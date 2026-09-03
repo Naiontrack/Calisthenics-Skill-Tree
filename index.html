@@ -142,6 +142,8 @@
             border: 1px solid var(--line-color);
             margin-bottom: 15px;
             font-size: 0.9rem;
+            flex-wrap: wrap;
+            gap: 10px;
         }
 
         .auth-bar span {
@@ -155,6 +157,7 @@
         .auth-actions {
             display: flex;
             gap: 8px;
+            align-items: center;
         }
 
         .btn-auth {
@@ -177,6 +180,70 @@
             font-weight: bold;
             cursor: pointer;
             border: none;
+        }
+
+        /* SOCIAL LOGIN BUTTONS */
+        .social-auth-container {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 15px;
+            margin-bottom: 15px;
+        }
+
+        .btn-social {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            width: 100%;
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            border: 1px solid var(--line-color);
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .btn-google {
+            background-color: #ffffff;
+            color: #000000;
+        }
+        .btn-google:hover {
+            background-color: #f1f5f9;
+        }
+
+        .btn-apple {
+            background-color: #000000;
+            color: #ffffff;
+        }
+        .btn-apple:hover {
+            background-color: #1e293b;
+        }
+
+        .auth-divider {
+            display: flex;
+            align-items: center;
+            text-align: center;
+            margin: 15px 0;
+            color: var(--subtext);
+            font-size: 0.8rem;
+        }
+
+        .auth-divider::before,
+        .auth-divider::after {
+            content: '';
+            flex: 1;
+            border-bottom: 1px solid var(--line-color);
+        }
+
+        .auth-divider:not(:empty)::before {
+            margin-right: .5em;
+        }
+
+        .auth-divider:not(:empty)::after {
+            margin-left: .5em;
         }
 
         .rank-card {
@@ -270,12 +337,12 @@
             border-radius: 10px;
             border: 1px solid var(--line-color);
             cursor: pointer;
-            transition: transform 0.1s, border-color 0.2s;
+            transition: transform 0.2s, border-color 0.2s;
         }
 
         .leaderboard-item:hover {
+            transform: translateX(4px);
             border-color: var(--accent);
-            transform: translateY(-2px);
         }
 
         .leaderboard-item.current-user-item {
@@ -323,24 +390,27 @@
         /* SEZIONE CHAT GLOBALE */
         .chat-section {
             width: 100%;
-            max-width: 900px;
             background: var(--card-bg);
             border-radius: 16px;
             padding: 15px;
             box-sizing: border-box;
             border: 1px solid var(--line-color);
             box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
-            margin-bottom: 25px;
+            text-align: left;
+            margin-bottom: 20px;
         }
 
         .chat-title {
             color: var(--accent);
             font-size: 1.1rem;
-            margin: 0 0 12px 0;
+            margin: 0 0 10px 0;
             text-transform: uppercase;
             letter-spacing: 1.5px;
             border-bottom: 2px solid var(--accent);
             padding-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
         .chat-messages {
@@ -350,32 +420,43 @@
             height: 200px;
             overflow-y: auto;
             background: var(--bg-color);
-            padding: 10px;
-            border-radius: 10px;
             border: 1px solid var(--line-color);
+            border-radius: 10px;
+            padding: 10px;
             margin-bottom: 10px;
         }
 
-        .chat-msg {
-            font-size: 0.85rem;
-            line-height: 1.3;
+        .chat-message-item {
+            display: flex;
+            flex-direction: column;
             background: var(--card-bg);
             padding: 6px 10px;
             border-radius: 8px;
-            border: 1px solid var(--line-color);
+            font-size: 0.85rem;
             word-break: break-word;
+            border-left: 3px solid var(--accent);
+        }
+
+        .chat-message-item.my-message {
+            border-left-color: var(--unlocked);
+            align-self: flex-end;
+            width: 85%;
+        }
+
+        .chat-msg-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 3px;
+            font-size: 0.75rem;
         }
 
         .chat-msg-author {
             font-weight: bold;
             color: var(--accent);
-            margin-right: 5px;
         }
 
-        .chat-msg-rank {
-            font-size: 0.75rem;
+        .chat-msg-time {
             color: var(--subtext);
-            margin-right: 5px;
         }
 
         .chat-input-box {
@@ -384,10 +465,13 @@
         }
 
         .chat-input-box input {
-            flex-grow: 1;
-            width: auto !important;
-            text-align: left !important;
-            padding: 8px 12px !important;
+            flex: 1;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid var(--locked);
+            background: var(--input-bg);
+            color: var(--text);
+            text-align: left;
         }
 
         .tree-container {
@@ -558,6 +642,31 @@
             transform: scale(0.95);
         }
 
+        /* INPUT PASSWORD WITH EYE ICON */
+        .password-container {
+            position: relative;
+            display: flex;
+            align-items: center;
+            width: 100%;
+        }
+
+        .password-container input {
+            width: 100% !important;
+            padding-right: 40px !important;
+        }
+
+        .toggle-password-btn {
+            position: absolute;
+            right: 8px;
+            background: none !important;
+            border: none !important;
+            color: var(--subtext);
+            cursor: pointer;
+            padding: 4px;
+            font-size: 1.1rem;
+            box-shadow: none !important;
+        }
+
         /* CUSTOM MODAL POP-UP & AUTH FORMS */
         .modal-overlay {
             position: fixed;
@@ -587,7 +696,7 @@
             border-radius: 16px;
             padding: 20px;
             width: 90%;
-            max-width: 420px;
+            max-width: 450px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.5);
             text-align: center;
             transform: scale(0.9);
@@ -617,7 +726,6 @@
             display: flex;
             gap: 10px;
             justify-content: center;
-            margin-top: 15px;
         }
 
         .modal-actions button {
@@ -645,10 +753,16 @@
             padding: 10px;
             box-sizing: border-box;
             text-align: left;
-            border-radius: 6px;
+            border-radius: 8px;
             border: 1px solid var(--locked);
             background: var(--input-bg);
             color: var(--text);
+        }
+
+        .auth-hint {
+            font-size: 0.75rem;
+            color: var(--subtext);
+            margin-top: 2px;
         }
 
         .auth-error {
@@ -668,21 +782,27 @@
             color: #fff;
         }
 
-        .unlocked-skills-list {
+        .btn-danger-confirm {
+            background: var(--danger);
+            color: #fff;
+        }
+
+        /* User Profile Modal List */
+        .profile-skills-list {
             text-align: left;
             max-height: 250px;
             overflow-y: auto;
-            margin-top: 10px;
+            margin: 15px 0;
             display: flex;
             flex-direction: column;
             gap: 8px;
         }
 
-        .unlocked-skill-item {
+        .profile-skill-item {
             background: var(--bg-color);
             padding: 8px 12px;
             border-radius: 8px;
-            border: 1px solid var(--line-color);
+            border-left: 3px solid var(--unlocked);
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -792,19 +912,14 @@
                 <p style="color: var(--subtext); text-align: center; font-size: 0.9rem;">Caricamento classifica...</p>
             </div>
         </div>
-    </div>
 
-    <div class="chat-section" id="chat-section">
-        <h3 class="chat-title">💬 Chat Globale</h3>
-        <div id="chat-login-notice" style="text-align: center; color: var(--subtext); font-size: 0.9rem; padding: 10px;">
-            🔒 Devi effettuare l'accesso per poter vedere e partecipare alla chat.
-        </div>
-        <div id="chat-content" style="display: none;">
-            <div class="chat-messages" id="chat-messages">
-                <p style="color: var(--subtext); text-align: center;">Caricamento messaggi...</p>
+        <div class="chat-section">
+            <h3 class="chat-title">💬 Chat Globale Community</h3>
+            <div class="chat-messages" id="chat-container">
+                <p style="color: var(--subtext); text-align: center; font-size: 0.85rem; margin-top: auto; margin-bottom: auto;">Effettua l'accesso per visualizzare e inviare messaggi in chat.</p>
             </div>
-            <div class="chat-input-box">
-                <input type="text" id="chat-input" placeholder="Scrivi un messaggio..." onkeypress="if(event.key === 'Enter') sendChatMessage()">
+            <div class="chat-input-box" id="chat-controls" style="display: none;">
+                <input type="text" id="chat-input-text" placeholder="Scrivi un messaggio..." maxlength="300" onkeydown="if(event.key==='Enter') sendChatMessage()">
                 <button onclick="sendChatMessage()">Invia</button>
             </div>
         </div>
@@ -839,13 +954,14 @@
             measurementId: "G-ZF4P6HX9HN"
         };
 
+        // Inizializzazione Firebase
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const db = firebase.firestore();
 
         let currentUser = null;
         let userNickname = "";
-        let userIsPrivate = false;
+        let userPrivacy = "public"; // "public" o "private"
         let leaderboardUnsubscribe = null;
         let chatUnsubscribe = null;
 
@@ -883,68 +999,193 @@
             planche_lean: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="20" cy="35" r="5" fill="var(--accent)"/><path d="M20 40 L80 62"/><path d="M45 50 L30 80"/><line x1="10" y1="80" x2="90" y2="80" stroke="var(--subtext)" stroke-width="4"/></svg>`,
             pushups_knee: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="20" cy="45" r="5" fill="var(--accent)"/><path d="M20 50 L60 65 L60 80"/><path d="M35 55 L35 80"/><line x1="10" y1="80" x2="90" y2="80" stroke="var(--subtext)" stroke-width="4"/></svg>`,
             pushups: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="20" cy="45" r="5" fill="var(--accent)"/><path d="M20 50 L85 70"/><path d="M40 55 L40 80"/><line x1="10" y1="80" x2="90" y2="80" stroke="var(--subtext)" stroke-width="4"/></svg>`,
+            diamond_pushups: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="20" cy="45" r="5" fill="var(--accent)"/><path d="M20 50 L85 70"/><path d="M38 55 L45 80"/><line x1="10" y1="80" x2="90" y2="80" stroke="var(--subtext)" stroke-width="4"/></svg>`,
+            pseudo_pushups: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="15" cy="50" r="5" fill="var(--accent)"/><path d="M15 55 L85 70"/><path d="M50 62 L35 80"/><line x1="10" y1="80" x2="90" y2="80" stroke="var(--subtext)" stroke-width="4"/></svg>`,
+            clap_pushups: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="25" cy="35" r="5" fill="var(--accent)"/><path d="M25 40 L85 60"/><path d="M45 47 L40 60 L50 60"/><line x1="10" y1="80" x2="90" y2="80" stroke="var(--subtext)" stroke-width="4"/></svg>`,
+            double_clap_pushups: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="30" cy="25" r="5" fill="var(--accent)"/><path d="M30 30 L85 55"/><path d="M50 39 L45 52 L55 52"/><line x1="10" y1="80" x2="90" y2="80" stroke="var(--subtext)" stroke-width="4"/></svg>`,
+            behind_back_clap: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="30" cy="22" r="5" fill="var(--accent)"/><path d="M30 27 L85 52"/><path d="M45 34 L35 30 L40 42"/><line x1="10" y1="80" x2="90" y2="80" stroke="var(--subtext)" stroke-width="4"/></svg>`,
+            one_arm_pushup: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="20" cy="45" r="5" fill="var(--accent)"/><path d="M20 50 L85 70"/><path d="M45 56 L40 80"/><line x1="10" y1="80" x2="90" y2="80" stroke="var(--subtext)" stroke-width="4"/></svg>`,
+            one_arm_russian: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="20" cy="50" r="5" fill="var(--accent)"/><path d="M20 55 L85 75"/><path d="M45 61 L35 80 L50 80"/><line x1="10" y1="80" x2="90" y2="80" stroke="var(--subtext)" stroke-width="4"/></svg>`,
             tuck_planche: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="30" cy="35" r="5" fill="var(--accent)"/><path d="M30 40 L50 42 L35 60 L50 60"/><path d="M40 41 L40 80"/><line x1="15" y1="80" x2="85" y2="80" stroke="var(--subtext)" stroke-width="4"/></svg>`,
+            adv_tuck_planche: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="25" cy="38" r="5" fill="var(--accent)"/><path d="M25 43 L55 43 L55 68"/><path d="M38 43 L38 80"/><line x1="15" y1="80" x2="85" y2="80" stroke="var(--subtext)" stroke-width="4"/></svg>`,
+            straddle_planche: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="20" cy="40" r="5" fill="var(--accent)"/><path d="M20 45 L50 45"/><path d="M50 45 L80 30 M50 45 L80 60"/><path d="M35 45 L35 80"/><line x1="10" y1="80" x2="90" y2="80" stroke="var(--subtext)" stroke-width="4"/></svg>`,
             full_planche: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="15" cy="42" r="5" fill="var(--accent)"/><path d="M15 47 L88 47"/><path d="M35 47 L35 80"/><line x1="10" y1="80" x2="90" y2="80" stroke="var(--subtext)" stroke-width="4"/></svg>`,
-            default_svg: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="50" cy="30" r="10" fill="var(--accent)"/><path d="M50 40 L50 70 M30 50 L70 50 M35 90 L50 70 L65 90"/></svg>`
+            maltese: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="15" cy="48" r="5" fill="var(--accent)"/><path d="M15 53 L88 53"/><path d="M38 53 L30 80"/><line x1="10" y1="80" x2="90" y2="80" stroke="var(--subtext)" stroke-width="4"/></svg>`,
+            dead_hang: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="50" cy="30" r="5" fill="var(--accent)"/><path d="M50 35 L50 65 L40 85 M50 65 L60 85"/><path d="M50 40 L40 15 M50 40 L60 15"/><line x1="30" y1="15" x2="70" y2="15" stroke="var(--subtext)" stroke-width="4"/></svg>`,
+            scapula_pulls: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="50" cy="28" r="5" fill="var(--accent)"/><path d="M50 33 L50 63 L40 83 M50 63 L60 83"/><path d="M50 38 L42 15 M50 38 L58 15"/><line x1="30" y1="15" x2="70" y2="15" stroke="var(--subtext)" stroke-width="4"/></svg>`,
+            australian_pullups: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="30" cy="40" r="5" fill="var(--accent)"/><path d="M30 45 L75 65"/><path d="M45 52 L45 35"/><line x1="20" y1="35" x2="80" y2="35" stroke="var(--subtext)" stroke-width="4"/></svg>`,
+            pullups: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="50" cy="22" r="5" fill="var(--accent)"/><path d="M50 27 L50 60 L40 80 M50 60 L60 80"/><path d="M50 32 L38 15 M50 32 L62 15"/><line x1="30" y1="15" x2="70" y2="15" stroke="var(--subtext)" stroke-width="4"/></svg>`,
+            chin_ups: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="50" cy="20" r="5" fill="var(--accent)"/><path d="M50 25 L50 58 L40 78 M50 58 L60 78"/><path d="M50 30 L42 15 M50 30 L58 15"/><line x1="30" y1="15" x2="70" y2="15" stroke="var(--subtext)" stroke-width="4"/></svg>`,
+            chest_to_bar: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="50" cy="12" r="5" fill="var(--accent)"/><path d="M50 17 L50 52 L40 75 M50 52 L60 75"/><path d="M50 28 L38 18 M50 28 L62 18"/><line x1="30" y1="20" x2="70" y2="20" stroke="var(--subtext)" stroke-width="4"/></svg>`,
+            high_pullups: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="50" cy="10" r="5" fill="var(--accent)"/><path d="M50 15 L50 50 L40 70 M50 50 L60 70"/><path d="M50 35 L38 25 M50 35 L62 25"/><line x1="30" y1="25" x2="70" y2="25" stroke="var(--subtext)" stroke-width="4"/></svg>`,
+            l_sit_pullups: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="45" cy="22" r="5" fill="var(--accent)"/><path d="M45 27 L45 55 L70 55"/><path d="M45 32 L35 15 M45 32 L55 15"/><line x1="25" y1="15" x2="65" y2="15" stroke="var(--subtext)" stroke-width="4"/></svg>`,
+            tuck_front_lever: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="35" cy="45" r="5" fill="var(--accent)"/><path d="M35 50 L55 52 L40 70 L55 70"/><path d="M40 46 L40 15"/><line x1="25" y1="15" x2="65" y2="15" stroke="var(--subtext)" stroke-width="4"/></svg>`,
+            adv_tuck_front_lever: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="30" cy="48" r="5" fill="var(--accent)"/><path d="M30 53 L60 53 L60 78"/><path d="M38 48 L38 15"/><line x1="20" y1="15" x2="60" y2="15" stroke="var(--subtext)" stroke-width="4"/></svg>`,
+            one_leg_front_lever: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="25" cy="48" r="5" fill="var(--accent)"/><path d="M25 53 L55 53"/><path d="M55 53 L85 53 M55 53 L70 75"/><path d="M35 48 L35 15"/><line x1="20" y1="15" x2="60" y2="15" stroke="var(--subtext)" stroke-width="4"/></svg>`,
+            straddle_front_lever: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="25" cy="48" r="5" fill="var(--accent)"/><path d="M25 53 L55 53"/><path d="M55 53 L85 38 M55 53 L85 68"/><path d="M38 48 L38 15"/><line x1="20" y1="15" x2="60" y2="15" stroke="var(--subtext)" stroke-width="4"/></svg>`,
+            full_front_lever: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="20" cy="48" r="5" fill="var(--accent)"/><path d="M20 53 L90 53"/><path d="M38 48 L38 15"/><line x1="20" y1="15" x2="60" y2="15" stroke="var(--subtext)" stroke-width="4"/></svg>`,
+            one_arm_pullup: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="50" cy="22" r="5" fill="var(--accent)"/><path d="M50 27 L50 60 L40 80 M50 60 L60 80"/><path d="M50 32 L50 15"/><line x1="30" y1="15" x2="70" y2="15" stroke="var(--subtext)" stroke-width="4"/></svg>`,
+            bench_dips: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="40" cy="35" r="5" fill="var(--accent)"/><path d="M40 40 L40 65 L70 70"/><path d="M40 48 L30 55 L30 65"/><line x1="15" y1="65" x2="35" y2="65" stroke="var(--subtext)" stroke-width="4"/></svg>`,
+            parallel_dips: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="50" cy="25" r="5" fill="var(--accent)"/><path d="M50 30 L50 65 L45 85 M50 65 L55 85"/><path d="M50 40 L40 50 M50 40 L60 50"/><line x1="30" y1="50" x2="70" y2="50" stroke="var(--subtext)" stroke-width="4"/></svg>`,
+            straight_bar_dips: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="50" cy="22" r="5" fill="var(--accent)"/><path d="M50 27 L50 60 L42 80 M50 60 L58 80"/><path d="M50 42 L40 50 M50 42 L60 50"/><line x1="30" y1="50" x2="70" y2="50" stroke="var(--subtext)" stroke-width="4"/></svg>`,
+            kipping_muscle_up: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="50" cy="18" r="5" fill="var(--accent)"/><path d="M50 23 L45 55 L35 75"/><path d="M50 33 L40 40 M50 33 L60 40"/><line x1="30" y1="40" x2="70" y2="40" stroke="var(--subtext)" stroke-width="4"/></svg>`,
+            clean_muscle_up: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="50" cy="15" r="5" fill="var(--accent)"/><path d="M50 20 L50 55 L42 78 M50 55 L58 78"/><path d="M50 32 L40 40 M50 32 L60 40"/><line x1="30" y1="40" x2="70" y2="40" stroke="var(--subtext)" stroke-width="4"/></svg>`,
+            slow_muscle_up: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="50" cy="15" r="5" fill="var(--accent)"/><path d="M50 20 L50 55 L45 78 M50 55 L55 78"/><path d="M50 30 L38 40 M50 30 L62 40"/><line x1="30" y1="40" x2="70" y2="40" stroke="var(--subtext)" stroke-width="4"/></svg>`,
+            iron_cross: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="50" cy="25" r="5" fill="var(--accent)"/><path d="M50 30 L50 68 L42 88 M50 68 L58 88"/><path d="M50 38 L15 38 M50 38 L85 38"/><circle cx="15" cy="38" r="3" fill="var(--accent)"/><circle cx="85" cy="38" r="3" fill="var(--accent)"/></svg>`,
+            victorian_cross: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="20" cy="48" r="5" fill="var(--accent)"/><path d="M20 53 L90 53"/><path d="M40 53 L40 30 M70 53 L70 30"/><line x1="30" y1="30" x2="80" y2="30" stroke="var(--subtext)" stroke-width="4"/></svg>`,
+            assisted_squat: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="40" cy="25" r="5" fill="var(--accent)"/><path d="M40 30 L40 55 L30 80 M40 55 L50 80"/><path d="M40 38 L65 38"/><line x1="65" y1="20" x2="65" y2="80" stroke="var(--subtext)" stroke-width="4"/></svg>`,
+            squat: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="50" cy="25" r="5" fill="var(--accent)"/><path d="M50 30 L50 55 L35 80 M50 55 L65 80"/><path d="M50 38 L30 50 M50 38 L70 50"/></svg>`,
+            bulgarian_split_squat: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="45" cy="25" r="5" fill="var(--accent)"/><path d="M45 30 L45 55 L35 80 M45 55 L70 65 L70 80"/><line x1="65" y1="65" x2="85" y2="65" stroke="var(--subtext)" stroke-width="4"/></svg>`,
+            shrimp_squat: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="45" cy="25" r="5" fill="var(--accent)"/><path d="M45 30 L45 55 L35 80 M45 55 L60 50 L55 38"/><path d="M45 38 L55 38"/></svg>`,
+            pistol_squat: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="40" cy="35" r="5" fill="var(--accent)"/><path d="M40 40 L40 60 L30 85 M40 60 L80 60"/><path d="M40 45 L65 45"/></svg>`,
+            dragon_squat: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="45" cy="35" r="5" fill="var(--accent)"/><path d="M45 40 L45 60 L35 85 M45 60 L15 75"/><path d="M45 45 L30 55 M45 45 L60 55"/></svg>`,
+            wall_assisted_handstand: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="40" cy="75" r="5" fill="var(--accent)"/><path d="M40 70 L40 35 L40 10 M40 35 L40 10"/><path d="M40 62 L40 85"/><line x1="25" y1="5" x2="25" y2="95" stroke="var(--subtext)" stroke-width="4"/><line x1="10" y1="85" x2="90" y2="85" stroke="var(--subtext)" stroke-width="4"/></svg>`,
+            handstand_hold: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="50" cy="75" r="5" fill="var(--accent)"/><path d="M50 70 L50 35 L42 10 M50 35 L58 10"/><path d="M50 62 L42 85 M50 62 L58 85"/><line x1="20" y1="85" x2="80" y2="85" stroke="var(--subtext)" stroke-width="4"/></svg>`,
+            handstand_pushup: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="50" cy="60" r="5" fill="var(--accent)"/><path d="M50 55 L50 30 L42 5 M50 30 L58 5"/><path d="M50 48 L38 75 L42 85 M50 48 L62 75 L58 85"/><line x1="20" y1="85" x2="80" y2="85" stroke="var(--subtext)" stroke-width="4"/></svg>`,
+            ninety_degree_hold: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="20" cy="40" r="5" fill="var(--accent)"/><path d="M20 45 L50 45 L80 45"/><path d="M40 45 L40 80 M50 45 L50 80"/><line x1="20" y1="80" x2="80" y2="80" stroke="var(--subtext)" stroke-width="4"/></svg>`,
+            ninety_degree_pushup: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="25" cy="35" r="5" fill="var(--accent)"/><path d="M25 40 L55 42 L85 45"/><path d="M45 41 L40 80 M55 42 L50 80"/><line x1="20" y1="80" x2="80" y2="80" stroke="var(--subtext)" stroke-width="4"/></svg>`,
+            hanging_knee_raises: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="50" cy="22" r="5" fill="var(--accent)"/><path d="M50 27 L50 55 L65 55 L65 70"/><path d="M50 32 L40 15 M50 32 L60 15"/><line x1="30" y1="15" x2="70" y2="15" stroke="var(--subtext)" stroke-width="4"/></svg>`,
+            hanging_leg_raises: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="45" cy="22" r="5" fill="var(--accent)"/><path d="M45 27 L45 55 L75 55"/><path d="M45 32 L35 15 M45 32 L55 15"/><line x1="25" y1="15" x2="65" y2="15" stroke="var(--subtext)" stroke-width="4"/></svg>`,
+            tuck_l_sit: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="40" cy="40" r="5" fill="var(--accent)"/><path d="M40 45 L40 65 L55 65 L45 80"/><path d="M40 50 L30 80 M40 50 L50 80"/><line x1="20" y1="80" x2="60" y2="80" stroke="var(--subtext)" stroke-width="4"/></svg>`,
+            l_sit: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="35" cy="40" r="5" fill="var(--accent)"/><path d="M35 45 L35 68 L75 68"/><path d="M35 52 L25 80 M35 52 L45 80"/><line x1="15" y1="80" x2="55" y2="80" stroke="var(--subtext)" stroke-width="4"/></svg>`,
+            v_sit: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="35" cy="45" r="5" fill="var(--accent)"/><path d="M35 50 L40 70 L70 30"/><path d="M40 58 L30 80 M40 58 L50 80"/><line x1="20" y1="80" x2="60" y2="80" stroke="var(--subtext)" stroke-width="4"/></svg>`,
+            dragon_flag: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="20" cy="65" r="5" fill="var(--accent)"/><path d="M25 65 L80 35"/><path d="M20 70 L15 85 M25 65 L15 85"/><line x1="10" y1="85" x2="90" y2="85" stroke="var(--subtext)" stroke-width="4"/></svg>`,
+            manna: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="40" cy="60" r="5" fill="var(--accent)"/><path d="M40 55 L45 35 L30 20"/><path d="M40 58 L30 80 M40 58 L50 80"/><line x1="20" y1="80" x2="60" y2="80" stroke="var(--subtext)" stroke-width="4"/></svg>`,
+            tuck_human_flag: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="45" cy="35" r="5" fill="var(--accent)"/><path d="M45 40 L60 40 L50 60 L60 60"/><path d="M45 42 L25 25 M45 42 L25 65"/><line x1="25" y1="10" x2="25" y2="90" stroke="var(--subtext)" stroke-width="4"/></svg>`,
+            straddle_human_flag: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="45" cy="45" r="5" fill="var(--accent)"/><path d="M45 50 L65 50"/><path d="M65 50 L90 30 M65 50 L90 70"/><path d="M45 50 L25 30 M45 50 L25 70"/><line x1="25" y1="10" x2="25" y2="90" stroke="var(--subtext)" stroke-width="4"/></svg>`,
+            full_human_flag: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="45" cy="48" r="5" fill="var(--accent)"/><path d="M45 53 L95 53"/><path d="M45 53 L25 30 M45 53 L25 75"/><line x1="25" y1="10" x2="25" y2="90" stroke="var(--subtext)" stroke-width="4"/></svg>`
         };
 
         const treeData = [
             {
-                category: "Spinta & Planche",
+                category: "Spinta (Push)",
                 skills: [
-                    { id: "pushups", name: "Piegamenti (Push-ups)", type: "reps", baseMultiplier: 10, svg: skillStickmen.pushups },
-                    { id: "planche_lean", name: "Planche Lean", type: "time", baseMultiplier: 15, svg: skillStickmen.planche_lean },
-                    { id: "tuck_planche", name: "Tuck Planche", type: "time", baseMultiplier: 50, svg: skillStickmen.tuck_planche },
-                    { id: "full_planche", name: "Full Planche", type: "time", baseMultiplier: 250, svg: skillStickmen.full_planche }
+                    { id: "planche_lean", name: "Planche Lean", max: 60, unit: "sec", baseRatio: 2.5, img: skillStickmen.planche_lean },
+                    { id: "pushups_knee", name: "Piegamenti sulle Ginocchia", max: 50, unit: "rep", baseRatio: 1.0, img: skillStickmen.pushups_knee },
+                    { id: "pushups", name: "Piegamenti Classici", max: 50, unit: "rep", baseRatio: 2.0, img: skillStickmen.pushups },
+                    { id: "diamond_pushups", name: "Diamond Push-ups", max: 40, unit: "rep", baseRatio: 3.5, img: skillStickmen.diamond_pushups },
+                    { id: "pseudo_pushups", name: "Pseudo Planche Push-ups", max: 30, unit: "rep", baseRatio: 6.0, img: skillStickmen.pseudo_pushups },
+                    { id: "clap_pushups", name: "Clap Push-ups", max: 30, unit: "rep", baseRatio: 5.0, img: skillStickmen.clap_pushups },
+                    { id: "double_clap_pushups", name: "Double Clap Push-ups", max: 20, unit: "rep", baseRatio: 12.0, img: skillStickmen.double_clap_pushups },
+                    { id: "behind_back_clap", name: "Behind the Back Clap Push-ups", max: 15, unit: "rep", baseRatio: 20.0, img: skillStickmen.behind_back_clap },
+                    { id: "one_arm_pushup", name: "One Arm Push-up", max: 20, unit: "rep", baseRatio: 25.0, img: skillStickmen.one_arm_pushup },
+                    { id: "one_arm_russian", name: "One Arm Russian Push-up", max: 10, unit: "rep", baseRatio: 60.0, img: skillStickmen.one_arm_russian },
+                    { id: "tuck_planche", name: "Tuck Planche", max: 30, unit: "sec", baseRatio: 30.0, img: skillStickmen.tuck_planche },
+                    { id: "adv_tuck_planche", name: "Advanced Tuck Planche", max: 30, unit: "sec", baseRatio: 70.0, img: skillStickmen.adv_tuck_planche },
+                    { id: "straddle_planche", name: "Straddle Planche", max: 20, unit: "sec", baseRatio: 250.0, img: skillStickmen.straddle_planche },
+                    { id: "full_planche", name: "Full Planche", max: 15, unit: "sec", baseRatio: 600.0, img: skillStickmen.full_planche },
+                    { id: "maltese", name: "Maltese Cross", max: 10, unit: "sec", baseRatio: 1200.0, img: skillStickmen.maltese }
+                ]
+            },
+            {
+                category: "Tirata (Pull)",
+                skills: [
+                    { id: "dead_hang", name: "Dead Hang", max: 120, unit: "sec", baseRatio: 1.0, img: skillStickmen.dead_hang },
+                    { id: "scapula_pulls", name: "Trazioni Scapolari", max: 30, unit: "rep", baseRatio: 2.0, img: skillStickmen.scapula_pulls },
+                    { id: "australian_pullups", name: "Australian Pull-ups", max: 40, unit: "rep", baseRatio: 2.5, img: skillStickmen.australian_pullups },
+                    { id: "pullups", name: "Trazioni al Mento", max: 30, unit: "rep", baseRatio: 5.0, img: skillStickmen.pullups },
+                    { id: "chin_ups", name: "Chin-ups", max: 30, unit: "rep", baseRatio: 4.5, img: skillStickmen.chin_ups },
+                    { id: "chest_to_bar", name: "Chest to Bar Pull-ups", max: 20, unit: "rep", baseRatio: 10.0, img: skillStickmen.chest_to_bar },
+                    { id: "high_pullups", name: "High Pull-ups (al Bacino)", max: 15, unit: "rep", baseRatio: 25.0, img: skillStickmen.high_pullups },
+                    { id: "l_sit_pullups", name: "L-Sit Pull-ups", max: 20, unit: "rep", baseRatio: 12.0, img: skillStickmen.l_sit_pullups },
+                    { id: "tuck_front_lever", name: "Tuck Front Lever", max: 30, unit: "sec", baseRatio: 20.0, img: skillStickmen.tuck_front_lever },
+                    { id: "adv_tuck_front_lever", name: "Advanced Tuck Front Lever", max: 30, unit: "sec", baseRatio: 45.0, img: skillStickmen.adv_tuck_front_lever },
+                    { id: "one_leg_front_lever", name: "One Leg Front Lever", max: 20, unit: "sec", baseRatio: 90.0, img: skillStickmen.one_leg_front_lever },
+                    { id: "straddle_front_lever", name: "Straddle Front Lever", max: 20, unit: "sec", baseRatio: 160.0, img: skillStickmen.straddle_front_lever },
+                    { id: "full_front_lever", name: "Full Front Lever", max: 15, unit: "sec", baseRatio: 350.0, img: skillStickmen.full_front_lever },
+                    { id: "one_arm_pullup", name: "One Arm Pull-up", max: 10, unit: "rep", baseRatio: 500.0, img: skillStickmen.one_arm_pullup }
+                ]
+            },
+            {
+                category: "Dip & Muscle Up",
+                skills: [
+                    { id: "bench_dips", name: "Dip alla Panca", max: 40, unit: "rep", baseRatio: 1.5, img: skillStickmen.bench_dips },
+                    { id: "parallel_dips", name: "Dip alle Parallele", max: 35, unit: "rep", baseRatio: 4.0, img: skillStickmen.parallel_dips },
+                    { id: "straight_bar_dips", name: "Straight Bar Dips", max: 30, unit: "rep", baseRatio: 6.0, img: skillStickmen.straight_bar_dips },
+                    { id: "kipping_muscle_up", name: "Kipping Muscle Up", max: 20, unit: "rep", baseRatio: 15.0, img: skillStickmen.kipping_muscle_up },
+                    { id: "clean_muscle_up", name: "Clean Muscle Up (Strict)", max: 15, unit: "rep", baseRatio: 35.0, img: skillStickmen.clean_muscle_up },
+                    { id: "slow_muscle_up", name: "Slow Lente Muscle Up", max: 8, unit: "rep", baseRatio: 120.0, img: skillStickmen.slow_muscle_up },
+                    { id: "iron_cross", name: "Croce agli Anelli (Iron Cross)", max: 10, unit: "sec", baseRatio: 800.0, img: skillStickmen.iron_cross },
+                    { id: "victorian_cross", name: "Victorian Cross", max: 10, unit: "sec", baseRatio: 1500.0, img: skillStickmen.victorian_cross }
+                ]
+            },
+            {
+                category: "Gambe (Gamba / Legs)",
+                skills: [
+                    { id: "assisted_squat", name: "Squat Assistito", max: 50, unit: "rep", baseRatio: 0.8, img: skillStickmen.assisted_squat },
+                    { id: "squat", name: "Air Squat", max: 60, unit: "rep", baseRatio: 1.2, img: skillStickmen.squat },
+                    { id: "bulgarian_split_squat", name: "Bulgarian Split Squat", max: 30, unit: "rep", baseRatio: 3.0, img: skillStickmen.bulgarian_split_squat },
+                    { id: "shrimp_squat", name: "Shrimp Squat", max: 20, unit: "rep", baseRatio: 8.0, img: skillStickmen.shrimp_squat },
+                    { id: "pistol_squat", name: "Pistol Squat", max: 20, unit: "rep", baseRatio: 12.0, img: skillStickmen.pistol_squat },
+                    { id: "dragon_squat", name: "Dragon Squat", max: 12, unit: "rep", baseRatio: 35.0, img: skillStickmen.dragon_squat }
+                ]
+            },
+            {
+                category: "Verticale (Handstand)",
+                skills: [
+                    { id: "wall_assisted_handstand", name: "Verticale al Muro", max: 90, unit: "sec", baseRatio: 2.0, img: skillStickmen.wall_assisted_handstand },
+                    { id: "handstand_hold", name: "Verticale Libera", max: 60, unit: "sec", baseRatio: 8.0, img: skillStickmen.handstand_hold },
+                    { id: "handstand_pushup", name: "Handstand Push-up (HSPU)", max: 15, unit: "rep", baseRatio: 30.0, img: skillStickmen.handstand_pushup },
+                    { id: "ninety_degree_hold", name: "90 Degree Hold", max: 15, unit: "sec", baseRatio: 200.0, img: skillStickmen.ninety_degree_hold },
+                    { id: "ninety_degree_pushup", name: "90 Degree Push-up", max: 8, unit: "rep", baseRatio: 550.0, img: skillStickmen.ninety_degree_pushup }
+                ]
+            },
+            {
+                category: "Core & Skills Varie",
+                skills: [
+                    { id: "hanging_knee_raises", name: "Hanging Knee Raises", max: 30, unit: "rep", baseRatio: 1.5, img: skillStickmen.hanging_knee_raises },
+                    { id: "hanging_leg_raises", name: "Hanging Leg Raises", max: 25, unit: "rep", baseRatio: 3.0, img: skillStickmen.hanging_leg_raises },
+                    { id: "tuck_l_sit", name: "Tuck L-Sit", max: 40, unit: "sec", baseRatio: 4.0, img: skillStickmen.tuck_l_sit },
+                    { id: "l_sit", name: "L-Sit", max: 30, unit: "sec", baseRatio: 10.0, img: skillStickmen.l_sit },
+                    { id: "v_sit", name: "V-Sit", max: 20, unit: "sec", baseRatio: 35.0, img: skillStickmen.v_sit },
+                    { id: "dragon_flag", name: "Dragon Flag", max: 20, unit: "sec", baseRatio: 45.0, img: skillStickmen.dragon_flag },
+                    { id: "manna", name: "Manna", max: 15, unit: "sec", baseRatio: 400.0, img: skillStickmen.manna },
+                    { id: "tuck_human_flag", name: "Tuck Human Flag", max: 20, unit: "sec", baseRatio: 25.0, img: skillStickmen.tuck_human_flag },
+                    { id: "straddle_human_flag", name: "Straddle Human Flag", max: 15, unit: "sec", baseRatio: 80.0, img: skillStickmen.straddle_human_flag },
+                    { id: "full_human_flag", name: "Full Human Flag", max: 12, unit: "sec", baseRatio: 220.0, img: skillStickmen.full_human_flag }
                 ]
             }
         ];
 
         let userState = {};
+        let currentCategory = "all";
 
-        function loadState() {
-            if (!currentUser) {
-                const saved = localStorage.getItem("cali_tree_userState");
-                if (saved) {
-                    try { userState = JSON.parse(saved); } catch (e) { userState = {}; }
-                } else {
+        function loadLocalState() {
+            const saved = localStorage.getItem('calisthenics_tree_state');
+            if (saved) {
+                try {
+                    userState = JSON.parse(saved);
+                } catch(e) {
                     userState = {};
                 }
-                renderTree();
-            } else {
-                db.collection("users").doc(currentUser.uid).get().then((doc) => {
-                    if (doc.exists) {
-                        const data = doc.data();
-                        userState = data.skills || {};
-                        userNickname = data.nickname || "Atleta";
-                        userIsPrivate = data.isPrivate || false;
-                    } else {
-                        userState = {};
-                        userIsPrivate = false;
-                    }
-                    updateAuthUI();
-                    renderTree();
-                }).catch((err) => {
-                    console.error("Errore caricamento dati:", err);
-                    renderTree();
-                });
             }
         }
 
         function saveState() {
-            calculateTotalXP();
-            if (!currentUser) {
-                localStorage.setItem("cali_tree_userState", JSON.stringify(userState));
-            } else {
+            if (currentUser) {
                 const totalXp = calculateTotalXP();
                 db.collection("users").doc(currentUser.uid).set({
                     nickname: userNickname,
-                    skills: userState,
+                    privacy: userPrivacy,
                     totalXp: totalXp,
-                    isPrivate: userIsPrivate,
+                    skillsState: userState,
                     updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-                }, { merge: true });
+                }, { merge: true }).catch(err => {
+                    console.error("Errore nel salvataggio su Cloud:", err);
+                });
+            } else {
+                localStorage.setItem('calisthenics_tree_state', JSON.stringify(userState));
             }
+            renderTree();
+            updateRank();
+        }
+
+        function calculateSkillXP(skill, val) {
+            if (!val || val <= 0) return 0;
+            const cappedVal = Math.min(val, skill.max);
+            const linearPart = cappedVal * skill.baseRatio;
+            const exponentialBonus = Math.pow(cappedVal / skill.max, 2) * (skill.baseRatio * skill.max * 0.5);
+            return Math.round((linearPart + exponentialBonus) * 10);
         }
 
         function calculateTotalXP() {
@@ -953,96 +1194,96 @@
                 cat.skills.forEach(skill => {
                     const st = userState[skill.id];
                     if (st && st.unlocked) {
-                        const val = parseInt(st.val) || 0;
-                        total += val * skill.baseMultiplier;
+                        total += calculateSkillXP(skill, st.val);
                     }
                 });
             });
-            updateRankDisplay(total);
             return total;
         }
 
-        function updateRankDisplay(xp) {
+        function updateRank() {
+            const totalXp = calculateTotalXP();
             let currentRank = ranks[0];
-            let nextRank = ranks[1];
 
-            for (let i = 0; i < ranks.length; i++) {
-                if (xp >= ranks[i].minXp) {
+            for (let i = ranks.length - 1; i >= 0; i--) {
+                if (totalXp >= ranks[i].minXp) {
                     currentRank = ranks[i];
-                    nextRank = ranks[i + 1] || null;
+                    break;
                 }
             }
 
-            document.getElementById("user-rank").innerText = `GRADO: ${currentRank.name}`;
-            document.getElementById("total-xp").innerText = `XP Totali: ${xp}`;
-            document.getElementById("rank-icon-box").innerHTML = currentRank.iconSvg;
+            document.getElementById('user-rank').innerText = `GRADO: ${currentRank.name}`;
+            document.getElementById('total-xp').innerText = `XP Totali: ${totalXp.toLocaleString('it-IT')}`;
+            document.getElementById('rank-icon-box').innerHTML = currentRank.iconSvg;
 
-            const fill = document.getElementById("rank-progress");
-            if (!nextRank) {
-                fill.style.width = "100%";
-            } else {
-                const range = nextRank.minXp - currentRank.minXp;
-                const progress = xp - currentRank.minXp;
-                const pct = Math.min(100, Math.max(0, (progress / range) * 100));
-                fill.style.width = `${pct}%`;
+            const nextRankIndex = ranks.indexOf(currentRank) + 1;
+            let progressPercent = 100;
+            if (nextRankIndex < ranks.length) {
+                const prevXp = currentRank.minXp;
+                const nextXp = ranks[nextRankIndex].minXp;
+                progressPercent = Math.min(100, Math.max(0, ((totalXp - prevXp) / (nextXp - prevXp)) * 100));
             }
+            document.getElementById('rank-progress').style.width = `${progressPercent}%`;
         }
 
         function renderTree() {
-            const container = document.getElementById("tree");
-            const filterCat = document.getElementById("categorySelect").value;
-            container.innerHTML = "";
+            const container = document.getElementById('tree');
+            container.innerHTML = '';
 
             treeData.forEach(cat => {
-                if (filterCat !== "all" && cat.category !== filterCat) return;
+                if (currentCategory !== "all" && cat.category !== currentCategory) return;
 
-                const catHeader = document.createElement("div");
-                catHeader.className = "category-title";
-                catHeader.innerText = cat.category;
+                const catHeader = document.createElement('h3');
+                catHeader.className = 'category-title';
+                catHeader.innerHTML = `<span>📂</span> ${cat.category}`;
                 container.appendChild(catHeader);
 
-                const branch = document.createElement("div");
-                branch.className = "skill-tree-branch";
+                const branch = document.createElement('div');
+                branch.className = 'skill-tree-branch';
 
                 cat.skills.forEach(skill => {
                     const st = userState[skill.id] || { unlocked: false, val: 0 };
-                    const card = document.createElement("div");
+                    const xpGained = st.unlocked ? calculateSkillXP(skill, st.val) : 0;
+
+                    const card = document.createElement('div');
                     card.className = `skill-card ${st.unlocked ? 'unlocked-card' : ''}`;
 
-                    const unitLabel = skill.type === 'reps' ? 'Ripetizioni' : 'Secondi';
-                    const xpGained = st.unlocked ? (st.val * skill.baseMultiplier) : 0;
+                    let actionHtml = '';
+                    if (!st.unlocked) {
+                        actionHtml = `<button class="unlock-btn" onclick="askUnlock('${skill.id}')">🔓 Sblocca</button>`;
+                    } else {
+                        actionHtml = `
+                            <input type="number" id="input-${skill.id}" min="0" max="${skill.max}" value="${st.val}" onchange="updateSkill('${skill.id}')" onkeyup="updateSkill('${skill.id}')">
+                            <span style="font-size:0.8rem; font-weight: bold; color: var(--subtext);">${skill.unit}</span>
+                            <button class="relock-btn" onclick="askRelock('${skill.id}')" title="Riblocca skill">🔒</button>
+                        `;
+                    }
 
                     card.innerHTML = `
-                        <div class="skill-content" onclick="${!st.unlocked ? `askUnlock('${skill.id}')` : ''}">
-                            <div class="skill-img-box">${skill.svg || skillStickmen.default_svg}</div>
+                        <div class="skill-content">
+                            <div class="skill-img-box">${skill.img}</div>
                             <div class="skill-info">
                                 <h4>${skill.name}</h4>
-                                <p>${st.unlocked ? `Sbloccata - ${xpGained} XP` : '🔒 Bloccata'}</p>
+                                <p>Max Target: <strong>${skill.max} ${skill.unit}</strong></p>
+                                <p style="color: ${st.unlocked ? 'var(--unlocked)' : 'var(--subtext)'}; font-weight: 600;">
+                                    ${st.unlocked ? `XP Accumulati: +${xpGained.toLocaleString('it-IT')}` : 'Stato: Bloccata'}
+                                </p>
                             </div>
                         </div>
-                        <div class="actions">
-                            ${st.unlocked ? `
-                                <input type="number" id="input-${skill.id}" value="${st.val}" min="0" onchange="updateSkill('${skill.id}')" onkeyup="updateSkill('${skill.id}')">
-                                <span style="font-size:0.8rem; color:var(--subtext);">${unitLabel.substr(0, 3)}</span>
-                                <button class="relock-btn" onclick="askRelock('${skill.id}')" title="Riblocca">🔒</button>
-                            ` : `
-                                <button class="unlock-btn" onclick="askUnlock('${skill.id}')">Sblocca</button>
-                            `}
-                        </div>
+                        <div class="actions">${actionHtml}</div>
                     `;
+
                     branch.appendChild(card);
                 });
 
                 container.appendChild(branch);
             });
-
-            calculateTotalXP();
         }
 
         function findSkillById(id) {
-            for (let c of treeData) {
-                for (let s of c.skills) {
-                    if (s.id === id) return s;
+            for (const cat of treeData) {
+                for (const sk of cat.skills) {
+                    if (sk.id === id) return sk;
                 }
             }
             return null;
@@ -1054,14 +1295,16 @@
 
             openCustomModal(
                 "🔓 Sblocca Skill",
-                `Vuoi sbloccare <strong>"${skill.name}"</strong>?`,
+                `Sei sicuro di voler sbloccare <strong>"${skill.name}"</strong>?<br><br>Sbloccandola potrai inserire i tuoi progressi e guadagnare XP!`,
                 "Sblocca Ora",
                 false,
                 () => {
-                    if (!userState[id]) userState[id] = { unlocked: true, val: 0 };
-                    else userState[id].unlocked = true;
+                    if (!userState[id]) {
+                        userState[id] = { unlocked: true, val: 0 };
+                    } else {
+                        userState[id].unlocked = true;
+                    }
                     saveState();
-                    renderTree();
                 }
             );
         }
@@ -1072,13 +1315,12 @@
 
             openCustomModal(
                 "🔒 Riblocca Skill",
-                `Vuoi bloccare di nuovo <strong>"${skill.name}"</strong>? I progressi per questa skill verranno azzerati.`,
+                `Vuoi bloccare di nuovo <strong>"${skill.name}"</strong>?<br><br>⚠️ La skill verrà bloccata, il punteggio azzerato e <strong>perderai tutti gli XP</strong> accumulati da essa.`,
                 "Sì, Riblocca",
                 true,
                 () => {
                     userState[id] = { unlocked: false, val: 0 };
                     saveState();
-                    renderTree();
                 }
             );
         }
@@ -1087,166 +1329,429 @@
             const input = document.getElementById(`input-${id}`);
             if (!input) return;
             const val = parseInt(input.value) || 0;
-            if (!userState[id]) userState[id] = { unlocked: true, val: val };
-            else userState[id].val = val;
+            if (!userState[id]) {
+                userState[id] = { unlocked: true, val: val };
+            } else {
+                userState[id].val = val;
+            }
             saveState();
         }
 
         function initCategorySelect() {
-            const select = document.getElementById("categorySelect");
-            select.innerHTML = `<option value="all">Tutte (Tutto)</option>`;
+            const select = document.getElementById('categorySelect');
+            select.innerHTML = '<option value="all">Tutte (Tutto)</option>';
             treeData.forEach(cat => {
-                const opt = document.createElement("option");
+                const opt = document.createElement('option');
                 opt.value = cat.category;
                 opt.innerText = cat.category;
                 select.appendChild(opt);
             });
         }
 
-        function changeCategory() { renderTree(); }
-        function changeTheme(theme) {
-            document.body.className = theme === 'default' ? '' : `theme-${theme}`;
+        function changeCategory(val) {
+            currentCategory = val;
+            renderTree();
+        }
+
+        function changeTheme(themeKey) {
+            document.body.classList.remove('theme-light', 'theme-dark');
+            if (themeKey === 'light') {
+                document.body.classList.add('theme-light');
+            } else if (themeKey === 'dark') {
+                document.body.classList.add('theme-dark');
+            }
+            localStorage.setItem('calisthenics_tree_theme', themeKey);
+        }
+
+        function loadSavedTheme() {
+            const savedTheme = localStorage.getItem('calisthenics_tree_theme');
+            if (savedTheme) {
+                document.getElementById('themeSelect').value = savedTheme;
+                changeTheme(savedTheme);
+            }
         }
 
         // ==========================================
-        // CLASSIFICA E POPUP UTENTE
+        // SISTEMA MODALE PERSONALIZZATO
         // ==========================================
-        function initLeaderboardListener() {
-            if (leaderboardUnsubscribe) leaderboardUnsubscribe();
+        function openCustomModal(title, bodyHtml, confirmText, isDanger, onConfirm) {
+            const modal = document.getElementById('custom-modal');
+            document.getElementById('modal-title').innerText = title;
+            document.getElementById('modal-body-content').innerHTML = bodyHtml;
+            
+            const btnCancel = document.getElementById('modal-btn-cancel');
+            const btnConfirm = document.getElementById('modal-btn-confirm');
 
-            leaderboardUnsubscribe = db.collection("users")
-                .orderBy("totalXp", "desc")
-                .limit(20)
-                .onSnapshot((snapshot) => {
-                    const container = document.getElementById("leaderboard-container");
-                    if (snapshot.empty) {
-                        container.innerHTML = `<p style="color: var(--subtext); text-align: center; font-size: 0.9rem;">Nessun utente in classifica.</p>`;
-                        return;
-                    }
+            btnConfirm.innerText = confirmText || "Conferma";
+            btnConfirm.className = isDanger ? "btn-danger-confirm" : "btn-confirm";
 
-                    let html = "";
-                    let pos = 1;
+            const closeModal = () => {
+                modal.classList.remove('active');
+            };
 
-                    snapshot.forEach((doc) => {
-                        const data = doc.data();
-                        const isMe = currentUser && doc.id === currentUser.uid;
-                        const name = data.nickname || "Atleta Anonimo";
-                        const xp = data.totalXp || 0;
-                        const isPriv = data.isPrivate || false;
+            btnCancel.onclick = closeModal;
+            btnConfirm.onclick = () => {
+                closeModal();
+                if (onConfirm) onConfirm();
+            };
 
-                        html += `
-                            <div class="leaderboard-item ${isMe ? 'current-user-item' : ''}" onclick="viewUserProfile('${doc.id}')">
-                                <div class="leaderboard-left">
-                                    <span class="leaderboard-rank-pos">#${pos}</span>
-                                    <span class="leaderboard-name">${name} ${isPriv ? '🔒' : ''} ${isMe ? ' (Tu)' : ''}</span>
-                                </div>
-                                <span class="leaderboard-xp">${xp} XP</span>
-                            </div>
-                        `;
-                        pos++;
-                    });
-
-                    container.innerHTML = html;
-                }, (err) => {
-                    console.error("Errore classifica:", err);
-                });
+            modal.classList.add('active');
         }
 
-        function viewUserProfile(userId) {
-            db.collection("users").doc(userId).get().then((doc) => {
-                if (!doc.exists) return;
-                const data = doc.data();
-                const isMe = currentUser && currentUser.uid === userId;
-                const name = data.nickname || "Atleta";
+        // ==========================================
+        // GESTIONE PRIVACY & PROFILO UTENTE DA CLASSIFICA
+        // ==========================================
+        function updatePrivacySetting(newPrivacy) {
+            userPrivacy = newPrivacy;
+            saveState();
+            openCustomModal("🔒 Privacy Aggiornata", `La tua privacy è stata impostata su <strong>${newPrivacy === 'public' ? 'Pubblica' : 'Privata'}</strong>.`, "OK");
+        }
 
-                if (data.isPrivate && !isMe) {
-                    openCustomModal(
-                        `🔒 Profilo Privato`,
-                        `<p><strong>${name}</strong> ha impostato il proprio profilo su <strong>Privato</strong>.</p><p style="color:var(--subtext); font-size:0.85rem;">Non è possibile visualizzare le skill sbloccate da questo utente.</p>`,
-                        "Chiudi",
-                        false,
-                        null
-                    );
-                    return;
-                }
+        function viewUserProfile(userId, name, privacy, totalXp, skillsState) {
+            if (privacy === 'private' && (!currentUser || currentUser.uid !== userId)) {
+                openCustomModal(
+                    `👤 Profilo di ${name}`,
+                    `<p style="color: var(--subtext);">🔒 Questo utente ha impostato il proprio account come <strong>Privato</strong>.<br>Non è possibile visualizzare le sue skill sbloccate.</p>`,
+                    "Chiudi"
+                );
+                return;
+            }
 
-                const skills = data.skills || {};
-                let unlockedHtml = "<div class='unlocked-skills-list'>";
-                let count = 0;
+            let unlockedSkillsHtml = '';
+            let totalUnlockedCount = 0;
 
+            if (skillsState) {
                 treeData.forEach(cat => {
-                    cat.skills.forEach(sk => {
-                        if (skills[sk.id] && skills[sk.id].unlocked) {
-                            count++;
-                            const val = skills[sk.id].val || 0;
-                            const xp = val * sk.baseMultiplier;
-                            const unit = sk.type === 'reps' ? 'rep' : 'sec';
-                            unlockedHtml += `
-                                <div class="unlocked-skill-item">
-                                    <span><strong>${sk.name}</strong> (${val} ${unit})</span>
-                                    <span style="color:var(--unlocked); font-weight:bold;">+${xp} XP</span>
+                    cat.skills.forEach(skill => {
+                        const st = skillsState[skill.id];
+                        if (st && st.unlocked) {
+                            totalUnlockedCount++;
+                            const xp = calculateSkillXP(skill, st.val);
+                            unlockedSkillsHtml += `
+                                <div class="profile-skill-item">
+                                    <div>
+                                        <strong>${skill.name}</strong><br>
+                                        <span style="color: var(--subtext); font-size: 0.75rem;">${st.val} / ${skill.max} ${skill.unit}</span>
+                                    </div>
+                                    <span style="color: var(--unlocked); font-weight: bold;">+${xp.toLocaleString('it-IT')} XP</span>
                                 </div>
                             `;
                         }
                     });
                 });
+            }
 
-                unlockedHtml += "</div>";
+            if (totalUnlockedCount === 0) {
+                unlockedSkillsHtml = `<p style="color: var(--subtext); font-size: 0.85rem;">Questo utente non ha ancora sbloccato alcuna skill.</p>`;
+            }
 
-                if (count === 0) {
-                    unlockedHtml = `<p style="color:var(--subtext);">Questo utente non ha ancora sbloccato nessuna skill.</p>`;
-                }
+            const bodyContent = `
+                <div style="text-align: center; margin-bottom: 10px;">
+                    <p style="margin: 5px 0;"><strong>XP Totali:</strong> <span style="color: var(--accent);">${totalXp.toLocaleString('it-IT')}</span></p>
+                    <p style="margin: 5px 0; font-size: 0.85rem; color: var(--subtext);">Skill Sbloccate: ${totalUnlockedCount}</p>
+                </div>
+                <h4 style="margin: 10px 0 5px 0; text-align: left; color: var(--accent);">🏆 Skill Sbloccate:</h4>
+                <div class="profile-skills-list">
+                    ${unlockedSkillsHtml}
+                </div>
+            `;
 
-                openCustomModal(
-                    `🏆 Profilo: ${name}`,
-                    `<p><strong>XP Totali:</strong> ${data.totalXp || 0}</p>
-                     <p><strong>Skill Sbloccate:</strong></p>
-                     ${unlockedHtml}`,
-                    "Chiudi",
-                    false,
-                    null
-                );
-            });
+            openCustomModal(`👤 Profilo: ${name}`, bodyContent, "Chiudi");
         }
 
         // ==========================================
-        // CHAT GLOBALE
+        // AUTENTICAZIONE FIREBASE
         // ==========================================
-        function initChatListener() {
-            if (chatUnsubscribe) chatUnsubscribe();
+        function openAuthModal(mode) {
+            const isLogin = mode === 'login';
+            const title = isLogin ? "🔑 Accedi al Profilo" : "📝 Registra Account";
+            
+            const formHtml = `
+                <div class="auth-error" id="auth-error-msg"></div>
+                ${!isLogin ? `
+                    <div class="auth-form-group">
+                        <label for="auth-nickname">Nickname Atleta</label>
+                        <input type="text" id="auth-nickname" placeholder="Es. MarioCalisthenics" maxlength="20">
+                    </div>
+                ` : ''}
+                <div class="auth-form-group">
+                    <label for="auth-email">Email</label>
+                    <input type="email" id="auth-email" placeholder="nome@esempio.com">
+                </div>
+                <div class="auth-form-group">
+                    <label for="auth-password">Password</label>
+                    <div class="password-container">
+                        <input type="password" id="auth-password" placeholder="••••••••">
+                        <button type="button" class="toggle-password-btn" onclick="togglePasswordVisibility('auth-password')">👁️</button>
+                    </div>
+                </div>
+                ${!isLogin ? `
+                    <div class="auth-form-group">
+                        <label for="auth-privacy">Privacy Account</label>
+                        <select id="auth-privacy">
+                            <option value="public">🌐 Pubblico (Visibile in classifica e apribile)</option>
+                            <option value="private">🔒 Privato (Nessuno può vedere le tue skill)</option>
+                        </select>
+                    </div>
+                ` : ''}
+                
+                <div class="auth-divider">OPPURE</div>
 
-            chatUnsubscribe = db.collection("chat")
-                .orderBy("timestamp", "desc")
-                .limit(50)
+                <div class="social-auth-container">
+                    <button class="btn-social btn-google" onclick="handleSocialAuth('google')">
+                        <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
+                        Accedi con Google
+                    </button>
+                </div>
+            `;
+
+            openCustomModal(
+                title,
+                formHtml,
+                isLogin ? "Accedi" : "Registrati",
+                false,
+                () => {
+                    const email = document.getElementById('auth-email')?.value;
+                    const password = document.getElementById('auth-password')?.value;
+                    const errorBox = document.getElementById('auth-error-msg');
+
+                    if (isLogin) {
+                        auth.signInWithEmailAndPassword(email, password).catch(err => {
+                            openAuthModal('login');
+                            setTimeout(() => {
+                                const errDiv = document.getElementById('auth-error-msg');
+                                if (errDiv) errDiv.innerText = "Errore: " + translateAuthError(err.code);
+                            }, 100);
+                        });
+                    } else {
+                        const nickname = document.getElementById('auth-nickname')?.value.trim();
+                        const privacy = document.getElementById('auth-privacy')?.value || 'public';
+                        if (!nickname) {
+                            alert("Inserisci un Nickname valido!");
+                            return;
+                        }
+                        userNickname = nickname;
+                        userPrivacy = privacy;
+
+                        auth.createUserWithEmailAndPassword(email, password)
+                            .then((cred) => {
+                                return db.collection("users").doc(cred.user.uid).set({
+                                    nickname: userNickname,
+                                    privacy: userPrivacy,
+                                    totalXp: calculateTotalXP(),
+                                    skillsState: userState,
+                                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                                });
+                            })
+                            .catch(err => {
+                                openAuthModal('signup');
+                                setTimeout(() => {
+                                    const errDiv = document.getElementById('auth-error-msg');
+                                    if (errDiv) errDiv.innerText = "Errore: " + translateAuthError(err.code);
+                                }, 100);
+                            });
+                    }
+                }
+            );
+        }
+
+        function togglePasswordVisibility(inputId) {
+            const input = document.getElementById(inputId);
+            if (input) {
+                input.type = input.type === 'password' ? 'text' : 'password';
+            }
+        }
+
+        function handleSocialAuth(providerName) {
+            let provider = null;
+            if (providerName === 'google') {
+                provider = new firebase.auth.GoogleAuthProvider();
+            }
+
+            if (provider) {
+                auth.signInWithPopup(provider).catch(err => {
+                    alert("Errore accesso Social: " + err.message);
+                });
+            }
+        }
+
+        function translateAuthError(code) {
+            switch (code) {
+                case 'auth/invalid-email': return 'Indirizzo email non valido.';
+                case 'auth/user-disabled': return 'Questo utente è stato disabilitato.';
+                case 'auth/user-not-found': return 'Nessun utente trovato con questa email.';
+                case 'auth/wrong-password': return 'Password errata.';
+                case 'auth/email-already-in-use': return 'L\'email è già utilizzata da un altro account.';
+                case 'auth/weak-password': return 'La password deve contenere almeno 6 caratteri.';
+                default: return 'Si è verificato un errore durante l\'autenticazione.';
+            }
+        }
+
+        function logout() {
+            auth.signOut().then(() => {
+                location.reload();
+            });
+        }
+
+        auth.onAuthStateChanged((user) => {
+            currentUser = user;
+            const authBar = document.getElementById('auth-bar');
+            const authStatusText = document.getElementById('user-status-text');
+            const authActionsContainer = document.getElementById('auth-actions-container');
+            const chatControls = document.getElementById('chat-controls');
+
+            if (user) {
+                db.collection("users").doc(user.uid).get().then((doc) => {
+                    if (doc.exists) {
+                        const data = doc.data();
+                        userNickname = data.nickname || user.displayName || "Atleta";
+                        userPrivacy = data.privacy || "public";
+                        if (data.skillsState) {
+                            userState = data.skillsState;
+                        }
+                    } else {
+                        userNickname = user.displayName || "Atleta";
+                        userPrivacy = "public";
+                        saveState();
+                    }
+                    
+                    authStatusText.innerHTML = `👤 Loggato come: <strong>${userNickname}</strong> (${userPrivacy === 'public' ? '🌐 Pubblico' : '🔒 Privato'})`;
+                    authActionsContainer.innerHTML = `
+                        <button class="btn-auth-secondary" onclick="updatePrivacySetting('${userPrivacy === 'public' ? 'private' : 'public'}')">
+                            Cambia Privacy (${userPrivacy === 'public' ? 'Rendi Privato 🔒' : 'Rendi Pubblico 🌐'})
+                        </button>
+                        <button class="btn-auth-secondary" onclick="logout()">Esci</button>
+                    `;
+
+                    chatControls.style.display = 'flex';
+
+                    renderTree();
+                    updateRank();
+                    listenLeaderboard();
+                    listenChat();
+                });
+            } else {
+                authStatusText.innerText = '👤 Non autenticato (Salvataggio locale)';
+                authActionsContainer.innerHTML = `
+                    <button class="btn-auth-secondary" onclick="openAuthModal('login')">Accedi</button>
+                    <button class="btn-auth" onclick="openAuthModal('signup')">Registrati</button>
+                `;
+                chatControls.style.display = 'none';
+
+                loadLocalState();
+                renderTree();
+                updateRank();
+                listenLeaderboard();
+            }
+        });
+
+        // ==========================================
+        // CLASSIFICA GLOBALE IN TEMPO REALE
+        // ==========================================
+        function listenLeaderboard() {
+            if (leaderboardUnsubscribe) leaderboardUnsubscribe();
+
+            const leaderboardContainer = document.getElementById('leaderboard-container');
+
+            leaderboardUnsubscribe = db.collection("users")
+                .orderBy("totalXp", "desc")
+                .limit(20)
                 .onSnapshot((snapshot) => {
-                    const container = document.getElementById("chat-messages");
                     if (snapshot.empty) {
-                        container.innerHTML = `<p style="color: var(--subtext); text-align: center;">Nessun messaggio presente.</p>`;
+                        leaderboardContainer.innerHTML = '<p style="color: var(--subtext); text-align: center; font-size: 0.9rem;">Nessun atleta in classifica.</p>';
                         return;
                     }
 
-                    let msgs = [];
-                    snapshot.forEach(doc => msgs.push(doc.data()));
-                    msgs.reverse();
+                    leaderboardContainer.innerHTML = '';
+                    let rankPos = 1;
 
-                    let html = "";
-                    msgs.forEach(m => {
-                        html += `
-                            <div class="chat-msg">
-                                <span class="chat-msg-author">${m.author}:</span>
-                                <span>${escapeHtml(m.text)}</span>
+                    snapshot.forEach((doc) => {
+                        const userData = doc.data();
+                        const isCurrent = currentUser && currentUser.uid === doc.id;
+                        
+                        let rankIcon = rankLogos.bronze;
+                        for (let i = ranks.length - 1; i >= 0; i--) {
+                            if ((userData.totalXp || 0) >= ranks[i].minXp) {
+                                rankIcon = ranks[i].iconSvg;
+                                break;
+                            }
+                        }
+
+                        const item = document.createElement('div');
+                        item.className = `leaderboard-item ${isCurrent ? 'current-user-item' : ''}`;
+                        
+                        const jsonState = JSON.stringify(userData.skillsState || {}).replace(/'/g, "&apos;");
+                        
+                        item.setAttribute("onclick", `viewUserProfile('${doc.id}', '${userData.nickname || 'Atleta Anonimo'}', '${userData.privacy || 'public'}', ${userData.totalXp || 0}, ${jsonState})`);
+
+                        item.innerHTML = `
+                            <div class="leaderboard-left">
+                                <span class="leaderboard-rank-pos">#${rankPos}</span>
+                                <div class="leaderboard-avatar">${rankIcon}</div>
+                                <span class="leaderboard-name">${userData.nickname || 'Atleta Anonimo'} ${userData.privacy === 'private' ? '🔒' : ''}</span>
                             </div>
+                            <span class="leaderboard-xp">${(userData.totalXp || 0).toLocaleString('it-IT')} XP</span>
                         `;
+
+                        leaderboardContainer.appendChild(item);
+                        rankPos++;
+                    });
+                }, (error) => {
+                    console.error("Errore ascolto classifica:", error);
+                    leaderboardContainer.innerHTML = '<p style="color: var(--danger); text-align: center; font-size: 0.85rem;">Impossibile caricare la classifica.</p>';
+                });
+        }
+
+        // ==========================================
+        // CHAT GLOBALE IN TEMPO REALE
+        // ==========================================
+        function listenChat() {
+            if (chatUnsubscribe) chatUnsubscribe();
+
+            const chatContainer = document.getElementById('chat-container');
+
+            chatUnsubscribe = db.collection("chat")
+                .orderBy("createdAt", "asc")
+                .limitToLast(50)
+                .onSnapshot((snapshot) => {
+                    if (snapshot.empty) {
+                        chatContainer.innerHTML = '<p style="color: var(--subtext); text-align: center; font-size: 0.85rem; margin-top: auto; margin-bottom: auto;">Nessun messaggio presente. Scrivi il primo messaggio!</p>';
+                        return;
+                    }
+
+                    chatContainer.innerHTML = '';
+                    snapshot.forEach((doc) => {
+                        const msgData = doc.data();
+                        const isMe = currentUser && currentUser.uid === msgData.uid;
+
+                        let timeStr = "";
+                        if (msgData.createdAt) {
+                            const date = msgData.createdAt.toDate();
+                            timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                        }
+
+                        const msgItem = document.createElement('div');
+                        msgItem.className = `chat-message-item ${isMe ? 'my-message' : ''}`;
+                        msgItem.innerHTML = `
+                            <div class="chat-msg-header">
+                                <span class="chat-msg-author">${msgData.author || 'Atleta'}</span>
+                                <span class="chat-msg-time">${timeStr}</span>
+                            </div>
+                            <div>${escapeHtml(msgData.text)}</div>
+                        `;
+                        chatContainer.appendChild(msgItem);
                     });
 
-                    container.innerHTML = html;
-                    container.scrollTop = container.scrollHeight;
+                    chatContainer.scrollTop = chatContainer.scrollHeight;
+                }, (error) => {
+                    console.error("Errore chat:", error);
                 });
         }
 
         function sendChatMessage() {
-            if (!currentUser) return;
-            const input = document.getElementById("chat-input");
+            const input = document.getElementById('chat-input-text');
+            if (!input || !currentUser) return;
+
             const text = input.value.trim();
             if (!text) return;
 
@@ -1254,191 +1759,30 @@
                 uid: currentUser.uid,
                 author: userNickname || "Atleta",
                 text: text,
-                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
             }).then(() => {
-                input.value = "";
+                input.value = '';
             }).catch(err => {
-                console.error("Errore invio messaggio:", err);
+                console.error("Errore nell'invio del messaggio:", err);
             });
         }
 
-        function escapeHtml(str) {
-            return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        function escapeHtml(text) {
+            return text
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
         }
 
         // ==========================================
-        // GESTIONE AUTENTICAZIONE E MODALE
+        // INIZIALIZZAZIONE ALL'AVVIO
         // ==========================================
-        function openAuthModal(mode) {
-            const title = mode === 'login' ? "Accedi" : "Registrati";
-            const isLogin = mode === 'login';
-
-            let bodyHtml = `
-                <div class="auth-form-group">
-                    <label>Email</label>
-                    <input type="email" id="auth-email" placeholder="latua@email.com">
-                </div>
-                <div class="auth-form-group">
-                    <label>Password</label>
-                    <input type="password" id="auth-password" placeholder="••••••••">
-                </div>
-            `;
-
-            if (!isLogin) {
-                bodyHtml += `
-                    <div class="auth-form-group">
-                        <label>Nickname</label>
-                        <input type="text" id="auth-nickname" placeholder="Il tuo nome atleta">
-                    </div>
-                    <div class="auth-form-group">
-                        <label>Privacy Profilo</label>
-                        <select id="auth-privacy">
-                            <option value="public">Pubblico (Visibile in classifica)</option>
-                            <option value="private">Privato (Nascosto agli altri)</option>
-                        </select>
-                    </div>
-                `;
-            }
-
-            bodyHtml += `<div class="auth-error" id="auth-error-msg"></div>`;
-
-            openCustomModal(
-                title,
-                bodyHtml,
-                title,
-                false,
-                () => {
-                    const email = document.getElementById("auth-email").value;
-                    const password = document.getElementById("auth-password").value;
-                    const errBox = document.getElementById("auth-error-msg");
-
-                    if (isLogin) {
-                        auth.signInWithEmailAndPassword(email, password).then(() => {
-                            closeCustomModal();
-                        }).catch(err => {
-                            errBox.innerText = err.message;
-                        });
-                    } else {
-                        const nick = document.getElementById("auth-nickname").value.trim() || "Atleta";
-                        const isPriv = document.getElementById("auth-privacy").value === 'private';
-
-                        auth.createUserWithEmailAndPassword(email, password).then((cred) => {
-                            userNickname = nick;
-                            userIsPrivate = isPriv;
-                            return db.collection("users").doc(cred.user.uid).set({
-                                nickname: nick,
-                                isPrivate: isPriv,
-                                totalXp: calculateTotalXP(),
-                                skills: userState
-                            });
-                        }).then(() => {
-                            closeCustomModal();
-                        }).catch(err => {
-                            errBox.innerText = err.message;
-                        });
-                    }
-                }
-            );
-        }
-
-        function openSettingsModal() {
-            let bodyHtml = `
-                <div class="auth-form-group">
-                    <label>Nickname</label>
-                    <input type="text" id="edit-nickname" value="${userNickname}">
-                </div>
-                <div class="auth-form-group">
-                    <label>Privacy Profilo</label>
-                    <select id="edit-privacy">
-                        <option value="public" ${!userIsPrivate ? 'selected' : ''}>Pubblico</option>
-                        <option value="private" ${userIsPrivate ? 'selected' : ''}>Privato</option>
-                    </select>
-                </div>
-            `;
-
-            openCustomModal(
-                "⚙️ Impostazioni Account",
-                bodyHtml,
-                "Salva Modifiche",
-                false,
-                () => {
-                    const newNick = document.getElementById("edit-nickname").value.trim() || "Atleta";
-                    const newPriv = document.getElementById("edit-privacy").value === 'private';
-
-                    userNickname = newNick;
-                    userIsPrivate = newPriv;
-                    saveState();
-                    updateAuthUI();
-                    closeCustomModal();
-                }
-            );
-        }
-
-        function updateAuthUI() {
-            const statusText = document.getElementById("user-status-text");
-            const actionsBox = document.getElementById("auth-actions-container");
-            const chatNotice = document.getElementById("chat-login-notice");
-            const chatContent = document.getElementById("chat-content");
-
-            if (currentUser) {
-                statusText.innerHTML = `👤 Loggato come <strong>${userNickname}</strong> (${userIsPrivate ? '🔒 Privato' : '🌐 Pubblico'})`;
-                actionsBox.innerHTML = `
-                    <button class="btn-auth-secondary" onclick="openSettingsModal()">⚙️ Opzioni</button>
-                    <button class="btn-auth-secondary" onclick="auth.signOut()">Esci</button>
-                `;
-                chatNotice.style.display = "none";
-                chatContent.style.display = "block";
-                initChatListener();
-            } else {
-                statusText.innerText = "👤 Non autenticato (Salvataggio locale)";
-                actionsBox.innerHTML = `
-                    <button class="btn-auth-secondary" onclick="openAuthModal('login')">Accedi</button>
-                    <button class="btn-auth" onclick="openAuthModal('signup')">Registrati</button>
-                `;
-                chatNotice.style.display = "block";
-                chatContent.style.display = "none";
-                if (chatUnsubscribe) chatUnsubscribe();
-            }
-        }
-
-        function openCustomModal(title, bodyHtml, confirmText, isDanger, onConfirm) {
-            document.getElementById("modal-title").innerText = title;
-            document.getElementById("modal-body-content").innerHTML = bodyHtml;
-
-            const confirmBtn = document.getElementById("modal-btn-confirm");
-            confirmBtn.innerText = confirmText;
-            confirmBtn.className = isDanger ? "btn-danger-confirm" : "btn-confirm";
-
-            confirmBtn.onclick = () => {
-                if (onConfirm) onConfirm();
-                else closeCustomModal();
-            };
-
-            document.getElementById("modal-btn-cancel").onclick = closeCustomModal;
-            document.getElementById("custom-modal").classList.add("active");
-        }
-
-        function closeCustomModal() {
-            document.getElementById("custom-modal").classList.remove("active");
-        }
-
-        auth.onAuthStateChanged((user) => {
-            currentUser = user;
-            if (user) {
-                loadState();
-            } else {
-                userNickname = "";
-                userIsPrivate = false;
-                userState = {};
-                loadState();
-                updateAuthUI();
-            }
-        });
-
-        window.onload = () => {
+        window.addEventListener('DOMContentLoaded', () => {
             initCategorySelect();
-            initLeaderboardListener();
-        };
+            loadSavedTheme();
+        });
     </script>
 </body>
 </html>
