@@ -6,13 +6,14 @@
     import { getFirestore, doc, setDoc, getDoc, collection, getDocs, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
     const firebaseConfig = {
-          apiKey: "AIzaSyA8DxxaRgjpdv9eldZnDiAipceVv6IJ5Ds",
+      apiKey: "AIzaSyA8DxxaRgjpdv9eldZnDiAipceVv6IJ5Ds",
   authDomain: "calisthenics-tree-b9a06.firebaseapp.com",
   projectId: "calisthenics-tree-b9a06",
   storageBucket: "calisthenics-tree-b9a06.firebasestorage.app",
   messagingSenderId: "385003641400",
   appId: "1:385003641400:web:7974dd3adc322170c264cd",
   measurementId: "G-ZF4P6HX9HN"
+
     };
 
     const app = initializeApp(firebaseConfig);
@@ -1017,6 +1018,8 @@
 
 // --- GESTIONE AUTENTICAZIONE E CLASSIFICA AGGIORNATA (DEFINITIVA) ---
 
+// --- CODICE DEFINITIVO FIREBASE & AUTH (NAIONTRACK) ---
+
 let currentUser = null;
 
 function showAuthError(message) {
@@ -1027,17 +1030,13 @@ function showAuthError(message) {
     }
 }
 
-// Funzione di chiusura sicura del modale (funziona anche se closeCustomModal non esiste)
 function safeCloseModal() {
     if (typeof closeCustomModal === 'function') {
         closeCustomModal();
     } else {
-        // Fallback per chiudere eventuali modali custom standard
         const modal = document.querySelector('.modal-overlay') || document.getElementById('custom-modal');
         if (modal) modal.remove();
-        // Rimuove eventuali dialoghi aperti
-        const dialogs = document.querySelectorAll('dialog');
-        dialogs.forEach(d => { if(d.open) d.close(); });
+        document.querySelectorAll('dialog').forEach(d => { if(d.open) d.close(); });
     }
 }
 
@@ -1049,6 +1048,7 @@ function validateEmail(email) {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
+// 1. GESTIONE STATO AUTENTICAZIONE (Sincronizzazione UI e Cloud)
 if (window.firebaseAuth && window.firebaseFns) {
     const { onAuthStateChanged } = window.firebaseFns;
     onAuthStateChanged(window.firebaseAuth, async (user) => {
@@ -1057,20 +1057,36 @@ if (window.firebaseAuth && window.firebaseFns) {
         const actionsEl = document.getElementById('auth-actions');
 
         if (user) {
+            // Recupera o richiede il nickname
             const nickname = await getUserNickname(user.uid);
             if (!nickname) {
                 openNicknameModal(user.uid);
             }
-            statusEl.innerHTML = `👤 Loggato come: <strong>${nickname || user.email}</strong>`;
-            actionsEl.innerHTML = `<button class="relock-btn" onclick="logoutUser()">Esci</button> <button onclick="openNicknameModal('${user.uid}')" style="background: var(--card-bg); border: 1px solid var(--accent); color: var(--text); padding: 5px 10px; border-radius: 4px; cursor: pointer;">Cambia Nickname</button>`;
+
+            if (statusEl) {
+                statusEl.innerHTML = `👤 Loggato: <strong>${nickname || user.email}</strong>`;
+            }
+            if (actionsEl) {
+                actionsEl.innerHTML = `
+                    <button class="relock-btn" onclick="logoutUser()">Esci</button> 
+                    <button onclick="openNicknameModal('${user.uid}')" style="background: var(--card-bg); border: 1px solid var(--accent); color: var(--text); padding: 5px 10px; border-radius: 4px; cursor: pointer;">Nick</button>
+                `;
+            }
+
+            // 2. SCARICA I DATI DAL CLOUD APPENA LOGGATO (Risolve il problema su altri dispositivi)
             await loadUserDataFromCloud(user.uid);
         } else {
-            statusEl.innerHTML = `⚠️ Non sei loggato (I progressi sono salvati solo sul browser)`;
-            actionsEl.innerHTML = `
-                <button onclick="openAuthModal('login')">Accedi</button>
-                <button class="unlock-btn" onclick="openAuthModal('register')">Registrati</button>
-            `;
+            if (statusEl) {
+                statusEl.innerHTML = `⚠️ Non sei loggato (Salvataggio locale)`;
+            }
+            if (actionsEl) {
+                actionsEl.innerHTML = `
+                    <button onclick="openAuthModal('login')">Accedi</button>
+                    <button class="unlock-btn" onclick="openAuthModal('register')">Registrati</button>
+                `;
+            }
         }
+        // 3. AGGIORNA CLASSIFICA
         loadLeaderboard();
     });
 }
@@ -1112,7 +1128,6 @@ function openNicknameModal(uid) {
                     nickname: nicknameInput
                 }, { merge: true });
                 safeCloseModal();
-                alert("Nickname salvato con successo!");
                 location.reload();
             } catch (error) {
                 alert("Errore nel salvataggio: " + error.message);
@@ -1127,7 +1142,7 @@ async function registerUser(email, password) {
         return;
     }
     if (!validatePassword(password)) {
-        showAuthError("La password deve avere almeno 8 caratteri e un carattere speciale (!@#$%^&*...)");
+        showAuthError("Password debole: min 8 caratteri e un carattere speciale.");
         return;
     }
     try {
@@ -1149,7 +1164,7 @@ async function loginUser(email, password) {
         await signInWithEmailAndPassword(window.firebaseAuth, email, password);
         safeCloseModal();
     } catch (error) {
-        showAuthError("Credenziali non corrette o errore di accesso.");
+        showAuthError("Credenziali non corrette.");
     }
 }
 
@@ -1160,7 +1175,7 @@ async function loginWithGoogle() {
         await signInWithPopup(window.firebaseAuth, provider);
         safeCloseModal();
     } catch (error) {
-        showAuthError("Errore login con Google: " + error.message);
+        showAuthError("Errore Google: " + error.message);
     }
 }
 
@@ -1171,7 +1186,7 @@ async function loginWithApple() {
         await signInWithPopup(window.firebaseAuth, provider);
         safeCloseModal();
     } catch (error) {
-        showAuthError("Errore login con Apple: " + error.message);
+        showAuthError("Errore Apple: " + error.message);
     }
 }
 
@@ -1179,16 +1194,14 @@ async function logoutUser() {
     try {
         const { signOut } = window.firebaseFns;
         await signOut(window.firebaseAuth);
+        location.reload();
     } catch (error) {
         console.error("Errore logout", error);
     }
 }
 
 function openAuthModal(mode) {
-    if (typeof openCustomModal !== 'function') {
-        alert("Funzione modale non trovata nel sistema.");
-        return;
-    }
+    if (typeof openCustomModal !== 'function') return;
     const isReg = mode === 'register';
     openCustomModal(
         isReg ? "📝 Registrati" : "🔑 Accedi",
@@ -1238,11 +1251,13 @@ function handleAuthSubmit(mode) {
     }
 }
 
+// 4. SALVATAGGIO STATO E XP (Ripristina i tasti sblocca originali)
 async function saveState() {
     localStorage.setItem('naiontrackState', JSON.stringify(userState));
+    
     if (currentUser && window.firebaseDb && window.firebaseFns) {
         const { doc, setDoc, getDoc } = window.firebaseFns;
-        const totalXp = calculateXP();
+        const totalXp = typeof calculateXP === 'function' ? calculateXP() : 0;
         try {
             const docRef = doc(window.firebaseDb, "users", currentUser.uid);
             const docSnap = await getDoc(docRef);
@@ -1254,28 +1269,36 @@ async function saveState() {
                 state: userState,
                 totalXp: totalXp
             }, { merge: true });
+            
             loadLeaderboard();
         } catch (e) {
             console.error("Errore salvataggio cloud: ", e);
         }
     }
-    updateUI();
+    if (typeof updateUI === 'function') {
+        updateUI();
+    }
 }
 
+// 5. CARICAMENTO DATI DAL CLOUD (Sincronizzazione multi-dispositivo)
 async function loadUserDataFromCloud(uid) {
     try {
         const { doc, getDoc } = window.firebaseFns;
         const docSnap = await getDoc(doc(window.firebaseDb, "users", uid));
+        
         if (docSnap.exists() && docSnap.data().state) {
             userState = docSnap.data().state;
             localStorage.setItem('naiontrackState', JSON.stringify(userState));
-            updateUI();
+            if (typeof updateUI === 'function') {
+                updateUI();
+            }
         }
     } catch (e) {
-        console.error("Errore caricamento cloud: ", e);
+        console.error("Errore caricamento dati cloud: ", e);
     }
 }
 
+// 6. CLASSIFICA GLOBALE DINAMICA
 async function loadLeaderboard() {
     const listEl = document.getElementById('leaderboard-list');
     if (!listEl || !window.firebaseDb || !window.firebaseFns) return;
@@ -1296,9 +1319,9 @@ async function loadLeaderboard() {
         });
 
         html += "</ol>";
-        listEl.innerHTML = foundAny ? html : "<p style='margin:0; color: var(--subtext);'>Ancora nessun atleta in classifica. Sii il primo!</p>";
+        listEl.innerHTML = foundAny ? html : "<p style='margin:0; color: var(--subtext);'>Ancora nessun atleta in classifica.</p>";
     } catch (e) {
-        listEl.innerHTML = "<p style='margin:0; color: var(--danger);'>Impossibile caricare la classifica.</p>";
+        listEl.innerHTML = "<p style='margin:0; color: var(--danger);'>Classifica non disponibile (verifica indici Firestore).</p>";
     }
 }
     </script>
