@@ -8,7 +8,6 @@
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
 
     <style>
         :root {
@@ -937,10 +936,6 @@
             border-color: var(--accent);
         }
 
-        .chat-message.chat-message-media {
-            max-width: 75%;
-        }
-
         .chat-msg-author {
             display: block;
             font-size: 0.7rem;
@@ -960,31 +955,41 @@
             font-style: italic;
         }
 
-        .chat-media-img {
-            max-width: 100%;
-            border-radius: 8px;
-            margin: 4px 0;
-            display: block;
-            cursor: pointer;
+        .chat-day-divider {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 6px 0;
         }
 
-        .chat-media-video {
-            max-width: 100%;
-            border-radius: 8px;
-            margin: 4px 0;
-            display: block;
+        .chat-day-divider span {
+            font-size: 0.7rem;
+            color: var(--subtext);
+            background: var(--bg-color);
+            border: 1px solid var(--line-color);
+            border-radius: 10px;
+            padding: 2px 10px;
+            text-transform: capitalize;
         }
 
-        .chat-media-audio {
-            width: 100%;
-            margin: 4px 0;
+        .chat-msg-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            margin-top: 4px;
+        }
+
+        .chat-msg-time {
+            font-size: 0.65rem;
+            color: var(--subtext);
+            white-space: nowrap;
         }
 
         .chat-msg-actions {
             display: flex;
             gap: 8px;
             justify-content: flex-end;
-            margin-top: 4px;
         }
 
         .chat-msg-action-btn {
@@ -1015,47 +1020,155 @@
             width: 100%;
         }
 
-        .chat-icon-btn {
-            background: var(--locked);
-            color: var(--text);
-            border: none;
-            border-radius: 8px;
-            width: 36px;
-            height: 36px;
-            min-width: 36px;
-            flex-shrink: 0;
-            font-size: 1rem;
-            padding: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-        }
-
-        .chat-icon-btn.recording {
-            background: var(--danger);
-            color: #fff;
-            animation: chat-pulse 1s infinite;
-        }
-
-        @keyframes chat-pulse {
-            0% { opacity: 1; }
-            50% { opacity: 0.5; }
-            100% { opacity: 1; }
-        }
-
-        .chat-upload-status {
-            font-size: 0.7rem;
-            color: var(--accent);
-            margin: 0;
-            min-height: 14px;
-            text-align: center;
-        }
-
         .chat-input-box input[type="text"] {
             flex-grow: 1;
             width: auto;
             padding: 8px 10px;
+        }
+
+        .chat-tabs {
+            display: flex;
+            border-bottom: 1px solid var(--line-color);
+        }
+
+        .chat-tab-btn {
+            flex: 1;
+            background: none;
+            border: none;
+            border-radius: 0;
+            padding: 8px 4px;
+            font-size: 0.8rem;
+            color: var(--subtext);
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+        }
+
+        .chat-tab-btn.active {
+            color: var(--accent);
+            border-bottom: 2px solid var(--accent);
+            font-weight: bold;
+        }
+
+        .chat-thread-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            border-bottom: 1px solid var(--line-color);
+        }
+
+        .chat-back-btn {
+            background: none;
+            border: none;
+            color: var(--accent);
+            font-size: 1.1rem;
+            padding: 2px 6px;
+            cursor: pointer;
+        }
+
+        #chat-thread-title {
+            font-size: 0.85rem;
+            font-weight: bold;
+            color: var(--text);
+        }
+
+        .chat-new-btn {
+            width: 100%;
+            padding: 10px;
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            cursor: pointer;
+        }
+
+        .chat-list-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 6px;
+            border-radius: 10px;
+            border: 1px solid var(--line-color);
+            cursor: pointer;
+        }
+
+        .chat-list-item:hover {
+            border-color: var(--accent);
+        }
+
+        .chat-list-icon {
+            font-size: 1.3rem;
+            flex-shrink: 0;
+        }
+
+        .chat-list-info {
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+        }
+
+        .chat-list-name {
+            font-size: 0.85rem;
+            font-weight: bold;
+            color: var(--text);
+        }
+
+        .chat-list-preview {
+            font-size: 0.75rem;
+            color: var(--subtext);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .chat-mode-toggle {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 10px;
+        }
+
+        .chat-mode-toggle button {
+            flex: 1;
+            padding: 8px;
+            border-radius: 6px;
+            border: 1px solid var(--locked);
+            background: var(--input-bg);
+            color: var(--subtext);
+            cursor: pointer;
+            font-size: 0.8rem;
+        }
+
+        .chat-mode-toggle button.active {
+            border-color: var(--accent);
+            color: var(--accent);
+            font-weight: bold;
+        }
+
+        .user-picker-list {
+            max-height: 180px;
+            overflow-y: auto;
+            border: 1px solid var(--locked);
+            border-radius: 6px;
+            margin-top: 6px;
+        }
+
+        .user-picker-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 7px 10px;
+            font-size: 0.85rem;
+            border-bottom: 1px solid var(--line-color);
+            cursor: pointer;
+        }
+
+        .user-picker-item:last-child {
+            border-bottom: none;
+        }
+
+        .user-picker-item.selected {
+            background: var(--border-glow);
         }
 
         @media (max-width: 600px) {
@@ -1144,8 +1257,16 @@
     <button class="chat-fab" id="chat-fab" onclick="toggleChatPanel()" title="Chat Generale">💬</button>
     <div class="chat-panel" id="chat-panel">
         <div class="chat-panel-header">
-            <span>💬 Chat Generale</span>
+            <span id="chat-panel-title">💬 Chat Generale</span>
             <button class="chat-close-btn" onclick="toggleChatPanel()">✕</button>
+        </div>
+        <div class="chat-tabs" id="chat-tabs">
+            <button class="chat-tab-btn active" id="chat-tab-general" onclick="switchChatTab('general')">💬 Generale</button>
+            <button class="chat-tab-btn" id="chat-tab-private" onclick="switchChatTab('private')">👤 Private</button>
+        </div>
+        <div class="chat-thread-header" id="chat-thread-header" style="display:none;">
+            <button class="chat-back-btn" onclick="backToPrivateList()">←</button>
+            <span id="chat-thread-title"></span>
         </div>
         <div class="chat-messages" id="chat-messages">
             <p style="color: var(--subtext); text-align:center; font-size:0.85rem;">Apri la chat per vedere i messaggi...</p>
@@ -1173,7 +1294,6 @@
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const db = firebase.firestore();
-        const storage = firebase.storage();
 
         let currentUser = null;
         let userNickname = "";
@@ -1182,9 +1302,13 @@
         let chatUnsubscribe = null;
         let chatPanelOpen = false;
         let chatMessagesCache = {}; // id -> dati messaggio (per modifica/eliminazione)
-        let mediaRecorder = null;
-        let audioChunks = [];
-        let isRecordingAudio = false;
+        let activeChatView = 'general'; // 'general' | 'private-list' | 'private-thread'
+        let activeConversationId = null;
+        let activeConversationData = null;
+        let conversationsUnsubscribe = null;
+        let conversationMessagesUnsubscribe = null;
+        let newChatSelectedUsers = {}; // uid -> nickname, per il picker di nuova chat/gruppo
+        let newChatMode = 'dm'; // 'dm' | 'group'
 
         const rankLogos = {
             bronze: `<svg viewBox="0 0 100 100"><defs><linearGradient id="b" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#d97706"/><stop offset="100%" stop-color="#78350f"/></linearGradient></defs><polygon points="50,5 90,25 90,75 50,95 10,75 10,25" fill="url(#b)" stroke="#f59e0b" stroke-width="3"/><path d="M50 20 L75 70 L25 70 Z" fill="#451a03" opacity="0.6"/><circle cx="50" cy="50" r="15" fill="#f59e0b"/></svg>`,
@@ -1456,7 +1580,7 @@
                     initRealtimeLeaderboard();
                     if (chatPanelOpen) {
                         renderChatInputState();
-                        initChatListener();
+                        resumeActiveChatListener();
                     }
                 }).catch((error) => {
                     console.error("Errore nel recupero dati da Firestore:", error);
@@ -1505,6 +1629,15 @@
                     chatUnsubscribe();
                     chatUnsubscribe = null;
                 }
+                stopConversationsListener();
+                stopConversationMessagesListener();
+                activeChatView = 'general';
+                activeConversationId = null;
+                activeConversationData = null;
+                document.getElementById('chat-thread-header').style.display = 'none';
+                document.getElementById('chat-tab-general').classList.add('active');
+                document.getElementById('chat-tab-private').classList.remove('active');
+                document.getElementById('chat-panel-title').innerText = '💬 Chat Generale';
                 if (chatPanelOpen) {
                     renderChatInputState();
                     document.getElementById('chat-messages').innerHTML = `<p style="color: var(--subtext); text-align:center; font-size:0.85rem;">Accedi per vedere i messaggi.</p>`;
@@ -2189,34 +2322,173 @@
 
             if (chatPanelOpen) {
                 renderChatInputState();
-                if (currentUser) {
-                    initChatListener();
-                }
+                resumeActiveChatListener();
             }
+        }
+
+        function resumeActiveChatListener() {
+            if (!currentUser) return;
+            if (activeChatView === 'private-list') {
+                initConversationsListener();
+            } else if (activeChatView === 'private-thread' && activeConversationId) {
+                initConversationMessagesListener(activeConversationId);
+            } else {
+                initChatListener();
+            }
+        }
+
+        function switchChatTab(tab) {
+            stopConversationsListener();
+            stopConversationMessagesListener();
+            if (chatUnsubscribe) { chatUnsubscribe(); chatUnsubscribe = null; }
+
+            const titleEl = document.getElementById('chat-panel-title');
+            const threadHeader = document.getElementById('chat-thread-header');
+            const tabGeneral = document.getElementById('chat-tab-general');
+            const tabPrivate = document.getElementById('chat-tab-private');
+
+            if (tab === 'general') {
+                activeChatView = 'general';
+                activeConversationId = null;
+                activeConversationData = null;
+                threadHeader.style.display = 'none';
+                titleEl.innerText = '💬 Chat Generale';
+                tabGeneral.classList.add('active');
+                tabPrivate.classList.remove('active');
+            } else {
+                activeChatView = 'private-list';
+                activeConversationId = null;
+                activeConversationData = null;
+                threadHeader.style.display = 'none';
+                titleEl.innerText = '👤 Chat Private';
+                tabGeneral.classList.remove('active');
+                tabPrivate.classList.add('active');
+            }
+
+            document.getElementById('chat-messages').innerHTML = `<p style="color: var(--subtext); text-align:center; font-size:0.85rem;">Caricamento...</p>`;
+            renderChatInputState();
+            resumeActiveChatListener();
         }
 
         function renderChatInputState() {
             const box = document.getElementById('chat-input-box');
             if (!box) return;
 
-            if (currentUser) {
+            if (!currentUser) {
+                box.innerHTML = `<p style="color: var(--subtext); font-size: 0.85rem; text-align:center; margin:0; padding:8px; width:100%;">🔒 Accedi per scrivere in chat.</p>`;
+                return;
+            }
+
+            if (activeChatView === 'private-list') {
                 box.innerHTML = `
                     <div class="chat-input-row">
-                        <input type="file" id="chat-media-input" accept="image/*,video/*" style="display:none" onchange="handleMediaSelected(event)">
-                        <button type="button" class="chat-icon-btn" id="chat-attach-btn" title="Invia foto o video" onclick="triggerMediaPicker()">📎</button>
-                        <button type="button" class="chat-icon-btn" id="chat-mic-btn" title="Registra messaggio vocale" onclick="toggleAudioRecording()">🎤</button>
-                        <input type="text" id="chat-input" placeholder="Scrivi un messaggio..." maxlength="300">
-                        <button onclick="sendChatMessage()">Invia</button>
+                        <button class="chat-new-btn" onclick="openNewChatModal()">✉️ Nuova chat privata o gruppo</button>
                     </div>
-                    <p id="chat-upload-status" class="chat-upload-status"></p>
                 `;
-                const input = document.getElementById('chat-input');
-                input.onkeypress = (e) => {
-                    if (e.key === 'Enter') sendChatMessage();
-                };
-            } else {
-                box.innerHTML = `<p style="color: var(--subtext); font-size: 0.85rem; text-align:center; margin:0; padding:8px; width:100%;">🔒 Accedi per scrivere in chat.</p>`;
+                return;
             }
+
+            box.innerHTML = `
+                <div class="chat-input-row">
+                    <input type="text" id="chat-input" placeholder="Scrivi un messaggio..." maxlength="300">
+                    <button onclick="sendChatMessage()">Invia</button>
+                </div>
+            `;
+            const input = document.getElementById('chat-input');
+            input.onkeypress = (e) => {
+                if (e.key === 'Enter') sendChatMessage();
+            };
+        }
+
+        // ==========================================
+        // FORMATTAZIONE DATA/ORA MESSAGGI
+        // ==========================================
+        function timestampToDate(ts) {
+            if (!ts) return null; // serverTimestamp non ancora confermato dal server
+            if (typeof ts.toDate === 'function') return ts.toDate();
+            return null;
+        }
+
+        function formatChatTime(ts) {
+            const date = timestampToDate(ts);
+            if (!date) return '';
+            return date.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
+        }
+
+        function formatDayLabel(date) {
+            const today = new Date();
+            const yesterday = new Date();
+            yesterday.setDate(today.getDate() - 1);
+
+            const isSameDay = (a, b) => a.getFullYear() === b.getFullYear()
+                && a.getMonth() === b.getMonth()
+                && a.getDate() === b.getDate();
+
+            if (isSameDay(date, today)) return 'Oggi';
+            if (isSameDay(date, yesterday)) return 'Ieri';
+            return date.toLocaleDateString('it-IT', { day: '2-digit', month: 'long', year: 'numeric' });
+        }
+
+        // ==========================================
+        // RENDERING CONDIVISO DEI MESSAGGI
+        // ==========================================
+        function renderMessagesIntoContainer(msgs, container) {
+            if (msgs.length === 0) {
+                container.innerHTML = `<p style="color: var(--subtext); text-align:center; font-size:0.85rem;">Nessun messaggio ancora. Scrivi il primo! 👋</p>`;
+                return;
+            }
+
+            let html = '';
+            let lastDayKey = null;
+
+            msgs.forEach(m => {
+                const isMe = currentUser && m.uid === currentUser.uid;
+                const msgDate = timestampToDate(m.createdAt);
+
+                if (msgDate) {
+                    const dayKey = msgDate.getFullYear() + '-' + msgDate.getMonth() + '-' + msgDate.getDate();
+                    if (dayKey !== lastDayKey) {
+                        html += `<div class="chat-day-divider"><span>${formatDayLabel(msgDate)}</span></div>`;
+                        lastDayKey = dayKey;
+                    }
+                }
+
+                const textHtml = m.text ? `<span class="chat-msg-text">${escapeHtml(m.text)}</span>` : '';
+                const sentTime = formatChatTime(m.createdAt);
+                const editedTime = m.edited ? formatChatTime(m.editedAt) : '';
+                const editedHtml = m.edited
+                    ? `<span class="chat-msg-edited"> (modificato${editedTime ? ' alle ' + editedTime : ''})</span>`
+                    : '';
+                const timeHtml = sentTime ? `<span class="chat-msg-time">${sentTime}</span>` : '';
+
+                const actionsHtml = isMe ? `
+                    <div class="chat-msg-actions">
+                        <button class="chat-msg-action-btn" title="Modifica" onclick="openEditMessageModal('${m.id}')">✏️</button>
+                        <button class="chat-msg-action-btn" title="Elimina" onclick="askDeleteChatMessage('${m.id}')">🗑️</button>
+                    </div>
+                ` : '';
+
+                html += `
+                    <div class="chat-message ${isMe ? 'chat-message-mine' : ''}">
+                        <span class="chat-msg-author">${escapeHtml(m.nickname || 'Anonimo')}</span>
+                        ${textHtml}${editedHtml}
+                        <div class="chat-msg-footer">
+                            ${timeHtml}
+                            ${actionsHtml}
+                        </div>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+            container.scrollTop = container.scrollHeight;
+        }
+
+        // Restituisce il riferimento Firestore alla collezione di messaggi attualmente visualizzata
+        function currentMessagesRef() {
+            if (activeChatView === 'private-thread' && activeConversationId) {
+                return db.collection("conversations").doc(activeConversationId).collection("messages");
+            }
+            return db.collection("chatMessages");
         }
 
         function initChatListener() {
@@ -2235,46 +2507,7 @@
                         msgs.push(Object.assign({ id: doc.id }, data));
                     });
                     msgs.reverse();
-
-                    if (msgs.length === 0) {
-                        container.innerHTML = `<p style="color: var(--subtext); text-align:center; font-size:0.85rem;">Nessun messaggio ancora. Scrivi il primo! 👋</p>`;
-                        return;
-                    }
-
-                    let html = '';
-                    msgs.forEach(m => {
-                        const isMe = currentUser && m.uid === currentUser.uid;
-
-                        let mediaHtml = '';
-                        if (m.mediaType === 'image' && m.mediaUrl) {
-                            mediaHtml = `<img src="${m.mediaUrl}" class="chat-media-img" onclick="window.open('${m.mediaUrl}', '_blank')" alt="foto">`;
-                        } else if (m.mediaType === 'video' && m.mediaUrl) {
-                            mediaHtml = `<video src="${m.mediaUrl}" class="chat-media-video" controls></video>`;
-                        } else if (m.mediaType === 'audio' && m.mediaUrl) {
-                            mediaHtml = `<audio src="${m.mediaUrl}" class="chat-media-audio" controls></audio>`;
-                        }
-
-                        const textHtml = m.text ? `<span class="chat-msg-text">${escapeHtml(m.text)}</span>` : '';
-                        const editedHtml = m.edited ? `<span class="chat-msg-edited"> (modificato)</span>` : '';
-
-                        const actionsHtml = isMe ? `
-                            <div class="chat-msg-actions">
-                                <button class="chat-msg-action-btn" title="Modifica" onclick="openEditMessageModal('${m.id}')">✏️</button>
-                                <button class="chat-msg-action-btn" title="Elimina" onclick="askDeleteChatMessage('${m.id}')">🗑️</button>
-                            </div>
-                        ` : '';
-
-                        html += `
-                            <div class="chat-message ${isMe ? 'chat-message-mine' : ''} ${m.mediaType ? 'chat-message-media' : ''}">
-                                <span class="chat-msg-author">${escapeHtml(m.nickname || 'Anonimo')}</span>
-                                ${mediaHtml}
-                                ${textHtml}${editedHtml}
-                                ${actionsHtml}
-                            </div>
-                        `;
-                    });
-                    container.innerHTML = html;
-                    container.scrollTop = container.scrollHeight;
+                    renderMessagesIntoContainer(msgs, container);
                 }, (error) => {
                     console.error("Errore nel caricamento della chat:", error);
                     container.innerHTML = `<p style="color: var(--subtext); text-align:center; font-size:0.85rem;">Errore nel caricamento della chat.</p>`;
@@ -2288,19 +2521,342 @@
             const text = input.value.trim();
             if (!text) return;
 
+            const isPrivateThread = activeChatView === 'private-thread' && activeConversationId;
+            const messagesRef = currentMessagesRef();
+            const msgText = text.slice(0, 300);
+
             input.disabled = true;
-            db.collection("chatMessages").add({
+            messagesRef.add({
                 uid: currentUser.uid,
                 nickname: userNickname || (currentUser.email ? currentUser.email.split('@')[0] : 'Anonimo'),
-                text: text.slice(0, 300),
+                text: msgText,
                 createdAt: firebase.firestore.FieldValue.serverTimestamp()
             }).then(() => {
                 input.value = '';
                 input.disabled = false;
                 input.focus();
+                if (isPrivateThread) {
+                    db.collection("conversations").doc(activeConversationId).update({
+                        lastMessageText: msgText,
+                        lastMessageAt: firebase.firestore.FieldValue.serverTimestamp()
+                    }).catch((error) => console.error("Errore aggiornamento anteprima chat:", error));
+                }
             }).catch((error) => {
                 console.error("Errore invio messaggio:", error);
                 input.disabled = false;
+            });
+        }
+
+        // ==========================================
+        // CHAT PRIVATE E GRUPPI
+        // ==========================================
+        function conversationDisplayName(conv) {
+            if (!conv) return '...';
+            if (conv.type === 'group') return conv.name || 'Gruppo senza nome';
+            const otherUid = (conv.participants || []).find(uid => uid !== currentUser.uid);
+            return (conv.participantNames && conv.participantNames[otherUid]) || 'Utente';
+        }
+
+        function initConversationsListener() {
+            if (conversationsUnsubscribe || !currentUser) return;
+
+            const container = document.getElementById('chat-messages');
+            conversationsUnsubscribe = db.collection("conversations")
+                .where("participants", "array-contains", currentUser.uid)
+                .orderBy("lastMessageAt", "desc")
+                .onSnapshot((snapshot) => {
+                    let convs = [];
+                    snapshot.forEach(doc => convs.push(Object.assign({ id: doc.id }, doc.data())));
+
+                    if (convs.length === 0) {
+                        container.innerHTML = `<p style="color: var(--subtext); text-align:center; font-size:0.85rem;">Nessuna chat privata. Tocca "Nuova chat" per iniziare! 👋</p>`;
+                        return;
+                    }
+
+                    let html = '';
+                    convs.forEach(c => {
+                        const title = conversationDisplayName(c);
+                        const preview = c.lastMessageText ? escapeHtml(c.lastMessageText).slice(0, 40) : 'Nessun messaggio ancora';
+                        const icon = c.type === 'group' ? '👥' : '👤';
+                        html += `
+                            <div class="chat-list-item" onclick="openConversation('${c.id}')">
+                                <span class="chat-list-icon">${icon}</span>
+                                <div class="chat-list-info">
+                                    <span class="chat-list-name">${escapeHtml(title)}</span>
+                                    <span class="chat-list-preview">${preview}</span>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    container.innerHTML = html;
+                }, (error) => {
+                    console.error("Errore nel caricamento delle chat private:", error);
+                    container.innerHTML = `<p style="color: var(--subtext); text-align:center; font-size:0.85rem;">Errore nel caricamento delle chat.</p>`;
+                });
+        }
+
+        function stopConversationsListener() {
+            if (conversationsUnsubscribe) {
+                conversationsUnsubscribe();
+                conversationsUnsubscribe = null;
+            }
+        }
+
+        function initConversationMessagesListener(convId) {
+            stopConversationMessagesListener();
+            const container = document.getElementById('chat-messages');
+
+            conversationMessagesUnsubscribe = db.collection("conversations").doc(convId).collection("messages")
+                .orderBy("createdAt", "desc")
+                .limit(50)
+                .onSnapshot((snapshot) => {
+                    let msgs = [];
+                    chatMessagesCache = {};
+                    snapshot.forEach(doc => {
+                        const data = doc.data();
+                        chatMessagesCache[doc.id] = data;
+                        msgs.push(Object.assign({ id: doc.id }, data));
+                    });
+                    msgs.reverse();
+                    renderMessagesIntoContainer(msgs, container);
+                }, (error) => {
+                    console.error("Errore nel caricamento dei messaggi:", error);
+                    container.innerHTML = `<p style="color: var(--subtext); text-align:center; font-size:0.85rem;">Errore nel caricamento dei messaggi.</p>`;
+                });
+        }
+
+        function stopConversationMessagesListener() {
+            if (conversationMessagesUnsubscribe) {
+                conversationMessagesUnsubscribe();
+                conversationMessagesUnsubscribe = null;
+            }
+        }
+
+        function openConversation(convId) {
+            if (!currentUser) return;
+
+            activeChatView = 'private-thread';
+            activeConversationId = convId;
+            activeConversationData = null;
+
+            document.getElementById('chat-thread-header').style.display = 'flex';
+            document.getElementById('chat-thread-title').innerText = '...';
+            document.getElementById('chat-messages').innerHTML = `<p style="color: var(--subtext); text-align:center; font-size:0.85rem;">Caricamento...</p>`;
+
+            db.collection("conversations").doc(convId).get().then((doc) => {
+                if (!doc.exists) return;
+                activeConversationData = Object.assign({ id: doc.id }, doc.data());
+                document.getElementById('chat-thread-title').innerText = conversationDisplayName(activeConversationData);
+            }).catch((error) => console.error("Errore nel recupero della conversazione:", error));
+
+            stopConversationsListener();
+            renderChatInputState();
+            initConversationMessagesListener(convId);
+        }
+
+        function backToPrivateList() {
+            stopConversationMessagesListener();
+            activeChatView = 'private-list';
+            activeConversationId = null;
+            activeConversationData = null;
+            document.getElementById('chat-thread-header').style.display = 'none';
+            renderChatInputState();
+            initConversationsListener();
+        }
+
+        // ==========================================
+        // NUOVA CHAT PRIVATA / NUOVO GRUPPO
+        // ==========================================
+        function openNewChatModal() {
+            if (!currentUser) return;
+            newChatSelectedUsers = {};
+            newChatMode = 'dm';
+
+            const modal = document.getElementById('custom-modal');
+            const titleEl = document.getElementById('modal-title');
+            const bodyContent = document.getElementById('modal-body-content');
+            const actionsBox = document.getElementById('modal-actions-box');
+
+            titleEl.innerText = "✉️ Nuova chat";
+            bodyContent.innerHTML = `
+                <div class="auth-error" id="new-chat-error"></div>
+                <div class="chat-mode-toggle">
+                    <button type="button" id="new-chat-mode-dm" class="active" onclick="setNewChatMode('dm')">👤 Messaggio privato</button>
+                    <button type="button" id="new-chat-mode-group" onclick="setNewChatMode('group')">👥 Crea gruppo</button>
+                </div>
+                <div class="auth-form-group" id="new-chat-group-name-wrap" style="display:none;">
+                    <label>Nome del gruppo</label>
+                    <input type="text" id="new-chat-group-name" placeholder="es. Squadra Mattina" maxlength="40">
+                </div>
+                <div class="auth-form-group">
+                    <label id="new-chat-picker-label">Scegli un utente</label>
+                    <input type="text" id="new-chat-search" placeholder="Cerca per nickname...">
+                    <div class="user-picker-list" id="new-chat-user-list">
+                        <p style="text-align:center; color:var(--subtext); font-size:0.8rem; padding:10px;">Caricamento utenti...</p>
+                    </div>
+                </div>
+            `;
+            actionsBox.innerHTML = `
+                <button class="btn-cancel" id="modal-btn-cancel">Annulla</button>
+                <button class="btn-confirm" id="new-chat-confirm-btn">Avvia chat</button>
+            `;
+
+            modal.classList.add('active');
+            document.getElementById('modal-btn-cancel').onclick = () => modal.classList.remove('active');
+            document.getElementById('new-chat-search').oninput = (e) => renderUserPickerList(e.target.value);
+            document.getElementById('new-chat-confirm-btn').onclick = confirmNewChat;
+
+            loadUsersForPicker();
+        }
+
+        let newChatAllUsers = [];
+
+        function loadUsersForPicker() {
+            db.collection("users").get().then((snapshot) => {
+                newChatAllUsers = [];
+                snapshot.forEach(doc => {
+                    if (doc.id === currentUser.uid) return; // escludi se stesso
+                    const data = doc.data();
+                    if (data.nickname) {
+                        newChatAllUsers.push({ uid: doc.id, nickname: data.nickname });
+                    }
+                });
+                newChatAllUsers.sort((a, b) => a.nickname.localeCompare(b.nickname));
+                renderUserPickerList('');
+            }).catch((error) => {
+                console.error("Errore nel caricamento degli utenti:", error);
+                const listEl = document.getElementById('new-chat-user-list');
+                if (listEl) listEl.innerHTML = `<p style="text-align:center; color:var(--subtext); font-size:0.8rem; padding:10px;">Errore nel caricamento utenti.</p>`;
+            });
+        }
+
+        function renderUserPickerList(filterText) {
+            const listEl = document.getElementById('new-chat-user-list');
+            if (!listEl) return;
+
+            const filter = (filterText || '').trim().toLowerCase();
+            const filtered = newChatAllUsers.filter(u => u.nickname.toLowerCase().includes(filter));
+
+            if (filtered.length === 0) {
+                listEl.innerHTML = `<p style="text-align:center; color:var(--subtext); font-size:0.8rem; padding:10px;">Nessun utente trovato.</p>`;
+                return;
+            }
+
+            listEl.innerHTML = filtered.map(u => {
+                const isSelected = !!newChatSelectedUsers[u.uid];
+                return `
+                    <div class="user-picker-item ${isSelected ? 'selected' : ''}" onclick="toggleUserPick('${u.uid}', '${escapeHtml(u.nickname)}')">
+                        ${newChatMode === 'group' ? `<input type="checkbox" ${isSelected ? 'checked' : ''} onclick="event.stopPropagation(); toggleUserPick('${u.uid}', '${escapeHtml(u.nickname)}')">` : ''}
+                        <span>${escapeHtml(u.nickname)}</span>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function setNewChatMode(mode) {
+            newChatMode = mode;
+            newChatSelectedUsers = {};
+
+            document.getElementById('new-chat-mode-dm').classList.toggle('active', mode === 'dm');
+            document.getElementById('new-chat-mode-group').classList.toggle('active', mode === 'group');
+            document.getElementById('new-chat-group-name-wrap').style.display = mode === 'group' ? 'block' : 'none';
+            document.getElementById('new-chat-picker-label').innerText = mode === 'group' ? 'Scegli i membri del gruppo' : 'Scegli un utente';
+            document.getElementById('new-chat-confirm-btn').innerText = mode === 'group' ? 'Crea gruppo' : 'Avvia chat';
+
+            renderUserPickerList(document.getElementById('new-chat-search').value);
+        }
+
+        function toggleUserPick(uid, nickname) {
+            if (newChatMode === 'dm') {
+                newChatSelectedUsers = { [uid]: nickname };
+            } else {
+                if (newChatSelectedUsers[uid]) {
+                    delete newChatSelectedUsers[uid];
+                } else {
+                    newChatSelectedUsers[uid] = nickname;
+                }
+            }
+            renderUserPickerList(document.getElementById('new-chat-search').value);
+        }
+
+        function confirmNewChat() {
+            const errEl = document.getElementById('new-chat-error');
+            const selectedUids = Object.keys(newChatSelectedUsers);
+
+            if (newChatMode === 'dm') {
+                if (selectedUids.length !== 1) {
+                    errEl.innerText = "Scegli un utente con cui iniziare una chat privata.";
+                    return;
+                }
+                const otherUid = selectedUids[0];
+                findOrCreateDM(otherUid, newChatSelectedUsers[otherUid]);
+            } else {
+                const groupName = document.getElementById('new-chat-group-name').value.trim();
+                if (!groupName) {
+                    errEl.innerText = "Inserisci un nome per il gruppo.";
+                    return;
+                }
+                if (selectedUids.length === 0) {
+                    errEl.innerText = "Scegli almeno un membro da invitare nel gruppo.";
+                    return;
+                }
+                createGroup(groupName, newChatSelectedUsers);
+            }
+        }
+
+        function findOrCreateDM(otherUid, otherNickname) {
+            const errEl = document.getElementById('new-chat-error');
+            const convId = [currentUser.uid, otherUid].sort().join('_');
+            const convRef = db.collection("conversations").doc(convId);
+
+            convRef.get().then((doc) => {
+                if (doc.exists) {
+                    return Promise.resolve();
+                }
+                return convRef.set({
+                    type: 'dm',
+                    participants: [currentUser.uid, otherUid],
+                    participantNames: {
+                        [currentUser.uid]: userNickname || 'Anonimo',
+                        [otherUid]: otherNickname
+                    },
+                    createdBy: currentUser.uid,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    lastMessageText: '',
+                    lastMessageAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+            }).then(() => {
+                document.getElementById('custom-modal').classList.remove('active');
+                activeChatView = 'private-list';
+                openConversation(convId);
+            }).catch((error) => {
+                console.error("Errore nella creazione della chat privata:", error);
+                if (errEl) errEl.innerText = "Errore durante la creazione della chat.";
+            });
+        }
+
+        function createGroup(groupName, selectedUsers) {
+            const errEl = document.getElementById('new-chat-error');
+            const participantNames = Object.assign({}, selectedUsers);
+            participantNames[currentUser.uid] = userNickname || 'Anonimo';
+            const participants = Object.keys(participantNames);
+
+            db.collection("conversations").add({
+                type: 'group',
+                name: groupName.slice(0, 40),
+                participants: participants,
+                participantNames: participantNames,
+                createdBy: currentUser.uid,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                lastMessageText: '',
+                lastMessageAt: firebase.firestore.FieldValue.serverTimestamp()
+            }).then((docRef) => {
+                document.getElementById('custom-modal').classList.remove('active');
+                activeChatView = 'private-list';
+                openConversation(docRef.id);
+            }).catch((error) => {
+                console.error("Errore nella creazione del gruppo:", error);
+                if (errEl) errEl.innerText = "Errore durante la creazione del gruppo.";
             });
         }
 
@@ -2336,12 +2892,12 @@
                 const newText = document.getElementById('edit-msg-textarea').value.trim();
                 const errEl = document.getElementById('edit-msg-error');
 
-                if (!newText && !data.mediaUrl) {
+                if (!newText) {
                     errEl.innerText = "Il messaggio non può essere vuoto.";
                     return;
                 }
 
-                db.collection("chatMessages").doc(msgId).update({
+                currentMessagesRef().doc(msgId).update({
                     text: newText.slice(0, 300),
                     edited: true,
                     editedAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -2364,176 +2920,13 @@
                 "Elimina",
                 true,
                 () => {
-                    const data = chatMessagesCache[msgId];
-                    db.collection("chatMessages").doc(msgId).delete().then(() => {
-                        if (data && data.mediaPath) {
-                            storage.ref(data.mediaPath).delete().catch((error) => {
-                                console.error("Errore eliminazione file multimediale:", error);
-                            });
-                        }
-                    }).catch((error) => {
+                    currentMessagesRef().doc(msgId).delete().catch((error) => {
                         console.error("Errore eliminazione messaggio:", error);
                     });
                 }
             );
         }
 
-        // ==========================================
-        // INVIO FOTO / VIDEO
-        // ==========================================
-        function triggerMediaPicker() {
-            if (!currentUser) return;
-            const input = document.getElementById('chat-media-input');
-            if (input) input.click();
-        }
-
-        function handleMediaSelected(event) {
-            const file = event.target.files[0];
-            event.target.value = ''; // reset per permettere di reinviare lo stesso file
-
-            if (!file || !currentUser) return;
-
-            const isImage = file.type.startsWith('image/');
-            const isVideo = file.type.startsWith('video/');
-
-            if (!isImage && !isVideo) {
-                setChatUploadStatus("❌ Puoi inviare solo immagini o video.");
-                setTimeout(() => setChatUploadStatus(''), 3000);
-                return;
-            }
-
-            const maxSizeMB = isVideo ? 25 : 8;
-            if (file.size > maxSizeMB * 1024 * 1024) {
-                setChatUploadStatus(`❌ File troppo grande (max ${maxSizeMB}MB).`);
-                setTimeout(() => setChatUploadStatus(''), 3000);
-                return;
-            }
-
-            uploadAndSendMedia(file, isImage ? 'image' : 'video', file.name);
-        }
-
-        // ==========================================
-        // REGISTRAZIONE E INVIO AUDIO
-        // ==========================================
-        function toggleAudioRecording() {
-            if (!currentUser) return;
-            if (isRecordingAudio) {
-                stopAudioRecording();
-            } else {
-                startAudioRecording();
-            }
-        }
-
-        function startAudioRecording() {
-            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || !window.MediaRecorder) {
-                setChatUploadStatus("❌ Il tuo browser non supporta la registrazione audio.");
-                setTimeout(() => setChatUploadStatus(''), 3000);
-                return;
-            }
-
-            navigator.mediaDevices.getUserMedia({ audio: true }).then((stream) => {
-                audioChunks = [];
-                mediaRecorder = new MediaRecorder(stream);
-
-                mediaRecorder.ondataavailable = (e) => {
-                    if (e.data && e.data.size > 0) audioChunks.push(e.data);
-                };
-
-                mediaRecorder.onstop = () => {
-                    stream.getTracks().forEach(track => track.stop());
-                    const blob = new Blob(audioChunks, { type: 'audio/webm' });
-                    uploadAndSendMedia(blob, 'audio', 'vocale.webm');
-                };
-
-                mediaRecorder.start();
-                isRecordingAudio = true;
-
-                const btn = document.getElementById('chat-mic-btn');
-                if (btn) {
-                    btn.innerText = '⏹️';
-                    btn.classList.add('recording');
-                    btn.title = "Ferma registrazione";
-                }
-                setChatUploadStatus("🔴 Registrazione in corso...");
-            }).catch((error) => {
-                console.error("Errore accesso microfono:", error);
-                setChatUploadStatus("❌ Impossibile accedere al microfono. Controlla i permessi del browser.");
-                setTimeout(() => setChatUploadStatus(''), 4000);
-            });
-        }
-
-        function stopAudioRecording() {
-            if (mediaRecorder && isRecordingAudio) {
-                mediaRecorder.stop();
-                isRecordingAudio = false;
-
-                const btn = document.getElementById('chat-mic-btn');
-                if (btn) {
-                    btn.innerText = '🎤';
-                    btn.classList.remove('recording');
-                    btn.title = "Registra messaggio vocale";
-                }
-            }
-        }
-
-        // ==========================================
-        // UPLOAD SU FIREBASE STORAGE E INVIO MESSAGGIO MULTIMEDIALE
-        // ==========================================
-        function uploadAndSendMedia(fileOrBlob, mediaType, originalName) {
-            if (!currentUser) return;
-
-            const labelMap = { image: 'immagine', video: 'video', audio: 'messaggio vocale' };
-            setChatUploadStatus(`⏳ Caricamento ${labelMap[mediaType] || 'file'} in corso...`);
-
-            const attachBtn = document.getElementById('chat-attach-btn');
-            const micBtn = document.getElementById('chat-mic-btn');
-            if (attachBtn) attachBtn.disabled = true;
-            if (micBtn) micBtn.disabled = true;
-
-            let ext = 'dat';
-            if (mediaType === 'audio') {
-                ext = 'webm';
-            } else if (originalName && originalName.includes('.')) {
-                ext = originalName.split('.').pop().toLowerCase();
-            }
-
-            const path = `chatMedia/${currentUser.uid}/${Date.now()}_${Math.random().toString(36).slice(2, 8)}.${ext}`;
-            const storageRef = storage.ref(path);
-
-            storageRef.put(fileOrBlob).then((snapshot) => {
-                return snapshot.ref.getDownloadURL();
-            }).then((url) => {
-                const captionInput = document.getElementById('chat-input');
-                const caption = captionInput ? captionInput.value.trim() : '';
-
-                return db.collection("chatMessages").add({
-                    uid: currentUser.uid,
-                    nickname: userNickname || (currentUser.email ? currentUser.email.split('@')[0] : 'Anonimo'),
-                    text: caption.slice(0, 300),
-                    mediaUrl: url,
-                    mediaPath: path,
-                    mediaType: mediaType,
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                }).then(() => {
-                    if (captionInput) captionInput.value = '';
-                });
-            }).then(() => {
-                setChatUploadStatus('✅ Inviato!');
-                setTimeout(() => setChatUploadStatus(''), 1500);
-            }).catch((error) => {
-                console.error("Errore invio file multimediale:", error);
-                setChatUploadStatus("❌ Errore durante l'invio del file.");
-                setTimeout(() => setChatUploadStatus(''), 3000);
-            }).finally(() => {
-                if (attachBtn) attachBtn.disabled = false;
-                if (micBtn) micBtn.disabled = false;
-            });
-        }
-
-        function setChatUploadStatus(msg) {
-            const el = document.getElementById('chat-upload-status');
-            if (el) el.innerText = msg;
-        }
 
         initCategorySelect();
         applyTheme(currentTheme);
