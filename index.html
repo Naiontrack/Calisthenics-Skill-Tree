@@ -231,6 +231,7 @@
             gap: 25px;
             width: 100%;
             max-width: 900px;
+            margin-bottom: 40px;
         }
 
         .category-title {
@@ -343,7 +344,7 @@
             z-index: 2;
         }
 
-        input[type="number"], input[type="email"], input[type="password"] {
+        input[type="number"], input[type="email"], input[type="password"], input[type="text"] {
             width: 55px;
             padding: 6px;
             border-radius: 6px;
@@ -390,6 +391,115 @@
 
         button:active {
             transform: scale(0.95);
+        }
+
+        /* CLASSIFICA GLOBALE (LEADERBOARD) */
+        .leaderboard-section {
+            width: 100%;
+            max-width: 900px;
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 20px;
+            box-sizing: border-box;
+            border: 1px solid var(--line-color);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+            margin-bottom: 40px;
+        }
+
+        .leaderboard-title {
+            color: var(--accent);
+            font-size: 1.2rem;
+            margin: 0 0 15px 0;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-bottom: 2px solid var(--accent);
+            padding-bottom: 8px;
+        }
+
+        .leaderboard-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .leaderboard-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: var(--bg-color);
+            padding: 10px 15px;
+            border-radius: 10px;
+            border: 1px solid var(--line-color);
+        }
+
+        .leaderboard-item.current-user-item {
+            border-color: var(--accent);
+            box-shadow: 0 0 10px var(--border-glow);
+        }
+
+        .leaderboard-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .leaderboard-rank-pos {
+            font-weight: bold;
+            font-size: 1rem;
+            min-width: 25px;
+            color: var(--subtext);
+        }
+
+        .leaderboard-avatar {
+            width: 35px;
+            height: 35px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .leaderboard-avatar svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        .leaderboard-name {
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        .leaderboard-xp {
+            font-weight: bold;
+            color: var(--unlocked);
+            font-size: 0.9rem;
+        }
+
+        /* INPUT PASSWORD WITH EYE ICON */
+        .password-container {
+            position: relative;
+            display: flex;
+            align-items: center;
+            width: 100%;
+        }
+
+        .password-container input {
+            width: 100% !important;
+            padding-right: 40px !important;
+        }
+
+        .toggle-password-btn {
+            position: absolute;
+            right: 8px;
+            background: none !important;
+            border: none !important;
+            color: var(--subtext);
+            cursor: pointer;
+            padding: 4px;
+            font-size: 1.1rem;
+            box-shadow: none !important;
         }
 
         /* CUSTOM MODAL POP-UP & AUTH FORMS */
@@ -460,8 +570,8 @@
         .auth-form-group {
             display: flex;
             flex-direction: column;
-            gap: 10px;
-            margin-bottom: 15px;
+            gap: 6px;
+            margin-bottom: 12px;
             text-align: left;
         }
 
@@ -476,6 +586,12 @@
             padding: 10px;
             box-sizing: border-box;
             text-align: left;
+        }
+
+        .auth-hint {
+            font-size: 0.75rem;
+            color: var(--subtext);
+            margin-top: 2px;
         }
 
         .auth-error {
@@ -599,6 +715,13 @@
 
     <div class="tree-container" id="tree"></div>
 
+    <div class="leaderboard-section">
+        <h3 class="leaderboard-title">🏆 Classifica Globale</h3>
+        <div class="leaderboard-list" id="leaderboard-container">
+            <p style="color: var(--subtext); text-align: center; font-size: 0.9rem;">Caricamento classifica...</p>
+        </div>
+    </div>
+
     <div class="modal-overlay" id="custom-modal">
         <div class="modal-box">
             <h3 id="modal-title">Titolo</h3>
@@ -632,6 +755,7 @@
         const db = firebase.firestore();
 
         let currentUser = null;
+        let userNickname = "";
 
         const rankLogos = {
             bronze: `<svg viewBox="0 0 100 100"><defs><linearGradient id="b" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#d97706"/><stop offset="100%" stop-color="#78350f"/></linearGradient></defs><polygon points="50,5 90,25 90,75 50,95 10,75 10,25" fill="url(#b)" stroke="#f59e0b" stroke-width="3"/><path d="M50 20 L75 70 L25 70 Z" fill="#451a03" opacity="0.6"/><circle cx="50" cy="50" r="15" fill="#f59e0b"/></svg>`,
@@ -856,11 +980,16 @@
 
         // SALVATAGGIO DATI (Locale o Firebase)
         function saveState() {
+            const currentXp = calculateXP();
             if (currentUser) {
                 db.collection("users").doc(currentUser.uid).set({
+                    nickname: userNickname || currentUser.email.split('@')[0],
+                    totalXp: currentXp,
                     skills: userState,
                     updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-                }, { merge: true }).catch(error => {
+                }, { merge: true }).then(() => {
+                    loadLeaderboard();
+                }).catch(error => {
                     console.error("Errore di salvataggio su Firebase: ", error);
                 });
             } else {
@@ -873,23 +1002,30 @@
         function loadUserData(user) {
             if (user) {
                 currentUser = user;
-                document.getElementById('user-status-text').innerHTML = `👤 <strong>${user.email}</strong>`;
-                document.getElementById('auth-actions-container').innerHTML = `
-                    <button class="btn-auth-secondary" onclick="logoutUser()">Esci</button>
-                `;
-
                 db.collection("users").doc(user.uid).get().then((doc) => {
-                    if (doc.exists && doc.data().skills) {
-                        userState = doc.data().skills;
+                    if (doc.exists) {
+                        const data = doc.data();
+                        userState = data.skills || {};
+                        userNickname = data.nickname || "";
                     } else {
                         userState = {};
+                        userNickname = "";
                     }
+
+                    if (!userNickname) {
+                        openNicknameModal();
+                    } else {
+                        renderUserAuthBar();
+                    }
+
                     updateUI();
+                    loadLeaderboard();
                 }).catch((error) => {
                     console.error("Errore nel recupero dati da Firestore:", error);
                 });
             } else {
                 currentUser = null;
+                userNickname = "";
                 document.getElementById('user-status-text').innerHTML = `👤 Non autenticato (Salvataggio locale)`;
                 document.getElementById('auth-actions-container').innerHTML = `
                     <button class="btn-auth-secondary" onclick="openAuthModal('login')">Accedi</button>
@@ -898,7 +1034,16 @@
 
                 userState = JSON.parse(localStorage.getItem('naiontrackState')) || {};
                 updateUI();
+                loadLeaderboard();
             }
+        }
+
+        function renderUserAuthBar() {
+            document.getElementById('user-status-text').innerHTML = `👤 <strong>${userNickname || currentUser.email}</strong>`;
+            document.getElementById('auth-actions-container').innerHTML = `
+                <button class="btn-auth-secondary" onclick="openNicknameModal()">✏️ Nickname</button>
+                <button class="btn-auth-secondary" onclick="logoutUser()">Esci</button>
+            `;
         }
 
         auth.onAuthStateChanged((user) => {
@@ -909,6 +1054,7 @@
             auth.signOut().then(() => {
                 userState = JSON.parse(localStorage.getItem('naiontrackState')) || {};
                 updateUI();
+                loadLeaderboard();
             });
         }
 
@@ -943,6 +1089,42 @@
                 }
             }
             return current;
+        }
+
+        function loadLeaderboard() {
+            const container = document.getElementById('leaderboard-container');
+            db.collection("users").orderBy("totalXp", "desc").limit(20).get().then((snapshot) => {
+                if (snapshot.empty) {
+                    container.innerHTML = `<p style="color: var(--subtext); text-align: center; font-size: 0.9rem;">Nessun atleta in classifica ancora.</p>`;
+                    return;
+                }
+
+                let html = '';
+                let index = 1;
+                snapshot.forEach((doc) => {
+                    const data = doc.data();
+                    const xp = data.totalXp || 0;
+                    const nick = data.nickname || "Anonimo";
+                    const rank = getCurrentRank(xp);
+                    const isMe = currentUser && currentUser.uid === doc.id;
+
+                    html += `
+                        <div class="leaderboard-item ${isMe ? 'current-user-item' : ''}">
+                            <div class="leaderboard-left">
+                                <span class="leaderboard-rank-pos">#${index}</span>
+                                <div class="leaderboard-avatar">${rank.iconSvg}</div>
+                                <span class="leaderboard-name">${nick} ${isMe ? '(Tu)' : ''}</span>
+                            </div>
+                            <span class="leaderboard-xp">${xp} XP</span>
+                        </div>
+                    `;
+                    index++;
+                });
+
+                container.innerHTML = html;
+            }).catch(err => {
+                container.innerHTML = `<p style="color: var(--subtext); text-align: center; font-size: 0.9rem;">Registrati o accedi per vedere la classifica globale.</p>`;
+            });
         }
 
         function updateUI() {
@@ -1069,6 +1251,60 @@
             };
         }
 
+        function togglePasswordVisibility(inputId, btnEl) {
+            const input = document.getElementById(inputId);
+            if (input.type === "password") {
+                input.type = "text";
+                btnEl.innerText = "🙈";
+            } else {
+                input.type = "password";
+                btnEl.innerText = "👁️";
+            }
+        }
+
+        function openNicknameModal() {
+            const modal = document.getElementById('custom-modal');
+            const titleEl = document.getElementById('modal-title');
+            const bodyContent = document.getElementById('modal-body-content');
+            const actionsBox = document.getElementById('modal-actions-box');
+
+            titleEl.innerText = "⭐ Scegli il tuo Nickname";
+
+            bodyContent.innerHTML = `
+                <div class="auth-error" id="nickname-error-msg"></div>
+                <p style="font-size:0.85rem; color:var(--subtext); margin-bottom: 10px;">Questo nome sarà visibile nella classifica globale.</p>
+                <div class="auth-form-group">
+                    <label>Nickname</label>
+                    <input type="text" id="nickname-input" placeholder="es. SpartaAtleta" value="${userNickname}">
+                </div>
+            `;
+
+            actionsBox.innerHTML = `
+                <button class="btn-confirm" id="save-nickname-btn">Salva Nickname</button>
+            `;
+
+            modal.classList.add('active');
+
+            document.getElementById('save-nickname-btn').onclick = () => {
+                const newNick = document.getElementById('nickname-input').value.trim();
+                const errEl = document.getElementById('nickname-error-msg');
+
+                if (!newNick) {
+                    errEl.innerText = "Inserisci un nickname valido.";
+                    return;
+                }
+                if (newNick.length < 3) {
+                    errEl.innerText = "Il nickname deve avere almeno 3 caratteri.";
+                    return;
+                }
+
+                userNickname = newNick;
+                modal.classList.remove('active');
+                renderUserAuthBar();
+                saveState();
+            };
+        }
+
         function openAuthModal(mode) {
             const modal = document.getElementById('custom-modal');
             const titleEl = document.getElementById('modal-title');
@@ -1086,7 +1322,11 @@
                 </div>
                 <div class="auth-form-group">
                     <label>Password</label>
-                    <input type="password" id="auth-password" placeholder="••••••••">
+                    <div class="password-container">
+                        <input type="password" id="auth-password" placeholder="••••••••">
+                        <button class="toggle-password-btn" type="button" onclick="togglePasswordVisibility('auth-password', this)">👁️</button>
+                    </div>
+                    ${!isLogin ? `<span class="auth-hint">Minimo 8 caratteri ed almeno un carattere speciale (!@#$%^&*)</span>` : ''}
                 </div>
             `;
 
@@ -1107,6 +1347,19 @@
                 if (!email || !password) {
                     errorEl.innerText = "Compila tutti i campi.";
                     return;
+                }
+
+                // REGOLA VALIDAZIONE PASSWORD PER REGISTRAZIONE
+                if (!isLogin) {
+                    const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>_\-\/\\]/.test(password);
+                    if (password.length < 8) {
+                        errorEl.innerText = "La password deve contenere almeno 8 caratteri.";
+                        return;
+                    }
+                    if (!hasSpecialChar) {
+                        errorEl.innerText = "La password deve contenere almeno un carattere speciale.";
+                        return;
+                    }
                 }
 
                 const authPromise = isLogin 
