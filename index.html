@@ -8,6 +8,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
 
     <style>
         :root {
@@ -936,6 +937,10 @@
             border-color: var(--accent);
         }
 
+        .chat-message.chat-message-media {
+            max-width: 75%;
+        }
+
         .chat-msg-author {
             display: block;
             font-size: 0.7rem;
@@ -949,14 +954,105 @@
             word-break: break-word;
         }
 
-        .chat-input-box {
+        .chat-msg-edited {
+            font-size: 0.7rem;
+            color: var(--subtext);
+            font-style: italic;
+        }
+
+        .chat-media-img {
+            max-width: 100%;
+            border-radius: 8px;
+            margin: 4px 0;
+            display: block;
+            cursor: pointer;
+        }
+
+        .chat-media-video {
+            max-width: 100%;
+            border-radius: 8px;
+            margin: 4px 0;
+            display: block;
+        }
+
+        .chat-media-audio {
+            width: 100%;
+            margin: 4px 0;
+        }
+
+        .chat-msg-actions {
             display: flex;
             gap: 8px;
+            justify-content: flex-end;
+            margin-top: 4px;
+        }
+
+        .chat-msg-action-btn {
+            background: none;
+            border: none;
+            color: var(--subtext);
+            font-size: 0.75rem;
+            padding: 2px 4px;
+            cursor: pointer;
+        }
+
+        .chat-msg-action-btn:hover {
+            color: var(--accent);
+        }
+
+        .chat-input-box {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
             padding: 10px;
             border-top: 1px solid var(--line-color);
         }
 
-        .chat-input-box input {
+        .chat-input-row {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+            width: 100%;
+        }
+
+        .chat-icon-btn {
+            background: var(--locked);
+            color: var(--text);
+            border: none;
+            border-radius: 8px;
+            width: 36px;
+            height: 36px;
+            min-width: 36px;
+            flex-shrink: 0;
+            font-size: 1rem;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+
+        .chat-icon-btn.recording {
+            background: var(--danger);
+            color: #fff;
+            animation: chat-pulse 1s infinite;
+        }
+
+        @keyframes chat-pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .chat-upload-status {
+            font-size: 0.7rem;
+            color: var(--accent);
+            margin: 0;
+            min-height: 14px;
+            text-align: center;
+        }
+
+        .chat-input-box input[type="text"] {
             flex-grow: 1;
             width: auto;
             padding: 8px 10px;
@@ -1077,6 +1173,7 @@
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const db = firebase.firestore();
+        const storage = firebase.storage();
 
         let currentUser = null;
         let userNickname = "";
@@ -1084,6 +1181,10 @@
         let userProfileData = {}; // { heightCm, weightKg, isPublic }
         let chatUnsubscribe = null;
         let chatPanelOpen = false;
+        let chatMessagesCache = {}; // id -> dati messaggio (per modifica/eliminazione)
+        let mediaRecorder = null;
+        let audioChunks = [];
+        let isRecordingAudio = false;
 
         const rankLogos = {
             bronze: `<svg viewBox="0 0 100 100"><defs><linearGradient id="b" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#d97706"/><stop offset="100%" stop-color="#78350f"/></linearGradient></defs><polygon points="50,5 90,25 90,75 50,95 10,75 10,25" fill="url(#b)" stroke="#f59e0b" stroke-width="3"/><path d="M50 20 L75 70 L25 70 Z" fill="#451a03" opacity="0.6"/><circle cx="50" cy="50" r="15" fill="#f59e0b"/></svg>`,
@@ -2100,8 +2201,14 @@
 
             if (currentUser) {
                 box.innerHTML = `
-                    <input type="text" id="chat-input" placeholder="Scrivi un messaggio..." maxlength="300">
-                    <button onclick="sendChatMessage()">Invia</button>
+                    <div class="chat-input-row">
+                        <input type="file" id="chat-media-input" accept="image/*,video/*" style="display:none" onchange="handleMediaSelected(event)">
+                        <button type="button" class="chat-icon-btn" id="chat-attach-btn" title="Invia foto o video" onclick="triggerMediaPicker()">📎</button>
+                        <button type="button" class="chat-icon-btn" id="chat-mic-btn" title="Registra messaggio vocale" onclick="toggleAudioRecording()">🎤</button>
+                        <input type="text" id="chat-input" placeholder="Scrivi un messaggio..." maxlength="300">
+                        <button onclick="sendChatMessage()">Invia</button>
+                    </div>
+                    <p id="chat-upload-status" class="chat-upload-status"></p>
                 `;
                 const input = document.getElementById('chat-input');
                 input.onkeypress = (e) => {
@@ -2121,7 +2228,12 @@
                 .limit(50)
                 .onSnapshot((snapshot) => {
                     let msgs = [];
-                    snapshot.forEach(doc => msgs.push(doc.data()));
+                    chatMessagesCache = {};
+                    snapshot.forEach(doc => {
+                        const data = doc.data();
+                        chatMessagesCache[doc.id] = data;
+                        msgs.push(Object.assign({ id: doc.id }, data));
+                    });
                     msgs.reverse();
 
                     if (msgs.length === 0) {
@@ -2132,10 +2244,32 @@
                     let html = '';
                     msgs.forEach(m => {
                         const isMe = currentUser && m.uid === currentUser.uid;
+
+                        let mediaHtml = '';
+                        if (m.mediaType === 'image' && m.mediaUrl) {
+                            mediaHtml = `<img src="${m.mediaUrl}" class="chat-media-img" onclick="window.open('${m.mediaUrl}', '_blank')" alt="foto">`;
+                        } else if (m.mediaType === 'video' && m.mediaUrl) {
+                            mediaHtml = `<video src="${m.mediaUrl}" class="chat-media-video" controls></video>`;
+                        } else if (m.mediaType === 'audio' && m.mediaUrl) {
+                            mediaHtml = `<audio src="${m.mediaUrl}" class="chat-media-audio" controls></audio>`;
+                        }
+
+                        const textHtml = m.text ? `<span class="chat-msg-text">${escapeHtml(m.text)}</span>` : '';
+                        const editedHtml = m.edited ? `<span class="chat-msg-edited"> (modificato)</span>` : '';
+
+                        const actionsHtml = isMe ? `
+                            <div class="chat-msg-actions">
+                                <button class="chat-msg-action-btn" title="Modifica" onclick="openEditMessageModal('${m.id}')">✏️</button>
+                                <button class="chat-msg-action-btn" title="Elimina" onclick="askDeleteChatMessage('${m.id}')">🗑️</button>
+                            </div>
+                        ` : '';
+
                         html += `
-                            <div class="chat-message ${isMe ? 'chat-message-mine' : ''}">
+                            <div class="chat-message ${isMe ? 'chat-message-mine' : ''} ${m.mediaType ? 'chat-message-media' : ''}">
                                 <span class="chat-msg-author">${escapeHtml(m.nickname || 'Anonimo')}</span>
-                                <span class="chat-msg-text">${escapeHtml(m.text || '')}</span>
+                                ${mediaHtml}
+                                ${textHtml}${editedHtml}
+                                ${actionsHtml}
                             </div>
                         `;
                     });
@@ -2168,6 +2302,237 @@
                 console.error("Errore invio messaggio:", error);
                 input.disabled = false;
             });
+        }
+
+        // ==========================================
+        // MODIFICA MESSAGGIO
+        // ==========================================
+        function openEditMessageModal(msgId) {
+            const data = chatMessagesCache[msgId];
+            if (!data) return;
+
+            const modal = document.getElementById('custom-modal');
+            const titleEl = document.getElementById('modal-title');
+            const bodyContent = document.getElementById('modal-body-content');
+            const actionsBox = document.getElementById('modal-actions-box');
+
+            titleEl.innerText = "✏️ Modifica Messaggio";
+            bodyContent.innerHTML = `
+                <div class="auth-error" id="edit-msg-error"></div>
+                <div class="auth-form-group">
+                    <label>Testo del messaggio</label>
+                    <textarea id="edit-msg-textarea" maxlength="300" rows="3" style="width:100%; box-sizing:border-box; padding:10px; border-radius:6px; border:1px solid var(--locked); background:var(--input-bg); color:var(--text); font-family:inherit; resize:vertical;">${escapeHtml(data.text || '')}</textarea>
+                </div>
+            `;
+            actionsBox.innerHTML = `
+                <button class="btn-cancel" id="modal-btn-cancel">Annulla</button>
+                <button class="btn-confirm" id="save-edit-msg-btn">Salva</button>
+            `;
+
+            modal.classList.add('active');
+            document.getElementById('modal-btn-cancel').onclick = () => modal.classList.remove('active');
+
+            document.getElementById('save-edit-msg-btn').onclick = () => {
+                const newText = document.getElementById('edit-msg-textarea').value.trim();
+                const errEl = document.getElementById('edit-msg-error');
+
+                if (!newText && !data.mediaUrl) {
+                    errEl.innerText = "Il messaggio non può essere vuoto.";
+                    return;
+                }
+
+                db.collection("chatMessages").doc(msgId).update({
+                    text: newText.slice(0, 300),
+                    edited: true,
+                    editedAt: firebase.firestore.FieldValue.serverTimestamp()
+                }).then(() => {
+                    modal.classList.remove('active');
+                }).catch((error) => {
+                    console.error("Errore modifica messaggio:", error);
+                    errEl.innerText = "Errore durante il salvataggio della modifica.";
+                });
+            };
+        }
+
+        // ==========================================
+        // ELIMINAZIONE MESSAGGIO
+        // ==========================================
+        function askDeleteChatMessage(msgId) {
+            openCustomModal(
+                "🗑️ Elimina Messaggio",
+                "Sei sicuro di voler eliminare questo messaggio? L'azione è irreversibile.",
+                "Elimina",
+                true,
+                () => {
+                    const data = chatMessagesCache[msgId];
+                    db.collection("chatMessages").doc(msgId).delete().then(() => {
+                        if (data && data.mediaPath) {
+                            storage.ref(data.mediaPath).delete().catch((error) => {
+                                console.error("Errore eliminazione file multimediale:", error);
+                            });
+                        }
+                    }).catch((error) => {
+                        console.error("Errore eliminazione messaggio:", error);
+                    });
+                }
+            );
+        }
+
+        // ==========================================
+        // INVIO FOTO / VIDEO
+        // ==========================================
+        function triggerMediaPicker() {
+            if (!currentUser) return;
+            const input = document.getElementById('chat-media-input');
+            if (input) input.click();
+        }
+
+        function handleMediaSelected(event) {
+            const file = event.target.files[0];
+            event.target.value = ''; // reset per permettere di reinviare lo stesso file
+
+            if (!file || !currentUser) return;
+
+            const isImage = file.type.startsWith('image/');
+            const isVideo = file.type.startsWith('video/');
+
+            if (!isImage && !isVideo) {
+                setChatUploadStatus("❌ Puoi inviare solo immagini o video.");
+                setTimeout(() => setChatUploadStatus(''), 3000);
+                return;
+            }
+
+            const maxSizeMB = isVideo ? 25 : 8;
+            if (file.size > maxSizeMB * 1024 * 1024) {
+                setChatUploadStatus(`❌ File troppo grande (max ${maxSizeMB}MB).`);
+                setTimeout(() => setChatUploadStatus(''), 3000);
+                return;
+            }
+
+            uploadAndSendMedia(file, isImage ? 'image' : 'video', file.name);
+        }
+
+        // ==========================================
+        // REGISTRAZIONE E INVIO AUDIO
+        // ==========================================
+        function toggleAudioRecording() {
+            if (!currentUser) return;
+            if (isRecordingAudio) {
+                stopAudioRecording();
+            } else {
+                startAudioRecording();
+            }
+        }
+
+        function startAudioRecording() {
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || !window.MediaRecorder) {
+                setChatUploadStatus("❌ Il tuo browser non supporta la registrazione audio.");
+                setTimeout(() => setChatUploadStatus(''), 3000);
+                return;
+            }
+
+            navigator.mediaDevices.getUserMedia({ audio: true }).then((stream) => {
+                audioChunks = [];
+                mediaRecorder = new MediaRecorder(stream);
+
+                mediaRecorder.ondataavailable = (e) => {
+                    if (e.data && e.data.size > 0) audioChunks.push(e.data);
+                };
+
+                mediaRecorder.onstop = () => {
+                    stream.getTracks().forEach(track => track.stop());
+                    const blob = new Blob(audioChunks, { type: 'audio/webm' });
+                    uploadAndSendMedia(blob, 'audio', 'vocale.webm');
+                };
+
+                mediaRecorder.start();
+                isRecordingAudio = true;
+
+                const btn = document.getElementById('chat-mic-btn');
+                if (btn) {
+                    btn.innerText = '⏹️';
+                    btn.classList.add('recording');
+                    btn.title = "Ferma registrazione";
+                }
+                setChatUploadStatus("🔴 Registrazione in corso...");
+            }).catch((error) => {
+                console.error("Errore accesso microfono:", error);
+                setChatUploadStatus("❌ Impossibile accedere al microfono. Controlla i permessi del browser.");
+                setTimeout(() => setChatUploadStatus(''), 4000);
+            });
+        }
+
+        function stopAudioRecording() {
+            if (mediaRecorder && isRecordingAudio) {
+                mediaRecorder.stop();
+                isRecordingAudio = false;
+
+                const btn = document.getElementById('chat-mic-btn');
+                if (btn) {
+                    btn.innerText = '🎤';
+                    btn.classList.remove('recording');
+                    btn.title = "Registra messaggio vocale";
+                }
+            }
+        }
+
+        // ==========================================
+        // UPLOAD SU FIREBASE STORAGE E INVIO MESSAGGIO MULTIMEDIALE
+        // ==========================================
+        function uploadAndSendMedia(fileOrBlob, mediaType, originalName) {
+            if (!currentUser) return;
+
+            const labelMap = { image: 'immagine', video: 'video', audio: 'messaggio vocale' };
+            setChatUploadStatus(`⏳ Caricamento ${labelMap[mediaType] || 'file'} in corso...`);
+
+            const attachBtn = document.getElementById('chat-attach-btn');
+            const micBtn = document.getElementById('chat-mic-btn');
+            if (attachBtn) attachBtn.disabled = true;
+            if (micBtn) micBtn.disabled = true;
+
+            let ext = 'dat';
+            if (mediaType === 'audio') {
+                ext = 'webm';
+            } else if (originalName && originalName.includes('.')) {
+                ext = originalName.split('.').pop().toLowerCase();
+            }
+
+            const path = `chatMedia/${currentUser.uid}/${Date.now()}_${Math.random().toString(36).slice(2, 8)}.${ext}`;
+            const storageRef = storage.ref(path);
+
+            storageRef.put(fileOrBlob).then((snapshot) => {
+                return snapshot.ref.getDownloadURL();
+            }).then((url) => {
+                const captionInput = document.getElementById('chat-input');
+                const caption = captionInput ? captionInput.value.trim() : '';
+
+                return db.collection("chatMessages").add({
+                    uid: currentUser.uid,
+                    nickname: userNickname || (currentUser.email ? currentUser.email.split('@')[0] : 'Anonimo'),
+                    text: caption.slice(0, 300),
+                    mediaUrl: url,
+                    mediaPath: path,
+                    mediaType: mediaType,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                }).then(() => {
+                    if (captionInput) captionInput.value = '';
+                });
+            }).then(() => {
+                setChatUploadStatus('✅ Inviato!');
+                setTimeout(() => setChatUploadStatus(''), 1500);
+            }).catch((error) => {
+                console.error("Errore invio file multimediale:", error);
+                setChatUploadStatus("❌ Errore durante l'invio del file.");
+                setTimeout(() => setChatUploadStatus(''), 3000);
+            }).finally(() => {
+                if (attachBtn) attachBtn.disabled = false;
+                if (micBtn) micBtn.disabled = false;
+            });
+        }
+
+        function setChatUploadStatus(msg) {
+            const el = document.getElementById('chat-upload-status');
+            if (el) el.innerText = msg;
         }
 
         initCategorySelect();
