@@ -191,6 +191,7 @@
             position: relative;
             overflow: hidden;
             transition: background-color 0.3s ease, border-color 0.3s ease;
+            margin-bottom: 15px;
         }
 
         .rank-badge-box {
@@ -223,6 +224,92 @@
             width: 0%;
             background: linear-gradient(90deg, var(--accent), var(--unlocked));
             transition: width 0.4s ease;
+        }
+
+        /* CLASSIFICA GLOBALE (LEADERBOARD) - POSIZIONATA IN HEADER */
+        .leaderboard-section {
+            width: 100%;
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 15px;
+            box-sizing: border-box;
+            border: 1px solid var(--line-color);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+            text-align: left;
+        }
+
+        .leaderboard-title {
+            color: var(--accent);
+            font-size: 1.1rem;
+            margin: 0 0 12px 0;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-bottom: 2px solid var(--accent);
+            padding-bottom: 6px;
+        }
+
+        .leaderboard-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            max-height: 250px;
+            overflow-y: auto;
+            padding-right: 5px;
+        }
+
+        .leaderboard-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: var(--bg-color);
+            padding: 8px 12px;
+            border-radius: 10px;
+            border: 1px solid var(--line-color);
+        }
+
+        .leaderboard-item.current-user-item {
+            border-color: var(--accent);
+            box-shadow: 0 0 10px var(--border-glow);
+        }
+
+        .leaderboard-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .leaderboard-rank-pos {
+            font-weight: bold;
+            font-size: 0.9rem;
+            min-width: 22px;
+            color: var(--subtext);
+        }
+
+        .leaderboard-avatar {
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .leaderboard-avatar svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        .leaderboard-name {
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .leaderboard-xp {
+            font-weight: bold;
+            color: var(--unlocked);
+            font-size: 0.85rem;
         }
 
         .tree-container {
@@ -391,90 +478,6 @@
 
         button:active {
             transform: scale(0.95);
-        }
-
-        /* CLASSIFICA GLOBALE (LEADERBOARD) */
-        .leaderboard-section {
-            width: 100%;
-            max-width: 900px;
-            background: var(--card-bg);
-            border-radius: 16px;
-            padding: 20px;
-            box-sizing: border-box;
-            border: 1px solid var(--line-color);
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
-            margin-bottom: 40px;
-        }
-
-        .leaderboard-title {
-            color: var(--accent);
-            font-size: 1.2rem;
-            margin: 0 0 15px 0;
-            text-transform: uppercase;
-            letter-spacing: 1.5px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            border-bottom: 2px solid var(--accent);
-            padding-bottom: 8px;
-        }
-
-        .leaderboard-list {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .leaderboard-item {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            background: var(--bg-color);
-            padding: 10px 15px;
-            border-radius: 10px;
-            border: 1px solid var(--line-color);
-        }
-
-        .leaderboard-item.current-user-item {
-            border-color: var(--accent);
-            box-shadow: 0 0 10px var(--border-glow);
-        }
-
-        .leaderboard-left {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .leaderboard-rank-pos {
-            font-weight: bold;
-            font-size: 1rem;
-            min-width: 25px;
-            color: var(--subtext);
-        }
-
-        .leaderboard-avatar {
-            width: 35px;
-            height: 35px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .leaderboard-avatar svg {
-            width: 100%;
-            height: 100%;
-        }
-
-        .leaderboard-name {
-            font-weight: 600;
-            font-size: 0.95rem;
-        }
-
-        .leaderboard-xp {
-            font-weight: bold;
-            color: var(--unlocked);
-            font-size: 0.9rem;
         }
 
         /* INPUT PASSWORD WITH EYE ICON */
@@ -703,6 +706,7 @@
                 </div>
             </div>
         </div>
+
         <div class="rank-card">
             <div id="rank-icon-box" class="rank-badge-box"></div>
             <h2 id="user-rank" style="margin:0; color: var(--accent); font-size: 1.1rem;">GRADO: Unranked</h2>
@@ -711,16 +715,17 @@
                 <div class="progress-fill" id="rank-progress"></div>
             </div>
         </div>
+
+        <!-- CLASSIFICA GLOBALE SPOSTATA SOTTO AL RANK -->
+        <div class="leaderboard-section">
+            <h3 class="leaderboard-title">🏆 Classifica Globale</h3>
+            <div class="leaderboard-list" id="leaderboard-container">
+                <p style="color: var(--subtext); text-align: center; font-size: 0.9rem;">Caricamento classifica...</p>
+            </div>
+        </div>
     </div>
 
     <div class="tree-container" id="tree"></div>
-
-    <div class="leaderboard-section">
-        <h3 class="leaderboard-title">🏆 Classifica Globale</h3>
-        <div class="leaderboard-list" id="leaderboard-container">
-            <p style="color: var(--subtext); text-align: center; font-size: 0.9rem;">Caricamento classifica...</p>
-        </div>
-    </div>
 
     <div class="modal-overlay" id="custom-modal">
         <div class="modal-box">
@@ -756,6 +761,7 @@
 
         let currentUser = null;
         let userNickname = "";
+        let leaderboardUnsubscribe = null;
 
         const rankLogos = {
             bronze: `<svg viewBox="0 0 100 100"><defs><linearGradient id="b" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#d97706"/><stop offset="100%" stop-color="#78350f"/></linearGradient></defs><polygon points="50,5 90,25 90,75 50,95 10,75 10,25" fill="url(#b)" stroke="#f59e0b" stroke-width="3"/><path d="M50 20 L75 70 L25 70 Z" fill="#451a03" opacity="0.6"/><circle cx="50" cy="50" r="15" fill="#f59e0b"/></svg>`,
@@ -987,9 +993,7 @@
                     totalXp: currentXp,
                     skills: userState,
                     updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-                }, { merge: true }).then(() => {
-                    loadLeaderboard();
-                }).catch(error => {
+                }, { merge: true }).catch(error => {
                     console.error("Errore di salvataggio su Firebase: ", error);
                 });
             } else {
@@ -1019,7 +1023,7 @@
                     }
 
                     updateUI();
-                    loadLeaderboard();
+                    initRealtimeLeaderboard();
                 }).catch((error) => {
                     console.error("Errore nel recupero dati da Firestore:", error);
                 });
@@ -1034,7 +1038,7 @@
 
                 userState = JSON.parse(localStorage.getItem('naiontrackState')) || {};
                 updateUI();
-                loadLeaderboard();
+                initRealtimeLeaderboard();
             }
         }
 
@@ -1054,7 +1058,7 @@
             auth.signOut().then(() => {
                 userState = JSON.parse(localStorage.getItem('naiontrackState')) || {};
                 updateUI();
-                loadLeaderboard();
+                initRealtimeLeaderboard();
             });
         }
 
@@ -1091,9 +1095,16 @@
             return current;
         }
 
-        function loadLeaderboard() {
+        // CLASSIFICA IN TEMPO REALE CON onSnapshot
+        function initRealtimeLeaderboard() {
             const container = document.getElementById('leaderboard-container');
-            db.collection("users").orderBy("totalXp", "desc").limit(20).get().then((snapshot) => {
+            
+            // Rimuove eventuali listener precedenti per evitare perdite di memoria
+            if (leaderboardUnsubscribe) {
+                leaderboardUnsubscribe();
+            }
+
+            leaderboardUnsubscribe = db.collection("users").orderBy("totalXp", "desc").limit(20).onSnapshot((snapshot) => {
                 if (snapshot.empty) {
                     container.innerHTML = `<p style="color: var(--subtext); text-align: center; font-size: 0.9rem;">Nessun atleta in classifica ancora.</p>`;
                     return;
@@ -1122,7 +1133,7 @@
                 });
 
                 container.innerHTML = html;
-            }).catch(err => {
+            }, (err) => {
                 container.innerHTML = `<p style="color: var(--subtext); text-align: center; font-size: 0.9rem;">Registrati o accedi per vedere la classifica globale.</p>`;
             });
         }
@@ -1262,6 +1273,7 @@
             }
         }
 
+        // MODALE NICKNAME CON VERIFICA DI UNICITÀ SU FIRESTORE
         function openNicknameModal() {
             const modal = document.getElementById('custom-modal');
             const titleEl = document.getElementById('modal-title');
@@ -1298,10 +1310,29 @@
                     return;
                 }
 
-                userNickname = newNick;
-                modal.classList.remove('active');
-                renderUserAuthBar();
-                saveState();
+                // CONTROLLO UNICITÀ NICKNAME SU FIRESTORE
+                errEl.innerText = "Verifica disponibilità in corso...";
+                db.collection("users").where("nickname", "==", newNick).get().then((snapshot) => {
+                    let isTaken = false;
+                    snapshot.forEach((doc) => {
+                        if (!currentUser || doc.id !== currentUser.uid) {
+                            isTaken = true;
+                        }
+                    });
+
+                    if (isTaken) {
+                        errEl.innerText = "❌ Questo Nickname è già in uso! Scegline un altro.";
+                        return;
+                    }
+
+                    userNickname = newNick;
+                    modal.classList.remove('active');
+                    renderUserAuthBar();
+                    saveState();
+                }).catch((error) => {
+                    console.error("Errore controllo nickname:", error);
+                    errEl.innerText = "Errore durante la verifica del nickname.";
+                });
             };
         }
 
