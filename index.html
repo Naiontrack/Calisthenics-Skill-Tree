@@ -4,6 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Naiontrack's Calisthenics Progression</title>
+    
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
     <style>
         :root {
             /* TEMA PREDEFINITO (Futuristic Dark) */
@@ -63,6 +68,7 @@
             flex-direction: column;
             align-items: center;
             transition: background-color 0.3s ease, color 0.3s ease;
+            -webkit-tap-highlight-color: transparent;
         }
 
         .header {
@@ -123,6 +129,54 @@
             outline: none;
             transition: all 0.3s ease;
             max-width: 200px;
+        }
+
+        /* AUTH BAR STYLES */
+        .auth-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--card-bg);
+            padding: 8px 15px;
+            border-radius: 10px;
+            border: 1px solid var(--line-color);
+            margin-bottom: 15px;
+            font-size: 0.9rem;
+        }
+
+        .auth-bar span {
+            color: var(--subtext);
+        }
+
+        .auth-bar strong {
+            color: var(--accent);
+        }
+
+        .auth-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-auth {
+            background: var(--accent);
+            color: #fff;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            cursor: pointer;
+            border: none;
+        }
+
+        .btn-auth-secondary {
+            background: var(--locked);
+            color: var(--text);
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            cursor: pointer;
+            border: none;
         }
 
         .rank-card {
@@ -232,6 +286,15 @@
             background-color: var(--line-color);
         }
 
+        .skill-content {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            width: 100%;
+            cursor: pointer;
+            touch-action: manipulation;
+        }
+
         .skill-img-box {
             width: 65px;
             height: 65px;
@@ -245,6 +308,7 @@
             padding: 4px;
             box-shadow: inset 0 0 10px rgba(0,0,0,0.2);
             transition: background-color 0.3s ease, border-color 0.3s ease;
+            pointer-events: none;
         }
 
         .unlocked-card .skill-img-box {
@@ -258,6 +322,7 @@
 
         .skill-info {
             flex-grow: 1;
+            pointer-events: none;
         }
 
         .skill-info h4 {
@@ -275,9 +340,10 @@
             display: flex;
             gap: 6px;
             align-items: center;
+            z-index: 2;
         }
 
-        input[type="number"] {
+        input[type="number"], input[type="email"], input[type="password"] {
             width: 55px;
             padding: 6px;
             border-radius: 6px;
@@ -286,18 +352,20 @@
             color: var(--text);
             text-align: center;
             font-size: 0.9rem;
+            touch-action: manipulation;
         }
 
         button {
             background: var(--accent);
             color: #fff;
             border: none;
-            padding: 6px 10px;
+            padding: 8px 12px;
             border-radius: 6px;
             font-weight: bold;
             cursor: pointer;
             font-size: 0.85rem;
             transition: transform 0.1s, opacity 0.2s;
+            touch-action: manipulation;
         }
 
         body.theme-light button {
@@ -324,7 +392,7 @@
             transform: scale(0.95);
         }
 
-        /* CUSTOM MODAL POP-UP */
+        /* CUSTOM MODAL POP-UP & AUTH FORMS */
         .modal-overlay {
             position: fixed;
             top: 0;
@@ -387,6 +455,34 @@
             padding: 10px 18px;
             font-size: 0.9rem;
             flex: 1;
+        }
+
+        .auth-form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 15px;
+            text-align: left;
+        }
+
+        .auth-form-group label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--subtext);
+        }
+
+        .auth-form-group input {
+            width: 100%;
+            padding: 10px;
+            box-sizing: border-box;
+            text-align: left;
+        }
+
+        .auth-error {
+            color: var(--danger);
+            font-size: 0.85rem;
+            margin-bottom: 10px;
+            min-height: 18px;
         }
 
         .btn-cancel {
@@ -464,6 +560,14 @@
 <body>
 
     <div class="header">
+        <div class="auth-bar" id="auth-bar">
+            <span id="user-status-text">👤 Non autenticato (Salvataggio locale)</span>
+            <div class="auth-actions" id="auth-actions-container">
+                <button class="btn-auth-secondary" onclick="openAuthModal('login')">Accedi</button>
+                <button class="btn-auth" onclick="openAuthModal('signup')">Registrati</button>
+            </div>
+        </div>
+
         <div class="top-bar">
             <h1>Naiontrack's Calisthenics</h1>
             <div class="controls-group">
@@ -498,8 +602,10 @@
     <div class="modal-overlay" id="custom-modal">
         <div class="modal-box">
             <h3 id="modal-title">Titolo</h3>
-            <p id="modal-desc">Descrizione del messaggio</p>
-            <div class="modal-actions">
+            <div id="modal-body-content">
+                <p id="modal-desc">Descrizione del messaggio</p>
+            </div>
+            <div class="modal-actions" id="modal-actions-box">
                 <button class="btn-cancel" id="modal-btn-cancel">Annulla</button>
                 <button class="btn-confirm" id="modal-btn-confirm">Conferma</button>
             </div>
@@ -507,6 +613,26 @@
     </div>
 
     <script>
+        // ==========================================
+        // CONFIGURAZIONE FIREBASE
+        // ==========================================
+        const firebaseConfig = {
+            apiKey: "AIzaSyA8DxxaRgjpdv9eldZnDiAipceVv6IJ5Ds",
+            authDomain: "calisthenics-tree-b9a06.firebaseapp.com",
+            projectId: "calisthenics-tree-b9a06",
+            storageBucket: "calisthenics-tree-b9a06.firebasestorage.app",
+            messagingSenderId: "385003641400",
+            appId: "1:385003641400:web:7974dd3adc322170c264cd",
+            measurementId: "G-ZF4P6HX9HN"
+        };
+
+        // Inizializzazione Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        let currentUser = null;
+
         const rankLogos = {
             bronze: `<svg viewBox="0 0 100 100"><defs><linearGradient id="b" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#d97706"/><stop offset="100%" stop-color="#78350f"/></linearGradient></defs><polygon points="50,5 90,25 90,75 50,95 10,75 10,25" fill="url(#b)" stroke="#f59e0b" stroke-width="3"/><path d="M50 20 L75 70 L25 70 Z" fill="#451a03" opacity="0.6"/><circle cx="50" cy="50" r="15" fill="#f59e0b"/></svg>`,
             silver: `<svg viewBox="0 0 100 100"><defs><linearGradient id="s" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#e2e8f0"/><stop offset="100%" stop-color="#475569"/></linearGradient></defs><polygon points="50,5 95,30 80,85 20,85 5,30" fill="url(#s)" stroke="#f8fafc" stroke-width="3"/><polygon points="50,20 75,50 50,80 25,50" fill="#94a3b8"/><circle cx="50" cy="50" r="12" fill="#f8fafc"/></svg>`,
@@ -562,17 +688,14 @@
             straddle_fl: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="20" cy="50" r="5" fill="var(--accent)"/><path d="M20 55 L50 55"/><path d="M50 55 L80 38 M50 55 L80 72"/><path d="M38 55 L38 20"/><line x1="15" y1="20" x2="65" y2="20" stroke="var(--subtext)" stroke-width="5"/></svg>`,
             full_fl: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="15" cy="50" r="5" fill="var(--accent)"/><path d="M15 55 L88 55"/><path d="M38 55 L38 20"/><line x1="15" y1="20" x2="65" y2="20" stroke="var(--subtext)" stroke-width="5"/></svg>`,
             one_arm_pullup: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="45" cy="22" r="5" fill="var(--accent)"/><path d="M45 27 L45 65 L35 88 M45 65 L55 88"/><path d="M45 35 L50 20 M45 35 L30 50"/><line x1="20" y1="20" x2="80" y2="20" stroke="var(--subtext)" stroke-width="5"/></svg>`,
-            
             ring_support: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="50" cy="30" r="5" fill="var(--accent)"/><path d="M50 35 L50 70 L40 90 M50 70 L60 90"/><path d="M50 42 L30 42 M50 42 L70 42"/><circle cx="30" cy="42" r="6" stroke="var(--subtext)" stroke-width="3"/><circle cx="70" cy="42" r="6" stroke="var(--subtext)" stroke-width="3"/><line x1="30" y1="5" x2="30" y2="36" stroke="var(--subtext)" stroke-width="2"/><line x1="70" y1="5" x2="70" y2="36" stroke="var(--subtext)" stroke-width="2"/></svg>`,
             ring_dips: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="50" cy="22" r="5" fill="var(--accent)"/><path d="M50 27 L50 65 L40 88 M50 65 L60 88"/><path d="M50 35 L32 35 L32 48 M50 35 L68 35 L68 48"/><circle cx="32" cy="48" r="6" stroke="var(--subtext)" stroke-width="3"/><circle cx="68" cy="48" r="6" stroke="var(--subtext)" stroke-width="3"/><line x1="32" y1="5" x2="32" y2="42" stroke="var(--subtext)" stroke-width="2"/><line x1="68" y1="5" x2="68" y2="42" stroke="var(--subtext)" stroke-width="2"/></svg>`,
             ring_muscle_up: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="50" cy="18" r="5" fill="var(--accent)"/><path d="M50 23 L50 65 L40 88 M50 65 L60 88"/><path d="M50 35 L30 48 M50 35 L70 48"/><circle cx="30" cy="48" r="6" stroke="var(--subtext)" stroke-width="3"/><circle cx="70" cy="48" r="6" stroke="var(--subtext)" stroke-width="3"/><line x1="30" y1="5" x2="30" y2="42" stroke="var(--subtext)" stroke-width="2"/><line x1="68" y1="5" x2="68" y2="42" stroke="var(--subtext)" stroke-width="2"/></svg>`,
             iron_cross: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="50" cy="25" r="5" fill="var(--accent)"/><path d="M50 30 L50 70 L40 92 M50 70 L60 92"/><path d="M50 38 L18 38 M50 38 L82 38"/><circle cx="18" cy="38" r="6" stroke="var(--subtext)" stroke-width="3"/><circle cx="82" cy="38" r="6" stroke="var(--subtext)" stroke-width="3"/><line x1="18" y1="5" x2="18" y2="32" stroke="var(--subtext)" stroke-width="2"/><line x1="82" y1="5" x2="82" y2="32" stroke="var(--subtext)" stroke-width="2"/></svg>`,
             victorian: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="15" cy="35" r="5" fill="var(--accent)"/><path d="M15 40 L88 40"/><path d="M40 40 L40 60 M55 40 L55 60"/><circle cx="40" cy="60" r="5" stroke="var(--subtext)" stroke-width="3"/><circle cx="55" cy="60" r="5" stroke="var(--subtext)" stroke-width="3"/><line x1="40" y1="5" x2="40" y2="55" stroke="var(--subtext)" stroke-width="2"/><line x1="55" y1="5" x2="55" y2="55" stroke="var(--subtext)" stroke-width="2"/></svg>`,
-
             pullover: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="50" cy="28" r="5" fill="var(--accent)"/><path d="M50 33 C70 20 70 60 50 50"/><line x1="15" y1="50" x2="85" y2="50" stroke="var(--subtext)" stroke-width="5"/></svg>`,
             spin_360: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="50" cy="30" r="5" fill="var(--accent)"/><path d="M50 35 L50 75 M40 85 L60 85"/><path d="M30 45 C40 20 60 20 70 45" stroke-dasharray="3 3"/><line x1="15" y1="45" x2="85" y2="45" stroke="var(--subtext)" stroke-width="5"/></svg>`,
             freestyle_combo: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="40" cy="25" r="5" fill="var(--accent)"/><path d="M40 30 L65 50 L85 30"/><path d="M40 35 L20 15"/><line x1="10" y1="60" x2="90" y2="60" stroke="var(--subtext)" stroke-width="5"/></svg>`,
-
             bench_dips: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="35" cy="30" r="5" fill="var(--accent)"/><path d="M35 35 L35 60 L75 60"/><path d="M35 42 L20 42 L20 60"/><line x1="10" y1="60" x2="30" y2="60" stroke="var(--subtext)" stroke-width="5"/><line x1="60" y1="75" x2="90" y2="75" stroke="var(--subtext)" stroke-width="4"/></svg>`,
             bar_dips: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="50" cy="20" r="5" fill="var(--accent)"/><path d="M50 25 L50 65 L40 88 M50 65 L60 88"/><path d="M50 35 L35 35 L35 50 M50 35 L65 35 L65 50"/><line x1="20" y1="50" x2="80" y2="50" stroke="var(--subtext)" stroke-width="5"/></svg>`,
             l_sit: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="35" cy="25" r="5" fill="var(--accent)"/><path d="M35 30 L35 60 L85 60"/><path d="M35 48 L22 75 M35 48 L48 75"/><line x1="10" y1="75" x2="60" y2="75" stroke="var(--subtext)" stroke-width="4"/></svg>`,
@@ -582,7 +705,6 @@
             hspu_wall: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="42" cy="55" r="5" fill="var(--accent)"/><path d="M42 50 L42 20 L32 5 M42 20 L52 5"/><path d="M42 38 L28 75 M42 38 L56 75"/><line x1="68" y1="5" x2="68" y2="95" stroke="var(--subtext)" stroke-width="5"/></svg>`,
             freestanding_hspu: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="50" cy="50" r="5" fill="var(--accent)"/><path d="M50 45 L50 18 L40 5 M50 18 L60 5"/><path d="M50 35 L30 75 M50 35 L70 75"/><line x1="20" y1="75" x2="80" y2="75" stroke="var(--subtext)" stroke-width="4"/></svg>`,
             impossible_dip: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="25" cy="40" r="5" fill="var(--accent)"/><path d="M25 45 L50 65 L80 65"/><path d="M50 65 L25 65 L15 80"/><line x1="10" y1="80" x2="90" y2="80" stroke="var(--subtext)" stroke-width="4"/></svg>`,
-            
             plank: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="20" cy="45" r="5" fill="var(--accent)"/><path d="M20 50 L85 50"/><path d="M35 50 L35 75 L25 75 M85 50 L85 75"/><line x1="10" y1="75" x2="90" y2="75" stroke="var(--subtext)" stroke-width="4"/></svg>`,
             crunch: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="30" cy="55" r="5" fill="var(--accent)"/><path d="M30 60 C40 60 50 68 50 75 L80 75"/><path d="M30 60 L20 70 M50 75 L65 90 M80 75 L90 90"/><line x1="10" y1="75" x2="90" y2="75" stroke="var(--subtext)" stroke-width="4"/></svg>`,
             hollow_body: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="20" cy="50" r="5" fill="var(--accent)"/><path d="M12 40 L20 45 C45 65 55 65 80 45 L88 40"/><line x1="10" y1="75" x2="90" y2="75" stroke="var(--subtext)" stroke-width="4"/></svg>`,
@@ -693,7 +815,7 @@
             }
         ];
 
-        let userState = JSON.parse(localStorage.getItem('naiontrackState')) || {};
+        let userState = {};
         let currentTheme = localStorage.getItem('naiontrackTheme') || 'default';
         let currentCategoryFilter = localStorage.getItem('naiontrackCategory') || 'all';
 
@@ -732,9 +854,62 @@
             updateUI();
         }
 
+        // SALVATAGGIO DATI (Locale o Firebase)
         function saveState() {
-            localStorage.setItem('naiontrackState', JSON.stringify(userState));
+            if (currentUser) {
+                db.collection("users").doc(currentUser.uid).set({
+                    skills: userState,
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                }, { merge: true }).catch(error => {
+                    console.error("Errore di salvataggio su Firebase: ", error);
+                });
+            } else {
+                localStorage.setItem('naiontrackState', JSON.stringify(userState));
+            }
             updateUI();
+        }
+
+        // CARICAMENTO STATO UTENTE
+        function loadUserData(user) {
+            if (user) {
+                currentUser = user;
+                document.getElementById('user-status-text').innerHTML = `👤 <strong>${user.email}</strong>`;
+                document.getElementById('auth-actions-container').innerHTML = `
+                    <button class="btn-auth-secondary" onclick="logoutUser()">Esci</button>
+                `;
+
+                db.collection("users").doc(user.uid).get().then((doc) => {
+                    if (doc.exists && doc.data().skills) {
+                        userState = doc.data().skills;
+                    } else {
+                        userState = {};
+                    }
+                    updateUI();
+                }).catch((error) => {
+                    console.error("Errore nel recupero dati da Firestore:", error);
+                });
+            } else {
+                currentUser = null;
+                document.getElementById('user-status-text').innerHTML = `👤 Non autenticato (Salvataggio locale)`;
+                document.getElementById('auth-actions-container').innerHTML = `
+                    <button class="btn-auth-secondary" onclick="openAuthModal('login')">Accedi</button>
+                    <button class="btn-auth" onclick="openAuthModal('signup')">Registrati</button>
+                `;
+
+                userState = JSON.parse(localStorage.getItem('naiontrackState')) || {};
+                updateUI();
+            }
+        }
+
+        auth.onAuthStateChanged((user) => {
+            loadUserData(user);
+        });
+
+        function logoutUser() {
+            auth.signOut().then(() => {
+                userState = JSON.parse(localStorage.getItem('naiontrackState')) || {};
+                updateUI();
+            });
         }
 
         function calculateXP() {
@@ -824,7 +999,7 @@
                     const stickmanSvg = skillStickmen[skill.id] || `<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="20" fill="var(--accent)"/></svg>`;
 
                     card.innerHTML = `
-                        <div style="display: flex; align-items: center; gap: 10px; width: 100%; cursor: pointer;" onclick="handleCardTap(event, '${skill.id}')">
+                        <div class="skill-content" onclick="handleCardTap('${skill.id}')">
                             <div class="skill-img-box">
                                 ${stickmanSvg}
                             </div>
@@ -839,17 +1014,17 @@
                                     <p style="color: #eab308; font-weight: bold;">
                                         Sblocca per: +${skill.unlockXp} XP!
                                     </p>
-                                    <p>Tocca la scheda per sbloccare</p>
+                                    <p>Tocca per sbloccare</p>
                                 `}
                             </div>
                         </div>
                         <div class="actions">
                             ${isUnlocked ? `
-                                <input type="number" id="input-${skill.id}" value="${val}" min="0">
+                                <input type="number" id="input-${skill.id}" value="${val}" min="0" onclick="event.stopPropagation()">
                                 <button onclick="event.stopPropagation(); updateSkill('${skill.id}')">Salva</button>
                                 <button class="relock-btn" title="Blocca di nuovo la skill" onclick="event.stopPropagation(); askRelock('${skill.id}')">🔒</button>
                             ` : `
-                                <button class="unlock-btn" onclick="event.stopPropagation(); askUnlock('${skill.id}')">🔒 Sblocca</button>
+                                <button class="unlock-btn" onclick="event.stopPropagation(); askUnlock('${skill.id}')">🔓 Sblocca</button>
                             `}
                         </div>
                     `;
@@ -868,41 +1043,87 @@
             return null;
         }
 
-        /* GESTIONE CUSTOM MODAL POP-UP */
         function openCustomModal(title, text, confirmText, isDanger, onConfirm) {
             const modal = document.getElementById('custom-modal');
             const titleEl = document.getElementById('modal-title');
-            const descEl = document.getElementById('modal-desc');
-            const btnCancel = document.getElementById('modal-btn-cancel');
-            const btnConfirm = document.getElementById('modal-btn-confirm');
+            const bodyContent = document.getElementById('modal-body-content');
+            const actionsBox = document.getElementById('modal-actions-box');
 
             titleEl.innerText = title;
-            descEl.innerHTML = text;
-            btnConfirm.innerText = confirmText;
-
-            if (isDanger) {
-                btnConfirm.className = 'btn-danger-confirm';
-            } else {
-                btnConfirm.className = 'btn-confirm';
-            }
+            bodyContent.innerHTML = `<p id="modal-desc">${text}</p>`;
+            actionsBox.innerHTML = `
+                <button class="btn-cancel" id="modal-btn-cancel">Annulla</button>
+                <button class="${isDanger ? 'btn-danger-confirm' : 'btn-confirm'}" id="modal-btn-confirm">${confirmText}</button>
+            `;
 
             modal.classList.add('active');
 
             const close = () => {
                 modal.classList.remove('active');
-                btnConfirm.onclick = null;
-                btnCancel.onclick = null;
             };
 
-            btnCancel.onclick = close;
-            btnConfirm.onclick = () => {
+            document.getElementById('modal-btn-cancel').onclick = close;
+            document.getElementById('modal-btn-confirm').onclick = () => {
                 onConfirm();
                 close();
             };
         }
 
-        function handleCardTap(e, id) {
-            e.stopPropagation();
+        function openAuthModal(mode) {
+            const modal = document.getElementById('custom-modal');
+            const titleEl = document.getElementById('modal-title');
+            const bodyContent = document.getElementById('modal-body-content');
+            const actionsBox = document.getElementById('modal-actions-box');
+
+            const isLogin = mode === 'login';
+            titleEl.innerText = isLogin ? "🔑 Accedi al tuo Account" : "✨ Registrati";
+
+            bodyContent.innerHTML = `
+                <div class="auth-error" id="auth-error-msg"></div>
+                <div class="auth-form-group">
+                    <label>Email</label>
+                    <input type="email" id="auth-email" placeholder="latua@email.com">
+                </div>
+                <div class="auth-form-group">
+                    <label>Password</label>
+                    <input type="password" id="auth-password" placeholder="••••••••">
+                </div>
+            `;
+
+            actionsBox.innerHTML = `
+                <button class="btn-cancel" id="modal-btn-cancel">Annulla</button>
+                <button class="btn-confirm" id="auth-submit-btn">${isLogin ? "Accedi" : "Registrati"}</button>
+            `;
+
+            modal.classList.add('active');
+
+            document.getElementById('modal-btn-cancel').onclick = () => modal.classList.remove('active');
+
+            document.getElementById('auth-submit-btn').onclick = () => {
+                const email = document.getElementById('auth-email').value.trim();
+                const password = document.getElementById('auth-password').value;
+                const errorEl = document.getElementById('auth-error-msg');
+
+                if (!email || !password) {
+                    errorEl.innerText = "Compila tutti i campi.";
+                    return;
+                }
+
+                const authPromise = isLogin 
+                    ? auth.signInWithEmailAndPassword(email, password)
+                    : auth.createUserWithEmailAndPassword(email, password);
+
+                authPromise
+                    .then(() => {
+                        modal.classList.remove('active');
+                    })
+                    .catch((error) => {
+                        errorEl.innerText = error.message;
+                    });
+            };
+        }
+
+        function handleCardTap(id) {
             const skillData = userState[id] || { unlocked: false, val: 0 };
             if (!skillData.unlocked) {
                 askUnlock(id);
@@ -946,7 +1167,9 @@
         }
 
         function updateSkill(id) {
-            const val = parseInt(document.getElementById(`input-${id}`).value) || 0;
+            const input = document.getElementById(`input-${id}`);
+            if (!input) return;
+            const val = parseInt(input.value) || 0;
             if (!userState[id]) {
                 userState[id] = { unlocked: true, val: val };
             } else {
@@ -955,10 +1178,8 @@
             saveState();
         }
 
-        // Inizializzazione
         initCategorySelect();
         applyTheme(currentTheme);
-        updateUI();
     </script>
 </body>
 </html>
