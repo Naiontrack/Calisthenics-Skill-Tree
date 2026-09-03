@@ -2591,6 +2591,9 @@
                     container.innerHTML = html;
                 }, (error) => {
                     console.error("Errore nel caricamento delle chat private:", error);
+                    if (error && error.message) {
+                        console.error("Dettaglio Firestore (cerca qui il link per creare l'indice):", error.message);
+                    }
                     container.innerHTML = `<p style="color: var(--subtext); text-align:center; font-size:0.85rem;">Errore nel caricamento delle chat.</p>`;
                 });
         }
