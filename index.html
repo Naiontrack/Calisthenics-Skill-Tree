@@ -1048,29 +1048,43 @@ function validateEmail(email) {
 }
 
 // Monitoraggio dello stato di autenticazione in tempo reale
+// Ascolta i cambiamenti dello stato di autenticazione in tempo reale
 if (window.firebaseAuth && window.firebaseFns) {
     const { onAuthStateChanged } = window.firebaseFns;
+    
     onAuthStateChanged(window.firebaseAuth, async (user) => {
-        currentUser = user;
-        const statusEl = document.getElementById('user-status');
-        const actionsEl = document.getElementById('auth-actions');
-
+        const authStatusEl = document.getElementById('user-status'); // Elemento UI dove mostri lo stato
+        
         if (user) {
-            // Utente loggato: controlliamo se ha un nickname
+            // L'utente è loggato
+            currentUser = user;
+            
+            // Controlla se ha un nickname, altrimenti mostra il modale per crearlo
             const nickname = await getUserNickname(user.uid);
             if (!nickname) {
                 openNicknameModal(user.uid);
+            } else {
+                if (authStatusEl) {
+                    authStatusEl.innerHTML = `👤 Loggato come: <strong>${nickname}</strong>`;
+                }
             }
             
-            if (statusEl) {
-                statusEl.innerHTML = `👤 Loggato come: <strong>${nickname || user.email}</strong>`;
-            }
-            if (actionsEl) {
-                actionsEl.innerHTML = `
-                    <button class="relock-btn" onclick="logoutUser()">Esci</button> 
-                    <button onclick="openNicknameModal('${user.uid}')" style="background: var(--card-bg); border: 1px solid var(--accent); color: var(--text); padding: 5px 10px; border-radius: 4px; cursor: pointer;">Cambia Nickname</button>
+            // Sblocca/carica i progressi dal cloud
+            await loadUserDataFromCloud(user.uid);
+            updateLeaderboard();
+            
+        } else {
+            // L'utente NON è loggato
+            currentUser = null;
+            if (authStatusEl) {
+                authStatusEl.innerHTML = `
+                    <button onclick="openAuthModal('login')" class="custom-btn">Accedi</button>
+                    <button onclick="openAuthModal('register')" class="custom-btn">Registrati</button>
                 `;
             }
+        }
+    });
+}
             
             // SCARICA I DATI DAL CLOUD SUL NUOVO DISPOSITIVO
             await loadUserDataFromCloud(user.uid);
@@ -1201,7 +1215,7 @@ async function logoutUser() {
     }
 }
 
-// Funzioni per i modali di autenticazione (Login / Registrazione) con Google e Apple
+// Funzioni per i modali di autenticazione (Login / Registrazione)
 function openAuthModal(mode) {
     const isLogin = mode === 'login';
     openCustomModal(
@@ -1209,35 +1223,19 @@ function openAuthModal(mode) {
         `
         <div style="display: flex; flex-direction: column; gap: 10px; text-align: left; margin-top: 10px;">
             <label style="font-size: 0.85rem; color: var(--subtext);">Email</label>
-            <input type="email" id="auth-email" class="custom-select" style="width: 100%; max-width: none; box-sizing: border-box;" placeholder="tuamail@email.com">
+            <input type="email5" id="auth-email" class="custom-select" style="width: 100%; max-width: none; box-sizing: border-box;" placeholder="tuamail@email.com">
             
             <label style="font-size: 0.85rem; color: var(--subtext);">Password (min 8 caratteri, 1 simbolo)</label>
             <input type="password" id="auth-password" class="custom-select" style="width: 100%; max-width: none; box-sizing: border-box;" placeholder="••••••••">
             
             <div id="auth-error-msg" style="color: var(--danger); font-size: 0.8rem; display: none; margin-top: 4px;"></div>
-
-            <hr style="border: 0; border-top: 1px solid var(--border); margin: 10px 0;">
-
-            <button type="button" id="google-auth-btn" class="custom-btn" style="background: #db4437; color: white; width: 100%; margin-bottom: 5px;">
-                <i class="fab fa-google"></i> Accedi con Google
-            </button>
-            <button type="button" id="apple-auth-btn" class="custom-btn" style="background: #000; color: white; width: 100%;">
-                <i class="fab fa-apple"></i> Accedi con Apple
-            </button>
         </div>
         `,
         isLogin ? "Accedi" : "Registrati",
-        false, // Impostato a false per impedire la chiusura automatica al click del pulsante principale
+        false,
         async () => {
             const email = document.getElementById('auth-email').value.trim();
             const password = document.getElementById('auth-password').value;
-            const errorDiv = document.getElementById('auth-error-msg');
-
-            // Funzione di supporto per mostrare l'errore nel modale senza chiuderlo
-            const showAuthError = (msg) => {
-                errorDiv.innerText = msg;
-                errorDiv.style.display = 'block';
-            };
 
             if (!validateEmail(email)) {
                 showAuthError("Inserisci un'email valida.");
@@ -1256,69 +1254,134 @@ function openAuthModal(mode) {
                     const cred = await createUserWithEmailAndPassword(window.firebaseAuth, email, password);
                     openNicknameModal(cred.user.uid);
                 }
-                safeCloseModal(); // Chiude il modale solo se l'operazione ha successo
+                safeCloseModal();
             } catch (error) {
-                showAuthError(error.message); // Mostra l'errore restituito da Firebase
+                showAuthError(error.message);
             }
         }
     );
-
-    // Gestione eventi per i provider esterni (Google e Apple)
-    setTimeout(() => {
-        const { signInWithPopup, GoogleAuthProvider, OAuthProvider } = window.firebaseFns;
-
-        const googleBtn = document.getElementById('google-auth-btn');
-        if (googleBtn) {
-            googleBtn.onclick = async () => {
-                try {
-                    const provider = new GoogleAuthProvider();
-                    const result = await signInWithPopup(window.firebaseAuth, provider);
-                    const user = result.user;
-                    
-                    // Controlla se l'utente ha già un nickname salvato, altrimenti lo richiede
-                    const nickname = await getUserNickname(user.uid);
-                    if (!nickname) {
-                        openNicknameModal(user.uid);
-                    } else {
-                        updateLeaderboard();
-                    }
-                    safeCloseModal();
-                } catch (error) {
-                    const errorDiv = document.getElementById('auth-error-msg');
-                    if(errorDiv) {
-                        errorDiv.innerText = error.message;
-                        errorDiv.style.display = 'block';
-                    }
-                }
-            };
-        }
-
-        const appleBtn = document.getElementById('apple-auth-btn');
-        if (appleBtn) {
-            appleBtn.onclick = async () => {
-                try {
-                    const provider = new OAuthProvider('apple.com');
-                    const result = await signInWithPopup(window.firebaseAuth, provider);
-                    const user = result.user;
-
-                    const nickname = await getUserNickname(user.uid);
-                    if (!nickname) {
-                        openNicknameModal(user.uid);
-                    } else {
-                        updateLeaderboard();
-                    }
-                    safeCloseModal();
-                } catch (error) {
-                    const errorDiv = document.getElementById('auth-error-msg');
-                    if(errorDiv) {
-                        errorDiv.innerText = error.message;
-                        errorDiv.style.display = 'block';
-                    }
-                }
-            };
-        }
-    }, 100);
 }
+
+// Gestione del Nickname utente
+async function getUserNickname(uid) {
+    if (!window.firebaseDb || !window.firebaseFns) return null;
+    const { doc, getDoc } = window.firebaseFns;
+    try {
+        const userDoc = await getDoc(doc(window.firebaseDb, "users", uid));
+        if (userDoc.exists()) {
+            return userDoc.data().nickname;
+        }
+    } catch (e) {
+        console.error("Errore recupero nickname:", e);
+    }
+    return null;
+}
+
+function openNicknameModal(uid) {
+    openCustomModal(
+        "o Scegli un Nickname",
+        `
+        <div style="display: flex; flex-direction: column; gap: 10px; text-align: left; margin-top: 10px;">
+            <label style="font-size: 0.85rem; color: var(--subtext);">Inserisci il tuo nome atleta per la classifica:</label>
+            <input type="text" id="user-nickname-input" class="custom-select" style="width: 100%; max-width: none; box-sizing: border-box;" placeholder="Es. Naiontrack">
+        </div>
+        `,
+        "Salva Nickname",
+        false,
+        async () => {
+            const nickname = document.getElementById('user-nickname-input').value.trim();
+            if (!nickname) return;
+
+            const { doc, setDoc } = window.firebaseFns;
+            try {
+                await setDoc(doc(window.firebaseDb, "users", uid), {
+                    nickname: nickname,
+                    totalXp: calculateXP(),
+                    updatedAt: new Date().toISOString()
+                }, { merge: true });
+                
+                updateLeaderboard();
+                if (currentUser) {
+                    document.getElementById('user-status').innerHTML = `👤 Loggato come: <strong>${nickname}</strong>`;
+                }
+            } catch (e) {
+                console.error("Errore salvataggio nickname:", e);
+            }
+        }
+    );
+}
+
+// Sincronizzazione cloud dei dati utente
+async function saveUserDataToCloud(uid) {
+    if (!window.firebaseDb || !window.firebaseFns) return;
+    const { doc, setDoc } = window.firebaseFns;
+    const totalXp = calculateXP();
+    try {
+        await setDoc(doc(window.firebaseDb, "users", uid), {
+            state: userState,
+            totalXp: totalXp,
+            updatedAt: new Date().toISOString()
+        }, { merge: true });
+        updateLeaderboard();
+    } catch (e) {
+        console.error("Errore nel salvataggio cloud:", e);
+    }
+}
+async function loadUserDataFromCloud(uid) {
+    if (!window.firebaseDb || !window.firebaseFns) return;
+    const { doc, getDoc } = window.firebaseFns;
+    try {
+        const userDoc = await getDoc(doc(window.firebaseDb, "users", uid));
+        if (userDoc.exists() && userDoc.data().state) {
+            userState = userDoc.data().state; // Aggiorna lo stato locale con quello salvato nel cloud
+            
+            if (typeof saveState === 'function') saveState(); // Salva in locale
+            if (typeof renderApp === 'function') renderApp(); // AGGIORNA LA GRAFICA (fondamentale per sbloccare le skill!)
+        }
+    } catch (e) {
+        console.error("Errore nel caricamento cloud:", e);
+    }
+}
+
+// Classifica Globale Atleti
+async function updateLeaderboard() {
+    const listEl = document.getElementById('leaderboard-list');
+    if (!listEl || !window.firebaseDb || !window.firebaseFns) return;
+
+    const { collection, getDocs, query, orderBy, limit } = window.firebaseFns;
+    try {
+        const q = query(collection(window.firebaseDb, "users"), orderBy("totalXp", "desc"), limit(5));
+        const querySnapshot = await getDocs(q);
+        
+        let html = '<ol style="margin: 0; padding-left: 20px; font-size: 0.9rem;">';
+        let foundAny = false;
+
+        querySnapshot.forEach((docSnap) => {
+            foundAny = true;
+            const data = docSnap.data();
+            const name = data.nickname || "Atleta Anonimo";
+            const xp = data.totalXp || 0;
+            html += `<li style="margin-bottom: 4px;"><strong>${name}</strong> — <span style="color: var(--accent);">${xp} XP</span></li>`;
+        });
+
+        html += '</ol>';
+        listEl.innerHTML = foundAny ? html : "Nessun atleta in classifica.";
+    } catch (e) {
+        console.error("Errore caricamento classifica:", e);
+        listEl.innerHTML = "Impossibile caricare la classifica.";
+    }
+}
+
+async function logoutUser() {
+    if (window.firebaseAuth && window.firebaseFns) {
+        const { signOut } = window.firebaseFns;
+        await signOut(window.firebaseAuth);
+        window.location.reload();
+    }
+}
+
+// Aggiorna periodicamente la classifica all'avvio
+setTimeout(updateLeaderboard, 1000);
     </script>
 </body>
 </html>
