@@ -1014,14 +1014,11 @@
         updateUI();
        // --- GESTIONE AUTENTICAZIONE E CLASSIFICA FIREBASE ---
 
-// --- GESTIONE AUTENTICAZIONE E CLASSIFICA AGGIORNATA ---
-
-// --- GESTIONE AUTENTICAZIONE E CLASSIFICA AGGIORNATA (DEFINITIVA) ---
-
-// --- CODICE DEFINITIVO FIREBASE & AUTH (NAIONTRACK) ---
+// --- CODICE FIREBASE DEFINITIVO PER CALISTHENICS APP ---
 
 let currentUser = null;
 
+// Gestione errori visiva nel popup
 function showAuthError(message) {
     const errorEl = document.getElementById('auth-error-msg');
     if (errorEl) {
@@ -1030,6 +1027,7 @@ function showAuthError(message) {
     }
 }
 
+// Chiusura sicura dei modali
 function safeCloseModal() {
     if (typeof closeCustomModal === 'function') {
         closeCustomModal();
@@ -1040,6 +1038,7 @@ function safeCloseModal() {
     }
 }
 
+// Validazioni di sicurezza
 function validatePassword(password) {
     return password.length >= 8 && /[!@#$%^&*(),.?":{}|<>]/.test(password);
 }
@@ -1048,7 +1047,7 @@ function validateEmail(email) {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
-// 1. GESTIONE STATO AUTENTICAZIONE (Sincronizzazione UI e Cloud)
+// Monitoraggio dello stato di autenticazione in tempo reale
 if (window.firebaseAuth && window.firebaseFns) {
     const { onAuthStateChanged } = window.firebaseFns;
     onAuthStateChanged(window.firebaseAuth, async (user) => {
@@ -1057,27 +1056,27 @@ if (window.firebaseAuth && window.firebaseFns) {
         const actionsEl = document.getElementById('auth-actions');
 
         if (user) {
-            // Recupera o richiede il nickname
+            // Utente loggato: controlliamo se ha un nickname
             const nickname = await getUserNickname(user.uid);
             if (!nickname) {
                 openNicknameModal(user.uid);
             }
-
+            
             if (statusEl) {
-                statusEl.innerHTML = `👤 Loggato: <strong>${nickname || user.email}</strong>`;
+                statusEl.innerHTML = `👤 Loggato come: <strong>${nickname || user.email}</strong>`;
             }
             if (actionsEl) {
                 actionsEl.innerHTML = `
                     <button class="relock-btn" onclick="logoutUser()">Esci</button> 
-                    <button onclick="openNicknameModal('${user.uid}')" style="background: var(--card-bg); border: 1px solid var(--accent); color: var(--text); padding: 5px 10px; border-radius: 4px; cursor: pointer;">Nick</button>
+                    <button onclick="openNicknameModal('${user.uid}')" style="background: var(--card-bg); border: 1px solid var(--accent); color: var(--text); padding: 5px 10px; border-radius: 4px; cursor: pointer;">Cambia Nickname</button>
                 `;
             }
-
-            // 2. SCARICA I DATI DAL CLOUD APPENA LOGGATO (Risolve il problema su altri dispositivi)
+            
+            // SCARICA I DATI DAL CLOUD SUL NUOVO DISPOSITIVO
             await loadUserDataFromCloud(user.uid);
         } else {
             if (statusEl) {
-                statusEl.innerHTML = `⚠️ Non sei loggato (Salvataggio locale)`;
+                statusEl.innerHTML = `⚠️ Non sei loggato (Salvataggio solo locale)`;
             }
             if (actionsEl) {
                 actionsEl.innerHTML = `
@@ -1086,11 +1085,11 @@ if (window.firebaseAuth && window.firebaseFns) {
                 `;
             }
         }
-        // 3. AGGIORNA CLASSIFICA
         loadLeaderboard();
     });
 }
 
+// Recupero nickname da Firestore
 async function getUserNickname(uid) {
     try {
         const { doc, getDoc } = window.firebaseFns;
@@ -1104,6 +1103,7 @@ async function getUserNickname(uid) {
     return null;
 }
 
+// Modale per la scelta del Nickname
 function openNicknameModal(uid) {
     if (typeof openCustomModal !== 'function') return;
     openCustomModal(
@@ -1136,13 +1136,14 @@ function openNicknameModal(uid) {
     );
 }
 
+// Autenticazione Email/Password
 async function registerUser(email, password) {
     if (!validateEmail(email)) {
         showAuthError("Inserisci un'email valida!");
         return;
     }
     if (!validatePassword(password)) {
-        showAuthError("Password debole: min 8 caratteri e un carattere speciale.");
+        showAuthError("La password deve avere min 8 caratteri e un carattere speciale (!@#$%^&*...)");
         return;
     }
     try {
@@ -1164,10 +1165,11 @@ async function loginUser(email, password) {
         await signInWithEmailAndPassword(window.firebaseAuth, email, password);
         safeCloseModal();
     } catch (error) {
-        showAuthError("Credenziali non corrette.");
+        showAuthError("Credenziali non corrette o errore di accesso.");
     }
 }
 
+// Social Login
 async function loginWithGoogle() {
     try {
         const { GoogleAuthProvider, signInWithPopup } = window.firebaseFns;
@@ -1175,7 +1177,7 @@ async function loginWithGoogle() {
         await signInWithPopup(window.firebaseAuth, provider);
         safeCloseModal();
     } catch (error) {
-        showAuthError("Errore Google: " + error.message);
+        showAuthError("Errore login con Google: " + error.message);
     }
 }
 
@@ -1186,7 +1188,7 @@ async function loginWithApple() {
         await signInWithPopup(window.firebaseAuth, provider);
         safeCloseModal();
     } catch (error) {
-        showAuthError("Errore Apple: " + error.message);
+        showAuthError("Errore login con Apple: " + error.message);
     }
 }
 
@@ -1194,14 +1196,17 @@ async function logoutUser() {
     try {
         const { signOut } = window.firebaseFns;
         await signOut(window.firebaseAuth);
-        location.reload();
     } catch (error) {
         console.error("Errore logout", error);
     }
 }
 
+// Finestra modale di accesso/registrazione
 function openAuthModal(mode) {
-    if (typeof openCustomModal !== 'function') return;
+    if (typeof openCustomModal !== 'function') {
+        alert("Sistema modale non disponibile.");
+        return;
+    }
     const isReg = mode === 'register';
     openCustomModal(
         isReg ? "📝 Registrati" : "🔑 Accedi",
@@ -1251,10 +1256,12 @@ function handleAuthSubmit(mode) {
     }
 }
 
-// 4. SALVATAGGIO STATO E XP (Ripristina i tasti sblocca originali)
+// SALVATAGGIO DEI DATI (Sia locale che cloud su Firestore)
 async function saveState() {
+    // 1. Salva sempre nel browser (localStorage) per sicurezza immediata
     localStorage.setItem('naiontrackState', JSON.stringify(userState));
     
+    // 2. Se l'utente è loggato, salva in tempo reale sul database cloud
     if (currentUser && window.firebaseDb && window.firebaseFns) {
         const { doc, setDoc, getDoc } = window.firebaseFns;
         const totalXp = typeof calculateXP === 'function' ? calculateXP() : 0;
@@ -1270,35 +1277,40 @@ async function saveState() {
                 totalXp: totalXp
             }, { merge: true });
             
-            loadLeaderboard();
+            loadLeaderboard(); // Aggiorna la classifica globale istantaneamente
         } catch (e) {
             console.error("Errore salvataggio cloud: ", e);
         }
     }
+    
     if (typeof updateUI === 'function') {
         updateUI();
     }
 }
 
-// 5. CARICAMENTO DATI DAL CLOUD (Sincronizzazione multi-dispositivo)
+// CARICAMENTO DEI DATI DAL CLOUD (Sincronizzazione multi-dispositivo)
 async function loadUserDataFromCloud(uid) {
     try {
         const { doc, getDoc } = window.firebaseFns;
-        const docSnap = await getDoc(doc(window.firebaseDb, "users", uid));
+        const docRef = doc(window.firebaseDb, "users", uid);
+        const docSnap = await getDoc(docRef);
         
         if (docSnap.exists() && docSnap.data().state) {
+            // Aggiorna lo stato locale con i dati salvati nel cloud dell'utente
             userState = docSnap.data().state;
             localStorage.setItem('naiontrackState', JSON.stringify(userState));
+            
             if (typeof updateUI === 'function') {
                 updateUI();
             }
+            console.log("Dati caricati con successo dal cloud!");
         }
     } catch (e) {
-        console.error("Errore caricamento dati cloud: ", e);
+        console.error("Errore caricamento cloud: ", e);
     }
 }
 
-// 6. CLASSIFICA GLOBALE DINAMICA
+// CLASSIFICA GLOBALE (Legge i top 5 utenti ordinati per XP)
 async function loadLeaderboard() {
     const listEl = document.getElementById('leaderboard-list');
     if (!listEl || !window.firebaseDb || !window.firebaseFns) return;
@@ -1319,9 +1331,9 @@ async function loadLeaderboard() {
         });
 
         html += "</ol>";
-        listEl.innerHTML = foundAny ? html : "<p style='margin:0; color: var(--subtext);'>Ancora nessun atleta in classifica.</p>";
+        listEl.innerHTML = foundAny ? html : "<p style='margin:0; color: var(--subtext);'>Ancora nessun atleta in classifica. Sii il primo!</p>";
     } catch (e) {
-        listEl.innerHTML = "<p style='margin:0; color: var(--danger);'>Classifica non disponibile (verifica indici Firestore).</p>";
+        listEl.innerHTML = "<p style='margin:0; color: var(--danger);'>Impossibile caricare la classifica.</p>";
     }
 }
     </script>
