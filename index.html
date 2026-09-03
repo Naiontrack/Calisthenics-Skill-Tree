@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Occhionero's Calisthenics Tree</title>
+    <title>Naiontrack's Calisthenics Progression</title>
     <style>
         :root {
             /* TEMA PREDEFINITO (Futuristic Dark) */
@@ -446,7 +446,7 @@
 
     <div class="header">
         <div class="top-bar">
-            <h1>Occhionero's Calisthenics Tree</h1>
+            <h1>Naiontrack's Calisthenics</h1>
             <div class="theme-selector">
                 <label for="themeSelect">🎨 Tema:</label>
                 <select id="themeSelect" class="theme-select" onchange="changeTheme(this.value)">
@@ -497,17 +497,17 @@
 
         const ranks = [
             { name: "Bronzo (Novizio)", minXp: 0, iconSvg: rankLogos.bronze },
-            { name: "Argento (Atleta Base)", minXp: 1000, iconSvg: rankLogos.silver },
-            { name: "Oro (Intermedio)", minXp: 3000, iconSvg: rankLogos.gold },
-            { name: "Platino (Avanzato)", minXp: 7500, iconSvg: rankLogos.platinum },
-            { name: "Smeraldo (Specialista)", minXp: 15000, iconSvg: rankLogos.emerald },
-            { name: "Diamante (Esperto Leve)", minXp: 28000, iconSvg: rankLogos.diamond },
-            { name: "Master (Maestro di Forza)", minXp: 45000, iconSvg: rankLogos.master },
-            { name: "GrandMaster (Elite Atleta)", minXp: 70000, iconSvg: rankLogos.grandmaster },
-            { name: "Challenger (Campione)", minXp: 105000, iconSvg: rankLogos.challenger },
-            { name: "Titano (Forza Sovrumana)", minXp: 150000, iconSvg: rankLogos.titan },
-            { name: "Overhuman (Leggenda Vivente)", minXp: 220000, iconSvg: rankLogos.overhuman },
-            { name: "Godlike (Divinità del Calisthenics)", minXp: 320000, iconSvg: rankLogos.godlike }
+            { name: "Argento (Atleta Base)", minXp: 1500, iconSvg: rankLogos.silver },
+            { name: "Oro (Intermedio)", minXp: 4500, iconSvg: rankLogos.gold },
+            { name: "Platino (Avanzato)", minXp: 11000, iconSvg: rankLogos.platinum },
+            { name: "Smeraldo (Specialista)", minXp: 22000, iconSvg: rankLogos.emerald },
+            { name: "Diamante (Esperto Leve)", minXp: 40000, iconSvg: rankLogos.diamond },
+            { name: "Master (Maestro di Forza)", minXp: 65000, iconSvg: rankLogos.master },
+            { name: "GrandMaster (Elite Atleta)", minXp: 100000, iconSvg: rankLogos.grandmaster },
+            { name: "Challenger (Campione)", minXp: 150000, iconSvg: rankLogos.challenger },
+            { name: "Titano (Forza Sovrumana)", minXp: 220000, iconSvg: rankLogos.titan },
+            { name: "Overhuman (Leggenda Vivente)", minXp: 320000, iconSvg: rankLogos.overhuman },
+            { name: "Godlike (Divinità del Calisthenics)", minXp: 450000, iconSvg: rankLogos.godlike }
         ];
 
         const skillStickmen = {
@@ -516,6 +516,11 @@
             pushups: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="20" cy="45" r="5" fill="var(--accent)"/><path d="M20 50 L85 70"/><path d="M40 55 L40 80"/><line x1="10" y1="80" x2="90" y2="80" stroke="var(--subtext)" stroke-width="4"/></svg>`,
             diamond_pushups: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="20" cy="45" r="5" fill="var(--accent)"/><path d="M20 50 L85 70"/><path d="M38 55 L45 80"/><line x1="10" y1="80" x2="90" y2="80" stroke="var(--subtext)" stroke-width="4"/></svg>`,
             pseudo_pushups: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="15" cy="50" r="5" fill="var(--accent)"/><path d="M15 55 L85 70"/><path d="M50 62 L35 80"/><line x1="10" y1="80" x2="90" y2="80" stroke="var(--subtext)" stroke-width="4"/></svg>`,
+            clap_pushups: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="25" cy="35" r="5" fill="var(--accent)"/><path d="M25 40 L85 60"/><path d="M45 47 L40 60 L50 60"/><line x1="10" y1="80" x2="90" y2="80" stroke="var(--subtext)" stroke-width="4"/></svg>`,
+            double_clap_pushups: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="30" cy="25" r="5" fill="var(--accent)"/><path d="M30 30 L85 55"/><path d="M50 39 L45 52 L55 52"/><line x1="10" y1="80" x2="90" y2="80" stroke="var(--subtext)" stroke-width="4"/></svg>`,
+            behind_back_clap: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="30" cy="22" r="5" fill="var(--accent)"/><path d="M30 27 L85 52"/><path d="M45 34 L35 30 L40 42"/><line x1="10" y1="80" x2="90" y2="80" stroke="var(--subtext)" stroke-width="4"/></svg>`,
+            one_arm_pushup: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="20" cy="45" r="5" fill="var(--accent)"/><path d="M20 50 L85 70"/><path d="M45 56 L40 80"/><line x1="10" y1="80" x2="90" y2="80" stroke="var(--subtext)" stroke-width="4"/></svg>`,
+            one_arm_russian: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="20" cy="50" r="5" fill="var(--accent)"/><path d="M20 55 L85 75"/><path d="M45 61 L35 80 L50 80"/><line x1="10" y1="80" x2="90" y2="80" stroke="var(--subtext)" stroke-width="4"/></svg>`,
             tuck_planche: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="30" cy="35" r="5" fill="var(--accent)"/><path d="M30 40 L50 42 L35 60 L50 60"/><path d="M40 41 L40 80"/><line x1="15" y1="80" x2="85" y2="80" stroke="var(--subtext)" stroke-width="4"/></svg>`,
             adv_tuck_planche: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="25" cy="38" r="5" fill="var(--accent)"/><path d="M25 43 L55 43 L55 68"/><path d="M38 43 L38 80"/><line x1="15" y1="80" x2="85" y2="80" stroke="var(--subtext)" stroke-width="4"/></svg>`,
             straddle_planche: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="20" cy="40" r="5" fill="var(--accent)"/><path d="M20 45 L50 45"/><path d="M50 45 L80 30 M50 45 L80 60"/><path d="M35 45 L35 80"/><line x1="10" y1="80" x2="90" y2="80" stroke="var(--subtext)" stroke-width="4"/></svg>`,
@@ -530,7 +535,17 @@
             straddle_fl: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="20" cy="50" r="5" fill="var(--accent)"/><path d="M20 55 L50 55"/><path d="M50 55 L80 38 M50 55 L80 72"/><path d="M38 55 L38 20"/><line x1="15" y1="20" x2="65" y2="20" stroke="var(--subtext)" stroke-width="5"/></svg>`,
             full_fl: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="15" cy="50" r="5" fill="var(--accent)"/><path d="M15 55 L88 55"/><path d="M38 55 L38 20"/><line x1="15" y1="20" x2="65" y2="20" stroke="var(--subtext)" stroke-width="5"/></svg>`,
             one_arm_pullup: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="45" cy="22" r="5" fill="var(--accent)"/><path d="M45 27 L45 65 L35 88 M45 65 L55 88"/><path d="M45 35 L50 20 M45 35 L30 50"/><line x1="20" y1="20" x2="80" y2="20" stroke="var(--subtext)" stroke-width="5"/></svg>`,
-            victorian: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="15" cy="28" r="5" fill="var(--accent)"/><path d="M15 33 L88 33"/><path d="M40 33 L40 60 M55 33 L55 60"/><line x1="10" y1="60" x2="85" y2="60" stroke="var(--subtext)" stroke-width="5"/></svg>`,
+            
+            ring_support: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="50" cy="30" r="5" fill="var(--accent)"/><path d="M50 35 L50 70 L40 90 M50 70 L60 90"/><path d="M50 42 L30 42 M50 42 L70 42"/><circle cx="30" cy="42" r="6" stroke="var(--subtext)" stroke-width="3"/><circle cx="70" cy="42" r="6" stroke="var(--subtext)" stroke-width="3"/><line x1="30" y1="5" x2="30" y2="36" stroke="var(--subtext)" stroke-width="2"/><line x1="70" y1="5" x2="70" y2="36" stroke="var(--subtext)" stroke-width="2"/></svg>`,
+            ring_dips: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="50" cy="22" r="5" fill="var(--accent)"/><path d="M50 27 L50 65 L40 88 M50 65 L60 88"/><path d="M50 35 L32 35 L32 48 M50 35 L68 35 L68 48"/><circle cx="32" cy="48" r="6" stroke="var(--subtext)" stroke-width="3"/><circle cx="68" cy="48" r="6" stroke="var(--subtext)" stroke-width="3"/><line x1="32" y1="5" x2="32" y2="42" stroke="var(--subtext)" stroke-width="2"/><line x1="68" y1="5" x2="68" y2="42" stroke="var(--subtext)" stroke-width="2"/></svg>`,
+            ring_muscle_up: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="50" cy="18" r="5" fill="var(--accent)"/><path d="M50 23 L50 65 L40 88 M50 65 L60 88"/><path d="M50 35 L30 48 M50 35 L70 48"/><circle cx="30" cy="48" r="6" stroke="var(--subtext)" stroke-width="3"/><circle cx="70" cy="48" r="6" stroke="var(--subtext)" stroke-width="3"/><line x1="30" y1="5" x2="30" y2="42" stroke="var(--subtext)" stroke-width="2"/><line x1="68" y1="5" x2="68" y2="42" stroke="var(--subtext)" stroke-width="2"/></svg>`,
+            iron_cross: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="50" cy="25" r="5" fill="var(--accent)"/><path d="M50 30 L50 70 L40 92 M50 70 L60 92"/><path d="M50 38 L18 38 M50 38 L82 38"/><circle cx="18" cy="38" r="6" stroke="var(--subtext)" stroke-width="3"/><circle cx="82" cy="38" r="6" stroke="var(--subtext)" stroke-width="3"/><line x1="18" y1="5" x2="18" y2="32" stroke="var(--subtext)" stroke-width="2"/><line x1="82" y1="5" x2="82" y2="32" stroke="var(--subtext)" stroke-width="2"/></svg>`,
+            victorian: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="15" cy="35" r="5" fill="var(--accent)"/><path d="M15 40 L88 40"/><path d="M40 40 L40 60 M55 40 L55 60"/><circle cx="40" cy="60" r="5" stroke="var(--subtext)" stroke-width="3"/><circle cx="55" cy="60" r="5" stroke="var(--subtext)" stroke-width="3"/><line x1="40" y1="5" x2="40" y2="55" stroke="var(--subtext)" stroke-width="2"/><line x1="55" y1="5" x2="55" y2="55" stroke="var(--subtext)" stroke-width="2"/></svg>`,
+
+            pullover: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="50" cy="28" r="5" fill="var(--accent)"/><path d="M50 33 C70 20 70 60 50 50"/><line x1="15" y1="50" x2="85" y2="50" stroke="var(--subtext)" stroke-width="5"/></svg>`,
+            spin_360: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="50" cy="30" r="5" fill="var(--accent)"/><path d="M50 35 L50 75 M40 85 L60 85"/><path d="M30 45 C40 20 60 20 70 45" stroke-dasharray="3 3"/><line x1="15" y1="45" x2="85" y2="45" stroke="var(--subtext)" stroke-width="5"/></svg>`,
+            freestyle_combo: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="40" cy="25" r="5" fill="var(--accent)"/><path d="M40 30 L65 50 L85 30"/><path d="M40 35 L20 15"/><line x1="10" y1="60" x2="90" y2="60" stroke="var(--subtext)" stroke-width="5"/></svg>`,
+
             bench_dips: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="35" cy="30" r="5" fill="var(--accent)"/><path d="M35 35 L35 60 L75 60"/><path d="M35 42 L20 42 L20 60"/><line x1="10" y1="60" x2="30" y2="60" stroke="var(--subtext)" stroke-width="5"/><line x1="60" y1="75" x2="90" y2="75" stroke="var(--subtext)" stroke-width="4"/></svg>`,
             bar_dips: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="50" cy="20" r="5" fill="var(--accent)"/><path d="M50 25 L50 65 L40 88 M50 65 L60 88"/><path d="M50 35 L35 35 L35 50 M50 35 L65 35 L65 50"/><line x1="20" y1="50" x2="80" y2="50" stroke="var(--subtext)" stroke-width="5"/></svg>`,
             l_sit: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="35" cy="25" r="5" fill="var(--accent)"/><path d="M35 30 L35 60 L85 60"/><path d="M35 48 L22 75 M35 48 L48 75"/><line x1="10" y1="75" x2="60" y2="75" stroke="var(--subtext)" stroke-width="4"/></svg>`,
@@ -540,6 +555,10 @@
             hspu_wall: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="42" cy="55" r="5" fill="var(--accent)"/><path d="M42 50 L42 20 L32 5 M42 20 L52 5"/><path d="M42 38 L28 75 M42 38 L56 75"/><line x1="68" y1="5" x2="68" y2="95" stroke="var(--subtext)" stroke-width="5"/></svg>`,
             freestanding_hspu: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="50" cy="50" r="5" fill="var(--accent)"/><path d="M50 45 L50 18 L40 5 M50 18 L60 5"/><path d="M50 35 L30 75 M50 35 L70 75"/><line x1="20" y1="75" x2="80" y2="75" stroke="var(--subtext)" stroke-width="4"/></svg>`,
             impossible_dip: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="25" cy="40" r="5" fill="var(--accent)"/><path d="M25 45 L50 65 L80 65"/><path d="M50 65 L25 65 L15 80"/><line x1="10" y1="80" x2="90" y2="80" stroke="var(--subtext)" stroke-width="4"/></svg>`,
+            
+            plank: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="20" cy="45" r="5" fill="var(--accent)"/><path d="M20 50 L85 50"/><path d="M35 50 L35 75 L25 75 M85 50 L85 75"/><line x1="10" y1="75" x2="90" y2="75" stroke="var(--subtext)" stroke-width="4"/></svg>`,
+            crunch: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="30" cy="55" r="5" fill="var(--accent)"/><path d="M30 60 C40 60 50 68 50 75 L80 75"/><path d="M30 60 L20 70 M50 75 L65 90 M80 75 L90 90"/><line x1="10" y1="75" x2="90" y2="75" stroke="var(--subtext)" stroke-width="4"/></svg>`,
+            hollow_body: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="20" cy="50" r="5" fill="var(--accent)"/><path d="M12 40 L20 45 C45 65 55 65 80 45 L88 40"/><line x1="10" y1="75" x2="90" y2="75" stroke="var(--subtext)" stroke-width="4"/></svg>`,
             side_plank: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="20" cy="40" r="5" fill="var(--accent)"/><path d="M20 45 L85 68"/><path d="M38 50 L30 75"/><line x1="10" y1="75" x2="90" y2="75" stroke="var(--subtext)" stroke-width="4"/></svg>`,
             dragon_flag: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="78" cy="65" r="5" fill="var(--accent)"/><path d="M78 60 L40 30 L20 15"/><path d="M78 65 L88 78 L88 85"/><line x1="10" y1="85" x2="90" y2="85" stroke="var(--subtext)" stroke-width="4"/></svg>`,
             human_flag_tuck: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="68" cy="50" r="5" fill="var(--accent)"/><path d="M68 50 L48 50 L60 30 L50 30"/><path d="M48 50 L25 35 M48 50 L25 65"/><line x1="25" y1="10" x2="25" y2="90" stroke="var(--subtext)" stroke-width="6"/></svg>`,
@@ -558,7 +577,12 @@
                     { id: 'pushups_knee', name: 'Knee Push Ups', type: 'rep', baseTarget: 10, step: 5, xpPerUnit: 3, unlockXp: 50, goalBonusXp: 100 },
                     { id: 'pushups', name: 'Regular Push Ups', type: 'rep', baseTarget: 15, step: 5, xpPerUnit: 6, unlockXp: 150, goalBonusXp: 200 },
                     { id: 'diamond_pushups', name: 'Diamond Push Ups', type: 'rep', baseTarget: 12, step: 4, xpPerUnit: 10, unlockXp: 250, goalBonusXp: 300 },
+                    { id: 'clap_pushups', name: 'Clap Push Ups', type: 'rep', baseTarget: 10, step: 3, xpPerUnit: 12, unlockXp: 300, goalBonusXp: 400 },
                     { id: 'pseudo_pushups', name: 'PPPU (Pseudo Push Ups)', type: 'rep', baseTarget: 10, step: 3, xpPerUnit: 18, unlockXp: 400, goalBonusXp: 500 },
+                    { id: 'double_clap_pushups', name: 'Double Clap Push Ups', type: 'rep', baseTarget: 6, step: 2, xpPerUnit: 25, unlockXp: 600, goalBonusXp: 800 },
+                    { id: 'behind_back_clap', name: 'Behind-the-Back Clap Push Ups', type: 'rep', baseTarget: 4, step: 2, xpPerUnit: 40, unlockXp: 900, goalBonusXp: 1200 },
+                    { id: 'one_arm_pushup', name: 'One Arm Push Up', type: 'rep', baseTarget: 5, step: 2, xpPerUnit: 45, unlockXp: 1000, goalBonusXp: 1300 },
+                    { id: 'one_arm_russian', name: 'One Arm Russian Push Up', type: 'rep', baseTarget: 3, step: 2, xpPerUnit: 70, unlockXp: 1400, goalBonusXp: 1800 },
                     { id: 'tuck_planche', name: 'Tuck Planche Hold', type: 'sec', baseTarget: 10, step: 5, xpPerUnit: 30, unlockXp: 800, goalBonusXp: 1000 },
                     { id: 'adv_tuck_planche', name: 'Advanced Tuck Planche', type: 'sec', baseTarget: 8, step: 4, xpPerUnit: 55, unlockXp: 1500, goalBonusXp: 2000 },
                     { id: 'straddle_planche', name: 'Straddle Planche', type: 'sec', baseTarget: 5, step: 3, xpPerUnit: 140, unlockXp: 3500, goalBonusXp: 4500 },
@@ -577,12 +601,29 @@
                     { id: 'adv_tuck_fl', name: 'Adv. Tuck Front Lever', type: 'sec', baseTarget: 8, step: 4, xpPerUnit: 45, unlockXp: 1200, goalBonusXp: 1600 },
                     { id: 'straddle_fl', name: 'Straddle Front Lever', type: 'sec', baseTarget: 5, step: 3, xpPerUnit: 110, unlockXp: 2800, goalBonusXp: 3500 },
                     { id: 'full_fl', name: 'Full Front Lever', type: 'sec', baseTarget: 4, step: 2, xpPerUnit: 220, unlockXp: 5500, goalBonusXp: 7000 },
-                    { id: 'one_arm_pullup', name: 'One Arm Pull Up', type: 'rep', baseTarget: 1, step: 1, xpPerUnit: 400, unlockXp: 10000, goalBonusXp: 12000 },
+                    { id: 'one_arm_pullup', name: 'One Arm Pull Up', type: 'rep', baseTarget: 1, step: 1, xpPerUnit: 400, unlockXp: 10000, goalBonusXp: 12000 }
+                ]
+            },
+            {
+                title: "3. Ring Skills (Anelli)",
+                skills: [
+                    { id: 'ring_support', name: 'Ring Support Hold', type: 'sec', baseTarget: 20, step: 5, xpPerUnit: 5, unlockXp: 120, goalBonusXp: 180 },
+                    { id: 'ring_dips', name: 'Ring Dips', type: 'rep', baseTarget: 8, step: 3, xpPerUnit: 15, unlockXp: 300, goalBonusXp: 400 },
+                    { id: 'ring_muscle_up', name: 'Ring Muscle Up', type: 'rep', baseTarget: 2, step: 2, xpPerUnit: 90, unlockXp: 1500, goalBonusXp: 2000 },
+                    { id: 'iron_cross', name: 'Iron Cross Hold', type: 'sec', baseTarget: 3, step: 2, xpPerUnit: 400, unlockXp: 12000, goalBonusXp: 15000 },
                     { id: 'victorian', name: 'Victorian Cross on Rings', type: 'sec', baseTarget: 2, step: 1, xpPerUnit: 1200, unlockXp: 30000, goalBonusXp: 40000 }
                 ]
             },
             {
-                title: "3. Verticali, Dip & Core Compression",
+                title: "4. Freestyle & Skills Dinamiche",
+                skills: [
+                    { id: 'pullover', name: 'Bar Pull Over', type: 'rep', baseTarget: 5, step: 2, xpPerUnit: 20, unlockXp: 350, goalBonusXp: 500 },
+                    { id: 'spin_360', name: '360 Spin / Bar Hop', type: 'rep', baseTarget: 2, step: 1, xpPerUnit: 150, unlockXp: 2500, goalBonusXp: 3500 },
+                    { id: 'freestyle_combo', name: 'Freestyle Flow Combo', type: 'sec', baseTarget: 15, step: 5, xpPerUnit: 80, unlockXp: 4500, goalBonusXp: 6000 }
+                ]
+            },
+            {
+                title: "5. Verticali, Dip & Core Compression",
                 skills: [
                     { id: 'bench_dips', name: 'Bench Dips', type: 'rep', baseTarget: 15, step: 5, xpPerUnit: 3, unlockXp: 60, goalBonusXp: 100 },
                     { id: 'bar_dips', name: 'Parallel Bar Dips', type: 'rep', baseTarget: 10, step: 4, xpPerUnit: 10, unlockXp: 200, goalBonusXp: 300 },
@@ -596,8 +637,11 @@
                 ]
             },
             {
-                title: "4. Human Flag & Core Special",
+                title: "6. Human Flag & Core Special",
                 skills: [
+                    { id: 'plank', name: 'Plank Hold', type: 'sec', baseTarget: 30, step: 15, xpPerUnit: 2, unlockXp: 30, goalBonusXp: 50 },
+                    { id: 'crunch', name: 'Crunch Addominali', type: 'rep', baseTarget: 20, step: 10, xpPerUnit: 2, unlockXp: 40, goalBonusXp: 70 },
+                    { id: 'hollow_body', name: 'Barchetta (Hollow Body Hold)', type: 'sec', baseTarget: 30, step: 10, xpPerUnit: 3, unlockXp: 60, goalBonusXp: 90 },
                     { id: 'side_plank', name: 'Side Plank Hold', type: 'sec', baseTarget: 30, step: 10, xpPerUnit: 2, unlockXp: 50, goalBonusXp: 80 },
                     { id: 'dragon_flag', name: 'Dragon Flag Hold', type: 'sec', baseTarget: 10, step: 4, xpPerUnit: 35, unlockXp: 900, goalBonusXp: 1200 },
                     { id: 'human_flag_tuck', name: 'Tuck Human Flag', type: 'sec', baseTarget: 8, step: 3, xpPerUnit: 65, unlockXp: 1600, goalBonusXp: 2200 },
@@ -606,7 +650,7 @@
                 ]
             },
             {
-                title: "5. Legs & Lower Body",
+                title: "7. Legs & Lower Body",
                 skills: [
                     { id: 'squat', name: 'Air Squats', type: 'rep', baseTarget: 20, step: 10, xpPerUnit: 2, unlockXp: 50, goalBonusXp: 80 },
                     { id: 'pistol_squat', name: 'Pistol Squats', type: 'rep', baseTarget: 5, step: 3, xpPerUnit: 25, unlockXp: 600, goalBonusXp: 800 },
