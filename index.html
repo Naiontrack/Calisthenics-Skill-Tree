@@ -1,34 +1,5 @@
 <!DOCTYPE html>
 <html lang="it">
-   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, GoogleAuthProvider, OAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-    import { getFirestore, doc, setDoc, getDoc, collection, getDocs, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-
-    const firebaseConfig = {
-      apiKey: "AIzaSyA8DxxaRgjpdv9eldZnDiAipceVv6IJ5Ds",
-  authDomain: "calisthenics-tree-b9a06.firebaseapp.com",
-  projectId: "calisthenics-tree-b9a06",
-  storageBucket: "calisthenics-tree-b9a06.firebasestorage.app",
-  messagingSenderId: "385003641400",
-  appId: "1:385003641400:web:7974dd3adc322170c264cd",
-  measurementId: "G-ZF4P6HX9HN"
-
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
-
-    window.firebaseAuth = auth;
-    window.firebaseDb = db;
-    window.firebaseFns = { 
-        createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, 
-        GoogleAuthProvider, OAuthProvider, signInWithPopup, 
-        doc, setDoc, getDoc, collection, getDocs, query, orderBy, limit 
-    };
-</script>
-</script>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -92,7 +63,6 @@
             flex-direction: column;
             align-items: center;
             transition: background-color 0.3s ease, color 0.3s ease;
-            -webkit-tap-highlight-color: transparent;
         }
 
         .header {
@@ -262,15 +232,6 @@
             background-color: var(--line-color);
         }
 
-        .skill-content {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            width: 100%;
-            cursor: pointer;
-            touch-action: manipulation;
-        }
-
         .skill-img-box {
             width: 65px;
             height: 65px;
@@ -284,7 +245,6 @@
             padding: 4px;
             box-shadow: inset 0 0 10px rgba(0,0,0,0.2);
             transition: background-color 0.3s ease, border-color 0.3s ease;
-            pointer-events: none;
         }
 
         .unlocked-card .skill-img-box {
@@ -298,7 +258,6 @@
 
         .skill-info {
             flex-grow: 1;
-            pointer-events: none;
         }
 
         .skill-info h4 {
@@ -316,7 +275,6 @@
             display: flex;
             gap: 6px;
             align-items: center;
-            z-index: 2;
         }
 
         input[type="number"] {
@@ -328,20 +286,18 @@
             color: var(--text);
             text-align: center;
             font-size: 0.9rem;
-            touch-action: manipulation;
         }
 
         button {
             background: var(--accent);
             color: #fff;
             border: none;
-            padding: 8px 12px;
+            padding: 6px 10px;
             border-radius: 6px;
             font-weight: bold;
             cursor: pointer;
             font-size: 0.85rem;
             transition: transform 0.1s, opacity 0.2s;
-            touch-action: manipulation;
         }
 
         body.theme-light button {
@@ -506,18 +462,6 @@
     </style>
 </head>
 <body>
-    <div id="auth-container" style="background: var(--card-bg); border: 2px solid var(--accent); padding: 12px; border-radius: 12px; margin-bottom: 20px; width: 100%; max-width: 900px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
-    <div id="user-status">Caricamento account...</div>
-    <div id="auth-actions" style="display: flex; gap: 8px;">
-        <button onclick="openAuthModal('login')">Accedi</button>
-        <button class="unlock-btn" onclick="openAuthModal('register')">Registrati</button>
-    </div>
-</div>
-
-<div id="leaderboard-container" style="background: var(--card-bg); border: 2px solid var(--accent); padding: 15px; border-radius: 12px; margin-bottom: 20px; width: 100%; max-width: 900px;">
-    <h3 style="margin-top: 0; color: var(--accent);">🏆 Classifica Globale Atleti</h3>
-    <div id="leaderboard-list">Caricamento classifica...</div>
-</div>
 
     <div class="header">
         <div class="top-bar">
@@ -618,14 +562,17 @@
             straddle_fl: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="20" cy="50" r="5" fill="var(--accent)"/><path d="M20 55 L50 55"/><path d="M50 55 L80 38 M50 55 L80 72"/><path d="M38 55 L38 20"/><line x1="15" y1="20" x2="65" y2="20" stroke="var(--subtext)" stroke-width="5"/></svg>`,
             full_fl: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="15" cy="50" r="5" fill="var(--accent)"/><path d="M15 55 L88 55"/><path d="M38 55 L38 20"/><line x1="15" y1="20" x2="65" y2="20" stroke="var(--subtext)" stroke-width="5"/></svg>`,
             one_arm_pullup: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="45" cy="22" r="5" fill="var(--accent)"/><path d="M45 27 L45 65 L35 88 M45 65 L55 88"/><path d="M45 35 L50 20 M45 35 L30 50"/><line x1="20" y1="20" x2="80" y2="20" stroke="var(--subtext)" stroke-width="5"/></svg>`,
+            
             ring_support: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="50" cy="30" r="5" fill="var(--accent)"/><path d="M50 35 L50 70 L40 90 M50 70 L60 90"/><path d="M50 42 L30 42 M50 42 L70 42"/><circle cx="30" cy="42" r="6" stroke="var(--subtext)" stroke-width="3"/><circle cx="70" cy="42" r="6" stroke="var(--subtext)" stroke-width="3"/><line x1="30" y1="5" x2="30" y2="36" stroke="var(--subtext)" stroke-width="2"/><line x1="70" y1="5" x2="70" y2="36" stroke="var(--subtext)" stroke-width="2"/></svg>`,
             ring_dips: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="50" cy="22" r="5" fill="var(--accent)"/><path d="M50 27 L50 65 L40 88 M50 65 L60 88"/><path d="M50 35 L32 35 L32 48 M50 35 L68 35 L68 48"/><circle cx="32" cy="48" r="6" stroke="var(--subtext)" stroke-width="3"/><circle cx="68" cy="48" r="6" stroke="var(--subtext)" stroke-width="3"/><line x1="32" y1="5" x2="32" y2="42" stroke="var(--subtext)" stroke-width="2"/><line x1="68" y1="5" x2="68" y2="42" stroke="var(--subtext)" stroke-width="2"/></svg>`,
             ring_muscle_up: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="50" cy="18" r="5" fill="var(--accent)"/><path d="M50 23 L50 65 L40 88 M50 65 L60 88"/><path d="M50 35 L30 48 M50 35 L70 48"/><circle cx="30" cy="48" r="6" stroke="var(--subtext)" stroke-width="3"/><circle cx="70" cy="48" r="6" stroke="var(--subtext)" stroke-width="3"/><line x1="30" y1="5" x2="30" y2="42" stroke="var(--subtext)" stroke-width="2"/><line x1="68" y1="5" x2="68" y2="42" stroke="var(--subtext)" stroke-width="2"/></svg>`,
             iron_cross: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="50" cy="25" r="5" fill="var(--accent)"/><path d="M50 30 L50 70 L40 92 M50 70 L60 92"/><path d="M50 38 L18 38 M50 38 L82 38"/><circle cx="18" cy="38" r="6" stroke="var(--subtext)" stroke-width="3"/><circle cx="82" cy="38" r="6" stroke="var(--subtext)" stroke-width="3"/><line x1="18" y1="5" x2="18" y2="32" stroke="var(--subtext)" stroke-width="2"/><line x1="82" y1="5" x2="82" y2="32" stroke="var(--subtext)" stroke-width="2"/></svg>`,
             victorian: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="15" cy="35" r="5" fill="var(--accent)"/><path d="M15 40 L88 40"/><path d="M40 40 L40 60 M55 40 L55 60"/><circle cx="40" cy="60" r="5" stroke="var(--subtext)" stroke-width="3"/><circle cx="55" cy="60" r="5" stroke="var(--subtext)" stroke-width="3"/><line x1="40" y1="5" x2="40" y2="55" stroke="var(--subtext)" stroke-width="2"/><line x1="55" y1="5" x2="55" y2="55" stroke="var(--subtext)" stroke-width="2"/></svg>`,
+
             pullover: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="50" cy="28" r="5" fill="var(--accent)"/><path d="M50 33 C70 20 70 60 50 50"/><line x1="15" y1="50" x2="85" y2="50" stroke="var(--subtext)" stroke-width="5"/></svg>`,
             spin_360: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="50" cy="30" r="5" fill="var(--accent)"/><path d="M50 35 L50 75 M40 85 L60 85"/><path d="M30 45 C40 20 60 20 70 45" stroke-dasharray="3 3"/><line x1="15" y1="45" x2="85" y2="45" stroke="var(--subtext)" stroke-width="5"/></svg>`,
             freestyle_combo: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="40" cy="25" r="5" fill="var(--accent)"/><path d="M40 30 L65 50 L85 30"/><path d="M40 35 L20 15"/><line x1="10" y1="60" x2="90" y2="60" stroke="var(--subtext)" stroke-width="5"/></svg>`,
+
             bench_dips: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="35" cy="30" r="5" fill="var(--accent)"/><path d="M35 35 L35 60 L75 60"/><path d="M35 42 L20 42 L20 60"/><line x1="10" y1="60" x2="30" y2="60" stroke="var(--subtext)" stroke-width="5"/><line x1="60" y1="75" x2="90" y2="75" stroke="var(--subtext)" stroke-width="4"/></svg>`,
             bar_dips: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="50" cy="20" r="5" fill="var(--accent)"/><path d="M50 25 L50 65 L40 88 M50 65 L60 88"/><path d="M50 35 L35 35 L35 50 M50 35 L65 35 L65 50"/><line x1="20" y1="50" x2="80" y2="50" stroke="var(--subtext)" stroke-width="5"/></svg>`,
             l_sit: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="35" cy="25" r="5" fill="var(--accent)"/><path d="M35 30 L35 60 L85 60"/><path d="M35 48 L22 75 M35 48 L48 75"/><line x1="10" y1="75" x2="60" y2="75" stroke="var(--subtext)" stroke-width="4"/></svg>`,
@@ -635,6 +582,7 @@
             hspu_wall: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="42" cy="55" r="5" fill="var(--accent)"/><path d="M42 50 L42 20 L32 5 M42 20 L52 5"/><path d="M42 38 L28 75 M42 38 L56 75"/><line x1="68" y1="5" x2="68" y2="95" stroke="var(--subtext)" stroke-width="5"/></svg>`,
             freestanding_hspu: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="50" cy="50" r="5" fill="var(--accent)"/><path d="M50 45 L50 18 L40 5 M50 18 L60 5"/><path d="M50 35 L30 75 M50 35 L70 75"/><line x1="20" y1="75" x2="80" y2="75" stroke="var(--subtext)" stroke-width="4"/></svg>`,
             impossible_dip: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="25" cy="40" r="5" fill="var(--accent)"/><path d="M25 45 L50 65 L80 65"/><path d="M50 65 L25 65 L15 80"/><line x1="10" y1="80" x2="90" y2="80" stroke="var(--subtext)" stroke-width="4"/></svg>`,
+            
             plank: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="20" cy="45" r="5" fill="var(--accent)"/><path d="M20 50 L85 50"/><path d="M35 50 L35 75 L25 75 M85 50 L85 75"/><line x1="10" y1="75" x2="90" y2="75" stroke="var(--subtext)" stroke-width="4"/></svg>`,
             crunch: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="30" cy="55" r="5" fill="var(--accent)"/><path d="M30 60 C40 60 50 68 50 75 L80 75"/><path d="M30 60 L20 70 M50 75 L65 90 M80 75 L90 90"/><line x1="10" y1="75" x2="90" y2="75" stroke="var(--subtext)" stroke-width="4"/></svg>`,
             hollow_body: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="20" cy="50" r="5" fill="var(--accent)"/><path d="M12 40 L20 45 C45 65 55 65 80 45 L88 40"/><line x1="10" y1="75" x2="90" y2="75" stroke="var(--subtext)" stroke-width="4"/></svg>`,
@@ -876,7 +824,7 @@
                     const stickmanSvg = skillStickmen[skill.id] || `<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="20" fill="var(--accent)"/></svg>`;
 
                     card.innerHTML = `
-                        <div class="skill-content" onclick="handleCardTap('${skill.id}')">
+                        <div style="display: flex; align-items: center; gap: 10px; width: 100%; cursor: pointer;" onclick="handleCardTap(event, '${skill.id}')">
                             <div class="skill-img-box">
                                 ${stickmanSvg}
                             </div>
@@ -891,17 +839,17 @@
                                     <p style="color: #eab308; font-weight: bold;">
                                         Sblocca per: +${skill.unlockXp} XP!
                                     </p>
-                                    <p>Tocca per sbloccare</p>
+                                    <p>Tocca la scheda per sbloccare</p>
                                 `}
                             </div>
                         </div>
                         <div class="actions">
                             ${isUnlocked ? `
-                                <input type="number" id="input-${skill.id}" value="${val}" min="0" onclick="event.stopPropagation()">
+                                <input type="number" id="input-${skill.id}" value="${val}" min="0">
                                 <button onclick="event.stopPropagation(); updateSkill('${skill.id}')">Salva</button>
                                 <button class="relock-btn" title="Blocca di nuovo la skill" onclick="event.stopPropagation(); askRelock('${skill.id}')">🔒</button>
                             ` : `
-                                <button class="unlock-btn" onclick="event.stopPropagation(); askUnlock('${skill.id}')">🔓 Sblocca</button>
+                                <button class="unlock-btn" onclick="event.stopPropagation(); askUnlock('${skill.id}')">🔒 Sblocca</button>
                             `}
                         </div>
                     `;
@@ -953,7 +901,8 @@
             };
         }
 
-        function handleCardTap(id) {
+        function handleCardTap(e, id) {
+            e.stopPropagation();
             const skillData = userState[id] || { unlocked: false, val: 0 };
             if (!skillData.unlocked) {
                 askUnlock(id);
@@ -997,9 +946,7 @@
         }
 
         function updateSkill(id) {
-            const input = document.getElementById(`input-${id}`);
-            if (!input) return;
-            const val = parseInt(input.value) || 0;
+            const val = parseInt(document.getElementById(`input-${id}`).value) || 0;
             if (!userState[id]) {
                 userState[id] = { unlocked: true, val: val };
             } else {
@@ -1012,376 +959,6 @@
         initCategorySelect();
         applyTheme(currentTheme);
         updateUI();
-       // --- GESTIONE AUTENTICAZIONE E CLASSIFICA FIREBASE ---
-
-// --- CODICE FIREBASE DEFINITIVO PER CALISTHENICS APP ---
-
-let currentUser = null;
-
-// Gestione errori visiva nel popup
-function showAuthError(message) {
-    const errorEl = document.getElementById('auth-error-msg');
-    if (errorEl) {
-        errorEl.textContent = message;
-        errorEl.style.display = 'block';
-    }
-}
-
-// Chiusura sicura dei modali
-function safeCloseModal() {
-    if (typeof closeCustomModal === 'function') {
-        closeCustomModal();
-    } else {
-        const modal = document.querySelector('.modal-overlay') || document.getElementById('custom-modal');
-        if (modal) modal.remove();
-        document.querySelectorAll('dialog').forEach(d => { if(d.open) d.close(); });
-    }
-}
-
-// Validazioni di sicurezza
-function validatePassword(password) {
-    return password.length >= 8 && /[!@#$%^&*(),.?":{}|<>]/.test(password);
-}
-
-function validateEmail(email) {
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-}
-
-// Monitoraggio dello stato di autenticazione in tempo reale
-// Ascolta i cambiamenti dello stato di autenticazione in tempo reale
-if (window.firebaseAuth && window.firebaseFns) {
-    const { onAuthStateChanged } = window.firebaseFns;
-    
-    onAuthStateChanged(window.firebaseAuth, async (user) => {
-        const authStatusEl = document.getElementById('user-status'); // Elemento UI dove mostri lo stato
-        
-        if (user) {
-            // L'utente è loggato
-            currentUser = user;
-            
-            // Controlla se ha un nickname, altrimenti mostra il modale per crearlo
-            const nickname = await getUserNickname(user.uid);
-            if (!nickname) {
-                openNicknameModal(user.uid);
-            } else {
-                if (authStatusEl) {
-                    authStatusEl.innerHTML = `👤 Loggato come: <strong>${nickname}</strong>`;
-                }
-            }
-            
-            // Sblocca/carica i progressi dal cloud
-            await loadUserDataFromCloud(user.uid);
-            updateLeaderboard();
-            
-        } else {
-            // L'utente NON è loggato
-            currentUser = null;
-            if (authStatusEl) {
-                authStatusEl.innerHTML = `
-                    <button onclick="openAuthModal('login')" class="custom-btn">Accedi</button>
-                    <button onclick="openAuthModal('register')" class="custom-btn">Registrati</button>
-                `;
-            }
-        }
-    });
-}
-            
-            // SCARICA I DATI DAL CLOUD SUL NUOVO DISPOSITIVO
-            await loadUserDataFromCloud(user.uid);
-        } else {
-            if (statusEl) {
-                statusEl.innerHTML = `⚠️ Non sei loggato (Salvataggio solo locale)`;
-            }
-            if (actionsEl) {
-                actionsEl.innerHTML = `
-                    <button onclick="openAuthModal('login')">Accedi</button>
-                    <button class="unlock-btn" onclick="openAuthModal('register')">Registrati</button>
-                `;
-            }
-        }
-        loadLeaderboard();
-    });
-}
-
-// Recupero nickname da Firestore
-async function getUserNickname(uid) {
-    try {
-        const { doc, getDoc } = window.firebaseFns;
-        const docSnap = await getDoc(doc(window.firebaseDb, "users", uid));
-        if (docSnap.exists() && docSnap.data().nickname) {
-            return docSnap.data().nickname;
-        }
-    } catch (e) {
-        console.error("Errore recupero nickname", e);
-    }
-    return null;
-}
-
-// Modale per la scelta del Nickname
-function openNicknameModal(uid) {
-    if (typeof openCustomModal !== 'function') return;
-    openCustomModal(
-        "🏆 Scegli il tuo Nickname",
-        `
-        <div style="display: flex; flex-direction: column; gap: 10px; align-items: center; width: 100%;">
-            <p style="margin: 0; font-size: 0.9rem; color: var(--subtext); text-align: center;">Come vuoi farti chiamare nella classifica globale?</p>
-            <input type="text" id="user-chosen-nickname" placeholder="Il tuo nickname unico" style="width: 85%; padding: 10px; border-radius: 6px; border: 1px solid var(--locked); background: var(--input-bg); color: var(--text);">
-        </div>
-        `,
-        "Salva Nickname",
-        false,
-        async () => {
-            const nicknameInput = document.getElementById('user-chosen-nickname').value.trim();
-            if (!nicknameInput) {
-                alert("Inserisci un nickname valido!");
-                return;
-            }
-            try {
-                const { doc, setDoc } = window.firebaseFns;
-                await setDoc(doc(window.firebaseDb, "users", uid), {
-                    nickname: nicknameInput
-                }, { merge: true });
-                safeCloseModal();
-                location.reload();
-            } catch (error) {
-                alert("Errore nel salvataggio: " + error.message);
-            }
-        }
-    );
-}
-
-// Autenticazione Email/Password
-async function registerUser(email, password) {
-    if (!validateEmail(email)) {
-        showAuthError("Inserisci un'email valida!");
-        return;
-    }
-    if (!validatePassword(password)) {
-        showAuthError("La password deve avere min 8 caratteri e un carattere speciale (!@#$%^&*...)");
-        return;
-    }
-    try {
-        const { createUserWithEmailAndPassword } = window.firebaseFns;
-        await createUserWithEmailAndPassword(window.firebaseAuth, email, password);
-        safeCloseModal();
-    } catch (error) {
-        showAuthError("Errore: " + error.message);
-    }
-}
-
-async function loginUser(email, password) {
-    if (!validateEmail(email)) {
-        showAuthError("Inserisci un'email valida!");
-        return;
-    }
-    try {
-        const { signInWithEmailAndPassword } = window.firebaseFns;
-        await signInWithEmailAndPassword(window.firebaseAuth, email, password);
-        safeCloseModal();
-    } catch (error) {
-        showAuthError("Credenziali non corrette o errore di accesso.");
-    }
-}
-
-// Social Login
-async function loginWithGoogle() {
-    try {
-        const { GoogleAuthProvider, signInWithPopup } = window.firebaseFns;
-        const provider = new GoogleAuthProvider();
-        await signInWithPopup(window.firebaseAuth, provider);
-        safeCloseModal();
-    } catch (error) {
-        showAuthError("Errore login con Google: " + error.message);
-    }
-}
-
-async function loginWithApple() {
-    try {
-        const { OAuthProvider, signInWithPopup } = window.firebaseFns;
-        const provider = new OAuthProvider('apple.com');
-        await signInWithPopup(window.firebaseAuth, provider);
-        safeCloseModal();
-    } catch (error) {
-        showAuthError("Errore login con Apple: " + error.message);
-    }
-}
-
-async function logoutUser() {
-    try {
-        const { signOut } = window.firebaseFns;
-        await signOut(window.firebaseAuth);
-    } catch (error) {
-        console.error("Errore logout", error);
-    }
-}
-
-// Funzioni per i modali di autenticazione (Login / Registrazione)
-function openAuthModal(mode) {
-    const isLogin = mode === 'login';
-    openCustomModal(
-        isLogin ? "🔑 Accedi al tuo Account" : "📝 Registrati",
-        `
-        <div style="display: flex; flex-direction: column; gap: 10px; text-align: left; margin-top: 10px;">
-            <label style="font-size: 0.85rem; color: var(--subtext);">Email</label>
-            <input type="email5" id="auth-email" class="custom-select" style="width: 100%; max-width: none; box-sizing: border-box;" placeholder="tuamail@email.com">
-            
-            <label style="font-size: 0.85rem; color: var(--subtext);">Password (min 8 caratteri, 1 simbolo)</label>
-            <input type="password" id="auth-password" class="custom-select" style="width: 100%; max-width: none; box-sizing: border-box;" placeholder="••••••••">
-            
-            <div id="auth-error-msg" style="color: var(--danger); font-size: 0.8rem; display: none; margin-top: 4px;"></div>
-        </div>
-        `,
-        isLogin ? "Accedi" : "Registrati",
-        false,
-        async () => {
-            const email = document.getElementById('auth-email').value.trim();
-            const password = document.getElementById('auth-password').value;
-
-            if (!validateEmail(email)) {
-                showAuthError("Inserisci un'email valida.");
-                return;
-            }
-            if (!validatePassword(password)) {
-                showAuthError("La password deve avere almeno 8 caratteri e un carattere speciale.");
-                return;
-            }
-
-            const { createUserWithEmailAndPassword, signInWithEmailAndPassword } = window.firebaseFns;
-            try {
-                if (isLogin) {
-                    await signInWithEmailAndPassword(window.firebaseAuth, email, password);
-                } else {
-                    const cred = await createUserWithEmailAndPassword(window.firebaseAuth, email, password);
-                    openNicknameModal(cred.user.uid);
-                }
-                safeCloseModal();
-            } catch (error) {
-                showAuthError(error.message);
-            }
-        }
-    );
-}
-
-// Gestione del Nickname utente
-async function getUserNickname(uid) {
-    if (!window.firebaseDb || !window.firebaseFns) return null;
-    const { doc, getDoc } = window.firebaseFns;
-    try {
-        const userDoc = await getDoc(doc(window.firebaseDb, "users", uid));
-        if (userDoc.exists()) {
-            return userDoc.data().nickname;
-        }
-    } catch (e) {
-        console.error("Errore recupero nickname:", e);
-    }
-    return null;
-}
-
-function openNicknameModal(uid) {
-    openCustomModal(
-        "o Scegli un Nickname",
-        `
-        <div style="display: flex; flex-direction: column; gap: 10px; text-align: left; margin-top: 10px;">
-            <label style="font-size: 0.85rem; color: var(--subtext);">Inserisci il tuo nome atleta per la classifica:</label>
-            <input type="text" id="user-nickname-input" class="custom-select" style="width: 100%; max-width: none; box-sizing: border-box;" placeholder="Es. Naiontrack">
-        </div>
-        `,
-        "Salva Nickname",
-        false,
-        async () => {
-            const nickname = document.getElementById('user-nickname-input').value.trim();
-            if (!nickname) return;
-
-            const { doc, setDoc } = window.firebaseFns;
-            try {
-                await setDoc(doc(window.firebaseDb, "users", uid), {
-                    nickname: nickname,
-                    totalXp: calculateXP(),
-                    updatedAt: new Date().toISOString()
-                }, { merge: true });
-                
-                updateLeaderboard();
-                if (currentUser) {
-                    document.getElementById('user-status').innerHTML = `👤 Loggato come: <strong>${nickname}</strong>`;
-                }
-            } catch (e) {
-                console.error("Errore salvataggio nickname:", e);
-            }
-        }
-    );
-}
-
-// Sincronizzazione cloud dei dati utente
-async function saveUserDataToCloud(uid) {
-    if (!window.firebaseDb || !window.firebaseFns) return;
-    const { doc, setDoc } = window.firebaseFns;
-    const totalXp = calculateXP();
-    try {
-        await setDoc(doc(window.firebaseDb, "users", uid), {
-            state: userState,
-            totalXp: totalXp,
-            updatedAt: new Date().toISOString()
-        }, { merge: true });
-        updateLeaderboard();
-    } catch (e) {
-        console.error("Errore nel salvataggio cloud:", e);
-    }
-}
-async function loadUserDataFromCloud(uid) {
-    if (!window.firebaseDb || !window.firebaseFns) return;
-    const { doc, getDoc } = window.firebaseFns;
-    try {
-        const userDoc = await getDoc(doc(window.firebaseDb, "users", uid));
-        if (userDoc.exists() && userDoc.data().state) {
-            userState = userDoc.data().state; // Aggiorna lo stato locale con quello salvato nel cloud
-            
-            if (typeof saveState === 'function') saveState(); // Salva in locale
-            if (typeof renderApp === 'function') renderApp(); // AGGIORNA LA GRAFICA (fondamentale per sbloccare le skill!)
-        }
-    } catch (e) {
-        console.error("Errore nel caricamento cloud:", e);
-    }
-}
-
-// Classifica Globale Atleti
-async function updateLeaderboard() {
-    const listEl = document.getElementById('leaderboard-list');
-    if (!listEl || !window.firebaseDb || !window.firebaseFns) return;
-
-    const { collection, getDocs, query, orderBy, limit } = window.firebaseFns;
-    try {
-        const q = query(collection(window.firebaseDb, "users"), orderBy("totalXp", "desc"), limit(5));
-        const querySnapshot = await getDocs(q);
-        
-        let html = '<ol style="margin: 0; padding-left: 20px; font-size: 0.9rem;">';
-        let foundAny = false;
-
-        querySnapshot.forEach((docSnap) => {
-            foundAny = true;
-            const data = docSnap.data();
-            const name = data.nickname || "Atleta Anonimo";
-            const xp = data.totalXp || 0;
-            html += `<li style="margin-bottom: 4px;"><strong>${name}</strong> — <span style="color: var(--accent);">${xp} XP</span></li>`;
-        });
-
-        html += '</ol>';
-        listEl.innerHTML = foundAny ? html : "Nessun atleta in classifica.";
-    } catch (e) {
-        console.error("Errore caricamento classifica:", e);
-        listEl.innerHTML = "Impossibile caricare la classifica.";
-    }
-}
-
-async function logoutUser() {
-    if (window.firebaseAuth && window.firebaseFns) {
-        const { signOut } = window.firebaseFns;
-        await signOut(window.firebaseAuth);
-        window.location.reload();
-    }
-}
-
-// Aggiorna periodicamente la classifica all'avvio
-setTimeout(updateLeaderboard, 1000);
     </script>
 </body>
 </html>
