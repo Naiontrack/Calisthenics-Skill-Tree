@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Naiontrack's Calisthenics Progression</title>
+    <style>
+        :root {
+            --bg-color: #0b0f19;
+            --card-bg: #151d30;
+            --accent: #38bdf8;
+            --locked: #334155;
+            --unlocked: #22c55e;
+            --text: #f8fafc;
+            --line-color: #1e293b;
+            --stickman-color: #a855f7;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 25px;
+            width: 100%;
+            max-width: 900px;
+            position: sticky;
+            top: 0;
+            background: var(--bg-color);
+            padding-top: 10px;
+            padding-bottom: 15px;
+            z-index: 10;
+        }
+
+        .header h1 {
+            margin: 0 0 15px 0;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            font-size: 1.8rem;
+            text-shadow: 0 0 15px rgba(56, 189, 248, 0.4);
+        }
+
+        .rank-card {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 16px;
+            border: 2px solid var(--accent);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.6);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .rank-badge-box {
+            width: 120px;
+            height: 120px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            filter: drop-shadow(0 0 15px rgba(56, 189, 248, 0.5));
+        }
+
+        .rank-badge-box svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 14px;
+            background: var(--locked);
+            border-radius: 7px;
+            overflow: hidden;
+            margin-top: 12px;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .progress-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, var(--accent), #818cf8);
+            transition: width 0.4s ease;
+        }
+
+        .tree-container {
+            display: flex;
+            flex-direction: column;
+            gap: 35px;
+            width: 100%;
+            max-width: 900px;
+        }
+
+        .category-title {
+            color: var(--accent);
+            border-bottom: 2px solid var(--accent);
+            padding-bottom: 8px;
+            margin-top: 10px;
+            text-transform: uppercase;
+            font-size: 1.25rem;
+            letter-spacing: 1.5px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .skill-tree-branch {
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            padding-left: 20px;
+            border-left: 3px dashed var(--line-color);
+            margin-left: 15px;
+            gap: 15px;
+        }
+
+        .skill-card {
+            background: var(--card-bg);
+            padding: 15px;
+            border-radius: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-left: 6px solid var(--locked);
+            transition: all 0.3s;
+            gap: 15px;
+            position: relative;
+        }
+
+        .skill-card::before {
+            content: '';
+            position: absolute;
+            left: -23px;
+            top: 50%;
+            width: 20px;
+            height: 3px;
+            background-color: var(--line-color);
+        }
+
+        .skill-card.unlocked {
+            border-left-color: var(--unlocked);
+            box-shadow: 0 4px 15px rgba(34, 197, 94, 0.15);
+        }
+
+        .skill-img-box {
+            width: 80px;
+            height: 80px;
+            min-width: 80px;
+            border-radius: 12px;
+            border: 2px solid var(--accent);
+            background: #070a12;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 5px;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.8);
+        }
+
+        .skill-img-box svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        .skill-info {
+            flex-grow: 1;
+        }
+
+        .skill-info h4 {
+            margin: 0 0 5px 0;
+            font-size: 1.05rem;
+        }
+
+        .skill-info p {
+            margin: 3px 0;
+            font-size: 0.85rem;
+            color: #94a3b8;
+        }
+
+        .actions {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        input[type="number"] {
+            width: 65px;
+            padding: 8px;
+            border-radius: 6px;
+            border: 1px solid var(--locked);
+            background: #0b0f19;
+            color: #fff;
+            text-align: center;
+            font-size: 1rem;
+        }
+
+        button {
+            background: var(--accent);
+            color: #000;
+            border: none;
+            padding: 8px 14px;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: transform 0.1s;
+        }
+
+        button:active {
+            transform: scale(0.95);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>Naiontrack's Calisthenics</h1>
+        <div class="rank-card">
+            <div id="rank-icon-box" class="rank-badge-box"></div>
+            <h2 id="user-rank" style="margin:0; color: var(--accent);">GRADO: Unranked</h2>
+            <p id="total-xp" style="margin: 5px 0 0 0; font-weight: 600;">XP Totali: 0</p>
+            <div class="progress-bar">
+                <div class="progress-fill" id="rank-progress"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="tree-container" id="tree"></div>
+
+    <script>
+        const rankLogos = {
+            bronze: `<svg viewBox="0 0 100 100"><defs><linearGradient id="b" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#d97706"/><stop offset="100%" stop-color="#78350f"/></linearGradient></defs><polygon points="50,5 90,25 90,75 50,95 10,75 10,25" fill="url(#b)" stroke="#f59e0b" stroke-width="3"/><path d="M50 20 L75 70 L25 70 Z" fill="#451a03" opacity="0.6"/><circle cx="50" cy="50" r="15" fill="#f59e0b"/></svg>`,
+            silver: `<svg viewBox="0 0 100 100"><defs><linearGradient id="s" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#e2e8f0"/><stop offset="100%" stop-color="#475569"/></linearGradient></defs><polygon points="50,5 95,30 80,85 20,85 5,30" fill="url(#s)" stroke="#f8fafc" stroke-width="3"/><polygon points="50,20 75,50 50,80 25,50" fill="#94a3b8"/><circle cx="50" cy="50" r="12" fill="#f8fafc"/></svg>`,
+            gold: `<svg viewBox="0 0 100 100"><defs><linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#facc15"/><stop offset="100%" stop-color="#854d0e"/></linearGradient></defs><path d="M50 5 L85 25 L85 75 L50 95 L15 75 L15 25 Z" fill="url(#g)" stroke="#fef08a" stroke-width="3"/><polygon points="50,15 65,40 90,45 70,65 75,90 50,75 25,90 30,65 10,45 35,40" fill="#fef08a"/></svg>`,
+            platinum: `<svg viewBox="0 0 100 100"><defs><linearGradient id="p" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#22d3ee"/><stop offset="100%" stop-color="#0e7490"/></linearGradient></defs><polygon points="50,0 90,35 70,95 30,95 10,35" fill="url(#p)" stroke="#67e8f9" stroke-width="3"/><polygon points="50,15 80,40 50,85 20,40" fill="#a5f3fc"/><circle cx="50" cy="45" r="8" fill="#0891b2"/></svg>`,
+            emerald: `<svg viewBox="0 0 100 100"><defs><linearGradient id="e" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#34d399"/><stop offset="100%" stop-color="#064e3b"/></linearGradient></defs><polygon points="50,5 95,35 75,90 25,90 5,35" fill="url(#e)" stroke="#a7f3d0" stroke-width="3"/><polygon points="50,15 80,40 50,80 20,40" fill="#10b981"/></svg>`,
+            diamond: `<svg viewBox="0 0 100 100"><defs><linearGradient id="d" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#60a5fa"/><stop offset="100%" stop-color="#1e3a8a"/></linearGradient></defs><polygon points="50,5 95,50 50,95 5,50" fill="url(#d)" stroke="#bfdbfe" stroke-width="3"/><polygon points="50,20 80,50 50,80 20,50" fill="#3b82f6"/><polygon points="50,30 65,50 50,70 35,50" fill="#eff6ff"/></svg>`,
+            master: `<svg viewBox="0 0 100 100"><defs><linearGradient id="m" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#c084fc"/><stop offset="100%" stop-color="#581c87"/></linearGradient></defs><path d="M50 5 L90 25 L90 75 L50 95 L10 75 L10 25 Z" fill="url(#m)" stroke="#e9d5ff" stroke-width="3"/><path d="M30 40 L50 20 L70 40 L60 80 L40 80 Z" fill="#a855f7"/></svg>`,
+            grandmaster: `<svg viewBox="0 0 100 100"><defs><linearGradient id="gm" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#f43f5e"/><stop offset="100%" stop-color="#881337"/></linearGradient></defs><polygon points="50,2 98,38 80,98 20,98 2,38" fill="url(#gm)" stroke="#fecdd3" stroke-width="4"/><path d="M50 15 L65 45 L95 45 L70 65 L80 95 L50 75 L20 95 L30 65 L5 45 L35 45 Z" fill="#e11d48"/></svg>`,
+            challenger: `<svg viewBox="0 0 100 100"><defs><linearGradient id="c" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#fbbf24"/><stop offset="100%" stop-color="#b45309"/></linearGradient></defs><polygon points="50,0 100,50 50,100 0,50" fill="url(#c)" stroke="#fff" stroke-width="3"/><circle cx="50" cy="50" r="30" fill="#d97706" stroke="#fef08a" stroke-width="3"/><path d="M50 25 L60 42 L80 45 L65 60 L70 80 L50 70 L30 80 L35 60 L20 45 L40 42 Z" fill="#fff"/></svg>`,
+            titan: `<svg viewBox="0 0 100 100"><defs><linearGradient id="t" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#38bdf8"/><stop offset="100%" stop-color="#0369a1"/></linearGradient></defs><path d="M10 20 L50 0 L90 20 L90 80 L50 100 L10 80 Z" fill="url(#t)" stroke="#e0f2fe" stroke-width="4"/><path d="M30 30 L50 15 L70 30 L70 70 L50 85 L30 70 Z" fill="#0284c7"/></svg>`,
+            overhuman: `<svg viewBox="0 0 100 100"><defs><linearGradient id="oh" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#f43f5e"/><stop offset="50%" stop-color="#a855f7"/><stop offset="100%" stop-color="#06b6d4"/></linearGradient></defs><polygon points="50,0 95,25 95,75 50,100 5,75 5,25" fill="url(#oh)" stroke="#fff" stroke-width="4"/><circle cx="50" cy="50" r="25" fill="#0f172a" stroke="#fff" stroke-width="3"/><path d="M50 30 L60 45 L75 50 L60 60 L65 75 L50 65 L35 75 L40 60 L25 50 L40 45 Z" fill="#fff"/></svg>`,
+            godlike: `<svg viewBox="0 0 100 100"><defs><radialGradient id="gdl"><stop offset="0%" stop-color="#ffffff"/><stop offset="50%" stop-color="#fef08a"/><stop offset="100%" stop-color="#ca8a04"/></radialGradient></defs><circle cx="50" cy="50" r="45" fill="url(#gdl)" stroke="#fff" stroke-width="5"/><polygon points="50,10 63,35 90,38 70,57 76,84 50,70 24,84 30,57 10,38 37,35" fill="#a16207"/></svg>`
+        };
+
+        const ranks = [
+            { name: "Bronzo (Novizio)", minXp: 0, iconSvg: rankLogos.bronze },
+            { name: "Argento (Atleta Base)", minXp: 500, iconSvg: rankLogos.silver },
+            { name: "Oro (Intermedio)", minXp: 1500, iconSvg: rankLogos.gold },
+            { name: "Platino (Avanzato)", minXp: 3500, iconSvg: rankLogos.platinum },
+            { name: "Smeraldo (Specialista)", minXp: 7000, iconSvg: rankLogos.emerald },
+            { name: "Diamante (Esperto Leve)", minXp: 12000, iconSvg: rankLogos.diamond },
+            { name: "Master (Maestro di Forza)", minXp: 20000, iconSvg: rankLogos.master },
+            { name: "GrandMaster (Elite Atleta)", minXp: 32000, iconSvg: rankLogos.grandmaster },
+            { name: "Challenger (Campione)", minXp: 50000, iconSvg: rankLogos.challenger },
+            { name: "Titano (Forza Sovrumana)", minXp: 75000, iconSvg: rankLogos.titan },
+            { name: "Overhuman (Leggenda Vivente)", minXp: 110000, iconSvg: rankLogos.overhuman },
+            { name: "Godlike (Divinità del Calisthenics)", minXp: 160000, iconSvg: rankLogos.godlike }
+        ];
+
+        // STICKMAN DEDICATI CORRETTI BIOMECCANICAMENTE
+        const skillStickmen = {
+            // SPINTA & PLANCHE
+            planche_lean: `<svg viewBox="0 0 100 100" stroke="#a855f7" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="20" cy="35" r="5" fill="#a855f7"/><path d="M20 40 L80 62"/><path d="M45 50 L30 80"/><line x1="10" y1="80" x2="90" y2="80" stroke="#64748b" stroke-width="4"/></svg>`,
+            
+            pushups_knee: `<svg viewBox="0 0 100 100" stroke="#a855f7" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="20" cy="45" r="5" fill="#a855f7"/><path d="M20 50 L60 65 L60 80"/><path d="M35 55 L35 80"/><line x1="10" y1="80" x2="90" y2="80" stroke="#64748b" stroke-width="4"/></svg>`,
+            
+            pushups: `<svg viewBox="0 0 100 100" stroke="#a855f7" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="20" cy="45" r="5" fill="#a855f7"/><path d="M20 50 L85 70"/><path d="M40 55 L40 80"/><line x1="10" y1="80" x2="90" y2="80" stroke="#64748b" stroke-width="4"/></svg>`,
+            
+            diamond_pushups: `<svg viewBox="0 0 100 100" stroke="#a855f7" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="20" cy="45" r="5" fill="#a855f7"/><path d="M20 50 L85 70"/><path d="M38 55 L45 80"/><line x1="10" y1="80" x2="90" y2="80" stroke="#64748b" stroke-width="4"/></svg>`,
+            
+            pseudo_pushups: `<svg viewBox="0 0 100 100" stroke="#a855f7" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="15" cy="50" r="5" fill="#a855f7"/><path d="M15 55 L85 70"/><path d="M50 62 L35 80"/><line x1="10" y1="80" x2="90" y2="80" stroke="#64748b" stroke-width="4"/></svg>`,
+            
+            tuck_planche: `<svg viewBox="0 0 100 100" stroke="#a855f7" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="30" cy="35" r="5" fill="#a855f7"/><path d="M30 40 L50 42 L35 60 L50 60"/><path d="M40 41 L40 80"/><line x1="15" y1="80" x2="85" y2="80" stroke="#64748b" stroke-width="4"/></svg>`,
+            
+            adv_tuck_planche: `<svg viewBox="0 0 100 100" stroke="#a855f7" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="25" cy="38" r="5" fill="#a855f7"/><path d="M25 43 L55 43 L55 68"/><path d="M38 43 L38 80"/><line x1="15" y1="80" x2="85" y2="80" stroke="#64748b" stroke-width="4"/></svg>`,
+            
+            straddle_planche: `<svg viewBox="0 0 100 100" stroke="#a855f7" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="20" cy="40" r="5" fill="#a855f7"/><path d="M20 45 L50 45"/><path d="M50 45 L80 30 M50 45 L80 60"/><path d="M35 45 L35 80"/><line x1="10" y1="80" x2="90" y2="80" stroke="#64748b" stroke-width="4"/></svg>`,
+            
+            full_planche: `<svg viewBox="0 0 100 100" stroke="#a855f7" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="15" cy="42" r="5" fill="#a855f7"/><path d="M15 47 L88 47"/><path d="M35 47 L35 80"/><line x1="10" y1="80" x2="90" y2="80" stroke="#64748b" stroke-width="4"/></svg>`,
+            
+            maltese: `<svg viewBox="0 0 100 100" stroke="#a855f7" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="15" cy="48" r="5" fill="#a855f7"/><path d="M15 53 L88 53"/><path d="M38 53 L20 80 M62 53 L80 80"/><line x1="10" y1="80" x2="90" y2="80" stroke="#64748b" stroke-width="4"/></svg>`,
+
+            // TRAZIONE & FRONT LEVER
+            australian: `<svg viewBox="0 0 100 100" stroke="#a855f7" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="25" cy="35" r="5" fill="#a855f7"/><path d="M25 40 L80 75"/><path d="M40 50 L40 25"/><line x1="10" y1="25" x2="60" y2="25" stroke="#64748b" stroke-width="5"/></svg>`,
+            
+            pullups: `<svg viewBox="0 0 100 100" stroke="#a855f7" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="50" cy="30" r="5" fill="#a855f7"/><path d="M50 35 L50 70 L40 90 M50 70 L60 90"/><path d="M50 42 L30 18 M50 42 L70 18"/><line x1="15" y1="18" x2="85" y2="18" stroke="#64748b" stroke-width="5"/></svg>`,
+            
+            chest_to_bar: `<svg viewBox="0 0 100 100" stroke="#a855f7" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="50" cy="12" r="5" fill="#a855f7"/><path d="M50 17 L50 55 L40 80 M50 55 L60 80"/><path d="M50 25 L30 25 L30 22 M50 25 L70 25 L70 22"/><line x1="15" y1="22" x2="85" y2="22" stroke="#64748b" stroke-width="5"/></svg>`,
+            
+            muscle_up: `<svg viewBox="0 0 100 100" stroke="#a855f7" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="50" cy="18" r="5" fill="#a855f7"/><path d="M50 23 L50 65 L40 88 M50 65 L60 88"/><path d="M50 35 L30 48 M50 35 L70 48"/><line x1="15" y1="48" x2="85" y2="48" stroke="#64748b" stroke-width="5"/></svg>`,
+            
+            tuck_fl: `<svg viewBox="0 0 100 100" stroke="#a855f7" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="30" cy="50" r="5" fill="#a855f7"/><path d="M30 55 L50 55 L40 75 L50 75"/><path d="M42 55 L42 20"/><line x1="20" y1="20" x2="70" y2="20" stroke="#64748b" stroke-width="5"/></svg>`,
+            
+            adv_tuck_fl: `<svg viewBox="0 0 100 100" stroke="#a855f7" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="25" cy="50" r="5" fill="#a855f7"/><path d="M25 55 L55 55 L55 78"/><path d="M42 55 L42 20"/><line x1="20" y1="20" x2="70" y2="20" stroke="#64748b" stroke-width="5"/></svg>`,
+            
+            straddle_fl: `<svg viewBox="0 0 100 100" stroke="#a855f7" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="20" cy="50" r="5" fill="#a855f7"/><path d="M20 55 L50 55"/><path d="M50 55 L80 38 M50 55 L80 72"/><path d="M38 55 L38 20"/><line x1="15" y1="20" x2="65" y2="20" stroke="#64748b" stroke-width="5"/></svg>`,
+            
+            full_fl: `<svg viewBox="0 0 100 100" stroke="#a855f7" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="15" cy="50" r="5" fill="#a855f7"/><path d="M15 55 L88 55"/><path d="M38 55 L38 20"/><line x1="15" y1="20" x2="65" y2="20" stroke="#64748b" stroke-width="5"/></svg>`,
+            
+            one_arm_pullup: `<svg viewBox="0 0 100 100" stroke="#a855f7" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="45" cy="22" r="5" fill="#a855f7"/><path d="M45 27 L45 65 L35 88 M45 65 L55 88"/><path d="M45 35 L50 20 M45 35 L30 50"/><line x1="20" y1="20" x2="80" y2="20" stroke="#64748b" stroke-width="5"/></svg>`,
+            
+            victorian: `<svg viewBox="0 0 100 100" stroke="#a855f7" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="15" cy="28" r="5" fill="#a855f7"/><path d="M15 33 L88 33"/><path d="M40 33 L40 60 M55 33 L55 60"/><line x1="10" y1="60" x2="85" y2="60" stroke="#64748b" stroke-width="5"/></svg>`,
+
+            // DIP, VERTICALI & COMPRESSION
+            bench_dips: `<svg viewBox="0 0 100 100" stroke="#a855f7" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="35" cy="30" r="5" fill="#a855f7"/><path d="M35 35 L35 60 L75 60"/><path d="M35 42 L20 42 L20 60"/><line x1="10" y1="60" x2="30" y2="60" stroke="#64748b" stroke-width="5"/><line x1="60" y1="75" x2="90" y2="75" stroke="#64748b" stroke-width="4"/></svg>`,
+            
+            bar_dips: `<svg viewBox="0 0 100 100" stroke="#a855f7" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="50" cy="20" r="5" fill="#a855f7"/><path d="M50 25 L50 65 L40 88 M50 65 L60 88"/><path d="M50 35 L35 35 L35 50 M50 35 L65 35 L65 50"/><line x1="20" y1="50" x2="80" y2="50" stroke="#64748b" stroke-width="5"/></svg>`,
+            
+            l_sit: `<svg viewBox="0 0 100 100" stroke="#a855f7" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="35" cy="25" r="5" fill="#a855f7"/><path d="M35 30 L35 60 L85 60"/><path d="M35 48 L22 75 M35 48 L48 75"/><line x1="10" y1="75" x2="60" y2="75" stroke="#64748b" stroke-width="4"/></svg>`,
+            
+            v_sit: `<svg viewBox="0 0 100 100" stroke="#a855f7" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="30" cy="40" r="5" fill="#a855f7"/><path d="M30 45 L42 70 L75 25"/><path d="M42 70 L28 88 M42 70 L56 88"/><line x1="10" y1="88" x2="75" y2="88" stroke="#64748b" stroke-width="4"/></svg>`,
+            
+            wall_handstand: `<svg viewBox="0 0 100 100" stroke="#a855f7" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="42" cy="75" r="5" fill="#a855f7"/><path d="M42 70 L42 28 L32 10 M42 28 L52 10"/><path d="M42 50 L42 88"/><line x1="60" y1="5" x2="60" y2="95" stroke="#64748b" stroke-width="5"/></svg>`,
+            
+            freestanding_hs: `<svg viewBox="0 0 100 100" stroke="#a855f7" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="50" cy="70" r="5" fill="#a855f7"/><path d="M50 65 L50 22 L40 8 M50 22 L60 8"/><path d="M50 50 L40 85 M50 50 L60 85"/><line x1="20" y1="85" x2="80" y2="85" stroke="#64748b" stroke-width="4"/></svg>`,
+            
+            hspu_wall: `<svg viewBox="0 0 100 100" stroke="#a855f7" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="42" cy="55" r="5" fill="#a855f7"/><path d="M42 50 L42 20 L32 5 M42 20 L52 5"/><path d="M42 38 L28 75 M42 38 L56 75"/><line x1="68" y1="5" x2="68" y2="95" stroke="#64748b" stroke-width="5"/></svg>`,
+            
+            freestanding_hspu: `<svg viewBox="0 0 100 100" stroke="#a855f7" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="50" cy="50" r="5" fill="#a855f7"/><path d="M50 45 L50 18 L40 5 M50 18 L60 5"/><path d="M50 35 L30 75 M50 35 L70 75"/><line x1="20" y1="75" x2="80" y2="75" stroke="#64748b" stroke-width="4"/></svg>`,
+            
+            impossible_dip: `<svg viewBox="0 0 100 100" stroke="#a855f7" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="25" cy="40" r="5" fill="#a855f7"/><path d="M25 45 L50 65 L80 65"/><path d="M50 65 L25 65 L15 80"/><line x1="10" y1="80" x2="90" y2="80" stroke="#64748b" stroke-width="4"/></svg>`,
+
+            // HUMAN FLAG & CORE
+            side_plank: `<svg viewBox="0 0 100 100" stroke="#a855f7" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="20" cy="40" r="5" fill="#a855f7"/><path d="M20 45 L85 68"/><path d="M38 50 L30 75"/><line x1="10" y1="75" x2="90" y2="75" stroke="#64748b" stroke-width="4"/></svg>`,
+            
+            dragon_flag: `<svg viewBox="0 0 100 100" stroke="#a855f7" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="78" cy="65" r="5" fill="#a855f7"/><path d="M78 60 L40 30 L20 15"/><path d="M78 65 L88 78 L88 85"/><line x1="10" y1="85" x2="90" y2="85" stroke="#64748b" stroke-width="4"/></svg>`,
+            
+            human_flag_tuck: `<svg viewBox="0 0 100 100" stroke="#a855f7" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="68" cy="50" r="5" fill="#a855f7"/><path d="M68 50 L48 50 L60 30 L50 30"/><path d="M48 50 L25 35 M48 50 L25 65"/><line x1="25" y1="10" x2="25" y2="90" stroke="#64748b" stroke-width="6"/></svg>`,
+            
+            human_flag_straddle: `<svg viewBox="0 0 100 100" stroke="#a855f7" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="75" cy="50" r="5" fill="#a855f7"/><path d="M75 50 L45 50"/><path d="M45 50 L80 25 M45 50 L80 75"/><path d="M45 50 L25 35 M45 50 L25 65"/><line x1="25" y1="10" x2="25" y2="90" stroke="#64748b" stroke-width="6"/></svg>`,
+            
+            human_flag: `<svg viewBox="0 0 100 100" stroke="#a855f7" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="85" cy="50" r="5" fill="#a855f7"/><path d="M85 50 L45 50"/><path d="M45 50 L25 35 M45 50 L25 65"/><line x1="25" y1="10" x2="25" y2="90" stroke="#64748b" stroke-width="6"/></svg>`,
+
+            // GAMBE
+            squat: `<svg viewBox="0 0 100 100" stroke="#a855f7" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="50" cy="25" r="5" fill="#a855f7"/><path d="M50 30 L50 55 L35 72 L35 90 M50 55 L65 72 L65 90"/><line x1="15" y1="90" x2="85" y2="90" stroke="#64748b" stroke-width="4"/></svg>`,
+            
+            pistol_squat: `<svg viewBox="0 0 100 100" stroke="#a855f7" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="35" cy="40" r="5" fill="#a855f7"/><path d="M35 45 L35 68 L20 88 M35 68 L85 68"/><line x1="10" y1="88" x2="90" y2="88" stroke="#64748b" stroke-width="4"/></svg>`,
+            
+            nordic_curl: `<svg viewBox="0 0 100 100" stroke="#a855f7" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="25" cy="35" r="5" fill="#a855f7"/><path d="M25 40 L60 62 L85 62 L85 80"/><line x1="10" y1="80" x2="95" y2="80" stroke="#64748b" stroke-width="4"/></svg>`
+        };
+
+        const categories = [
+            {
+                title: "1. Spinta & Planche Tree",
+                skills: [
+                    { id: 'planche_lean', name: 'Planche Lean', type: 'sec', baseTarget: 20, step: 5, xpPerUnit: 2 },
+                    { id: 'pushups_knee', name: 'Knee Push Ups', type: 'rep', baseTarget: 10, step: 5, xpPerUnit: 3 },
+                    { id: 'pushups', name: 'Regular Push Ups', type: 'rep', baseTarget: 15, step: 5, xpPerUnit: 6 },
+                    { id: 'diamond_pushups', name: 'Diamond Push Ups', type: 'rep', baseTarget: 12, step: 4, xpPerUnit: 10 },
+                    { id: 'pseudo_pushups', name: 'PPPU (Pseudo Planche Push Ups)', type: 'rep', baseTarget: 10, step: 3, xpPerUnit: 18 },
+                    { id: 'tuck_planche', name: 'Tuck Planche Hold', type: 'sec', baseTarget: 10, step: 5, xpPerUnit: 30 },
+                    { id: 'adv_tuck_planche', name: 'Advanced Tuck Planche', type: 'sec', baseTarget: 8, step: 4, xpPerUnit: 55 },
+                    { id: 'straddle_planche', name: 'Straddle Planche', type: 'sec', baseTarget: 5, step: 3, xpPerUnit: 140 },
+                    { id: 'full_planche', name: 'Full Planche Hold', type: 'sec', baseTarget: 3, step: 2, xpPerUnit: 350 },
+                    { id: 'maltese', name: 'Maltese Hold', type: 'sec', baseTarget: 2, step: 1, xpPerUnit: 800 }
+                ]
+            },
+            {
+                title: "2. Trazione & Front Lever Tree",
+                skills: [
+                    { id: 'australian', name: 'Australian Pull Ups', type: 'rep', baseTarget: 12, step: 5, xpPerUnit: 4 },
+                    { id: 'pullups', name: 'Pull Ups (Trazioni)', type: 'rep', baseTarget: 8, step: 3, xpPerUnit: 12 },
+                    { id: 'chest_to_bar', name: 'Chest to Bar Pull Ups', type: 'rep', baseTarget: 6, step: 3, xpPerUnit: 22 },
+                    { id: 'muscle_up', name: 'Bar Muscle Up', type: 'rep', baseTarget: 3, step: 2, xpPerUnit: 75 },
+                    { id: 'tuck_fl', name: 'Tuck Front Lever', type: 'sec', baseTarget: 12, step: 5, xpPerUnit: 20 },
+                    { id: 'adv_tuck_fl', name: 'Adv. Tuck Front Lever', type: 'sec', baseTarget: 8, step: 4, xpPerUnit: 45 },
+                    { id: 'straddle_fl', name: 'Straddle Front Lever', type: 'sec', baseTarget: 5, step: 3, xpPerUnit: 110 },
+                    { id: 'full_fl', name: 'Full Front Lever', type: 'sec', baseTarget: 4, step: 2, xpPerUnit: 220 },
+                    { id: 'one_arm_pullup', name: 'One Arm Pull Up', type: 'rep', baseTarget: 1, step: 1, xpPerUnit: 400 },
+                    { id: 'victorian', name: 'Victorian Cross on Rings', type: 'sec', baseTarget: 2, step: 1, xpPerUnit: 1200 }
+                ]
+            },
+            {
+                title: "3. Verticali, Dip & Core Compression",
+                skills: [
+                    { id: 'bench_dips', name: 'Bench Dips', type: 'rep', baseTarget: 15, step: 5, xpPerUnit: 3 },
+                    { id: 'bar_dips', name: 'Parallel Bar Dips', type: 'rep', baseTarget: 10, step: 4, xpPerUnit: 10 },
+                    { id: 'l_sit', name: 'L-Sit Hold', type: 'sec', baseTarget: 15, step: 5, xpPerUnit: 12 },
+                    { id: 'v_sit', name: 'V-Sit Hold', type: 'sec', baseTarget: 8, step: 3, xpPerUnit: 50 },
+                    { id: 'wall_handstand', name: 'Verticale a Muro', type: 'sec', baseTarget: 30, step: 10, xpPerUnit: 5 },
+                    { id: 'freestanding_hs', name: 'Verticale Libera', type: 'sec', baseTarget: 15, step: 5, xpPerUnit: 20 },
+                    { id: 'hspu_wall', name: 'HSPU a Muro', type: 'rep', baseTarget: 6, step: 2, xpPerUnit: 55 },
+                    { id: 'freestanding_hspu', name: 'Freestanding HSPU', type: 'rep', baseTarget: 2, step: 2, xpPerUnit: 280 },
+                    { id: 'impossible_dip', name: 'Impossible Dip', type: 'rep', baseTarget: 1, step: 1, xpPerUnit: 600 }
+                ]
+            },
+            {
+                title: "4. Human Flag & Core Special",
+                skills: [
+                    { id: 'side_plank', name: 'Side Plank Hold', type: 'sec', baseTarget: 30, step: 10, xpPerUnit: 2 },
+                    { id: 'dragon_flag', name: 'Dragon Flag Hold', type: 'sec', baseTarget: 10, step: 4, xpPerUnit: 35 },
+                    { id: 'human_flag_tuck', name: 'Tuck Human Flag', type: 'sec', baseTarget: 8, step: 3, xpPerUnit: 65 },
+                    { id: 'human_flag_straddle', name: 'Straddle Human Flag', type: 'sec', baseTarget: 5, step: 2, xpPerUnit: 160 },
+                    { id: 'human_flag', name: 'Full Human Flag', type: 'sec', baseTarget: 4, step: 2, xpPerUnit: 260 }
+                ]
+            },
+            {
+                title: "5. Legs & Lower Body",
+                skills: [
+                    { id: 'squat', name: 'Air Squats', type: 'rep', baseTarget: 20, step: 10, xpPerUnit: 2 },
+                    { id: 'pistol_squat', name: 'Pistol Squats', type: 'rep', baseTarget: 5, step: 3, xpPerUnit: 25 },
+                    { id: 'nordic_curl', name: 'Nordic Hamstring Curl', type: 'rep', baseTarget: 3, step: 2, xpPerUnit: 80 }
+                ]
+            }
+        ];
+
+        let userState = JSON.parse(localStorage.getItem('naiontrackState')) || {};
+
+        function saveState() {
+            localStorage.setItem('naiontrackState', JSON.stringify(userState));
+            updateUI();
+        }
+
+        function calculateXP() {
+            let totalXp = 0;
+            categories.forEach(cat => {
+                cat.skills.forEach(skill => {
+                    const val = userState[skill.id] || 0;
+                    totalXp += val * skill.xpPerUnit;
+                });
+            });
+            return totalXp;
+        }
+
+        function getCurrentRank(xp) {
+            let current = ranks[0];
+            for (let i = 0; i < ranks.length; i++) {
+                if (xp >= ranks[i].minXp) {
+                    current = ranks[i];
+                }
+            }
+            return current;
+        }
+
+        function updateUI() {
+            const currentXp = calculateXP();
+            const currentRank = getCurrentRank(currentXp);
+            
+            let rankIndex = ranks.indexOf(currentRank);
+            let nextRank = ranks[rankIndex + 1] || currentRank;
+
+            document.getElementById('rank-icon-box').innerHTML = currentRank.iconSvg;
+            document.getElementById('user-rank').innerText = `GRADO: ${currentRank.name}`;
+            document.getElementById('total-xp').innerText = `XP Totali: ${currentXp}`;
+            
+            const prevRankXp = currentRank.minXp;
+            const nextRankXp = nextRank.minXp;
+            const progressPercent = nextRankXp === prevRankXp ? 100 : Math.min(((currentXp - prevRankXp) / (nextRankXp - prevRankXp)) * 100, 100);
+            document.getElementById('rank-progress').style.width = `${progressPercent}%`;
+
+            const container = document.getElementById('tree');
+            container.innerHTML = '';
+
+            categories.forEach(cat => {
+                const catHeader = document.createElement('h3');
+                catHeader.className = 'category-title';
+                catHeader.innerText = cat.title;
+                container.appendChild(catHeader);
+
+                const branch = document.createElement('div');
+                branch.className = 'skill-tree-branch';
+
+                cat.skills.forEach(skill => {
+                    const val = userState[skill.id] || 0;
+                    
+                    let dynamicTarget = skill.baseTarget;
+                    while (val >= dynamicTarget) {
+                        dynamicTarget += skill.step;
+                    }
+
+                    const isUnlocked = val >= skill.baseTarget;
+                    const unit = skill.type === 'rep' ? 'rip' : 'sec';
+                    const skillXp = val * skill.xpPerUnit;
+
+                    const card = document.createElement('div');
+                    card.className = `skill-card ${isUnlocked ? 'unlocked' : ''}`;
+
+                    const stickmanSvg = skillStickmen[skill.id] || `<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="20" fill="#a855f7"/></svg>`;
+
+                    card.innerHTML = `
+                        <div class="skill-img-box">
+                            ${stickmanSvg}
+                        </div>
+                        <div class="skill-info">
+                            <h4>${skill.name}</h4>
+                            <p>Prossimo Obiettivo: <strong>${dynamicTarget} ${unit}</strong> (+${skill.xpPerUnit} XP/${unit})</p>
+                            <p style="color: ${isUnlocked ? '#22c55e' : '#38bdf8'}; font-weight: bold;">
+                                Record Attuale: ${val} ${unit} (${skillXp} XP)
+                            </p>
+                        </div>
+                        <div class="actions">
+                            <input type="number" id="input-${skill.id}" value="${val}" min="0">
+                            <button onclick="updateSkill('${skill.id}')">Salva</button>
+                        </div>
+                    `;
+                    branch.appendChild(card);
+                });
+                container.appendChild(branch);
+            });
+        }
+
+        function updateSkill(id) {
+            const val = parseInt(document.getElementById(`input-${id}`).value) || 0;
+            userState[id] = val;
+            saveState();
+        }
+
+        updateUI();
+    </script>
+</body>
+</html>
