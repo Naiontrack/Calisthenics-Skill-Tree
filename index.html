@@ -1,18 +1,17 @@
 <!DOCTYPE html>
 <html lang="it">
-    <script type="module">
+   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, GoogleAuthProvider, OAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
     import { getFirestore, doc, setDoc, getDoc, collection, getDocs, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-    // INSERISCI QUI I DATI CHE TI HA DATO FIREBASE
     const firebaseConfig = {
-        apiKey: "AIzaSyA8DxxaRgjpdv9eldZnDiAipceVv6IJ5Ds",
-        authDomain: "calisthenics-tree-b9a06.firebaseapp.com",
-        projectId: "calisthenics-tree-b9a06",
-        storageBucket: "calisthenics-tree-b9a06.firebasestorage.app",
-        messagingSenderId: "385003641400",
-        appId: "1:385003641400:web:7974dd3adc322170c264cd"
+        apiKey: "LA_TUA_API_KEY",
+        authDomain: "TUO_PROGETTO.firebaseapp.com",
+        projectId: "TUO_PROGETTO",
+        storageBucket: "TUO_PROGETTO.appspot.com",
+        messagingSenderId: "TID",
+        appId: "APP_ID"
     };
 
     const app = initializeApp(firebaseConfig);
@@ -21,7 +20,12 @@
 
     window.firebaseAuth = auth;
     window.firebaseDb = db;
-    window.firebaseFns = { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, doc, setDoc, getDoc, collection, getDocs, query, orderBy, limit };
+    window.firebaseFns = { 
+        createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, 
+        GoogleAuthProvider, OAuthProvider, signInWithPopup, 
+        doc, setDoc, getDoc, collection, getDocs, query, orderBy, limit 
+    };
+</script>
 </script>
 <head>
     <meta charset="UTF-8">
@@ -1010,6 +1014,8 @@
 
 // --- GESTIONE AUTENTICAZIONE, NICKNAME E CLASSIFICA ---
 
+// --- GESTIONE AUTENTICAZIONE E CLASSIFICA AGGIORNATA ---
+
 let currentUser = null;
 
 function showAuthError(message) {
@@ -1021,14 +1027,11 @@ function showAuthError(message) {
 }
 
 function validatePassword(password) {
-    const minLength = password.length >= 8;
-    const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password);
-    return minLength && hasSpecialChar;
+    return password.length >= 8 && /[!@#$%^&*(),.?":{}|<>]/.test(password);
 }
 
 function validateEmail(email) {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
 if (window.firebaseAuth && window.firebaseFns) {
@@ -1039,17 +1042,12 @@ if (window.firebaseAuth && window.firebaseFns) {
         const actionsEl = document.getElementById('auth-actions');
 
         if (user) {
-            // Controlliamo se ha già scelto un nickname nel database
             const nickname = await getUserNickname(user.uid);
-            
             if (!nickname) {
-                // Se non ha un nickname, glielo chiediamo subito con un popup dedicato!
                 openNicknameModal(user.uid);
             }
-
             statusEl.innerHTML = `👤 Loggato come: <strong>${nickname || user.email}</strong>`;
             actionsEl.innerHTML = `<button class="relock-btn" onclick="logoutUser()">Esci</button> <button onclick="openNicknameModal('${user.uid}')" style="background: var(--card-bg); border: 1px solid var(--accent); color: var(--text); padding: 5px 10px; border-radius: 4px; cursor: pointer;">Cambia Nickname</button>`;
-            
             await loadUserDataFromCloud(user.uid);
         } else {
             statusEl.innerHTML = `⚠️ Non sei loggato (I progressi sono salvati solo sul browser)`;
@@ -1062,12 +1060,10 @@ if (window.firebaseAuth && window.firebaseFns) {
     });
 }
 
-// Funzione per recuperare il nickname da Firestore
 async function getUserNickname(uid) {
     try {
         const { doc, getDoc } = window.firebaseFns;
-        const docRef = doc(window.firebaseDb, "users", uid);
-        const docSnap = await getDoc(docRef);
+        const docSnap = await getDoc(doc(window.firebaseDb, "users", uid));
         if (docSnap.exists() && docSnap.data().nickname) {
             return docSnap.data().nickname;
         }
@@ -1077,7 +1073,6 @@ async function getUserNickname(uid) {
     return null;
 }
 
-// Modale per scegliere il Nickname
 function openNicknameModal(uid) {
     openCustomModal(
         "🏆 Scegli il tuo Nickname",
@@ -1095,19 +1090,16 @@ function openNicknameModal(uid) {
                 alert("Inserisci un nickname valido!");
                 return;
             }
-
             try {
                 const { doc, setDoc } = window.firebaseFns;
-                // Salviamo il nickname associato all'utente nel database
                 await setDoc(doc(window.firebaseDb, "users", uid), {
                     nickname: nicknameInput
-                }, { merge: true }); // merge: true evita di cancellare gli altri dati esistenti
-
+                }, { merge: true });
                 closeCustomModal();
                 alert("Nickname salvato con successo!");
-                location.reload(); // Ricarica per applicare le modifiche grafiche
+                location.reload();
             } catch (error) {
-                alert("Errore nel salvataggio del nickname: " + error.message);
+                alert("Errore nel salvataggio: " + error.message);
             }
         }
     );
@@ -1122,7 +1114,6 @@ async function registerUser(email, password) {
         showAuthError("La password deve avere almeno 8 caratteri e un carattere speciale (!@#$%^&*...)");
         return;
     }
-
     try {
         const { createUserWithEmailAndPassword } = window.firebaseFns;
         await createUserWithEmailAndPassword(window.firebaseAuth, email, password);
@@ -1137,7 +1128,6 @@ async function loginUser(email, password) {
         showAuthError("Inserisci un'email valida!");
         return;
     }
-
     try {
         const { signInWithEmailAndPassword } = window.firebaseFns;
         await signInWithEmailAndPassword(window.firebaseAuth, email, password);
@@ -1174,13 +1164,12 @@ async function logoutUser() {
         const { signOut } = window.firebaseFns;
         await signOut(window.firebaseAuth);
     } catch (error) {
-        console.error("Errore durante il logout", error);
+        console.error("Errore logout", error);
     }
 }
 
 function openAuthModal(mode) {
     const isReg = mode === 'register';
-    
     openCustomModal(
         isReg ? "📝 Registrati" : "🔑 Accedi",
         `
@@ -1218,12 +1207,10 @@ function openAuthModal(mode) {
 function handleAuthSubmit(mode) {
     const email = document.getElementById('auth-email').value;
     const password = document.getElementById('auth-password').value;
-
     if (!email || !password) {
         showAuthError("Compila tutti i campi!");
         return;
     }
-
     if (mode === 'register') {
         registerUser(email, password);
     } else {
@@ -1233,12 +1220,10 @@ function handleAuthSubmit(mode) {
 
 async function saveState() {
     localStorage.setItem('naiontrackState', JSON.stringify(userState));
-    
     if (currentUser && window.firebaseDb && window.firebaseFns) {
         const { doc, setDoc, getDoc } = window.firebaseFns;
         const totalXp = calculateXP();
         try {
-            // Manteniamo il nickname esistente se l'utente ce l'ha già
             const docRef = doc(window.firebaseDb, "users", currentUser.uid);
             const docSnap = await getDoc(docRef);
             let currentNickname = docSnap.exists() ? (docSnap.data().nickname || "Atleta") : "Atleta";
@@ -1249,10 +1234,9 @@ async function saveState() {
                 state: userState,
                 totalXp: totalXp
             }, { merge: true });
-            
             loadLeaderboard();
         } catch (e) {
-            console.error("Errore salvataggio sul cloud: ", e);
+            console.error("Errore salvataggio cloud: ", e);
         }
     }
     updateUI();
@@ -1261,16 +1245,14 @@ async function saveState() {
 async function loadUserDataFromCloud(uid) {
     try {
         const { doc, getDoc } = window.firebaseFns;
-        const docRef = doc(window.firebaseDb, "users", uid);
-        const docSnap = await getDoc(docRef);
-        
+        const docSnap = await getDoc(doc(window.firebaseDb, "users", uid));
         if (docSnap.exists() && docSnap.data().state) {
             userState = docSnap.data().state;
             localStorage.setItem('naiontrackState', JSON.stringify(userState));
             updateUI();
         }
     } catch (e) {
-        console.error("Errore caricamento dati cloud: ", e);
+        console.error("Errore caricamento cloud: ", e);
     }
 }
 
@@ -1289,7 +1271,6 @@ async function loadLeaderboard() {
         querySnapshot.forEach((doc) => {
             foundAny = true;
             const data = doc.data();
-            // Usa il nickname scelto dall'utente, altrimenti ripiega sull'email o su "Atleta"
             const displayName = data.nickname || (data.email ? data.email.split('@')[0] : "Atleta");
             html += `<li style="margin-bottom: 4px;"><strong>${displayName}</strong> — <span style="color: var(--accent);">${data.totalXp || 0} XP</span></li>`;
         });
@@ -1297,7 +1278,7 @@ async function loadLeaderboard() {
         html += "</ol>";
         listEl.innerHTML = foundAny ? html : "<p style='margin:0; color: var(--subtext);'>Ancora nessun atleta in classifica. Sii il primo!</p>";
     } catch (e) {
-        listEl.innerHTML = "<p style='margin:0; color: var(--danger);'>Impossibile caricare la classifica (controlla le regole Firestore).</p>";
+        listEl.innerHTML = "<p style='margin:0; color: var(--danger);'>Impossibile caricare la classifica.</p>";
     }
 }
     </script>
