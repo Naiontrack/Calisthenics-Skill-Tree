@@ -868,6 +868,24 @@
             padding: 0;
         }
 
+        .chat-badge {
+            position: absolute;
+            top: -3px;
+            right: -3px;
+            min-width: 20px;
+            height: 20px;
+            padding: 0 5px;
+            border-radius: 999px;
+            background: var(--danger);
+            color: #fff;
+            font-size: 0.7rem;
+            font-weight: bold;
+            line-height: 20px;
+            text-align: center;
+            box-shadow: 0 0 0 2px var(--bg-color);
+            z-index: 91;
+        }
+
         .chat-panel {
             position: fixed;
             bottom: 90px;
@@ -1072,6 +1090,21 @@
             color: var(--text);
         }
 
+        .chat-thread-menu-btn {
+            background: none;
+            border: none;
+            color: var(--subtext);
+            font-size: 1.2rem;
+            padding: 2px 8px;
+            cursor: pointer;
+            margin-left: auto;
+            line-height: 1;
+        }
+
+        .chat-thread-menu-btn:hover {
+            color: var(--accent);
+        }
+
         .chat-new-btn {
             width: 100%;
             padding: 10px;
@@ -1254,7 +1287,10 @@
     </div>
 
     <!-- CHAT GENERALE (solo utenti loggati) -->
-    <button class="chat-fab" id="chat-fab" onclick="toggleChatPanel()" title="Chat Generale">💬</button>
+    <button class="chat-fab" id="chat-fab" onclick="toggleChatPanel()" title="Chat Generale">
+        💬
+        <span class="chat-badge" id="chat-badge" style="display:none;">0</span>
+    </button>
     <div class="chat-panel" id="chat-panel">
         <div class="chat-panel-header">
             <span id="chat-panel-title">💬 Chat Generale</span>
@@ -1267,6 +1303,7 @@
         <div class="chat-thread-header" id="chat-thread-header" style="display:none;">
             <button class="chat-back-btn" onclick="backToPrivateList()">←</button>
             <span id="chat-thread-title"></span>
+            <button class="chat-thread-menu-btn" id="chat-thread-menu-btn" onclick="openConversationOptionsModal()" title="Opzioni chat">⋮</button>
         </div>
         <div class="chat-messages" id="chat-messages">
             <p style="color: var(--subtext); text-align:center; font-size:0.85rem;">Apri la chat per vedere i messaggi...</p>
@@ -1310,6 +1347,13 @@
         let newChatSelectedUsers = {}; // uid -> nickname, per il picker di nuova chat/gruppo
         let newChatMode = 'dm'; // 'dm' | 'group'
 
+        // ---- Notifiche non lette (badge sull'icona chat) ----
+        let unreadGeneralUnsubscribe = null;
+        let unreadConversationsUnsubscribe = null;
+        let unreadGeneralMessagesCache = []; // ultimi messaggi generali (per ricalcolare il non letto)
+        let unreadConversationsCache = []; // ultime conversazioni (per ricalcolare il non letto)
+        let lastSeenGeneralAtMillis = 0; // persistito in localStorage, per utente
+
         const rankLogos = {
             bronze: `<svg viewBox="0 0 100 100"><defs><linearGradient id="b" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#d97706"/><stop offset="100%" stop-color="#78350f"/></linearGradient></defs><polygon points="50,5 90,25 90,75 50,95 10,75 10,25" fill="url(#b)" stroke="#f59e0b" stroke-width="3"/><path d="M50 20 L75 70 L25 70 Z" fill="#451a03" opacity="0.6"/><circle cx="50" cy="50" r="15" fill="#f59e0b"/></svg>`,
             silver: `<svg viewBox="0 0 100 100"><defs><linearGradient id="s" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#e2e8f0"/><stop offset="100%" stop-color="#475569"/></linearGradient></defs><polygon points="50,5 95,30 80,85 20,85 5,30" fill="url(#s)" stroke="#f8fafc" stroke-width="3"/><polygon points="50,20 75,50 50,80 25,50" fill="#94a3b8"/><circle cx="50" cy="50" r="12" fill="#f8fafc"/></svg>`,
@@ -1341,59 +1385,86 @@
         ];
 
         const skillStickmen = {
-            planche_lean: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="20" cy="35" r="5" fill="var(--accent)"/><path d="M20 40 L80 62"/><path d="M45 50 L30 80"/><line x1="10" y1="80" x2="90" y2="80" stroke="var(--subtext)" stroke-width="4"/></svg>`,
-            pushups_knee: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="20" cy="45" r="5" fill="var(--accent)"/><path d="M20 50 L60 65 L60 80"/><path d="M35 55 L35 80"/><line x1="10" y1="80" x2="90" y2="80" stroke="var(--subtext)" stroke-width="4"/></svg>`,
-            pushups: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="20" cy="45" r="5" fill="var(--accent)"/><path d="M20 50 L85 70"/><path d="M40 55 L40 80"/><line x1="10" y1="80" x2="90" y2="80" stroke="var(--subtext)" stroke-width="4"/></svg>`,
-            diamond_pushups: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="20" cy="45" r="5" fill="var(--accent)"/><path d="M20 50 L85 70"/><path d="M38 55 L45 80"/><line x1="10" y1="80" x2="90" y2="80" stroke="var(--subtext)" stroke-width="4"/></svg>`,
-            pseudo_pushups: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="15" cy="50" r="5" fill="var(--accent)"/><path d="M15 55 L85 70"/><path d="M50 62 L35 80"/><line x1="10" y1="80" x2="90" y2="80" stroke="var(--subtext)" stroke-width="4"/></svg>`,
-            clap_pushups: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="25" cy="35" r="5" fill="var(--accent)"/><path d="M25 40 L85 60"/><path d="M45 47 L40 60 L50 60"/><line x1="10" y1="80" x2="90" y2="80" stroke="var(--subtext)" stroke-width="4"/></svg>`,
-            double_clap_pushups: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="30" cy="25" r="5" fill="var(--accent)"/><path d="M30 30 L85 55"/><path d="M50 39 L45 52 L55 52"/><line x1="10" y1="80" x2="90" y2="80" stroke="var(--subtext)" stroke-width="4"/></svg>`,
-            behind_back_clap: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="30" cy="22" r="5" fill="var(--accent)"/><path d="M30 27 L85 52"/><path d="M45 34 L35 30 L40 42"/><line x1="10" y1="80" x2="90" y2="80" stroke="var(--subtext)" stroke-width="4"/></svg>`,
-            one_arm_pushup: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="20" cy="45" r="5" fill="var(--accent)"/><path d="M20 50 L85 70"/><path d="M45 56 L40 80"/><line x1="10" y1="80" x2="90" y2="80" stroke="var(--subtext)" stroke-width="4"/></svg>`,
-            one_arm_russian: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="20" cy="50" r="5" fill="var(--accent)"/><path d="M20 55 L85 75"/><path d="M45 61 L35 80 L50 80"/><line x1="10" y1="80" x2="90" y2="80" stroke="var(--subtext)" stroke-width="4"/></svg>`,
-            tuck_planche: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="30" cy="35" r="5" fill="var(--accent)"/><path d="M30 40 L50 42 L35 60 L50 60"/><path d="M40 41 L40 80"/><line x1="15" y1="80" x2="85" y2="80" stroke="var(--subtext)" stroke-width="4"/></svg>`,
-            adv_tuck_planche: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="25" cy="38" r="5" fill="var(--accent)"/><path d="M25 43 L55 43 L55 68"/><path d="M38 43 L38 80"/><line x1="15" y1="80" x2="85" y2="80" stroke="var(--subtext)" stroke-width="4"/></svg>`,
-            straddle_planche: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="20" cy="40" r="5" fill="var(--accent)"/><path d="M20 45 L50 45"/><path d="M50 45 L80 30 M50 45 L80 60"/><path d="M35 45 L35 80"/><line x1="10" y1="80" x2="90" y2="80" stroke="var(--subtext)" stroke-width="4"/></svg>`,
-            full_planche: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="15" cy="42" r="5" fill="var(--accent)"/><path d="M15 47 L88 47"/><path d="M35 47 L35 80"/><line x1="10" y1="80" x2="90" y2="80" stroke="var(--subtext)" stroke-width="4"/></svg>`,
-            maltese: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="15" cy="48" r="5" fill="var(--accent)"/><path d="M15 53 L88 53"/><path d="M38 53 L20 80 M62 53 L80 80"/><line x1="10" y1="80" x2="90" y2="80" stroke="var(--subtext)" stroke-width="4"/></svg>`,
-            australian: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="25" cy="35" r="5" fill="var(--accent)"/><path d="M25 40 L80 75"/><path d="M40 50 L40 25"/><line x1="10" y1="25" x2="60" y2="25" stroke="var(--subtext)" stroke-width="5"/></svg>`,
-            pullups: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="50" cy="30" r="5" fill="var(--accent)"/><path d="M50 35 L50 70 L40 90 M50 70 L60 90"/><path d="M50 42 L30 18 M50 42 L70 18"/><line x1="15" y1="18" x2="85" y2="18" stroke="var(--subtext)" stroke-width="5"/></svg>`,
-            chest_to_bar: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="50" cy="12" r="5" fill="var(--accent)"/><path d="M50 17 L50 55 L40 80 M50 55 L60 80"/><path d="M50 25 L30 25 L30 22 M50 25 L70 25 L70 22"/><line x1="15" y1="22" x2="85" y2="22" stroke="var(--subtext)" stroke-width="5"/></svg>`,
-            muscle_up: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="50" cy="18" r="5" fill="var(--accent)"/><path d="M50 23 L50 65 L40 88 M50 65 L60 88"/><path d="M50 35 L30 48 M50 35 L70 48"/><line x1="15" y1="48" x2="85" y2="48" stroke="var(--subtext)" stroke-width="5"/></svg>`,
-            tuck_fl: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="30" cy="50" r="5" fill="var(--accent)"/><path d="M30 55 L50 55 L40 75 L50 75"/><path d="M42 55 L42 20"/><line x1="20" y1="20" x2="70" y2="20" stroke="var(--subtext)" stroke-width="5"/></svg>`,
-            adv_tuck_fl: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="25" cy="50" r="5" fill="var(--accent)"/><path d="M25 55 L55 55 L55 78"/><path d="M42 55 L42 20"/><line x1="20" y1="20" x2="70" y2="20" stroke="var(--subtext)" stroke-width="5"/></svg>`,
-            straddle_fl: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="20" cy="50" r="5" fill="var(--accent)"/><path d="M20 55 L50 55"/><path d="M50 55 L80 38 M50 55 L80 72"/><path d="M38 55 L38 20"/><line x1="15" y1="20" x2="65" y2="20" stroke="var(--subtext)" stroke-width="5"/></svg>`,
-            full_fl: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="15" cy="50" r="5" fill="var(--accent)"/><path d="M15 55 L88 55"/><path d="M38 55 L38 20"/><line x1="15" y1="20" x2="65" y2="20" stroke="var(--subtext)" stroke-width="5"/></svg>`,
-            one_arm_pullup: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="45" cy="22" r="5" fill="var(--accent)"/><path d="M45 27 L45 65 L35 88 M45 65 L55 88"/><path d="M45 35 L50 20 M45 35 L30 50"/><line x1="20" y1="20" x2="80" y2="20" stroke="var(--subtext)" stroke-width="5"/></svg>`,
-            ring_support: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="50" cy="30" r="5" fill="var(--accent)"/><path d="M50 35 L50 70 L40 90 M50 70 L60 90"/><path d="M50 42 L30 42 M50 42 L70 42"/><circle cx="30" cy="42" r="6" stroke="var(--subtext)" stroke-width="3"/><circle cx="70" cy="42" r="6" stroke="var(--subtext)" stroke-width="3"/><line x1="30" y1="5" x2="30" y2="36" stroke="var(--subtext)" stroke-width="2"/><line x1="70" y1="5" x2="70" y2="36" stroke="var(--subtext)" stroke-width="2"/></svg>`,
-            ring_dips: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="50" cy="22" r="5" fill="var(--accent)"/><path d="M50 27 L50 65 L40 88 M50 65 L60 88"/><path d="M50 35 L32 35 L32 48 M50 35 L68 35 L68 48"/><circle cx="32" cy="48" r="6" stroke="var(--subtext)" stroke-width="3"/><circle cx="68" cy="48" r="6" stroke="var(--subtext)" stroke-width="3"/><line x1="32" y1="5" x2="32" y2="42" stroke="var(--subtext)" stroke-width="2"/><line x1="68" y1="5" x2="68" y2="42" stroke="var(--subtext)" stroke-width="2"/></svg>`,
-            ring_muscle_up: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="50" cy="18" r="5" fill="var(--accent)"/><path d="M50 23 L50 65 L40 88 M50 65 L60 88"/><path d="M50 35 L30 48 M50 35 L70 48"/><circle cx="30" cy="48" r="6" stroke="var(--subtext)" stroke-width="3"/><circle cx="70" cy="48" r="6" stroke="var(--subtext)" stroke-width="3"/><line x1="30" y1="5" x2="30" y2="42" stroke="var(--subtext)" stroke-width="2"/><line x1="68" y1="5" x2="68" y2="42" stroke="var(--subtext)" stroke-width="2"/></svg>`,
-            iron_cross: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="50" cy="25" r="5" fill="var(--accent)"/><path d="M50 30 L50 70 L40 92 M50 70 L60 92"/><path d="M50 38 L18 38 M50 38 L82 38"/><circle cx="18" cy="38" r="6" stroke="var(--subtext)" stroke-width="3"/><circle cx="82" cy="38" r="6" stroke="var(--subtext)" stroke-width="3"/><line x1="18" y1="5" x2="18" y2="32" stroke="var(--subtext)" stroke-width="2"/><line x1="82" y1="5" x2="82" y2="32" stroke="var(--subtext)" stroke-width="2"/></svg>`,
-            victorian: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="15" cy="35" r="5" fill="var(--accent)"/><path d="M15 40 L88 40"/><path d="M40 40 L40 60 M55 40 L55 60"/><circle cx="40" cy="60" r="5" stroke="var(--subtext)" stroke-width="3"/><circle cx="55" cy="60" r="5" stroke="var(--subtext)" stroke-width="3"/><line x1="40" y1="5" x2="40" y2="55" stroke="var(--subtext)" stroke-width="2"/><line x1="55" y1="5" x2="55" y2="55" stroke="var(--subtext)" stroke-width="2"/></svg>`,
-            pullover: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="50" cy="28" r="5" fill="var(--accent)"/><path d="M50 33 C70 20 70 60 50 50"/><line x1="15" y1="50" x2="85" y2="50" stroke="var(--subtext)" stroke-width="5"/></svg>`,
-            spin_360: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="50" cy="30" r="5" fill="var(--accent)"/><path d="M50 35 L50 75 M40 85 L60 85"/><path d="M30 45 C40 20 60 20 70 45" stroke-dasharray="3 3"/><line x1="15" y1="45" x2="85" y2="45" stroke="var(--subtext)" stroke-width="5"/></svg>`,
-            freestyle_combo: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="40" cy="25" r="5" fill="var(--accent)"/><path d="M40 30 L65 50 L85 30"/><path d="M40 35 L20 15"/><line x1="10" y1="60" x2="90" y2="60" stroke="var(--subtext)" stroke-width="5"/></svg>`,
-            bench_dips: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="35" cy="30" r="5" fill="var(--accent)"/><path d="M35 35 L35 60 L75 60"/><path d="M35 42 L20 42 L20 60"/><line x1="10" y1="60" x2="30" y2="60" stroke="var(--subtext)" stroke-width="5"/><line x1="60" y1="75" x2="90" y2="75" stroke="var(--subtext)" stroke-width="4"/></svg>`,
-            bar_dips: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="50" cy="20" r="5" fill="var(--accent)"/><path d="M50 25 L50 65 L40 88 M50 65 L60 88"/><path d="M50 35 L35 35 L35 50 M50 35 L65 35 L65 50"/><line x1="20" y1="50" x2="80" y2="50" stroke="var(--subtext)" stroke-width="5"/></svg>`,
-            l_sit: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="35" cy="25" r="5" fill="var(--accent)"/><path d="M35 30 L35 60 L85 60"/><path d="M35 48 L22 75 M35 48 L48 75"/><line x1="10" y1="75" x2="60" y2="75" stroke="var(--subtext)" stroke-width="4"/></svg>`,
-            v_sit: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="30" cy="40" r="5" fill="var(--accent)"/><path d="M30 45 L42 70 L75 25"/><path d="M42 70 L28 88 M42 70 L56 88"/><line x1="10" y1="88" x2="75" y2="88" stroke="var(--subtext)" stroke-width="4"/></svg>`,
-            wall_handstand: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="42" cy="75" r="5" fill="var(--accent)"/><path d="M42 70 L42 28 L32 10 M42 28 L52 10"/><path d="M42 50 L42 88"/><line x1="60" y1="5" x2="60" y2="95" stroke="var(--subtext)" stroke-width="5"/></svg>`,
-            freestanding_hs: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="50" cy="70" r="5" fill="var(--accent)"/><path d="M50 65 L50 22 L40 8 M50 22 L60 8"/><path d="M50 50 L40 85 M50 50 L60 85"/><line x1="20" y1="85" x2="80" y2="85" stroke="var(--subtext)" stroke-width="4"/></svg>`,
-            hspu_wall: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="42" cy="55" r="5" fill="var(--accent)"/><path d="M42 50 L42 20 L32 5 M42 20 L52 5"/><path d="M42 38 L28 75 M42 38 L56 75"/><line x1="68" y1="5" x2="68" y2="95" stroke="var(--subtext)" stroke-width="5"/></svg>`,
-            freestanding_hspu: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="50" cy="50" r="5" fill="var(--accent)"/><path d="M50 45 L50 18 L40 5 M50 18 L60 5"/><path d="M50 35 L30 75 M50 35 L70 75"/><line x1="20" y1="75" x2="80" y2="75" stroke="var(--subtext)" stroke-width="4"/></svg>`,
-            impossible_dip: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="25" cy="40" r="5" fill="var(--accent)"/><path d="M25 45 L50 65 L80 65"/><path d="M50 65 L25 65 L15 80"/><line x1="10" y1="80" x2="90" y2="80" stroke="var(--subtext)" stroke-width="4"/></svg>`,
-            plank: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="20" cy="45" r="5" fill="var(--accent)"/><path d="M20 50 L85 50"/><path d="M35 50 L35 75 L25 75 M85 50 L85 75"/><line x1="10" y1="75" x2="90" y2="75" stroke="var(--subtext)" stroke-width="4"/></svg>`,
-            crunch: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="30" cy="55" r="5" fill="var(--accent)"/><path d="M30 60 C40 60 50 68 50 75 L80 75"/><path d="M30 60 L20 70 M50 75 L65 90 M80 75 L90 90"/><line x1="10" y1="75" x2="90" y2="75" stroke="var(--subtext)" stroke-width="4"/></svg>`,
-            hollow_body: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="20" cy="50" r="5" fill="var(--accent)"/><path d="M12 40 L20 45 C45 65 55 65 80 45 L88 40"/><line x1="10" y1="75" x2="90" y2="75" stroke="var(--subtext)" stroke-width="4"/></svg>`,
-            side_plank: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="20" cy="40" r="5" fill="var(--accent)"/><path d="M20 45 L85 68"/><path d="M38 50 L30 75"/><line x1="10" y1="75" x2="90" y2="75" stroke="var(--subtext)" stroke-width="4"/></svg>`,
-            dragon_flag: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="78" cy="65" r="5" fill="var(--accent)"/><path d="M78 60 L40 30 L20 15"/><path d="M78 65 L88 78 L88 85"/><line x1="10" y1="85" x2="90" y2="85" stroke="var(--subtext)" stroke-width="4"/></svg>`,
-            human_flag_tuck: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="68" cy="50" r="5" fill="var(--accent)"/><path d="M68 50 L48 50 L60 30 L50 30"/><path d="M48 50 L25 35 M48 50 L25 65"/><line x1="25" y1="10" x2="25" y2="90" stroke="var(--subtext)" stroke-width="6"/></svg>`,
-            human_flag_straddle: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="75" cy="50" r="5" fill="var(--accent)"/><path d="M75 50 L45 50"/><path d="M45 50 L80 25 M45 50 L80 75"/><path d="M45 50 L25 35 M45 50 L25 65"/><line x1="25" y1="10" x2="25" y2="90" stroke="var(--subtext)" stroke-width="6"/></svg>`,
-            human_flag: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="85" cy="50" r="5" fill="var(--accent)"/><path d="M85 50 L45 50"/><path d="M45 50 L25 35 M45 50 L25 65"/><line x1="25" y1="10" x2="25" y2="90" stroke="var(--subtext)" stroke-width="6"/></svg>`,
-            squat: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="50" cy="25" r="5" fill="var(--accent)"/><path d="M50 30 L50 55 L35 72 L35 90 M50 55 L65 72 L65 90"/><line x1="15" y1="90" x2="85" y2="90" stroke="var(--subtext)" stroke-width="4"/></svg>`,
-            pistol_squat: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="35" cy="40" r="5" fill="var(--accent)"/><path d="M35 40 L35 68 L20 88 M35 68 L85 68"/><line x1="10" y1="88" x2="90" y2="88" stroke="var(--subtext)" stroke-width="4"/></svg>`,
-            nordic_curl: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="25" cy="35" r="5" fill="var(--accent)"/><path d="M25 40 L60 62 L85 62 L85 80"/><line x1="10" y1="80" x2="95" y2="80" stroke="var(--subtext)" stroke-width="4"/></svg>`
-        };
+            planche_lean: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="20" cy="35" r="10" fill="var(--accent)"/><path d="M20 40 L80 62"/><path d="M45 50 L30 80"/><line x1="10" y1="80" x2="90" y2="80" stroke="var(--subtext)" stroke-width="6"/></svg>`,
+            pushups_knee: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="20" cy="45" r="10" fill="var(--accent)"/><path d="M20 50 L60 65 L60 80"/><path d="M35 55 L35 80"/><line x1="10" y1="80" x2="90" y2="80" stroke="var(--subtext)" stroke-width="6"/></svg>`,
+            pushups: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="20" cy="45" r="10" fill="var(--accent)"/><path d="M20 50 L85 70"/><path d="M40 55 L40 80"/><line x1="10" y1="80" x2="90" y2="80" stroke="var(--subtext)" stroke-width="6"/></svg>`,
+            diamond_pushups: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="20" cy="45" r="10" fill="var(--accent)"/><path d="M20 50 L85 70"/><path d="M38 55 L45 80"/><line x1="10" y1="80" x2="90" y2="80" stroke="var(--subtext)" stroke-width="6"/></svg>`,
+            pseudo_pushups: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="15" cy="50" r="10" fill="var(--accent)"/><path d="M15 55 L85 70"/><path d="M50 62 L35 80"/><line x1="10" y1="80" x2="90" y2="80" stroke="var(--subtext)" stroke-width="6"/></svg>`,
+            clap_pushups: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="25" cy="35" r="10" fill="var(--accent)"/><path d="M25 40 L85 60"/><path d="M45 47 L40 60 L50 60"/><line x1="10" y1="80" x2="90" y2="80" stroke="var(--subtext)" stroke-width="6"/></svg>`,
+            double_clap_pushups: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="30" cy="25" r="10" fill="var(--accent)"/><path d="M30 30 L85 55"/><path d="M50 39 L45 52 L55 52"/><line x1="10" y1="80" x2="90" y2="80" stroke="var(--subtext)" stroke-width="6"/></svg>`,
+            behind_back_clap: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="30" cy="22" r="10" fill="var(--accent)"/><path d="M30 27 L85 52"/><path d="M45 34 L35 30 L40 42"/><line x1="10" y1="80" x2="90" y2="80" stroke="var(--subtext)" stroke-width="6"/></svg>`,
+            one_arm_pushup: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="20" cy="45" r="10" fill="var(--accent)"/><path d="M20 50 L85 70"/><path d="M45 56 L40 80"/><line x1="10" y1="80" x2="90" y2="80" stroke="var(--subtext)" stroke-width="6"/></svg>`,
+            one_arm_russian: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="20" cy="50" r="10" fill="var(--accent)"/><path d="M20 55 L85 75"/><path d="M45 61 L35 80 L50 80"/><line x1="10" y1="80" x2="90" y2="80" stroke="var(--subtext)" stroke-width="6"/></svg>`,
+            tuck_planche: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="30" cy="35" r="10" fill="var(--accent)"/><path d="M30 40 L50 42 L35 60 L50 60"/><path d="M40 41 L40 80"/><line x1="15" y1="80" x2="85" y2="80" stroke="var(--subtext)" stroke-width="6"/></svg>`,
+            adv_tuck_planche: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="25" cy="38" r="10" fill="var(--accent)"/><path d="M25 43 L55 43 L55 68"/><path d="M38 43 L38 80"/><line x1="15" y1="80" x2="85" y2="80" stroke="var(--subtext)" stroke-width="6"/></svg>`,
+            straddle_planche: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="20" cy="40" r="10" fill="var(--accent)"/><path d="M20 45 L50 45"/><path d="M50 45 L80 30 M50 45 L80 60"/><path d="M35 45 L35 80"/><line x1="10" y1="80" x2="90" y2="80" stroke="var(--subtext)" stroke-width="6"/></svg>`,
+            full_planche: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="15" cy="42" r="10" fill="var(--accent)"/><path d="M15 47 L88 47"/><path d="M35 47 L35 80"/><line x1="10" y1="80" x2="90" y2="80" stroke="var(--subtext)" stroke-width="6"/></svg>`,
+            maltese: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="15" cy="48" r="10" fill="var(--accent)"/><path d="M15 53 L88 53"/><path d="M38 53 L20 80 M62 53 L80 80"/><line x1="10" y1="80" x2="90" y2="80" stroke="var(--subtext)" stroke-width="6"/></svg>`,
+            australian: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="25" cy="35" r="10" fill="var(--accent)"/><path d="M25 40 L80 75"/><path d="M40 50 L40 25"/><line x1="10" y1="25" x2="60" y2="25" stroke="var(--subtext)" stroke-width="7"/></svg>`,
+            pullups: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="50" cy="30" r="10" fill="var(--accent)"/><path d="M50 35 L50 70 L40 90 M50 70 L60 90"/><path d="M50 42 L30 18 M50 42 L70 18"/><line x1="15" y1="18" x2="85" y2="18" stroke="var(--subtext)" stroke-width="7"/></svg>`,
+            chest_to_bar: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="50" cy="12" r="10" fill="var(--accent)"/><path d="M50 17 L50 55 L40 80 M50 55 L60 80"/><path d="M50 25 L30 25 L30 22 M50 25 L70 25 L70 22"/><line x1="15" y1="22" x2="85" y2="22" stroke="var(--subtext)" stroke-width="7"/></svg>`,
+            muscle_up: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="50" cy="18" r="10" fill="var(--accent)"/><path d="M50 23 L50 65 L40 88 M50 65 L60 88"/><path d="M50 35 L30 48 M50 35 L70 48"/><line x1="15" y1="48" x2="85" y2="48" stroke="var(--subtext)" stroke-width="7"/></svg>`,
+            tuck_fl: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="30" cy="50" r="10" fill="var(--accent)"/><path d="M30 55 L50 55 L40 75 L50 75"/><path d="M42 55 L42 20"/><line x1="20" y1="20" x2="70" y2="20" stroke="var(--subtext)" stroke-width="7"/></svg>`,
+            adv_tuck_fl: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="25" cy="50" r="10" fill="var(--accent)"/><path d="M25 55 L55 55 L55 78"/><path d="M42 55 L42 20"/><line x1="20" y1="20" x2="70" y2="20" stroke="var(--subtext)" stroke-width="7"/></svg>`,
+            straddle_fl: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="20" cy="50" r="10" fill="var(--accent)"/><path d="M20 55 L50 55"/><path d="M50 55 L80 38 M50 55 L80 72"/><path d="M38 55 L38 20"/><line x1="15" y1="20" x2="65" y2="20" stroke="var(--subtext)" stroke-width="7"/></svg>`,
+            full_fl: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="15" cy="50" r="10" fill="var(--accent)"/><path d="M15 55 L88 55"/><path d="M38 55 L38 20"/><line x1="15" y1="20" x2="65" y2="20" stroke="var(--subtext)" stroke-width="7"/></svg>`,
+            one_arm_pullup: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="45" cy="22" r="10" fill="var(--accent)"/><path d="M45 27 L45 65 L35 88 M45 65 L55 88"/><path d="M45 35 L50 20 M45 35 L30 50"/><line x1="20" y1="20" x2="80" y2="20" stroke="var(--subtext)" stroke-width="7"/></svg>`,
+            ring_support: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="50" cy="30" r="10" fill="var(--accent)"/><path d="M50 35 L50 70 L40 90 M50 70 L60 90"/><path d="M50 42 L30 42 M50 42 L70 42"/><circle cx="30" cy="42" r="6" stroke="var(--subtext)" stroke-width="4"/><circle cx="70" cy="42" r="6" stroke="var(--subtext)" stroke-width="4"/><line x1="30" y1="5" x2="30" y2="36" stroke="var(--subtext)" stroke-width="3"/><line x1="70" y1="5" x2="70" y2="36" stroke="var(--subtext)" stroke-width="3"/></svg>`,
+            ring_dips: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="50" cy="22" r="10" fill="var(--accent)"/><path d="M50 27 L50 65 L40 88 M50 65 L60 88"/><path d="M50 35 L32 35 L32 48 M50 35 L68 35 L68 48"/><circle cx="32" cy="48" r="6" stroke="var(--subtext)" stroke-width="4"/><circle cx="68" cy="48" r="6" stroke="var(--subtext)" stroke-width="4"/><line x1="32" y1="5" x2="32" y2="42" stroke="var(--subtext)" stroke-width="3"/><line x1="68" y1="5" x2="68" y2="42" stroke="var(--subtext)" stroke-width="3"/></svg>`,
+            ring_muscle_up: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="50" cy="18" r="10" fill="var(--accent)"/><path d="M50 23 L50 65 L40 88 M50 65 L60 88"/><path d="M50 35 L30 48 M50 35 L70 48"/><circle cx="30" cy="48" r="6" stroke="var(--subtext)" stroke-width="4"/><circle cx="70" cy="48" r="6" stroke="var(--subtext)" stroke-width="4"/><line x1="30" y1="5" x2="30" y2="42" stroke="var(--subtext)" stroke-width="3"/><line x1="68" y1="5" x2="68" y2="42" stroke="var(--subtext)" stroke-width="3"/></svg>`,
+            iron_cross: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="50" cy="25" r="10" fill="var(--accent)"/><path d="M50 30 L50 70 L40 92 M50 70 L60 92"/><path d="M50 38 L18 38 M50 38 L82 38"/><circle cx="18" cy="38" r="6" stroke="var(--subtext)" stroke-width="4"/><circle cx="82" cy="38" r="6" stroke="var(--subtext)" stroke-width="4"/><line x1="18" y1="5" x2="18" y2="32" stroke="var(--subtext)" stroke-width="3"/><line x1="82" y1="5" x2="82" y2="32" stroke="var(--subtext)" stroke-width="3"/></svg>`,
+            victorian: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="15" cy="35" r="10" fill="var(--accent)"/><path d="M15 40 L88 40"/><path d="M40 40 L40 60 M55 40 L55 60"/><circle cx="40" cy="60" r="5" stroke="var(--subtext)" stroke-width="4"/><circle cx="55" cy="60" r="5" stroke="var(--subtext)" stroke-width="4"/><line x1="40" y1="5" x2="40" y2="55" stroke="var(--subtext)" stroke-width="3"/><line x1="55" y1="5" x2="55" y2="55" stroke="var(--subtext)" stroke-width="3"/></svg>`,
+            pullover: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="50" cy="28" r="10" fill="var(--accent)"/><path d="M50 33 C70 20 70 60 50 50"/><line x1="15" y1="50" x2="85" y2="50" stroke="var(--subtext)" stroke-width="7"/></svg>`,
+            spin_360: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="50" cy="30" r="10" fill="var(--accent)"/><path d="M50 35 L50 75 M40 85 L60 85"/><path d="M30 45 C40 20 60 20 70 45" stroke-dasharray="3 3"/><line x1="15" y1="45" x2="85" y2="45" stroke="var(--subtext)" stroke-width="7"/></svg>`,
+            freestyle_combo: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="40" cy="25" r="10" fill="var(--accent)"/><path d="M40 30 L65 50 L85 30"/><path d="M40 35 L20 15"/><line x1="10" y1="60" x2="90" y2="60" stroke="var(--subtext)" stroke-width="7"/></svg>`,
+            bench_dips: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="35" cy="30" r="10" fill="var(--accent)"/><path d="M35 35 L35 60 L75 60"/><path d="M35 42 L20 42 L20 60"/><line x1="10" y1="60" x2="30" y2="60" stroke="var(--subtext)" stroke-width="7"/><line x1="60" y1="75" x2="90" y2="75" stroke="var(--subtext)" stroke-width="6"/></svg>`,
+            bar_dips: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="50" cy="20" r="10" fill="var(--accent)"/><path d="M50 25 L50 65 L40 88 M50 65 L60 88"/><path d="M50 35 L35 35 L35 50 M50 35 L65 35 L65 50"/><line x1="20" y1="50" x2="80" y2="50" stroke="var(--subtext)" stroke-width="7"/></svg>`,
+            l_sit: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="35" cy="25" r="10" fill="var(--accent)"/><path d="M35 30 L35 60 L85 60"/><path d="M35 48 L22 75 M35 48 L48 75"/><line x1="10" y1="75" x2="60" y2="75" stroke="var(--subtext)" stroke-width="6"/></svg>`,
+            v_sit: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="30" cy="40" r="10" fill="var(--accent)"/><path d="M30 45 L42 70 L75 25"/><path d="M42 70 L28 88 M42 70 L56 88"/><line x1="10" y1="88" x2="75" y2="88" stroke="var(--subtext)" stroke-width="6"/></svg>`,
+            wall_handstand: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="42" cy="75" r="10" fill="var(--accent)"/><path d="M42 70 L42 28 L32 10 M42 28 L52 10"/><path d="M42 50 L42 88"/><line x1="60" y1="5" x2="60" y2="95" stroke="var(--subtext)" stroke-width="7"/></svg>`,
+            freestanding_hs: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="50" cy="70" r="10" fill="var(--accent)"/><path d="M50 65 L50 22 L40 8 M50 22 L60 8"/><path d="M50 50 L40 85 M50 50 L60 85"/><line x1="20" y1="85" x2="80" y2="85" stroke="var(--subtext)" stroke-width="6"/></svg>`,
+            hspu_wall: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="42" cy="55" r="10" fill="var(--accent)"/><path d="M42 50 L42 20 L32 5 M42 20 L52 5"/><path d="M42 38 L28 75 M42 38 L56 75"/><line x1="68" y1="5" x2="68" y2="95" stroke="var(--subtext)" stroke-width="7"/></svg>`,
+            freestanding_hspu: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="50" cy="50" r="10" fill="var(--accent)"/><path d="M50 45 L50 18 L40 5 M50 18 L60 5"/><path d="M50 35 L30 75 M50 35 L70 75"/><line x1="20" y1="75" x2="80" y2="75" stroke="var(--subtext)" stroke-width="6"/></svg>`,
+            impossible_dip: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="25" cy="40" r="10" fill="var(--accent)"/><path d="M25 45 L50 65 L80 65"/><path d="M50 65 L25 65 L15 80"/><line x1="10" y1="80" x2="90" y2="80" stroke="var(--subtext)" stroke-width="6"/></svg>`,
+            plank: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="20" cy="45" r="10" fill="var(--accent)"/><path d="M20 50 L85 50"/><path d="M35 50 L35 75 L25 75 M85 50 L85 75"/><line x1="10" y1="75" x2="90" y2="75" stroke="var(--subtext)" stroke-width="6"/></svg>`,
+            crunch: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="30" cy="55" r="10" fill="var(--accent)"/><path d="M30 60 C40 60 50 68 50 75 L80 75"/><path d="M30 60 L20 70 M50 75 L65 90 M80 75 L90 90"/><line x1="10" y1="75" x2="90" y2="75" stroke="var(--subtext)" stroke-width="6"/></svg>`,
+            hollow_body: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="20" cy="50" r="10" fill="var(--accent)"/><path d="M12 40 L20 45 C45 65 55 65 80 45 L88 40"/><line x1="10" y1="75" x2="90" y2="75" stroke="var(--subtext)" stroke-width="6"/></svg>`,
+            side_plank: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="20" cy="40" r="10" fill="var(--accent)"/><path d="M20 45 L85 68"/><path d="M38 50 L30 75"/><line x1="10" y1="75" x2="90" y2="75" stroke="var(--subtext)" stroke-width="6"/></svg>`,
+            dragon_flag: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="78" cy="65" r="10" fill="var(--accent)"/><path d="M78 60 L40 30 L20 15"/><path d="M78 65 L88 78 L88 85"/><line x1="10" y1="85" x2="90" y2="85" stroke="var(--subtext)" stroke-width="6"/></svg>`,
+            human_flag_tuck: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="68" cy="50" r="10" fill="var(--accent)"/><path d="M68 50 L48 50 L60 30 L50 30"/><path d="M48 50 L25 35 M48 50 L25 65"/><line x1="25" y1="10" x2="25" y2="90" stroke="var(--subtext)" stroke-width="8"/></svg>`,
+            human_flag_straddle: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="75" cy="50" r="10" fill="var(--accent)"/><path d="M75 50 L45 50"/><path d="M45 50 L80 25 M45 50 L80 75"/><path d="M45 50 L25 35 M45 50 L25 65"/><line x1="25" y1="10" x2="25" y2="90" stroke="var(--subtext)" stroke-width="8"/></svg>`,
+            human_flag: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="85" cy="50" r="10" fill="var(--accent)"/><path d="M85 50 L45 50"/><path d="M45 50 L25 35 M45 50 L25 65"/><line x1="25" y1="10" x2="25" y2="90" stroke="var(--subtext)" stroke-width="8"/></svg>`,
+            squat: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="50" cy="25" r="10" fill="var(--accent)"/><path d="M50 30 L50 55 L35 72 L35 90 M50 55 L65 72 L65 90"/><line x1="15" y1="90" x2="85" y2="90" stroke="var(--subtext)" stroke-width="6"/></svg>`,
+            pistol_squat: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="35" cy="40" r="10" fill="var(--accent)"/><path d="M35 40 L35 68 L20 88 M35 68 L85 68"/><line x1="10" y1="88" x2="90" y2="88" stroke="var(--subtext)" stroke-width="6"/></svg>`,
+            nordic_curl: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="25" cy="35" r="10" fill="var(--accent)"/><path d="M25 40 L60 62 L85 62 L85 80"/><line x1="10" y1="80" x2="95" y2="80" stroke="var(--subtext)" stroke-width="6"/></svg>`,
+            dead_hang: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="50" cy="25" r="10" fill="var(--accent)"/><path d="M50 30 L50 70 L42 90 M50 70 L58 90"/><path d="M50 35 L35 10 M50 35 L65 10"/><line x1="15" y1="10" x2="85" y2="10" stroke="var(--subtext)" stroke-width="7"/></svg>`,
+            towel_hang: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="50" cy="28" r="10" fill="var(--accent)"/><path d="M50 33 L50 72 L42 90 M50 72 L58 90"/><path d="M50 38 L35 15 M50 38 L65 15"/><line x1="15" y1="15" x2="85" y2="15" stroke="var(--subtext)" stroke-width="7"/><circle cx="35" cy="15" r="6" fill="none" stroke="var(--subtext)" stroke-width="4"/><circle cx="65" cy="15" r="6" fill="none" stroke="var(--subtext)" stroke-width="4"/></svg>`,
+            one_arm_hang: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="45" cy="25" r="10" fill="var(--accent)"/><path d="M45 30 L45 70 L37 90 M45 70 L53 90"/><path d="M45 35 L60 10"/><path d="M45 42 L33 58"/><line x1="20" y1="10" x2="80" y2="10" stroke="var(--subtext)" stroke-width="7"/></svg>`,
+            fingertip_hang: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="50" cy="25" r="10" fill="var(--accent)"/><path d="M50 30 L50 70 L42 90 M50 70 L58 90"/><path d="M50 35 L35 10 M50 35 L65 10"/><line x1="15" y1="10" x2="85" y2="10" stroke="var(--subtext)" stroke-width="7"/><circle cx="35" cy="10" r="3" fill="var(--subtext)"/><circle cx="65" cy="10" r="3" fill="var(--subtext)"/></svg>`,
+            towel_pullup: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="50" cy="20" r="10" fill="var(--accent)"/><path d="M50 25 L50 55 L42 78 M50 55 L58 78"/><path d="M50 32 L35 12 M50 32 L65 12"/><line x1="15" y1="12" x2="85" y2="12" stroke="var(--subtext)" stroke-width="7"/><circle cx="35" cy="12" r="6" fill="none" stroke="var(--subtext)" stroke-width="4"/><circle cx="65" cy="12" r="6" fill="none" stroke="var(--subtext)" stroke-width="4"/></svg>`,
+            lunges: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="30" cy="18" r="10" fill="var(--accent)"/><path d="M30 23 L40 52"/><path d="M40 52 L25 70 L20 90"/><path d="M40 52 L62 65 L78 85"/><line x1="10" y1="90" x2="90" y2="90" stroke="var(--subtext)" stroke-width="6"/></svg>`,
+            bulgarian_split_squat: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="30" cy="18" r="10" fill="var(--accent)"/><path d="M30 23 L40 52"/><path d="M40 52 L25 70 L20 90"/><path d="M40 52 L65 62 L80 55"/><line x1="10" y1="90" x2="55" y2="90" stroke="var(--subtext)" stroke-width="6"/><line x1="70" y1="55" x2="92" y2="55" stroke="var(--subtext)" stroke-width="6"/></svg>`,
+            wall_sit: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="70" cy="20" r="10" fill="var(--accent)"/><path d="M70 25 L70 55"/><path d="M70 55 L40 55"/><path d="M40 55 L40 88"/><line x1="82" y1="5" x2="82" y2="95" stroke="var(--subtext)" stroke-width="7"/><line x1="15" y1="88" x2="85" y2="88" stroke="var(--subtext)" stroke-width="6"/></svg>`,
+            calf_raises: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="50" cy="18" r="10" fill="var(--accent)"/><path d="M50 23 L50 65"/><path d="M50 65 L40 84 M50 65 L60 84"/><line x1="20" y1="90" x2="35" y2="86" stroke="var(--subtext)" stroke-width="5"/><line x1="80" y1="90" x2="65" y2="86" stroke="var(--subtext)" stroke-width="5"/><line x1="10" y1="90" x2="90" y2="90" stroke="var(--subtext)" stroke-width="4"/></svg>`,
+            glute_bridge: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="18" cy="72" r="10" fill="var(--accent)"/><path d="M18 76 L55 58"/><path d="M55 58 L72 76"/><path d="M72 76 L72 90"/><line x1="8" y1="90" x2="92" y2="90" stroke="var(--subtext)" stroke-width="6"/></svg>`,
+            shrimp_squat: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="35" cy="18" r="10" fill="var(--accent)"/><path d="M35 23 L40 52"/><path d="M40 52 L46 74 L40 90"/><path d="M40 52 L60 62 L72 48"/><path d="M72 48 L58 70"/><line x1="10" y1="90" x2="60" y2="90" stroke="var(--subtext)" stroke-width="6"/></svg>`,
+            cossack_squat: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="50" cy="15" r="10" fill="var(--accent)"/><path d="M50 20 L50 48"/><path d="M50 48 L30 62 L25 88"/><path d="M50 48 L80 58 L92 88"/><line x1="10" y1="90" x2="95" y2="90" stroke="var(--subtext)" stroke-width="6"/></svg>`,
+            box_jump: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="32" cy="18" r="10" fill="var(--accent)"/><path d="M32 23 L45 45"/><path d="M45 45 L58 55 L47 60"/><path d="M45 45 L35 55 L46 60"/><path d="M65 55 L90 55 L90 90 L65 90 Z" fill="none" stroke="var(--subtext)" stroke-width="6"/><line x1="10" y1="90" x2="65" y2="90" stroke="var(--subtext)" stroke-width="6"/></svg>`,
+            leg_raises: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="50" cy="13" r="10" fill="var(--accent)"/><path d="M50 18 L35 5 M50 18 L65 5"/><path d="M50 18 L50 45"/><path d="M50 45 L78 22"/><line x1="15" y1="5" x2="85" y2="5" stroke="var(--subtext)" stroke-width="7"/></svg>`,
+            russian_twist: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="32" cy="28" r="10" fill="var(--accent)"/><path d="M32 33 L38 58"/><path d="M38 58 L60 52 L72 62"/><path d="M35 40 L12 48 M35 40 L58 33"/><line x1="15" y1="65" x2="55" y2="65" stroke="var(--subtext)" stroke-width="5"/></svg>`,
+            ab_wheel: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="15" cy="38" r="10" fill="var(--accent)"/><path d="M15 43 L58 65"/><path d="M18 42 L88 30"/><path d="M58 65 L58 88"/><circle cx="88" cy="30" r="7" fill="none" stroke="var(--subtext)" stroke-width="5"/><line x1="10" y1="88" x2="70" y2="88" stroke="var(--subtext)" stroke-width="5"/></svg>`,
+            superman_hold: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="13" cy="45" r="10" fill="var(--accent)"/><path d="M13 45 C40 32 62 32 89 45"/><path d="M22 42 L6 33"/><path d="M80 42 L96 33"/><line x1="5" y1="62" x2="95" y2="62" stroke="var(--subtext)" stroke-width="5"/></svg>`,
+            windshield_wipers: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="50" cy="13" r="10" fill="var(--accent)"/><path d="M50 18 L35 5 M50 18 L65 5"/><path d="M50 18 L50 45"/><path d="M50 45 L82 58"/><line x1="15" y1="5" x2="85" y2="5" stroke="var(--subtext)" stroke-width="7"/></svg>`,
+            classic_dip: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="50" cy="16" r="10" fill="var(--accent)"/><path d="M50 21 L50 55"/><path d="M50 55 L44 75 L54 85"/><path d="M50 30 L32 30 L32 48 M50 30 L68 30 L68 48"/><line x1="20" y1="48" x2="20" y2="62" stroke="var(--subtext)" stroke-width="6"/><line x1="80" y1="48" x2="80" y2="62" stroke="var(--subtext)" stroke-width="6"/></svg>`,
+            korean_dip: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="45" cy="13" r="10" fill="var(--accent)"/><path d="M45 18 L62 55"/><path d="M62 55 L56 75 L66 88"/><path d="M48 26 L20 44 M48 26 L20 14"/><circle cx="20" cy="14" r="6" fill="none" stroke="var(--subtext)" stroke-width="4"/><circle cx="20" cy="44" r="6" fill="none" stroke="var(--subtext)" stroke-width="4"/><line x1="20" y1="5" x2="20" y2="8" stroke="var(--subtext)" stroke-width="3"/></svg>`,
+            russian_dip: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="13" cy="33" r="10" fill="var(--accent)"/><path d="M13 38 L82 38"/><path d="M36 38 L36 60"/><path d="M62 38 L62 60"/><line x1="25" y1="60" x2="47" y2="60" stroke="var(--subtext)" stroke-width="6"/><line x1="52" y1="60" x2="74" y2="60" stroke="var(--subtext)" stroke-width="6"/></svg>`,
+            l_sit_dip: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="50" cy="13" r="10" fill="var(--accent)"/><path d="M50 18 L50 48"/><path d="M50 26 L32 26 L32 44 M50 26 L68 26 L68 44"/><path d="M50 48 L86 48"/><line x1="32" y1="44" x2="32" y2="58" stroke="var(--subtext)" stroke-width="6"/><line x1="68" y1="44" x2="68" y2="58" stroke="var(--subtext)" stroke-width="6"/></svg>`,
+            burpees: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="50" cy="8" r="10" fill="var(--accent)"/><path d="M50 13 L50 45"/><path d="M50 18 L35 5 M50 18 L65 5"/><path d="M50 45 L35 72 L30 90 M50 45 L65 72 L70 90"/><line x1="10" y1="90" x2="90" y2="90" stroke="var(--subtext)" stroke-width="5"/></svg>`,
+            mountain_climbers: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="13" cy="42" r="10" fill="var(--accent)"/><path d="M13 47 L75 47"/><path d="M13 47 L13 65"/><path d="M75 47 L55 58 L45 42"/><path d="M75 47 L90 62 L90 80"/><line x1="10" y1="80" x2="95" y2="80" stroke="var(--subtext)" stroke-width="5"/></svg>`,
+            broad_jump: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="22" cy="22" r="10" fill="var(--accent)"/><path d="M22 27 L44 46"/><path d="M44 46 L68 56 L86 50"/><path d="M25 32 L8 44"/><line x1="5" y1="60" x2="30" y2="60" stroke="var(--subtext)" stroke-width="5" stroke-dasharray="4 4"/><line x1="72" y1="60" x2="97" y2="60" stroke="var(--subtext)" stroke-width="5"/></svg>`,
+            explosive_pullup: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="45" cy="14" r="10" fill="var(--accent)"/><path d="M45 19 L30 5 M45 19 L60 5"/><path d="M45 19 C55 42 65 52 60 72"/><path d="M60 72 L76 88"/><line x1="15" y1="5" x2="85" y2="5" stroke="var(--subtext)" stroke-width="7"/></svg>`,
+            jump_squat: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="50" cy="18" r="10" fill="var(--accent)"/><path d="M50 23 L50 48"/><path d="M50 30 L30 44"/><path d="M50 48 L35 68 L35 88 M50 48 L65 68 L65 88"/><line x1="10" y1="90" x2="90" y2="90" stroke="var(--subtext)" stroke-width="5"/></svg>`
+        }
 
         const categories = [
             {
@@ -1457,7 +1528,11 @@
                 title: "5. Verticali, Dip & Core Compression",
                 skills: [
                     { id: 'bench_dips', name: 'Bench Dips', type: 'rep', baseTarget: 15, step: 5, xpPerUnit: 3, unlockXp: 60, goalBonusXp: 100 },
+                    { id: 'classic_dip', name: 'Dip Classico (Parallele)', type: 'rep', baseTarget: 10, step: 5, xpPerUnit: 7, unlockXp: 180, goalBonusXp: 250 },
                     { id: 'bar_dips', name: 'Parallel Bar Dips', type: 'rep', baseTarget: 10, step: 4, xpPerUnit: 10, unlockXp: 200, goalBonusXp: 300 },
+                    { id: 'l_sit_dip', name: 'L-Sit Dip', type: 'rep', baseTarget: 5, step: 2, xpPerUnit: 50, unlockXp: 1100, goalBonusXp: 1400 },
+                    { id: 'korean_dip', name: 'Korean Dips', type: 'rep', baseTarget: 6, step: 3, xpPerUnit: 35, unlockXp: 800, goalBonusXp: 1000 },
+                    { id: 'russian_dip', name: 'Russian Dips', type: 'rep', baseTarget: 3, step: 2, xpPerUnit: 120, unlockXp: 3000, goalBonusXp: 4000 },
                     { id: 'l_sit', name: 'L-Sit Hold', type: 'sec', baseTarget: 15, step: 5, xpPerUnit: 12, unlockXp: 300, goalBonusXp: 400 },
                     { id: 'v_sit', name: 'V-Sit Hold', type: 'sec', baseTarget: 8, step: 3, xpPerUnit: 50, unlockXp: 1200, goalBonusXp: 1500 },
                     { id: 'wall_handstand', name: 'Verticale a Muro', type: 'sec', baseTarget: 30, step: 10, xpPerUnit: 5, unlockXp: 150, goalBonusXp: 200 },
@@ -1486,8 +1561,49 @@
                 title: "7. Legs & Lower Body",
                 skills: [
                     { id: 'squat', name: 'Air Squats', type: 'rep', baseTarget: 20, step: 10, xpPerUnit: 2, unlockXp: 50, goalBonusXp: 80 },
+                    { id: 'lunges', name: 'Affondi (Lunges)', type: 'rep', baseTarget: 20, step: 10, xpPerUnit: 3, unlockXp: 60, goalBonusXp: 90 },
+                    { id: 'calf_raises', name: 'Calf Raises', type: 'rep', baseTarget: 20, step: 10, xpPerUnit: 2, unlockXp: 40, goalBonusXp: 60 },
+                    { id: 'glute_bridge', name: 'Glute Bridge (Ponte)', type: 'rep', baseTarget: 15, step: 10, xpPerUnit: 3, unlockXp: 50, goalBonusXp: 80 },
+                    { id: 'wall_sit', name: 'Sedia a Muro (Wall Sit)', type: 'sec', baseTarget: 30, step: 15, xpPerUnit: 3, unlockXp: 50, goalBonusXp: 80 },
+                    { id: 'bulgarian_split_squat', name: 'Bulgarian Split Squat', type: 'rep', baseTarget: 10, step: 5, xpPerUnit: 8, unlockXp: 250, goalBonusXp: 350 },
+                    { id: 'box_jump', name: 'Box Jump', type: 'rep', baseTarget: 8, step: 4, xpPerUnit: 10, unlockXp: 200, goalBonusXp: 300 },
                     { id: 'pistol_squat', name: 'Pistol Squats', type: 'rep', baseTarget: 5, step: 3, xpPerUnit: 25, unlockXp: 600, goalBonusXp: 800 },
-                    { id: 'nordic_curl', name: 'Nordic Hamstring Curl', type: 'rep', baseTarget: 3, step: 2, xpPerUnit: 80, unlockXp: 2000, goalBonusXp: 2500 }
+                    { id: 'cossack_squat', name: 'Cossack Squat', type: 'rep', baseTarget: 8, step: 4, xpPerUnit: 15, unlockXp: 400, goalBonusXp: 500 },
+                    { id: 'nordic_curl', name: 'Nordic Hamstring Curl', type: 'rep', baseTarget: 3, step: 2, xpPerUnit: 80, unlockXp: 2000, goalBonusXp: 2500 },
+                    { id: 'shrimp_squat', name: 'Shrimp Squat', type: 'rep', baseTarget: 5, step: 3, xpPerUnit: 60, unlockXp: 1600, goalBonusXp: 2000 }
+                ]
+            },
+            {
+                id: 'cat_grip',
+                title: "8. Grip, Avambracci & Sospensioni",
+                skills: [
+                    { id: 'dead_hang', name: 'Dead Hang (Sospensione Passiva)', type: 'sec', baseTarget: 30, step: 10, xpPerUnit: 3, unlockXp: 40, goalBonusXp: 60 },
+                    { id: 'towel_hang', name: 'Sospensione all\'Asciugamano', type: 'sec', baseTarget: 20, step: 5, xpPerUnit: 8, unlockXp: 300, goalBonusXp: 400 },
+                    { id: 'fingertip_hang', name: 'Sospensione sulle Dita', type: 'sec', baseTarget: 10, step: 3, xpPerUnit: 20, unlockXp: 700, goalBonusXp: 900 },
+                    { id: 'towel_pullup', name: 'Trazioni all\'Asciugamano', type: 'rep', baseTarget: 5, step: 2, xpPerUnit: 18, unlockXp: 500, goalBonusXp: 700 },
+                    { id: 'one_arm_hang', name: 'Sospensione a un Braccio', type: 'sec', baseTarget: 10, step: 3, xpPerUnit: 25, unlockXp: 900, goalBonusXp: 1200 }
+                ]
+            },
+            {
+                id: 'cat_core2',
+                title: "9. Core Avanzato & Rotazioni",
+                skills: [
+                    { id: 'russian_twist', name: 'Russian Twist', type: 'rep', baseTarget: 20, step: 10, xpPerUnit: 2, unlockXp: 40, goalBonusXp: 70 },
+                    { id: 'superman_hold', name: 'Superman Hold', type: 'sec', baseTarget: 20, step: 10, xpPerUnit: 3, unlockXp: 50, goalBonusXp: 80 },
+                    { id: 'leg_raises', name: 'Leg Raises alla Sbarra', type: 'rep', baseTarget: 10, step: 5, xpPerUnit: 8, unlockXp: 200, goalBonusXp: 300 },
+                    { id: 'ab_wheel', name: 'Ab Wheel Rollout', type: 'rep', baseTarget: 5, step: 3, xpPerUnit: 30, unlockXp: 700, goalBonusXp: 900 },
+                    { id: 'windshield_wipers', name: 'Windshield Wipers', type: 'rep', baseTarget: 5, step: 3, xpPerUnit: 90, unlockXp: 2500, goalBonusXp: 3000 }
+                ]
+            },
+            {
+                id: 'cat_explosive',
+                title: "10. Esplosività & Condizionamento",
+                skills: [
+                    { id: 'jump_squat', name: 'Jump Squat', type: 'rep', baseTarget: 15, step: 8, xpPerUnit: 4, unlockXp: 80, goalBonusXp: 120 },
+                    { id: 'mountain_climbers', name: 'Mountain Climbers', type: 'rep', baseTarget: 20, step: 10, xpPerUnit: 2, unlockXp: 40, goalBonusXp: 70 },
+                    { id: 'burpees', name: 'Burpees', type: 'rep', baseTarget: 10, step: 5, xpPerUnit: 4, unlockXp: 60, goalBonusXp: 100 },
+                    { id: 'broad_jump', name: 'Salto in Lungo da Fermo', type: 'rep', baseTarget: 5, step: 2, xpPerUnit: 15, unlockXp: 300, goalBonusXp: 400 },
+                    { id: 'explosive_pullup', name: 'Trazioni Esplosive (Kipping)', type: 'rep', baseTarget: 5, step: 3, xpPerUnit: 30, unlockXp: 600, goalBonusXp: 800 }
                 ]
             }
         ];
@@ -1553,6 +1669,7 @@
         function loadUserData(user) {
             if (user) {
                 currentUser = user;
+                startUnreadListeners();
                 db.collection("users").doc(user.uid).get().then((doc) => {
                     if (doc.exists) {
                         const data = doc.data();
@@ -1589,6 +1706,7 @@
                 currentUser = null;
                 userNickname = "";
                 userProfileData = {};
+                stopUnreadListeners();
                 document.getElementById('user-status-text').innerHTML = `👤 Non autenticato (Salvataggio locale)`;
                 document.getElementById('auth-actions-container').innerHTML = `
                     <button class="btn-auth-secondary" onclick="openAuthModal('login')">Accedi</button>
@@ -2323,6 +2441,7 @@
             if (chatPanelOpen) {
                 renderChatInputState();
                 resumeActiveChatListener();
+                if (activeChatView === 'general') markGeneralChatAsRead();
             }
         }
 
@@ -2368,6 +2487,7 @@
             document.getElementById('chat-messages').innerHTML = `<p style="color: var(--subtext); text-align:center; font-size:0.85rem;">Caricamento...</p>`;
             renderChatInputState();
             resumeActiveChatListener();
+            if (tab === 'general') markGeneralChatAsRead();
         }
 
         function renderChatInputState() {
@@ -2398,6 +2518,111 @@
             input.onkeypress = (e) => {
                 if (e.key === 'Enter') sendChatMessage();
             };
+        }
+
+        // ==========================================
+        // NOTIFICHE NON LETTE (BADGE SULL'ICONA CHAT)
+        // ==========================================
+        let unreadGeneralCount = 0;
+        let unreadPrivateCount = 0;
+
+        function renderChatBadge() {
+            const badge = document.getElementById('chat-badge');
+            if (!badge) return;
+            const total = unreadGeneralCount + unreadPrivateCount;
+            if (total > 0) {
+                badge.innerText = total > 99 ? '99+' : String(total);
+                badge.style.display = 'block';
+            } else {
+                badge.style.display = 'none';
+            }
+        }
+
+        function getLastSeenGeneralStorageKey() {
+            return currentUser ? `lastSeenGeneral_${currentUser.uid}` : null;
+        }
+
+        function loadLastSeenGeneral() {
+            const key = getLastSeenGeneralStorageKey();
+            const stored = key ? localStorage.getItem(key) : null;
+            lastSeenGeneralAtMillis = stored ? (parseInt(stored, 10) || 0) : 0;
+        }
+
+        // Da chiamare quando l'utente vede effettivamente la chat generale
+        function markGeneralChatAsRead() {
+            if (!currentUser) return;
+            lastSeenGeneralAtMillis = Date.now();
+            const key = getLastSeenGeneralStorageKey();
+            if (key) localStorage.setItem(key, String(lastSeenGeneralAtMillis));
+            recomputeGeneralUnread();
+        }
+
+        function recomputeGeneralUnread() {
+            if (!currentUser) { unreadGeneralCount = 0; renderChatBadge(); return; }
+            unreadGeneralCount = unreadGeneralMessagesCache.filter(m => {
+                if (m.uid === currentUser.uid) return false; // i propri messaggi non contano
+                const ts = (m.createdAt && m.createdAt.toMillis) ? m.createdAt.toMillis() : 0;
+                return ts > lastSeenGeneralAtMillis;
+            }).length;
+            renderChatBadge();
+        }
+
+        function recomputePrivateUnread() {
+            if (!currentUser) { unreadPrivateCount = 0; renderChatBadge(); return; }
+            unreadPrivateCount = unreadConversationsCache.filter(c => {
+                if (!c.lastMessageAt || !c.lastMessageAt.toMillis) return false;
+                if (c.lastMessageSenderUid === currentUser.uid) return false; // i propri messaggi non contano
+                const lastMsgMillis = c.lastMessageAt.toMillis();
+                const readTs = c.lastRead && c.lastRead[currentUser.uid];
+                const readMillis = (readTs && readTs.toMillis) ? readTs.toMillis() : 0;
+                return lastMsgMillis > readMillis;
+            }).length;
+            renderChatBadge();
+        }
+
+        // Ascolto sempre attivo (indipendente dal pannello aperto/chiuso) per aggiornare il badge in tempo reale
+        function startUnreadListeners() {
+            stopUnreadListeners();
+            if (!currentUser) return;
+
+            loadLastSeenGeneral();
+
+            unreadGeneralUnsubscribe = db.collection("chatMessages")
+                .orderBy("createdAt", "desc")
+                .limit(50)
+                .onSnapshot((snapshot) => {
+                    unreadGeneralMessagesCache = [];
+                    snapshot.forEach(doc => {
+                        const data = doc.data();
+                        unreadGeneralMessagesCache.push({ uid: data.uid, createdAt: data.createdAt });
+                    });
+                    recomputeGeneralUnread();
+                }, (error) => console.error("Errore nel calcolo dei messaggi non letti:", error));
+
+            unreadConversationsUnsubscribe = db.collection("conversations")
+                .where("participants", "array-contains", currentUser.uid)
+                .onSnapshot((snapshot) => {
+                    unreadConversationsCache = [];
+                    snapshot.forEach(doc => {
+                        const data = doc.data();
+                        unreadConversationsCache.push({
+                            lastMessageAt: data.lastMessageAt,
+                            lastMessageSenderUid: data.lastMessageSenderUid,
+                            lastRead: data.lastRead
+                        });
+                    });
+                    recomputePrivateUnread();
+                }, (error) => console.error("Errore nel calcolo delle chat non lette:", error));
+        }
+
+        function stopUnreadListeners() {
+            if (unreadGeneralUnsubscribe) { unreadGeneralUnsubscribe(); unreadGeneralUnsubscribe = null; }
+            if (unreadConversationsUnsubscribe) { unreadConversationsUnsubscribe(); unreadConversationsUnsubscribe = null; }
+            unreadGeneralMessagesCache = [];
+            unreadConversationsCache = [];
+            unreadGeneralCount = 0;
+            unreadPrivateCount = 0;
+            renderChatBadge();
         }
 
         // ==========================================
@@ -2538,8 +2763,12 @@
                 if (isPrivateThread) {
                     db.collection("conversations").doc(activeConversationId).update({
                         lastMessageText: msgText,
-                        lastMessageAt: firebase.firestore.FieldValue.serverTimestamp()
+                        lastMessageAt: firebase.firestore.FieldValue.serverTimestamp(),
+                        lastMessageSenderUid: currentUser.uid,
+                        [`lastRead.${currentUser.uid}`]: firebase.firestore.FieldValue.serverTimestamp()
                     }).catch((error) => console.error("Errore aggiornamento anteprima chat:", error));
+                } else {
+                    markGeneralChatAsRead();
                 }
             }).catch((error) => {
                 console.error("Errore invio messaggio:", error);
@@ -2651,6 +2880,11 @@
                 activeConversationData = Object.assign({ id: doc.id }, doc.data());
                 document.getElementById('chat-thread-title').innerText = conversationDisplayName(activeConversationData);
             }).catch((error) => console.error("Errore nel recupero della conversazione:", error));
+
+            // Segna la conversazione come letta
+            db.collection("conversations").doc(convId).update({
+                [`lastRead.${currentUser.uid}`]: firebase.firestore.FieldValue.serverTimestamp()
+            }).catch((error) => console.error("Errore aggiornamento stato letto:", error));
 
             stopConversationsListener();
             renderChatInputState();
@@ -2860,6 +3094,289 @@
             }).catch((error) => {
                 console.error("Errore nella creazione del gruppo:", error);
                 if (errEl) errEl.innerText = "Errore durante la creazione del gruppo.";
+            });
+        }
+
+        // ==========================================
+        // GESTIONE CHAT PRIVATA (ABBANDONA / ELIMINA / MEMBRI)
+        // ==========================================
+        function isConversationCreator(conv) {
+            return !!(conv && currentUser && conv.createdBy === currentUser.uid);
+        }
+
+        function deleteConversationMessages(convId) {
+            return db.collection("conversations").doc(convId).collection("messages").get().then((snapshot) => {
+                if (snapshot.empty) return Promise.resolve();
+                const batch = db.batch();
+                snapshot.forEach(doc => batch.delete(doc.ref));
+                return batch.commit();
+            });
+        }
+
+        function deleteConversationAndMessages(convId) {
+            return deleteConversationMessages(convId).then(() => {
+                return db.collection("conversations").doc(convId).delete();
+            });
+        }
+
+        function openConversationOptionsModal() {
+            if (!currentUser || !activeConversationData) return;
+            const conv = activeConversationData;
+            const isGroup = conv.type === 'group';
+            const isCreator = isConversationCreator(conv);
+
+            const modal = document.getElementById('custom-modal');
+            const titleEl = document.getElementById('modal-title');
+            const bodyContent = document.getElementById('modal-body-content');
+            const actionsBox = document.getElementById('modal-actions-box');
+
+            titleEl.innerText = isGroup ? '⚙️ Opzioni gruppo' : '⚙️ Opzioni chat';
+
+            let membersHtml = '';
+            if (isGroup) {
+                const participants = conv.participants || [];
+                membersHtml = `
+                    <div class="auth-form-group">
+                        <label>Membri (${participants.length})</label>
+                        <div class="user-picker-list" id="conv-members-list">
+                            ${participants.map(uid => {
+                                const name = (conv.participantNames && conv.participantNames[uid]) || 'Utente';
+                                const isOwnerRow = uid === conv.createdBy;
+                                const showRemove = isCreator && !isOwnerRow;
+                                return `
+                                    <div class="user-picker-item" style="justify-content:space-between; cursor:default;">
+                                        <span>${escapeHtml(name)}${isOwnerRow ? ' 👑' : ''}</span>
+                                        ${showRemove ? `<button class="chat-msg-action-btn" title="Rimuovi dal gruppo" onclick="askRemoveMember('${uid}', '${escapeHtml(name)}')">✕</button>` : ''}
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    </div>
+                    ${isCreator ? `<button class="chat-new-btn" style="margin-top:6px;" onclick="openAddMembersModal()">➕ Aggiungi membri</button>` : ''}
+                    <div style="border-top:1px solid var(--line-color); margin:14px 0;"></div>
+                `;
+            }
+
+            bodyContent.innerHTML = `
+                <div id="conv-options-error" class="auth-error"></div>
+                ${membersHtml}
+                <button class="chat-new-btn" onclick="askLeaveConversation()">🚪 Abbandona ${isGroup ? 'il gruppo' : 'la chat'}</button>
+                ${isCreator ? `<button class="chat-new-btn" style="background:var(--danger); margin-top:8px;" onclick="askDeleteConversation()">🗑️ Elimina ${isGroup ? 'il gruppo' : 'la chat'}</button>` : ''}
+            `;
+
+            actionsBox.innerHTML = `<button class="btn-cancel" id="modal-btn-cancel" style="flex:1;">Chiudi</button>`;
+            modal.classList.add('active');
+            document.getElementById('modal-btn-cancel').onclick = () => modal.classList.remove('active');
+        }
+
+        // ---- Aggiunta membri (solo creatore, solo gruppi) ----
+        let addMembersSelectedUsers = {};
+        let addMembersAllUsers = [];
+
+        function openAddMembersModal() {
+            if (!activeConversationData || !isConversationCreator(activeConversationData)) return;
+            addMembersSelectedUsers = {};
+
+            const modal = document.getElementById('custom-modal');
+            const titleEl = document.getElementById('modal-title');
+            const bodyContent = document.getElementById('modal-body-content');
+            const actionsBox = document.getElementById('modal-actions-box');
+
+            titleEl.innerText = "➕ Aggiungi membri";
+            bodyContent.innerHTML = `
+                <div class="auth-error" id="add-members-error"></div>
+                <div class="auth-form-group">
+                    <label>Scegli i membri da aggiungere</label>
+                    <input type="text" id="add-members-search" placeholder="Cerca per nickname...">
+                    <div class="user-picker-list" id="add-members-user-list">
+                        <p style="text-align:center; color:var(--subtext); font-size:0.8rem; padding:10px;">Caricamento utenti...</p>
+                    </div>
+                </div>
+            `;
+            actionsBox.innerHTML = `
+                <button class="btn-cancel" id="modal-btn-cancel">Annulla</button>
+                <button class="btn-confirm" id="add-members-confirm-btn">Aggiungi</button>
+            `;
+
+            modal.classList.add('active');
+            document.getElementById('modal-btn-cancel').onclick = () => modal.classList.remove('active');
+            document.getElementById('add-members-search').oninput = (e) => renderAddMembersList(e.target.value);
+            document.getElementById('add-members-confirm-btn').onclick = confirmAddMembers;
+
+            loadUsersForAddMembers();
+        }
+
+        function loadUsersForAddMembers() {
+            db.collection("users").get().then((snapshot) => {
+                const existing = new Set(activeConversationData.participants || []);
+                addMembersAllUsers = [];
+                snapshot.forEach(doc => {
+                    if (existing.has(doc.id)) return;
+                    const data = doc.data();
+                    if (data.nickname) addMembersAllUsers.push({ uid: doc.id, nickname: data.nickname });
+                });
+                addMembersAllUsers.sort((a, b) => a.nickname.localeCompare(b.nickname));
+                renderAddMembersList('');
+            }).catch((error) => {
+                console.error("Errore nel caricamento degli utenti:", error);
+                const listEl = document.getElementById('add-members-user-list');
+                if (listEl) listEl.innerHTML = `<p style="text-align:center; color:var(--subtext); font-size:0.8rem; padding:10px;">Errore nel caricamento utenti.</p>`;
+            });
+        }
+
+        function renderAddMembersList(filterText) {
+            const listEl = document.getElementById('add-members-user-list');
+            if (!listEl) return;
+
+            const filter = (filterText || '').trim().toLowerCase();
+            const filtered = addMembersAllUsers.filter(u => u.nickname.toLowerCase().includes(filter));
+
+            if (filtered.length === 0) {
+                listEl.innerHTML = `<p style="text-align:center; color:var(--subtext); font-size:0.8rem; padding:10px;">Nessun utente trovato.</p>`;
+                return;
+            }
+
+            listEl.innerHTML = filtered.map(u => {
+                const isSelected = !!addMembersSelectedUsers[u.uid];
+                return `
+                    <div class="user-picker-item ${isSelected ? 'selected' : ''}" onclick="toggleAddMemberPick('${u.uid}', '${escapeHtml(u.nickname)}')">
+                        <input type="checkbox" ${isSelected ? 'checked' : ''} onclick="event.stopPropagation(); toggleAddMemberPick('${u.uid}', '${escapeHtml(u.nickname)}')">
+                        <span>${escapeHtml(u.nickname)}</span>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function toggleAddMemberPick(uid, nickname) {
+            if (addMembersSelectedUsers[uid]) {
+                delete addMembersSelectedUsers[uid];
+            } else {
+                addMembersSelectedUsers[uid] = nickname;
+            }
+            renderAddMembersList(document.getElementById('add-members-search').value);
+        }
+
+        function confirmAddMembers() {
+            const errEl = document.getElementById('add-members-error');
+            const selectedUids = Object.keys(addMembersSelectedUsers);
+
+            if (selectedUids.length === 0) {
+                errEl.innerText = "Scegli almeno un utente da aggiungere.";
+                return;
+            }
+            if (!activeConversationData || !isConversationCreator(activeConversationData)) return;
+
+            const convId = activeConversationData.id;
+            const newParticipantNames = Object.assign({}, activeConversationData.participantNames, addMembersSelectedUsers);
+            const newParticipants = (activeConversationData.participants || []).concat(selectedUids);
+
+            db.collection("conversations").doc(convId).update({
+                participants: firebase.firestore.FieldValue.arrayUnion(...selectedUids),
+                participantNames: newParticipantNames
+            }).then(() => {
+                activeConversationData.participants = newParticipants;
+                activeConversationData.participantNames = newParticipantNames;
+                document.getElementById('custom-modal').classList.remove('active');
+                openConversationOptionsModal();
+            }).catch((error) => {
+                console.error("Errore aggiunta membri:", error);
+                errEl.innerText = "Errore durante l'aggiunta dei membri.";
+            });
+        }
+
+        // ---- Rimozione membri (solo creatore, solo gruppi) ----
+        function askRemoveMember(uid, name) {
+            if (!activeConversationData || !isConversationCreator(activeConversationData)) return;
+            openCustomModal(
+                "Rimuovi membro",
+                `Vuoi rimuovere ${escapeHtml(name)} dal gruppo?`,
+                "Rimuovi",
+                true,
+                () => removeMemberFromConversation(uid)
+            );
+        }
+
+        function removeMemberFromConversation(uid) {
+            if (!activeConversationData || !isConversationCreator(activeConversationData)) return;
+            const convId = activeConversationData.id;
+            const newParticipantNames = Object.assign({}, activeConversationData.participantNames);
+            delete newParticipantNames[uid];
+
+            db.collection("conversations").doc(convId).update({
+                participants: firebase.firestore.FieldValue.arrayRemove(uid),
+                participantNames: newParticipantNames
+            }).then(() => {
+                activeConversationData.participants = (activeConversationData.participants || []).filter(p => p !== uid);
+                activeConversationData.participantNames = newParticipantNames;
+                document.getElementById('custom-modal').classList.remove('active');
+                openConversationOptionsModal();
+            }).catch((error) => {
+                console.error("Errore rimozione membro:", error);
+            });
+        }
+
+        // ---- Abbandona chat (tutti i partecipanti) ----
+        function askLeaveConversation() {
+            if (!activeConversationData) return;
+            const isGroup = activeConversationData.type === 'group';
+            openCustomModal(
+                "🚪 Abbandona chat",
+                `Sei sicuro di voler abbandonare ${isGroup ? 'questo gruppo' : 'questa chat'}? Non riceverai più i messaggi.`,
+                "Abbandona",
+                true,
+                () => leaveConversation()
+            );
+        }
+
+        function leaveConversation() {
+            if (!activeConversationData || !currentUser) return;
+            const convId = activeConversationData.id;
+            const remainingParticipants = (activeConversationData.participants || []).filter(uid => uid !== currentUser.uid);
+
+            let action;
+            if (remainingParticipants.length === 0) {
+                // Nessun partecipante rimasto: elimina l'intera chat
+                action = deleteConversationAndMessages(convId);
+            } else {
+                const newParticipantNames = Object.assign({}, activeConversationData.participantNames);
+                delete newParticipantNames[currentUser.uid];
+                action = db.collection("conversations").doc(convId).update({
+                    participants: firebase.firestore.FieldValue.arrayRemove(currentUser.uid),
+                    participantNames: newParticipantNames
+                });
+            }
+
+            action.then(() => {
+                document.getElementById('custom-modal').classList.remove('active');
+                backToPrivateList();
+            }).catch((error) => {
+                console.error("Errore durante l'abbandono della chat:", error);
+            });
+        }
+
+        // ---- Elimina chat (solo il creatore) ----
+        function askDeleteConversation() {
+            if (!activeConversationData || !isConversationCreator(activeConversationData)) return;
+            const isGroup = activeConversationData.type === 'group';
+            openCustomModal(
+                "🗑️ Elimina chat",
+                `Sei sicuro di voler eliminare definitivamente ${isGroup ? 'questo gruppo' : 'questa chat'}? Tutti i messaggi andranno persi per tutti i partecipanti. L'azione è irreversibile.`,
+                "Elimina",
+                true,
+                () => deleteConversation()
+            );
+        }
+
+        function deleteConversation() {
+            if (!activeConversationData || !currentUser) return;
+            if (!isConversationCreator(activeConversationData)) return; // solo il creatore può eliminare
+            const convId = activeConversationData.id;
+
+            deleteConversationAndMessages(convId).then(() => {
+                document.getElementById('custom-modal').classList.remove('active');
+                backToPrivateList();
+            }).catch((error) => {
+                console.error("Errore eliminazione chat:", error);
             });
         }
 
