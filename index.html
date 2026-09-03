@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Occhionero's Calisthenics Tree</title>
+    <title>Naiontrack's Calisthenics Progression</title>
     <style>
         :root {
             /* TEMA PREDEFINITO (Futuristic Dark) */
@@ -404,7 +404,6 @@
             color: #fff;
         }
 
-        /* RESPONSIVE PER SMARTPHONE E TABLET */
         @media (max-width: 600px) {
             .header {
                 position: static;
@@ -466,7 +465,7 @@
 
     <div class="header">
         <div class="top-bar">
-            <h1>Occhionero's Calisthenics Tree</h1>
+            <h1>Naiontrack's Calisthenics</h1>
             <div class="controls-group">
                 <div class="selector-box">
                     <label for="categorySelect">📁 Sezione:</label>
@@ -825,7 +824,7 @@
                     const stickmanSvg = skillStickmen[skill.id] || `<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="20" fill="var(--accent)"/></svg>`;
 
                     card.innerHTML = `
-                        <div style="display: flex; align-items: center; gap: 10px; width: 100%; cursor: pointer;" onclick="handleCardTap('${skill.id}')">
+                        <div style="display: flex; align-items: center; gap: 10px; width: 100%; cursor: pointer;" onclick="handleCardTap(event, '${skill.id}')">
                             <div class="skill-img-box">
                                 ${stickmanSvg}
                             </div>
@@ -847,10 +846,10 @@
                         <div class="actions">
                             ${isUnlocked ? `
                                 <input type="number" id="input-${skill.id}" value="${val}" min="0">
-                                <button onclick="updateSkill('${skill.id}')">Salva</button>
-                                <button class="relock-btn" title="Blocca di nuovo la skill" onclick="askRelock('${skill.id}')">🔒</button>
+                                <button onclick="event.stopPropagation(); updateSkill('${skill.id}')">Salva</button>
+                                <button class="relock-btn" title="Blocca di nuovo la skill" onclick="event.stopPropagation(); askRelock('${skill.id}')">🔒</button>
                             ` : `
-                                <button class="unlock-btn" onclick="askUnlock('${skill.id}')">🔒 Sblocca</button>
+                                <button class="unlock-btn" onclick="event.stopPropagation(); askUnlock('${skill.id}')">🔒 Sblocca</button>
                             `}
                         </div>
                     `;
@@ -902,7 +901,8 @@
             };
         }
 
-        function handleCardTap(id) {
+        function handleCardTap(e, id) {
+            e.stopPropagation();
             const skillData = userState[id] || { unlocked: false, val: 0 };
             if (!skillData.unlocked) {
                 askUnlock(id);
