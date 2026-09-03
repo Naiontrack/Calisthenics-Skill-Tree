@@ -84,6 +84,8 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 12px;
+            flex-wrap: wrap;
+            gap: 10px;
         }
 
         .header h1 {
@@ -95,7 +97,14 @@
             text-shadow: 0 0 15px var(--border-glow);
         }
 
-        .theme-selector {
+        .controls-group {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .selector-box {
             display: flex;
             align-items: center;
             gap: 6px;
@@ -103,16 +112,17 @@
             font-weight: 600;
         }
 
-        .theme-select {
+        .custom-select {
             background: var(--card-bg);
             color: var(--text);
             border: 1px solid var(--accent);
-            padding: 5px 10px;
+            padding: 6px 10px;
             border-radius: 8px;
             font-size: 0.85rem;
             cursor: pointer;
             outline: none;
             transition: all 0.3s ease;
+            max-width: 200px;
         }
 
         .rank-card {
@@ -404,7 +414,17 @@
 
             .top-bar {
                 flex-direction: column;
+                align-items: flex-start;
                 gap: 8px;
+            }
+
+            .controls-group {
+                width: 100%;
+                justify-content: space-between;
+            }
+
+            .custom-select {
+                max-width: 150px;
             }
 
             .rank-card {
@@ -447,13 +467,21 @@
     <div class="header">
         <div class="top-bar">
             <h1>Naiontrack's Calisthenics</h1>
-            <div class="theme-selector">
-                <label for="themeSelect">🎨 Tema:</label>
-                <select id="themeSelect" class="theme-select" onchange="changeTheme(this.value)">
-                    <option value="default">Predefinito</option>
-                    <option value="light">Chiaro</option>
-                    <option value="dark">Scuro</option>
-                </select>
+            <div class="controls-group">
+                <div class="selector-box">
+                    <label for="categorySelect">📁 Sezione:</label>
+                    <select id="categorySelect" class="custom-select" onchange="changeCategory(this.value)">
+                        <option value="all">Tutte (Tutto)</option>
+                    </select>
+                </div>
+                <div class="selector-box">
+                    <label for="themeSelect">🎨 Tema:</label>
+                    <select id="themeSelect" class="custom-select" onchange="changeTheme(this.value)">
+                        <option value="default">Predefinito</option>
+                        <option value="light">Chiaro</option>
+                        <option value="dark">Scuro</option>
+                    </select>
+                </div>
             </div>
         </div>
         <div class="rank-card">
@@ -571,6 +599,7 @@
 
         const categories = [
             {
+                id: 'cat_push',
                 title: "1. Spinta & Planche Tree",
                 skills: [
                     { id: 'planche_lean', name: 'Planche Lean', type: 'sec', baseTarget: 20, step: 5, xpPerUnit: 2, unlockXp: 100, goalBonusXp: 150 },
@@ -591,6 +620,7 @@
                 ]
             },
             {
+                id: 'cat_pull',
                 title: "2. Trazione & Front Lever Tree",
                 skills: [
                     { id: 'australian', name: 'Australian Pull Ups', type: 'rep', baseTarget: 12, step: 5, xpPerUnit: 4, unlockXp: 80, goalBonusXp: 120 },
@@ -605,6 +635,7 @@
                 ]
             },
             {
+                id: 'cat_rings',
                 title: "3. Ring Skills (Anelli)",
                 skills: [
                     { id: 'ring_support', name: 'Ring Support Hold', type: 'sec', baseTarget: 20, step: 5, xpPerUnit: 5, unlockXp: 120, goalBonusXp: 180 },
@@ -615,6 +646,7 @@
                 ]
             },
             {
+                id: 'cat_freestyle',
                 title: "4. Freestyle & Skills Dinamiche",
                 skills: [
                     { id: 'pullover', name: 'Bar Pull Over', type: 'rep', baseTarget: 5, step: 2, xpPerUnit: 20, unlockXp: 350, goalBonusXp: 500 },
@@ -623,6 +655,7 @@
                 ]
             },
             {
+                id: 'cat_handstand',
                 title: "5. Verticali, Dip & Core Compression",
                 skills: [
                     { id: 'bench_dips', name: 'Bench Dips', type: 'rep', baseTarget: 15, step: 5, xpPerUnit: 3, unlockXp: 60, goalBonusXp: 100 },
@@ -637,6 +670,7 @@
                 ]
             },
             {
+                id: 'cat_core',
                 title: "6. Human Flag & Core Special",
                 skills: [
                     { id: 'plank', name: 'Plank Hold', type: 'sec', baseTarget: 30, step: 15, xpPerUnit: 2, unlockXp: 30, goalBonusXp: 50 },
@@ -650,6 +684,7 @@
                 ]
             },
             {
+                id: 'cat_legs',
                 title: "7. Legs & Lower Body",
                 skills: [
                     { id: 'squat', name: 'Air Squats', type: 'rep', baseTarget: 20, step: 10, xpPerUnit: 2, unlockXp: 50, goalBonusXp: 80 },
@@ -661,6 +696,25 @@
 
         let userState = JSON.parse(localStorage.getItem('naiontrackState')) || {};
         let currentTheme = localStorage.getItem('naiontrackTheme') || 'default';
+        let currentCategoryFilter = localStorage.getItem('naiontrackCategory') || 'all';
+
+        function initCategorySelect() {
+            const select = document.getElementById('categorySelect');
+            select.innerHTML = '<option value="all">Tutte le sezioni</option>';
+            categories.forEach(cat => {
+                const opt = document.createElement('option');
+                opt.value = cat.id;
+                opt.innerText = cat.title;
+                select.appendChild(opt);
+            });
+            select.value = currentCategoryFilter;
+        }
+
+        function changeCategory(catId) {
+            currentCategoryFilter = catId;
+            localStorage.setItem('naiontrackCategory', catId);
+            updateUI();
+        }
 
         function applyTheme(theme) {
             document.body.classList.remove('theme-light', 'theme-dark');
@@ -736,7 +790,11 @@
             const container = document.getElementById('tree');
             container.innerHTML = '';
 
-            categories.forEach(cat => {
+            const filteredCategories = currentCategoryFilter === 'all' 
+                ? categories 
+                : categories.filter(c => c.id === currentCategoryFilter);
+
+            filteredCategories.forEach(cat => {
                 const catHeader = document.createElement('h3');
                 catHeader.className = 'category-title';
                 catHeader.innerText = cat.title;
@@ -897,7 +955,8 @@
             saveState();
         }
 
-        // Inizializzazione Tema e UI
+        // Inizializzazione
+        initCategorySelect();
         applyTheme(currentTheme);
         updateUI();
     </script>
