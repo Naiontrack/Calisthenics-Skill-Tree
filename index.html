@@ -1,5 +1,28 @@
 <!DOCTYPE html>
 <html lang="it">
+    <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    import { getFirestore, doc, setDoc, getDoc, collection, getDocs, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+    // INSERISCI QUI I DATI CHE TI HA DATO FIREBASE
+    const firebaseConfig = {
+        apiKey: "AIzaSyA8DxxaRgjpdv9eldZnDiAipceVv6IJ5Ds",
+        authDomain: "calisthenics-tree-b9a06.firebaseapp.com",
+        projectId: "calisthenics-tree-b9a06",
+        storageBucket: "calisthenics-tree-b9a06.firebasestorage.app",
+        messagingSenderId: "385003641400",
+        appId: "1:385003641400:web:7974dd3adc322170c264cd"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    window.firebaseAuth = auth;
+    window.firebaseDb = db;
+    window.firebaseFns = { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, doc, setDoc, getDoc, collection, getDocs, query, orderBy, limit };
+</script>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -477,6 +500,18 @@
     </style>
 </head>
 <body>
+    <div id="auth-container" style="background: var(--card-bg); border: 2px solid var(--accent); padding: 12px; border-radius: 12px; margin-bottom: 20px; width: 100%; max-width: 900px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+    <div id="user-status">Caricamento account...</div>
+    <div id="auth-actions" style="display: flex; gap: 8px;">
+        <button onclick="openAuthModal('login')">Accedi</button>
+        <button class="unlock-btn" onclick="openAuthModal('register')">Registrati</button>
+    </div>
+</div>
+
+<div id="leaderboard-container" style="background: var(--card-bg); border: 2px solid var(--accent); padding: 15px; border-radius: 12px; margin-bottom: 20px; width: 100%; max-width: 900px;">
+    <h3 style="margin-top: 0; color: var(--accent);">🏆 Classifica Globale Atleti</h3>
+    <div id="leaderboard-list">Caricamento classifica...</div>
+</div>
 
     <div class="header">
         <div class="top-bar">
@@ -971,6 +1006,162 @@
         initCategorySelect();
         applyTheme(currentTheme);
         updateUI();
+       // --- GESTIONE AUTENTICAZIONE E CLASSIFICA FIREBASE ---
+
+let currentUser = null;
+
+// Ascolta i cambiamenti di stato dell'utente (Login / Logout)
+if (window.firebaseAuth && window.firebaseFns) {
+    const { onAuthStateChanged } = window.firebaseFns;
+    onAuthStateChanged(window.firebaseAuth, async (user) => {
+        currentUser = user;
+        const statusEl = document.getElementById('user-status');
+        const actionsEl = document.getElementById('auth-actions');
+
+        if (user) {
+            statusEl.innerHTML = `👤 Loggato come: <strong>${user.email}</strong>`;
+            actionsEl.innerHTML = `<button class="relock-btn" onclick="logoutUser()">Esci</button>`;
+            
+            // Quando l'utente fa il login, carichiamo i suoi dati salvati sul cloud (se esistono)
+            await loadUserDataFromCloud(user.uid);
+        } else {
+            statusEl.innerHTML = `⚠️ Non sei loggato (I progressi sono salvati solo sul browser)`;
+            actionsEl.innerHTML = `
+                <button onclick="openAuthModal('login')">Accedi</button>
+                <button class="unlock-btn" onclick="openAuthModal('register')">Registrati</button>
+            `;
+        }
+        // Aggiorna la classifica globale
+        loadLeaderboard();
+    });
+}
+
+// Funzione per registrare un utente
+async function registerUser(email, password) {
+    try {
+        const { createUserWithEmailAndPassword } = window.firebaseFns;
+        await createUserWithEmailAndPassword(window.firebaseAuth, email, password);
+        alert("Registrazione avvenuta con successo!");
+        closeCustomModal();
+    } catch (error) {
+        alert("Errore di registrazione: " + error.message);
+    }
+}
+
+// Funzione per fare il login
+async function loginUser(email, password) {
+    try {
+        const { signInWithEmailAndPassword } = window.firebaseFns;
+        await signInWithEmailAndPassword(window.firebaseAuth, email, password);
+        alert("Bentornato!");
+        closeCustomModal();
+    } catch (error) {
+        alert("Errore di accesso: " + error.message);
+    }
+}
+
+// Funzione per fare il logout
+async function logoutUser() {
+    try {
+        const { signOut } = window.firebaseFns;
+        await signOut(window.firebaseAuth);
+        alert("Disconnesso.");
+    } catch (error) {
+        console.error("Errore durante il logout", error);
+    }
+}
+
+// Modale per inserire Email e Password
+function openAuthModal(mode) {
+    const isReg = mode === 'register';
+    openCustomModal(
+        isReg ? "📝 Registrati" : "🔑 Accedi",
+        `Inserisci le tue credenziali:<br><br>
+         <input type="email" id="auth-email" placeholder="Tua Email" style="width: 80%; padding: 8px; margin-bottom: 10px; border-radius: 6px; border: 1px solid var(--locked); background: var(--input-bg); color: var(--text);"><br>
+         <input type="password" id="auth-password" placeholder="Password" style="width: 80%; padding: 8px; border-radius: 6px; border: 1px solid var(--locked); background: var(--input-bg); color: var(--text);">`,
+        isReg ? "Registrati" : "Accedi",
+        false,
+        () => {
+            const email = document.getElementById('auth-email').value;
+            const password = document.getElementById('auth-password').value;
+            if (!email || !password) {
+                alert("Compila tutti i campi!");
+                return;
+            }
+            if (isReg) {
+                registerUser(email, password);
+            } else {
+                loginUser(email, password);
+            }
+        }
+    );
+}
+
+// Salva i dati sia nel localStorage che su Firestore (Cloud) se loggato
+async function saveState() {
+    localStorage.setItem('naiontrackState', JSON.stringify(userState));
+    
+    if (currentUser && window.firebaseDb && window.firebaseFns) {
+        const { doc, setDoc } = window.firebaseFns;
+        const totalXp = calculateXP();
+        try {
+            // Salviamo lo stato delle skill e gli XP totali per la classifica
+            await setDoc(doc(window.firebaseDb, "users", currentUser.uid), {
+                email: currentUser.email,
+                state: userState,
+                totalXp: totalXp
+            });
+            loadLeaderboard(); // Aggiorna la classifica in tempo reale
+        } catch (e) {
+            console.error("Errore salvataggio sul cloud: ", e);
+        }
+    }
+    updateUI();
+}
+
+// Carica i dati dal Cloud quando l'utente fa il login
+async function loadUserDataFromCloud(uid) {
+    try {
+        const { doc, getDoc } = window.firebaseFns;
+        const docRef = doc(window.firebaseDb, "users", uid);
+        const docSnap = await getDoc(docRef);
+        
+        if (docSnap.exists() && docSnap.data().state) {
+            userState = docSnap.data().state;
+            localStorage.setItem('naiontrackState', JSON.stringify(userState));
+            updateUI();
+        }
+    } catch (e) {
+        console.error("Errore caricamento dati cloud: ", e);
+    }
+}
+
+// Carica e mostra la classifica globale
+async function loadLeaderboard() {
+    const listEl = document.getElementById('leaderboard-list');
+    if (!listEl || !window.firebaseDb || !window.firebaseFns) return;
+
+    try {
+        const { collection, getDocs, query, orderBy, limit } = window.firebaseFns;
+        const q = query(collection(window.firebaseDb, "users"), orderBy("totalXp", "desc"), limit(5));
+        const querySnapshot = await getDocs(q);
+
+        let html = "<ol style='margin: 0; padding-left: 20px;'>";
+        let foundAny = false;
+
+        querySnapshot.forEach((doc) => {
+            foundAny = true;
+            const data = doc.data();
+            const emailName = data.email ? data.email.split('@')[0] : "Atleta";
+            html += `<li style="margin-bottom: 4px;"><strong>${emailName}</strong> — <span style="color: var(--accent);">${data.totalXp || 0} XP</span></li>`;
+        });
+
+        html += "</ol>";
+        listEl.innerHTML = foundAny ? html : "<p style='margin:0; color: var(--subtext);'>Ancora nessun atleta in classifica. Sii il primo!</p>";
+    } catch (e) {
+        listEl.innerHTML = "<p style='margin:0; color: var(--danger);'>Impossibile caricare la classifica (controlla le regole Firestore).</p>";
+    }
+} 
     </script>
 </body>
 </html>
