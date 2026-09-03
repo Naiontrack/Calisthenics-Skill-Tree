@@ -6,14 +6,13 @@
     import { getFirestore, doc, setDoc, getDoc, collection, getDocs, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
     const firebaseConfig = {
-        apiKey: "AIzaSyA8DxxaRgjpdv9eldZnDiAipceVv6IJ5Ds",
+          apiKey: "AIzaSyA8DxxaRgjpdv9eldZnDiAipceVv6IJ5Ds",
   authDomain: "calisthenics-tree-b9a06.firebaseapp.com",
   projectId: "calisthenics-tree-b9a06",
   storageBucket: "calisthenics-tree-b9a06.firebasestorage.app",
   messagingSenderId: "385003641400",
   appId: "1:385003641400:web:7974dd3adc322170c264cd",
   measurementId: "G-ZF4P6HX9HN"
-
     };
 
     const app = initializeApp(firebaseConfig);
@@ -1014,9 +1013,9 @@
         updateUI();
        // --- GESTIONE AUTENTICAZIONE E CLASSIFICA FIREBASE ---
 
-// --- GESTIONE AUTENTICAZIONE, NICKNAME E CLASSIFICA ---
-
 // --- GESTIONE AUTENTICAZIONE E CLASSIFICA AGGIORNATA ---
+
+// --- GESTIONE AUTENTICAZIONE E CLASSIFICA AGGIORNATA (DEFINITIVA) ---
 
 let currentUser = null;
 
@@ -1025,6 +1024,20 @@ function showAuthError(message) {
     if (errorEl) {
         errorEl.textContent = message;
         errorEl.style.display = 'block';
+    }
+}
+
+// Funzione di chiusura sicura del modale (funziona anche se closeCustomModal non esiste)
+function safeCloseModal() {
+    if (typeof closeCustomModal === 'function') {
+        closeCustomModal();
+    } else {
+        // Fallback per chiudere eventuali modali custom standard
+        const modal = document.querySelector('.modal-overlay') || document.getElementById('custom-modal');
+        if (modal) modal.remove();
+        // Rimuove eventuali dialoghi aperti
+        const dialogs = document.querySelectorAll('dialog');
+        dialogs.forEach(d => { if(d.open) d.close(); });
     }
 }
 
@@ -1076,6 +1089,7 @@ async function getUserNickname(uid) {
 }
 
 function openNicknameModal(uid) {
+    if (typeof openCustomModal !== 'function') return;
     openCustomModal(
         "🏆 Scegli il tuo Nickname",
         `
@@ -1097,7 +1111,7 @@ function openNicknameModal(uid) {
                 await setDoc(doc(window.firebaseDb, "users", uid), {
                     nickname: nicknameInput
                 }, { merge: true });
-                closeCustomModal();
+                safeCloseModal();
                 alert("Nickname salvato con successo!");
                 location.reload();
             } catch (error) {
@@ -1119,7 +1133,7 @@ async function registerUser(email, password) {
     try {
         const { createUserWithEmailAndPassword } = window.firebaseFns;
         await createUserWithEmailAndPassword(window.firebaseAuth, email, password);
-        closeCustomModal();
+        safeCloseModal();
     } catch (error) {
         showAuthError("Errore: " + error.message);
     }
@@ -1133,7 +1147,7 @@ async function loginUser(email, password) {
     try {
         const { signInWithEmailAndPassword } = window.firebaseFns;
         await signInWithEmailAndPassword(window.firebaseAuth, email, password);
-        closeCustomModal();
+        safeCloseModal();
     } catch (error) {
         showAuthError("Credenziali non corrette o errore di accesso.");
     }
@@ -1144,7 +1158,7 @@ async function loginWithGoogle() {
         const { GoogleAuthProvider, signInWithPopup } = window.firebaseFns;
         const provider = new GoogleAuthProvider();
         await signInWithPopup(window.firebaseAuth, provider);
-        closeCustomModal();
+        safeCloseModal();
     } catch (error) {
         showAuthError("Errore login con Google: " + error.message);
     }
@@ -1155,7 +1169,7 @@ async function loginWithApple() {
         const { OAuthProvider, signInWithPopup } = window.firebaseFns;
         const provider = new OAuthProvider('apple.com');
         await signInWithPopup(window.firebaseAuth, provider);
-        closeCustomModal();
+        safeCloseModal();
     } catch (error) {
         showAuthError("Errore login con Apple: " + error.message);
     }
@@ -1171,6 +1185,10 @@ async function logoutUser() {
 }
 
 function openAuthModal(mode) {
+    if (typeof openCustomModal !== 'function') {
+        alert("Funzione modale non trovata nel sistema.");
+        return;
+    }
     const isReg = mode === 'register';
     openCustomModal(
         isReg ? "📝 Registrati" : "🔑 Accedi",
