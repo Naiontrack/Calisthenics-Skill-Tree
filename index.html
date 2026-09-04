@@ -3526,6 +3526,28 @@ let currentUser = null;
         // ===============================================================
         // SISTEMA NOTIFICHE PUSH (REGISTRAZIONE REALE, VELOCE E RESILIENTE)
         // ===============================================================
+        // Rilevamento accurato versione iOS (supporto Web Push introdotto da Apple in iOS 16.4)
+        function getIOSInfo() {
+            const ua = (typeof navigator !== 'undefined' && navigator.userAgent) ? navigator.userAgent : '';
+            const isIOS = (/iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)) && !window.MSStream;
+            if (!isIOS) return { isIOS: false, isSupported: true, major: null, minor: null, patch: 0, raw: null };
+
+            const match = ua.match(/OS (\d+)_(\d+)(?:_(\d+))?/i);
+            if (match) {
+                const major = parseInt(match[1], 10);
+                const minor = parseInt(match[2], 10);
+                const patch = match[3] ? parseInt(match[3], 10) : 0;
+                const raw = `${major}.${minor}${match[3] ? '.' + patch : ''}`;
+                const isSupported = (major > 16 || (major === 16 && minor >= 4));
+                return { isIOS: true, isSupported: isSupported, major: major, minor: minor, patch: patch, raw: raw };
+            }
+            return { isIOS: true, isSupported: true, major: null, minor: null, patch: 0, raw: 'iOS' };
+        }
+
+        function getIOSVersion() {
+            return getIOSInfo().raw;
+        }
+
         function setPushNotificationsState(enabled) {
             notificationsEnabled = enabled;
             localStorage.setItem('naiontrackNotificationsEnabled', enabled ? 'true' : 'false');
@@ -3557,26 +3579,61 @@ let currentUser = null;
                 return { success: false, reason: "login_required", message: "Accedi prima con il tuo account!" };
             }
 
-            // 1. Richiedi permesso nativo se non ancora accordato
-            let perm = 'granted';
-            if (typeof Notification !== 'undefined') {
-                if (Notification.permission !== 'granted') {
-                    try {
-                        perm = await Notification.requestPermission();
-                    } catch(permErr) {
-                        perm = 'denied';
-                    }
-                }
+            // 1. Controllo versione iOS (< 16.4 non supporta Web Push su Apple)
+            const ios = getIOSInfo();
+            if (ios.isIOS && !ios.isSupported) {
+                setPushNotificationsState(false);
+                return { 
+                    success: false, 
+                    reason: "ios_version_unsupported", 
+                    message: `⚠️ Il tuo iPhone ha iOS ${ios.raw}. Apple ha introdotto le notifiche push solo da iOS 16.4 in poi.` 
+                };
             }
 
-            if (perm !== 'granted') {
+            // 2. Controllo PWA standalone su iOS (Apple richiede l'apertura da Schermata Home)
+            const isStandalone = window.navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches;
+            if (ios.isIOS && !isStandalone) {
                 setPushNotificationsState(false);
-                return { success: false, reason: "permission_denied", message: "Permesso notifiche non concesso sul telefono." };
+                return {
+                    success: false,
+                    reason: "ios_not_standalone",
+                    message: "ℹ️ Su iPhone le notifiche push funzionano solo aprendo l'app dalla Schermata Home (Condividi ➔ Aggiungi a Home)."
+                };
+            }
+
+            // 3. Controllo supporto Notification API
+            if (typeof Notification === 'undefined') {
+                setPushNotificationsState(false);
+                return { success: false, reason: "unsupported", message: "⚠️ Questo browser non supporta le notifiche push." };
+            }
+
+            // 4. Controllo permesso già negato
+            if (Notification.permission === 'denied') {
+                setPushNotificationsState(false);
+                return { 
+                    success: false, 
+                    reason: "permission_denied", 
+                    message: "❌ Notifiche bloccate nelle impostazioni del telefono. Su iPhone elimina l'app dalla Home e riaggiungila per sbloccarle." 
+                };
+            }
+
+            // 5. Richiesta permesso nativo al sistema operativo
+            if (Notification.permission !== 'granted') {
+                try {
+                    const perm = await Notification.requestPermission();
+                    if (perm !== 'granted') {
+                        setPushNotificationsState(false);
+                        return { success: false, reason: "permission_denied", message: "Permesso notifiche non concesso sul telefono." };
+                    }
+                } catch(permErr) {
+                    setPushNotificationsState(false);
+                    return { success: false, reason: "permission_denied", message: "Impossibile richiedere il permesso notifiche." };
+                }
             }
 
             setPushNotificationsState(true);
 
-            // 2. Chiamata a OneSignal con Promise.race e timeout massimo di 3 secondi (impossibile rimanere bloccati)
+            // 6. Chiamata a OneSignal protetta da timeout a 3s (impossibile rimanere bloccati)
             let subId = null;
             await Promise.race([
                 new Promise((resolve) => {
@@ -3607,10 +3664,10 @@ let currentUser = null;
                         resolve();
                     }
                 }),
-                new Promise(resolve => setTimeout(resolve, 3000)) // SBLOCCO GARANTITO DOPO 3s
+                new Promise(resolve => setTimeout(resolve, 3000))
             ]);
 
-            // 3. Salva su Firestore lo stato
+            // 7. Salva stato push su Firestore
             try {
                 await db.collection("users").doc(currentUser.uid).set({
                     oneSignalPlayerId: subId || "active",
@@ -3626,19 +3683,50 @@ let currentUser = null;
             };
         }
 
-        // Toggle impostazioni con gestione pulita
+        // Toggle impostazioni con avviso immediato per iOS < 16.4 e dispositivi non supportati
         async function togglePushNotifications() {
             const toggle = document.getElementById('profile-push-toggle');
             const shouldEnable = toggle ? toggle.checked : !notificationsEnabled;
             const errEl = document.getElementById('profile-settings-error');
+            const diagEl = document.getElementById('push-diagnostic-info');
 
             if (shouldEnable) {
+                // Controllo istantaneo versione iOS all'attivazione
+                const ios = getIOSInfo();
+                if (ios.isIOS && !ios.isSupported) {
+                    setPushNotificationsState(false);
+                    if (toggle) toggle.checked = false;
+                    if (errEl) {
+                        errEl.style.color = '#ef4444';
+                        errEl.innerText = `⚠️ Il tuo iPhone ha iOS ${ios.raw}. Apple ha introdotto le notifiche push solo da iOS 16.4 in poi.`;
+                    }
+                    if (diagEl && typeof getPushDiagnosticInfo === 'function') diagEl.innerText = getPushDiagnosticInfo();
+                    return;
+                }
+
+                // Controllo apertura standalone su iOS
+                const isStandalone = window.navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches;
+                if (ios.isIOS && !isStandalone) {
+                    setPushNotificationsState(false);
+                    if (toggle) toggle.checked = false;
+                    if (errEl) {
+                        errEl.style.color = '#ef4444';
+                        errEl.innerText = "ℹ️ Su iPhone tocca Condividi ➔ 'Aggiungi a Schermata Home' e apri l'app da lì per attivare le notifiche.";
+                    }
+                    if (diagEl && typeof getPushDiagnosticInfo === 'function') diagEl.innerText = getPushDiagnosticInfo();
+                    return;
+                }
+
                 if (errEl) { errEl.style.color = 'var(--text)'; errEl.innerText = "Attivazione in corso... ⏳"; }
                 const res = await subscribeUserToPush();
                 if (!res.success) {
                     setPushNotificationsState(false);
                     if (toggle) toggle.checked = false;
-                    if (errEl) { errEl.style.color = '#ef4444'; errEl.innerText = res.message; }
+                    if (errEl) { 
+                        errEl.style.color = '#ef4444'; 
+                        errEl.innerText = res.message; 
+                    }
+                    if (diagEl && typeof getPushDiagnosticInfo === 'function') diagEl.innerText = getPushDiagnosticInfo();
                     return;
                 }
                 setPushNotificationsState(true);
@@ -3647,6 +3735,7 @@ let currentUser = null;
                     errEl.innerText = "✅ Notifiche attivate con successo!";
                     setTimeout(() => { if (errEl) errEl.innerText = ''; }, 4000);
                 }
+                if (diagEl && typeof getPushDiagnosticInfo === 'function') diagEl.innerText = getPushDiagnosticInfo();
             } else {
                 setPushNotificationsState(false);
                 if (errEl) {
@@ -3654,9 +3743,11 @@ let currentUser = null;
                     errEl.innerText = "Notifiche telefono disattivate.";
                     setTimeout(() => { if (errEl) errEl.innerText = ''; }, 3000);
                 }
+                if (diagEl && typeof getPushDiagnosticInfo === 'function') diagEl.innerText = getPushDiagnosticInfo();
             }
         }
 
+        // Test push con gestione immediata iOS e timeout protetto
         async function testPushNotification(evt) {
             const btn = (evt && evt.target) ? evt.target : document.querySelector("button[onclick*='testPushNotification']");
             const errEl = document.getElementById('profile-settings-error');
@@ -3680,59 +3771,43 @@ let currentUser = null;
 
             const safetyTimer = setTimeout(() => {
                 resetButton("Inviato! ✅", 3000);
-            }, 6000);
+            }, 5000);
 
             try {
-                // Invia dati diagnostici su Firestore per analisi immediata
-                if (currentUser && currentUser.uid) {
-                    try {
-                        db.collection("users").doc(currentUser.uid).set({
-                            pushDiag: {
-                                hasNotification: typeof Notification !== 'undefined',
-                                permission: typeof Notification !== 'undefined' ? Notification.permission : 'undefined',
-                                isStandalone: window.navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches,
-                                userAgent: navigator.userAgent,
-                                timestamp: firebase.firestore.FieldValue.serverTimestamp()
-                            }
-                        }, { merge: true }).catch(()=>{});
-                    } catch(e) {}
-                }
-
-                // 1. Controllo supporto Notification
-                if (typeof Notification === 'undefined') {
+                // Controllo immediato iOS
+                const ios = getIOSInfo();
+                if (ios.isIOS && !ios.isSupported) {
                     clearTimeout(safetyTimer);
-                    resetButton("Non supportato ⚠️", 3500);
+                    resetButton("iOS 16.4+ ⚠️", 3500);
                     if (errEl) {
                         errEl.style.color = '#ef4444';
-                        errEl.innerText = "Notifiche non disponibili su questo browser. Su iPhone richiede iOS 16.4 o superiore e aggiunta alla Home.";
+                        errEl.innerText = `⚠️ Il tuo iPhone ha iOS ${ios.raw}. Apple ha introdotto le notifiche push solo da iOS 16.4 in poi.`;
                     }
                     return;
                 }
 
-                // 2. Controllo permesso già bloccato
-                if (Notification.permission === 'denied') {
-                    clearTimeout(safetyTimer);
-                    resetButton("Permesso negato ❌", 3500);
-                    if (errEl) {
-                        errEl.style.color = '#ef4444';
-                        errEl.innerText = "Permesso bloccato da iOS. Elimina l'app dalla Home e riaggiungila per resettare i permessi.";
-                    }
-                    return;
-                }
-
-                // 3. Registrazione ed eventuale richiesta permesso
-                if (btn) btn.innerText = "Registrazione... ⏳";
+                // Registra il dispositivo ed esegui le verifiche
                 const subRes = await subscribeUserToPush();
                 if (!subRes.success) {
                     clearTimeout(safetyTimer);
-                    resetButton(subRes.reason === 'login_required' ? "Accedi prima! ⚠️" : "Permesso negato ❌", 3000);
-                    if (errEl) { errEl.style.color = '#ef4444'; errEl.innerText = subRes.message; }
+                    let btnMsg = "Errore ⚠️";
+                    if (subRes.reason === 'login_required') btnMsg = "Accedi prima! ⚠️";
+                    else if (subRes.reason === 'ios_version_unsupported') btnMsg = "iOS 16.4+ ⚠️";
+                    else if (subRes.reason === 'ios_not_standalone') btnMsg = "Apri da Home ℹ️";
+                    else if (subRes.reason === 'unsupported') btnMsg = "Non supportato ⚠️";
+                    else if (subRes.reason === 'permission_denied') btnMsg = "Permesso negato ❌";
+
+                    resetButton(btnMsg, 3500);
+                    if (errEl) { 
+                        errEl.style.color = '#ef4444'; 
+                        errEl.innerText = subRes.message; 
+                    }
                     return;
                 }
 
                 if (btn) btn.innerText = "Invio push... ⏳";
 
-                // 4. Invia notifica Push reale via Cloudflare Relay
+                // Invia la notifica push reale via Cloudflare Relay
                 if (currentUser && currentUser.uid) {
                     await dispatchBackgroundPush({
                         targetUids: [currentUser.uid],
@@ -3742,7 +3817,7 @@ let currentUser = null;
                     });
                 }
 
-                // 5. Notifica visiva immediata
+                // Mostra la notifica visiva immediata
                 if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
                     if (swRegistration && typeof swRegistration.showNotification === 'function') {
                         try {
@@ -4619,23 +4694,25 @@ let currentUser = null;
         // PANNELLO PROFILO PERSONALE (Altezza / Peso / BMI / Privacy)
         // ==========================================
         function getPushDiagnosticInfo() {
+            const ios = getIOSInfo();
+            if (ios.isIOS && !ios.isSupported) {
+                return `⚠️ Il tuo iPhone ha iOS ${ios.raw}. Apple ha introdotto le notifiche push solo da iOS 16.4 in poi.`;
+            }
+            const isStandalone = window.navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches;
+            if (ios.isIOS && !isStandalone) {
+                return "ℹ️ Su iPhone apri l'app dalla Schermata Home (Condividi ➔ Aggiungi alla Home) per ricevere notifiche.";
+            }
             if (typeof Notification === 'undefined') {
-                return "⚠️ Notifiche non supportate da questo browser/iOS (serve iOS 16.4+ e apertura da Schermata Home).";
+                return "⚠️ Questo browser non supporta le notifiche push.";
             }
             const perm = Notification.permission;
-            const isIos = /iPad|iPhone|iPod/.test(navigator.userAgent);
-            const isStandalone = window.navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches;
-
             if (perm === 'denied') {
-                return "❌ Notifiche bloccate nelle impostazioni di iOS. Per sbloccarle: elimina l'app dalla Home e riaggiungila.";
+                return "❌ Notifiche bloccate nelle impostazioni. Su iPhone elimina l'icona dell'app dalla Home e riaggiungila per sbloccarle.";
             }
             if (perm === 'granted') {
-                return "✅ Permesso notifiche già concesso su questo telefono!";
+                return "✅ Permesso notifiche concesso! Tocca 'Test 📲' per verificare l'arrivo.";
             }
-            if (isIos && !isStandalone) {
-                return "ℹ️ Su iPhone apri l'app dalla Schermata Home per consentire le notifiche.";
-            }
-            return "ℹ️ Tocca 'Test 📲' per richiedere e consentire le notifiche.";
+            return "ℹ️ Attiva l'interruttore o tocca 'Test 📲' per consentire le notifiche sul telefono.";
         }
 
         function renderProfileSettings() {
@@ -4650,6 +4727,10 @@ let currentUser = null;
             const height = userProfileData.heightCm || '';
             const weight = userProfileData.weightKg || '';
             const isPublic = userProfileData.isPublic !== false;
+
+            const ios = getIOSInfo();
+            const isPushUnsupported = ios.isIOS && !ios.isSupported;
+            const isToggleActive = notificationsEnabled && !isPushUnsupported;
 
             container.innerHTML = `
                 <div class="profile-settings-grid">
@@ -4674,10 +4755,10 @@ let currentUser = null;
                 <div class="privacy-toggle-row" style="margin-top: 14px; padding-top: 12px; border-top: 1px dashed var(--line-color); justify-content: space-between;">
                     <div style="display:flex; align-items:center; gap: 8px;">
                         <label class="switch">
-                            <input type="checkbox" id="profile-push-toggle" ${notificationsEnabled ? 'checked' : ''} onchange="togglePushNotifications()">
+                            <input type="checkbox" id="profile-push-toggle" ${isToggleActive ? 'checked' : ''} onchange="togglePushNotifications()">
                             <span class="slider"></span>
                         </label>
-                        <span id="push-toggle-label" style="font-size: 0.85rem; font-weight: 600;">${notificationsEnabled ? '🔔 Notifiche Telefono: Attive' : '🔕 Notifiche Telefono: Disattivate'}</span>
+                        <span id="push-toggle-label" style="font-size: 0.85rem; font-weight: 600;">${isToggleActive ? '🔔 Notifiche Telefono: Attive' : '🔕 Notifiche Telefono: Disattivate'}</span>
                     </div>
                     <button type="button" class="btn-auth-secondary" style="padding: 4px 10px; font-size: 0.78rem;" onclick="testPushNotification(event)">Test 📲</button>
                 </div>
