@@ -123,16 +123,42 @@
             cursor: pointer;
         }
 
-        button:hover, .btn-auth:hover, .btn-auth-secondary:hover, .btn-confirm:hover, .btn-danger-confirm:hover, .chat-fab:hover, .events-fab:hover, .challenges-fab:hover, .btn-social:hover {
-            filter: brightness(1.22);
-            box-shadow: 0 0 18px var(--border-glow), 0 0 32px var(--border-glow) !important;
-            transform: translateY(-1.5px);
+        /* Il bagliore hover si attiva ESCLUSIVAMENTE sui dispositivi con puntatore mouse reale (previene bagliore sticky su mobile) */
+        @media (hover: hover) and (pointer: fine) {
+            button:hover, .btn-auth:hover, .btn-auth-secondary:hover, .btn-confirm:hover, .btn-danger-confirm:hover, .chat-fab:hover, .events-fab:hover, .challenges-fab:hover, .btn-social:hover {
+                filter: brightness(1.22);
+                box-shadow: 0 0 18px var(--border-glow), 0 0 32px var(--border-glow) !important;
+                transform: translateY(-1.5px);
+            }
         }
 
+        /* Feedback touch immediato durante la pressione */
         button:active, .btn-auth:active, .btn-auth-secondary:active, .btn-confirm:active, .btn-danger-confirm:active, .chat-fab:active, .events-fab:active, .challenges-fab:active {
             filter: brightness(1.38);
             box-shadow: 0 0 24px var(--border-glow), 0 0 45px var(--accent) !important;
             transform: scale(0.96) !important;
+        }
+
+        button:focus {
+            outline: none;
+        }
+
+        button:focus:not(:focus-visible) {
+            box-shadow: none !important;
+            filter: none !important;
+        }
+
+        .workouts-count-badge {
+            display: inline-block;
+            font-size: 0.82rem;
+            font-weight: 700;
+            color: var(--accent);
+            background: rgba(56, 189, 248, 0.15);
+            border: 1px solid var(--border-glow);
+            padding: 1px 8px;
+            border-radius: 12px;
+            margin-left: 6px;
+            vertical-align: middle;
         }
 
         .header {
@@ -1932,7 +1958,7 @@
             }
         }
 
-        .modal-box .auth-form-group input,
+        .modal-box .auth-form-group input:not([type="checkbox"]):not([type="radio"]),
         .modal-box .auth-form-group input[type="number"],
         .modal-box .auth-form-group input[type="date"],
         .modal-box .auth-form-group input[type="text"],
@@ -1940,6 +1966,45 @@
             width: 100% !important;
             box-sizing: border-box !important;
             text-align: left !important;
+        }
+
+        .user-picker-item {
+            display: flex !important;
+            flex-direction: row !important;
+            align-items: center !important;
+            justify-content: flex-start !important;
+            gap: 12px !important;
+            padding: 10px 12px !important;
+            font-size: 0.9rem !important;
+            border-bottom: 1px solid var(--line-color) !important;
+            cursor: pointer !important;
+            text-align: left !important;
+            box-sizing: border-box !important;
+            width: 100% !important;
+        }
+
+        .user-picker-item input[type="checkbox"] {
+            flex: 0 0 18px !important;
+            width: 18px !important;
+            min-width: 18px !important;
+            max-width: 18px !important;
+            height: 18px !important;
+            margin: 0 !important;
+            cursor: pointer !important;
+            accent-color: var(--accent) !important;
+        }
+
+        .user-picker-item span {
+            flex: 1 1 auto !important;
+            min-width: 0 !important;
+            text-align: left !important;
+            color: var(--text) !important;
+            font-size: 0.9rem !important;
+            font-weight: 600 !important;
+            white-space: nowrap !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+            display: inline-block !important;
         }
 
         /* ========================================== */
@@ -2365,7 +2430,7 @@
     <div class="workouts-section" id="workouts-section">
         <div class="workouts-section-header">
             <div class="workouts-toggle-title" onclick="toggleWorkoutsSection()">
-                <h3 class="leaderboard-title" style="margin:0; border-bottom:none; padding-bottom:0;">🏋️ I Miei Allenamenti</h3>
+                <h3 class="leaderboard-title" style="margin:0; border-bottom:none; padding-bottom:0;">🏋️ I Miei Allenamenti <span id="workouts-count-badge" class="workouts-count-badge">(0)</span></h3>
                 <span class="collapsible-icon" id="workouts-toggle-icon">▼ Espandi</span>
             </div>
             <button class="btn-confirm" id="new-workout-btn" onclick="openNewWorkoutModal()">➕ Nuovo Allenamento</button>
@@ -2646,6 +2711,8 @@
         ];
 
         const skillStickmen = {
+            frog_stand: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="25" cy="45" r="9" fill="var(--accent)"/><circle cx="22.5" cy="42.5" r="2.6" fill="var(--card-bg)" opacity="0.35"/><path d="M25 50 L50 48 L42 62 L58 60"/><path d="M42 49 L42 80"/><line x1="15" y1="80" x2="85" y2="80" stroke="var(--subtext)" stroke-width="6"/><circle cx="50.0" cy="48.0" r="3.4" fill="var(--card-bg)" stroke="var(--accent)" stroke-width="2.6"/><circle cx="42.0" cy="62.0" r="3.4" fill="var(--card-bg)" stroke="var(--accent)" stroke-width="2.6"/><circle cx="58.0" cy="60.0" r="3.4" fill="var(--card-bg)" stroke="var(--accent)" stroke-width="2.6"/><circle cx="42.0" cy="49.0" r="3.4" fill="var(--card-bg)" stroke="var(--accent)" stroke-width="2.6"/><circle cx="42.0" cy="80.0" r="3.4" fill="var(--card-bg)" stroke="var(--accent)" stroke-width="2.6"/></svg>`,
+            elbow_lever: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="15" cy="50" r="9" fill="var(--accent)"/><circle cx="12.5" cy="47.5" r="2.6" fill="var(--card-bg)" opacity="0.35"/><path d="M15 55 L88 55"/><path d="M48 55 L48 65 L48 80"/><line x1="10" y1="80" x2="90" y2="80" stroke="var(--subtext)" stroke-width="6"/><circle cx="88.0" cy="55.0" r="3.4" fill="var(--card-bg)" stroke="var(--accent)" stroke-width="2.6"/><circle cx="48.0" cy="55.0" r="3.4" fill="var(--card-bg)" stroke="var(--accent)" stroke-width="2.6"/><circle cx="48.0" cy="65.0" r="3.4" fill="var(--card-bg)" stroke="var(--accent)" stroke-width="2.6"/><circle cx="48.0" cy="80.0" r="3.4" fill="var(--card-bg)" stroke="var(--accent)" stroke-width="2.6"/></svg>`,
             planche_lean: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="20" cy="35" r="9" fill="var(--accent)"/><circle cx="17.5" cy="32.5" r="2.6" fill="var(--card-bg)" opacity="0.35"/><path d="M20 40 L80 62"/><path d="M45 50 L30 80"/><line x1="10" y1="80" x2="90" y2="80" stroke="var(--subtext)" stroke-width="6"/><circle cx="80.0" cy="62.0" r="3.4" fill="var(--card-bg)" stroke="var(--accent)" stroke-width="2.6"/><circle cx="45.0" cy="50.0" r="3.4" fill="var(--card-bg)" stroke="var(--accent)" stroke-width="2.6"/><circle cx="30.0" cy="80.0" r="3.4" fill="var(--card-bg)" stroke="var(--accent)" stroke-width="2.6"/></svg>`,
             pushups_knee: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="20" cy="45" r="9" fill="var(--accent)"/><circle cx="17.5" cy="42.5" r="2.6" fill="var(--card-bg)" opacity="0.35"/><path d="M20 50 L60 65 L60 80"/><path d="M35 55 L35 80"/><line x1="10" y1="80" x2="90" y2="80" stroke="var(--subtext)" stroke-width="6"/><circle cx="60.0" cy="65.0" r="3.4" fill="var(--card-bg)" stroke="var(--accent)" stroke-width="2.6"/><circle cx="60.0" cy="80.0" r="3.4" fill="var(--card-bg)" stroke="var(--accent)" stroke-width="2.6"/><circle cx="35.0" cy="55.0" r="3.4" fill="var(--card-bg)" stroke="var(--accent)" stroke-width="2.6"/><circle cx="35.0" cy="80.0" r="3.4" fill="var(--card-bg)" stroke="var(--accent)" stroke-width="2.6"/></svg>`,
             pushups: `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="20" cy="45" r="9" fill="var(--accent)"/><circle cx="17.5" cy="42.5" r="2.6" fill="var(--card-bg)" opacity="0.35"/><path d="M20 50 L85 70"/><path d="M40 55 L40 80"/><line x1="10" y1="80" x2="90" y2="80" stroke="var(--subtext)" stroke-width="6"/><circle cx="85.0" cy="70.0" r="3.4" fill="var(--card-bg)" stroke="var(--accent)" stroke-width="2.6"/><circle cx="40.0" cy="55.0" r="3.4" fill="var(--card-bg)" stroke="var(--accent)" stroke-width="2.6"/><circle cx="40.0" cy="80.0" r="3.4" fill="var(--card-bg)" stroke="var(--accent)" stroke-width="2.6"/></svg>`,
@@ -2738,6 +2805,8 @@
                     { id: 'diamond_pushups', name: 'Diamond Push Ups', type: 'rep', baseTarget: 12, step: 4, xpPerUnit: 10, unlockXp: 250, goalBonusXp: 300 },
                     { id: 'clap_pushups', name: 'Clap Push Ups', type: 'rep', baseTarget: 10, step: 3, xpPerUnit: 12, unlockXp: 300, goalBonusXp: 400 },
                     { id: 'pseudo_pushups', name: 'PPPU (Pseudo Push Ups)', type: 'rep', baseTarget: 10, step: 3, xpPerUnit: 18, unlockXp: 400, goalBonusXp: 500 },
+                    { id: 'frog_stand', name: 'Frog Stand Hold', type: 'sec', baseTarget: 15, step: 5, xpPerUnit: 5, unlockXp: 150, goalBonusXp: 200 },
+                    { id: 'elbow_lever', name: 'Elbow Lever Hold', type: 'sec', baseTarget: 10, step: 5, xpPerUnit: 15, unlockXp: 400, goalBonusXp: 600 },
                     { id: 'double_clap_pushups', name: 'Double Clap Push Ups', type: 'rep', baseTarget: 6, step: 2, xpPerUnit: 25, unlockXp: 600, goalBonusXp: 800 },
                     { id: 'behind_back_clap', name: 'Behind-the-Back Clap Push Ups', type: 'rep', baseTarget: 4, step: 2, xpPerUnit: 40, unlockXp: 900, goalBonusXp: 1200 },
                     { id: 'one_arm_pushup', name: 'One Arm Push Up', type: 'rep', baseTarget: 5, step: 2, xpPerUnit: 45, unlockXp: 1000, goalBonusXp: 1300 },
@@ -3120,20 +3189,11 @@
             return Math.round(effort * 10) / 10;
         }
 
-        // Trasforma lo sforzo in XP, "pesandolo" in relazione al grado attuale del giocatore:
-        // a parità di sforzo, un rank basso riceve un moltiplicatore relativo maggiore
-        // (perché gli basta poco XP assoluto per salire), un rank alto uno minore
-        // (perché gli serve moltissimo XP assoluto per progredire).
+        // Trasforma lo sforzo in XP in modo fisso e meritocratico: NON varia in base al rank!
+        // Rapporto 2:1 sull'intensità: a intensità 5 ogni ripetizione vale esattamente 10 XP.
         function calculateWorkoutXp(effortScore, currentTotalXp) {
-            const rank = getCurrentRank(currentTotalXp);
-            const rankIndex = ranks.indexOf(rank);
-            const gapXp = getRankXpGap(rankIndex);
-            const baseXpForRank = gapXp / WORKOUT_RANKUP_COUNT;
-
-            let ratio = effortScore / WORKOUT_REFERENCE_EFFORT;
-            ratio = Math.max(WORKOUT_MIN_RATIO, Math.min(ratio, WORKOUT_MAX_RATIO));
-
-            return Math.max(1, Math.round(baseXpForRank * ratio));
+            const effort = typeof effortScore === 'number' ? effortScore : 0;
+            return Math.max(1, Math.round(effort * 10));
         }
 
         // CLASSIFICA IN TEMPO REALE CON onSnapshot
@@ -3750,6 +3810,8 @@
                     .onSnapshot((snapshot) => {
                         const workouts = [];
                         snapshot.forEach(doc => workouts.push(Object.assign({ id: doc.id }, doc.data())));
+                        const countBadge = document.getElementById('workouts-count-badge');
+                        if (countBadge) countBadge.innerText = `(${snapshot.size})`;
                         renderWorkoutsList(workouts);
                     }, (error) => {
                         console.error("Errore nel caricamento degli allenamenti:", error);
@@ -3762,6 +3824,9 @@
                     });
             } else {
                 stopWorkoutsListener();
+                const local = getLocalWorkouts();
+                const countBadge = document.getElementById('workouts-count-badge');
+                if (countBadge) countBadge.innerText = `(${local.length})`;
                 renderLocalWorkoutsList();
             }
         }
@@ -3935,7 +4000,7 @@
 
             const effort = calculateWorkoutEffort(exercises, duration, intensity);
             const xp = calculateWorkoutXp(effort, getTotalXp());
-            previewEl.innerText = `Stima XP: +${xp} (in relazione al tuo grado attuale)`;
+            previewEl.innerText = `Stima XP: +${xp} XP (${intensity * 2} XP a rip)`;
         }
 
         function confirmCreateWorkout() {
@@ -4791,10 +4856,10 @@
                 newChatAllUsers = [];
                 snapshot.forEach(doc => {
                     if (doc.id === currentUser.uid) return; // escludi se stesso
-                    const data = doc.data();
-                    if (data.nickname) {
-                        newChatAllUsers.push({ uid: doc.id, nickname: data.nickname });
-                    }
+                    const data = doc.data() || {};
+                    const rawNick = data.nickname || data.displayName || (data.email ? data.email.split('@')[0] : '');
+                    const name = (rawNick && rawNick.trim().length > 0) ? rawNick.trim() : ('Atleta ' + doc.id.slice(0, 5));
+                    newChatAllUsers.push({ uid: doc.id, nickname: name });
                 });
                 newChatAllUsers.sort((a, b) => a.nickname.localeCompare(b.nickname));
                 renderUserPickerList('');
@@ -4824,14 +4889,14 @@
             if (!listEl) return;
 
             const filter = (filterText || '').trim().toLowerCase();
-            const filtered = newChatAllUsers.filter(u => u.nickname.toLowerCase().includes(filter));
+            const filtered = newChatAllUsers.filter(u => (u.nickname || '').toLowerCase().includes(filter));
 
             const renderItem = (u) => {
                 const isSelected = !!newChatSelectedUsers[u.uid];
                 return `
-                    <div class="user-picker-item ${isSelected ? 'selected' : ''}" onclick="toggleUserPick('${u.uid}', '${escapeHtml(u.nickname)}')">
-                        ${newChatMode === 'group' ? `<input type="checkbox" ${isSelected ? 'checked' : ''} onclick="event.stopPropagation(); toggleUserPick('${u.uid}', '${escapeHtml(u.nickname)}')">` : ''}
-                        <span>${escapeHtml(u.nickname)}</span>
+                    <div class="user-picker-item ${isSelected ? 'selected' : ''}" onclick="toggleUserPick('${u.uid}', '${escapeHtml(u.nickname)}')" style="display: flex !important; flex-direction: row !important; align-items: center !important; justify-content: flex-start !important; width: 100% !important; padding: 10px 14px !important; box-sizing: border-box !important; gap: 12px !important; border-bottom: 1px solid var(--line-color) !important; cursor: pointer !important; text-align: left !important; background: ${isSelected ? 'rgba(56, 189, 248, 0.15)' : 'transparent'} !important;">
+                        ${newChatMode === 'group' ? `<input type="checkbox" ${isSelected ? 'checked' : ''} onclick="event.stopPropagation(); toggleUserPick('${u.uid}', '${escapeHtml(u.nickname)}')" style="flex: 0 0 18px !important; width: 18px !important; height: 18px !important; min-width: 18px !important; max-width: 18px !important; margin: 0 !important; cursor: pointer !important; accent-color: var(--accent) !important; display: inline-block !important;">` : ''}
+                        <span style="flex: 1 1 auto !important; min-width: 0 !important; text-align: left !important; color: #ffffff !important; font-size: 0.95rem !important; font-weight: 600 !important; display: block !important; white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important;">${escapeHtml(u.nickname)}</span>
                     </div>
                 `;
             };
@@ -5140,8 +5205,10 @@
                 addMembersAllUsers = [];
                 snapshot.forEach(doc => {
                     if (existing.has(doc.id)) return;
-                    const data = doc.data();
-                    if (data.nickname) addMembersAllUsers.push({ uid: doc.id, nickname: data.nickname });
+                    const data = doc.data() || {};
+                    const rawNick = data.nickname || data.displayName || (data.email ? data.email.split('@')[0] : '');
+                    const name = (rawNick && rawNick.trim().length > 0) ? rawNick.trim() : ('Atleta ' + doc.id.slice(0, 5));
+                    addMembersAllUsers.push({ uid: doc.id, nickname: name });
                 });
                 addMembersAllUsers.sort((a, b) => a.nickname.localeCompare(b.nickname));
                 renderAddMembersList('');
@@ -5157,7 +5224,7 @@
             if (!listEl) return;
 
             const filter = (filterText || '').trim().toLowerCase();
-            const filtered = addMembersAllUsers.filter(u => u.nickname.toLowerCase().includes(filter));
+            const filtered = addMembersAllUsers.filter(u => (u.nickname || '').toLowerCase().includes(filter));
 
             if (filtered.length === 0) {
                 listEl.innerHTML = `<p style="text-align:center; color:var(--subtext); font-size:0.8rem; padding:10px;">Nessun utente trovato.</p>`;
@@ -5167,9 +5234,9 @@
             listEl.innerHTML = filtered.map(u => {
                 const isSelected = !!addMembersSelectedUsers[u.uid];
                 return `
-                    <div class="user-picker-item ${isSelected ? 'selected' : ''}" onclick="toggleAddMemberPick('${u.uid}', '${escapeHtml(u.nickname)}')">
-                        <input type="checkbox" ${isSelected ? 'checked' : ''} onclick="event.stopPropagation(); toggleAddMemberPick('${u.uid}', '${escapeHtml(u.nickname)}')">
-                        <span>${escapeHtml(u.nickname)}</span>
+                    <div class="user-picker-item ${isSelected ? 'selected' : ''}" onclick="toggleAddMemberPick('${u.uid}', '${escapeHtml(u.nickname)}')" style="display: flex !important; flex-direction: row !important; align-items: center !important; justify-content: flex-start !important; width: 100% !important; padding: 10px 14px !important; box-sizing: border-box !important; gap: 12px !important; border-bottom: 1px solid var(--line-color) !important; cursor: pointer !important; text-align: left !important; background: ${isSelected ? 'rgba(56, 189, 248, 0.15)' : 'transparent'} !important;">
+                        <input type="checkbox" ${isSelected ? 'checked' : ''} onclick="event.stopPropagation(); toggleAddMemberPick('${u.uid}', '${escapeHtml(u.nickname)}')" style="flex: 0 0 18px !important; width: 18px !important; height: 18px !important; min-width: 18px !important; max-width: 18px !important; margin: 0 !important; cursor: pointer !important; accent-color: var(--accent) !important; display: inline-block !important;">
+                        <span style="flex: 1 1 auto !important; min-width: 0 !important; text-align: left !important; color: #ffffff !important; font-size: 0.95rem !important; font-weight: 600 !important; display: block !important; white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important;">${escapeHtml(u.nickname)}</span>
                     </div>
                 `;
             }).join('');
@@ -6112,10 +6179,13 @@
             });
 
             sortedChallenges.forEach(c => {
+                const isCreator = c.creatorUid === currentUser.uid;
+                const isWaiting = c.status === 'waiting';
                 const isCompleted = c.status === 'completed';
                 const isWinner = c.winnerUid === currentUser.uid;
                 const pDataMap = c.participantData || {};
                 const participants = c.participants || [];
+                const canStart = isCreator && isWaiting && participants.length >= 2;
 
                 let participantsHtml = '';
                 participants.forEach(uid => {
@@ -6129,7 +6199,7 @@
                         <div class="challenge-participant-row">
                             <div style="display:flex; justify-content:space-between; align-items:center;">
                                 <span style="font-weight:${isMe ? '700' : '500'}; color:${isRowWinner ? 'var(--unlocked)' : 'var(--text)'};">
-                                    ${escapeHtml(p.name || 'Atleta')}${isMe ? ' (Tu)' : ''}${isRowWinner ? ' 👑 VINCITORE' : ''}
+                                    ${escapeHtml(p.name || 'Atleta')}${uid === c.creatorUid ? ' 👑' : ''}${isMe ? ' (Tu)' : ''}${isRowWinner ? ' 🏆 VINCITORE' : ''}
                                 </span>
                                 <span style="color:var(--subtext); font-size:0.75rem;">
                                     ${gainedXp} / ${c.targetXp} XP (${pct}%)
@@ -6141,6 +6211,36 @@
                         </div>
                     `;
                 });
+
+                let statusNoticeHtml = '';
+                if (isWaiting) {
+                    if (isCreator) {
+                        if (canStart) {
+                            statusNoticeHtml = `
+                                <div style="margin-top:10px;">
+                                    <div style="font-size:0.8rem; color:#10b981; font-weight:600; margin-bottom:6px; text-align:center;">
+                                        ✅ ${participants.length - 1} atleta/i hanno accettato! Puoi avviare la sfida:
+                                    </div>
+                                    <button class="btn-confirm" onclick="startChallenge('${c.id}')" style="width:100%; background:#10b981; border-color:#10b981; font-weight:700; padding:10px;">
+                                        🚀 AVVIA SFIDA
+                                    </button>
+                                </div>
+                            `;
+                        } else {
+                            statusNoticeHtml = `
+                                <div style="margin-top:10px; padding:8px 10px; background:rgba(234, 179, 8, 0.1); border:1px solid rgba(234, 179, 8, 0.3); border-radius:8px; font-size:0.78rem; color:#facc15; text-align:center;">
+                                    ⏳ In attesa che almeno un atleta invitato accetti la sfida prima di poterla avviare.
+                                </div>
+                            `;
+                        }
+                    } else {
+                        statusNoticeHtml = `
+                            <div style="margin-top:10px; padding:8px 10px; background:rgba(56, 189, 248, 0.1); border:1px solid rgba(56, 189, 248, 0.3); border-radius:8px; font-size:0.78rem; color:var(--accent); text-align:center;">
+                                ✅ Hai accettato la sfida! In attesa che l'autore <strong>${escapeHtml(c.creatorName || 'Anonimo')}</strong> la avvii.
+                            </div>
+                        `;
+                    }
+                }
 
                 let footerActionHtml = '';
                 if (isCompleted) {
@@ -6169,14 +6269,18 @@
 
                 html += `
                     <div class="challenge-card ${isCompleted ? 'challenge-completed' : ''}">
-                        <div class="challenge-header">
-                            <span class="challenge-title">🏹 ${escapeHtml(c.title || 'Sfida')}</span>
-                            <span class="challenge-target">🎯 ${c.targetXp} XP</span>
+                        <div class="challenge-header" style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
+                            <span class="challenge-title" style="flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">🏹 ${escapeHtml(c.title || 'Sfida')}</span>
+                            <div style="display:flex; align-items:center; gap:6px; flex-shrink:0;">
+                                <button onclick="openChallengeLeaderboardModal('${c.id}')" title="Classifica della sfida" style="background:rgba(234, 179, 8, 0.15); border:1px solid #eab308; color:#facc15; font-size:0.8rem; border-radius:6px; padding:3px 7px; cursor:pointer; font-weight:700; display:inline-flex; align-items:center; gap:3px;">🏆 Classifica</button>
+                                ${isCreator ? `<button onclick="confirmDeleteChallenge('${c.id}', '${escapeHtml(c.title || 'Sfida')}')" title="Elimina sfida" style="background:rgba(239, 68, 68, 0.15); border:1px solid #ef4444; color:#ef4444; font-size:0.8rem; border-radius:6px; padding:3px 7px; cursor:pointer; font-weight:700;">🗑️</button>` : ''}
+                            </div>
                         </div>
                         <div class="challenge-meta">
-                            Creata da ${escapeHtml(c.creatorName || 'Anonimo')} • ${participants.length} partecipanti
+                            Creata da ${escapeHtml(c.creatorName || 'Anonimo')} • ${participants.length} partecipanti • 🎯 ${c.targetXp} XP
                         </div>
                         ${participantsHtml}
+                        ${statusNoticeHtml}
                         ${footerActionHtml}
                     </div>
                 `;
@@ -6211,6 +6315,7 @@
                 </div>
                 <div class="auth-form-group">
                     <label>Seleziona atleti da sfidare (minimo 1)</label>
+                    <div class="selected-chips" id="new-challenge-selected-chips"></div>
                     <input type="text" id="new-challenge-search" placeholder="Cerca atleta per nickname...">
                     <div class="user-picker-list" id="new-challenge-user-list">
                         <p style="text-align:center; color:var(--subtext); font-size:0.8rem; padding:10px;">Caricamento atleti...</p>
@@ -6235,17 +6340,21 @@
                 challengeAllUsers = [];
                 snapshot.forEach(doc => {
                     if (doc.id === currentUser.uid) return;
-                    const data = doc.data();
-                    if (data.nickname) {
-                        challengeAllUsers.push({ uid: doc.id, nickname: data.nickname });
-                    }
+                    const data = doc.data() || {};
+                    const rawNick = data.nickname || data.displayName || (data.email ? data.email.split('@')[0] : '');
+                    const name = (rawNick && rawNick.trim().length > 0) ? rawNick.trim() : ('Atleta ' + doc.id.slice(0, 5));
+                    challengeAllUsers.push({ uid: doc.id, nickname: name });
                 });
                 challengeAllUsers.sort((a, b) => a.nickname.localeCompare(b.nickname));
                 renderChallengeUserList('');
             }).catch((err) => {
                 console.error("Errore caricamento utenti per sfida:", err);
                 const listEl = document.getElementById('new-challenge-user-list');
-                if (listEl) listEl.innerHTML = `<p style="text-align:center; color:var(--subtext); font-size:0.8rem; padding:10px;">Errore caricamento utenti.</p>`;
+                if (listEl) {
+                    listEl.innerHTML = (err && err.code === 'permission-denied')
+                        ? `<p style="text-align:center; color:var(--danger); font-size:0.8rem; padding:10px;">⚠️ Permessi Firestore insufficienti: aggiorna le regole nella console Firebase.</p>`
+                        : `<p style="text-align:center; color:var(--subtext); font-size:0.8rem; padding:10px;">Errore caricamento utenti.</p>`;
+                }
             });
         }
 
@@ -6254,7 +6363,7 @@
             if (!listEl) return;
 
             const filter = (filterText || '').trim().toLowerCase();
-            const filtered = challengeAllUsers.filter(u => u.nickname.toLowerCase().includes(filter));
+            const filtered = challengeAllUsers.filter(u => (u.nickname || '').toLowerCase().includes(filter));
 
             if (filtered.length === 0) {
                 listEl.innerHTML = `<p style="text-align:center; color:var(--subtext); font-size:0.8rem; padding:10px;">Nessun atleta trovato.</p>`;
@@ -6264,12 +6373,14 @@
             listEl.innerHTML = filtered.map(u => {
                 const isSelected = !!challengeSelectedUsers[u.uid];
                 return `
-                    <div class="user-picker-item ${isSelected ? 'selected' : ''}" onclick="toggleChallengeUserPick('${u.uid}', '${escapeHtml(u.nickname)}')">
-                        <input type="checkbox" ${isSelected ? 'checked' : ''} onclick="event.stopPropagation(); toggleChallengeUserPick('${u.uid}', '${escapeHtml(u.nickname)}')">
-                        <span>${escapeHtml(u.nickname)}</span>
+                    <div class="user-picker-item ${isSelected ? 'selected' : ''}" onclick="toggleChallengeUserPick('${u.uid}', '${escapeHtml(u.nickname)}')" style="display: flex !important; flex-direction: row !important; align-items: center !important; justify-content: flex-start !important; width: 100% !important; padding: 10px 14px !important; box-sizing: border-box !important; gap: 12px !important; border-bottom: 1px solid var(--line-color) !important; cursor: pointer !important; text-align: left !important; background: ${isSelected ? 'rgba(56, 189, 248, 0.15)' : 'transparent'} !important;">
+                        <input type="checkbox" ${isSelected ? 'checked' : ''} onclick="event.stopPropagation(); toggleChallengeUserPick('${u.uid}', '${escapeHtml(u.nickname)}')" style="flex: 0 0 18px !important; width: 18px !important; height: 18px !important; min-width: 18px !important; max-width: 18px !important; margin: 0 !important; cursor: pointer !important; accent-color: var(--accent) !important; display: inline-block !important;">
+                        <span style="flex: 1 1 auto !important; min-width: 0 !important; text-align: left !important; color: #ffffff !important; font-size: 0.95rem !important; font-weight: 600 !important; display: block !important; white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important;">${escapeHtml(u.nickname)}</span>
                     </div>
                 `;
             }).join('');
+
+            renderSelectedChips('new-challenge-selected-chips', challengeSelectedUsers, 'toggleChallengeUserPick');
         }
 
         function toggleChallengeUserPick(uid, nickname) {
@@ -6318,22 +6429,25 @@
                 const creatorName = userNickname || (currentUser.displayName || 'Anonimo');
                 const currentXp = getTotalXp();
 
-                // Creazione della sfida
+                // Creazione della sfida in stato 'waiting' (in attesa di accettazione da parte di almeno 1 invitato)
                 const challengeDoc = await db.collection("challenges").add({
                     title: title,
                     targetXp: targetXp,
                     creatorUid: currentUser.uid,
                     creatorName: creatorName,
+                    invitedUids: selectedUids,
                     participants: [currentUser.uid],
                     participantData: {
                         [currentUser.uid]: {
                             name: creatorName,
                             startXp: currentXp,
                             currentXp: currentXp,
-                            joinedAt: Date.now()
+                            joinedAt: Date.now(),
+                            isCreator: true
                         }
                     },
-                    status: 'active',
+                    status: 'waiting',
+                    startedAt: null,
                     winnerUid: null,
                     winnerName: null,
                     bonusClaimed: false,
@@ -6363,14 +6477,20 @@
                 document.getElementById('custom-modal').classList.remove('active');
                 openCustomModal(
                     "🏹 Sfida Creata!",
-                    `La sfida "<strong>${escapeHtml(title)}</strong>" da <strong>${targetXp} XP</strong> è stata lanciata! Gli inviti sono stati inviati agli atleti. Buon allenamento! 🔥`,
+                    `La sfida "<strong>${escapeHtml(title)}</strong>" da <strong>${targetXp} XP</strong> è stata creata e gli inviti sono stati spediti!<br><br>⏳ <em>La sfida partirà non appena almeno un atleta invitato avrà accettato e tu premerai "🚀 Avvia Sfida".</em>`,
                     "Perfetto!",
                     false,
                     () => {}
                 );
             } catch (err) {
                 console.error("Errore creazione sfida:", err);
-                if (errEl) errEl.innerText = "Errore durante la creazione della sfida.";
+                if (errEl) {
+                    if (err && (err.code === 'permission-denied' || (err.message && err.message.toLowerCase().includes('permission')))) {
+                        errEl.innerHTML = "⚠️ <strong>Permessi Firestore mancanti:</strong> le regole di sicurezza su Firebase bloccano la creazione della sfida. Aggiorna le regole nella console Firebase con quelle fornite in <code>firestore.rules</code>.";
+                    } else {
+                        errEl.innerText = "Errore durante la creazione della sfida: " + (err.message || err);
+                    }
+                }
                 if (confirmBtn) { confirmBtn.disabled = false; confirmBtn.innerText = 'Lancia Sfida'; }
             }
         }
@@ -6381,6 +6501,21 @@
 
             try {
                 const challengeRef = db.collection("challenges").doc(inv.challengeId);
+                const challengeSnap = await challengeRef.get();
+
+                if (!challengeSnap.exists) {
+                    alert("Questa sfida è stata eliminata o non è più disponibile.");
+                    await db.collection("challengeInvitations").doc(invId).delete();
+                    return;
+                }
+
+                const cData = challengeSnap.data() || {};
+                if (cData.status !== 'waiting') {
+                    alert("La sfida è già stata avviata dall'autore o è già terminata! Gli inviti sono stati chiusi e non è più possibile entrare.");
+                    await db.collection("challengeInvitations").doc(invId).delete();
+                    return;
+                }
+
                 const currentXp = getTotalXp();
                 const myName = userNickname || (currentUser.displayName || 'Anonimo');
 
@@ -6390,18 +6525,191 @@
                         name: myName,
                         startXp: currentXp,
                         currentXp: currentXp,
-                        joinedAt: Date.now()
+                        joinedAt: Date.now(),
+                        isCreator: false
                     }
                 });
 
                 await db.collection("challengeInvitations").doc(invId).delete();
             } catch (err) {
                 console.error("Errore accettazione sfida:", err);
-                alert("Errore durante l'accettazione della sfida.");
+                alert("Errore durante l'accettazione della sfida: " + (err.message || err));
             }
         }
 
-        function confirmDeclineChallengeInvitation(invId, fromUid, fromNickname) {
+        // Avvia la sfida: consentito SOLO all'autore e SOLO se almeno 1 invitato ha accettato (participants.length >= 2)
+        async function startChallenge(challengeId) {
+            if (!currentUser) return;
+            const c = activeChallengesList.find(x => x.id === challengeId);
+            if (!c) return;
+
+            if (c.creatorUid !== currentUser.uid) {
+                alert("Solo l'autore della sfida può avviarla.");
+                return;
+            }
+
+            const participants = c.participants || [];
+            if (participants.length < 2) {
+                alert("Non puoi avviare la sfida da solo! Almeno un membro invitato deve accettare prima di poter partire.");
+                return;
+            }
+
+            try {
+                // Aggiorna lo startXp di tutti i partecipanti attuali al valore corrente per partire alla pari
+                const pDataMap = c.participantData || {};
+                const updatePayload = {
+                    status: 'active',
+                    startedAt: firebase.firestore.FieldValue.serverTimestamp()
+                };
+
+                const myTotalXp = getTotalXp();
+                if (pDataMap[currentUser.uid]) {
+                    updatePayload[`participantData.${currentUser.uid}.startXp`] = myTotalXp;
+                    updatePayload[`participantData.${currentUser.uid}.currentXp`] = myTotalXp;
+                }
+
+                await db.collection("challenges").doc(challengeId).update(updatePayload);
+
+                // Blocco e cancellazione immediata di tutti gli inviti pendenti per questa sfida (nessun altro potrà più entrare)
+                const invitesSnap = await db.collection("challengeInvitations").where("challengeId", "==", challengeId).get();
+                const batch = db.batch();
+                invitesSnap.forEach(d => batch.delete(d.ref));
+                await batch.commit();
+
+                openCustomModal(
+                    "🚀 Sfida Avviata!",
+                    `La sfida "<strong>${escapeHtml(c.title || 'Sfida')}</strong>" è ufficialmente iniziata! Gli accessi sono stati chiusi e la gara ha inizio. Buon allenamento! 🔥`,
+                    "Inizia la Sfida!",
+                    false,
+                    () => {}
+                );
+            } catch (err) {
+                console.error("Errore avvio sfida:", err);
+                alert("Errore durante l'avvio della sfida: " + (err.message || err));
+            }
+        }
+
+        // Eliminazione sfida da parte dell'autore in qualsiasi momento (annulla automaticamente tutti gli inviti)
+        function confirmDeleteChallenge(challengeId, challengeTitle) {
+            if (!currentUser) return;
+            openCustomModal(
+                "🗑️ Elimina Sfida",
+                `Sei sicuro di voler eliminare la sfida "<strong>${escapeHtml(challengeTitle)}</strong>"?<br><br>⚠️ Tutti i progressi e gli inviti in sospeso verranno annullati automaticamente.`,
+                "Elimina Sfida",
+                true,
+                async () => {
+                    try {
+                        // 1. Elimina documento della sfida
+                        await db.collection("challenges").doc(challengeId).delete();
+
+                        // 2. Elimina a cascata tutti gli inviti pendenti associati alla sfida
+                        const invitesSnap = await db.collection("challengeInvitations").where("challengeId", "==", challengeId).get();
+                        const batch = db.batch();
+                        invitesSnap.forEach(d => batch.delete(d.ref));
+                        await batch.commit();
+
+                        document.getElementById('custom-modal').classList.remove('active');
+                    } catch (err) {
+                        console.error("Errore eliminazione sfida:", err);
+                        alert("Errore durante l'eliminazione della sfida: " + (err.message || err));
+                    }
+                }
+            );
+        }
+
+        // Mini Classifica per i membri di ogni sfida (🏆)
+        function openChallengeLeaderboardModal(challengeId) {
+            const c = activeChallengesList.find(x => x.id === challengeId);
+            if (!c) return;
+
+            const modal = document.getElementById('custom-modal');
+            const titleEl = document.getElementById('modal-title');
+            const bodyContent = document.getElementById('modal-body-content');
+            const actionsBox = document.getElementById('modal-actions-box');
+
+            titleEl.innerText = `🏆 Classifica Sfida: ${c.title || 'Sfida'}`;
+
+            const participants = c.participants || [];
+            const pDataMap = c.participantData || {};
+            const isCompleted = c.status === 'completed';
+
+            // Calcolo XP guadagnati e ordinamento decrescente
+            const ranked = participants.map(uid => {
+                const p = pDataMap[uid] || { name: 'Atleta', startXp: 0, currentXp: 0 };
+                const isCreator = uid === c.creatorUid;
+                const isMe = currentUser && uid === currentUser.uid;
+                const gained = Math.max(0, (p.currentXp || 0) - (p.startXp || 0));
+                const pct = Math.min(100, Math.floor((gained / c.targetXp) * 100));
+                return {
+                    uid,
+                    name: p.name || 'Atleta',
+                    isCreator,
+                    isMe,
+                    gained,
+                    pct,
+                    currentXp: p.currentXp || 0,
+                    isWinner: isCompleted && c.winnerUid === uid
+                };
+            }).sort((a, b) => b.gained - a.gained);
+
+            const statusBadge = c.status === 'waiting'
+                ? `<span style="background:rgba(234, 179, 8, 0.15); color:#facc15; border:1px solid #eab308; padding:3px 8px; border-radius:12px; font-size:0.75rem; font-weight:700;">⏳ In attesa di avvio</span>`
+                : (c.status === 'active'
+                    ? `<span style="background:rgba(56, 189, 248, 0.15); color:var(--accent); border:1px solid var(--border-glow); padding:3px 8px; border-radius:12px; font-size:0.75rem; font-weight:700;">🔥 In corso</span>`
+                    : `<span style="background:rgba(34, 197, 94, 0.15); color:var(--unlocked); border:1px solid var(--unlocked); padding:3px 8px; border-radius:12px; font-size:0.75rem; font-weight:700;">🏁 Completata</span>`);
+
+            let rowsHtml = '';
+            ranked.forEach((r, idx) => {
+                let medal = `#${idx + 1}`;
+                if (idx === 0) medal = '🥇 1°';
+                else if (idx === 1) medal = '🥈 2°';
+                else if (idx === 2) medal = '🥉 3°';
+
+                rowsHtml += `
+                    <div style="background:var(--input-bg); border:1px solid ${r.isWinner ? '#f59e0b' : (r.isMe ? 'var(--accent)' : 'var(--line-color)')}; border-radius:10px; padding:10px 12px; margin-bottom:8px; text-align:left;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                            <div style="display:flex; align-items:center; gap:8px;">
+                                <span style="font-weight:800; font-size:0.95rem; color:${idx === 0 ? '#f59e0b' : 'var(--text)'};">${medal}</span>
+                                <span style="font-weight:${r.isMe ? '700' : '600'}; color:var(--text); font-size:0.9rem;">
+                                    ${escapeHtml(r.name)}${r.isCreator ? ' 👑' : ''}${r.isMe ? ' (Tu)' : ''}${r.isWinner ? ' 🏆' : ''}
+                                </span>
+                            </div>
+                            <span style="font-weight:700; color:var(--accent); font-size:0.85rem;">
+                                +${r.gained.toLocaleString()} XP
+                            </span>
+                        </div>
+                        <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.72rem; color:var(--subtext); margin-bottom:4px;">
+                            <span>Progresso</span>
+                            <span>${r.gained.toLocaleString()} / ${c.targetXp.toLocaleString()} XP (${r.pct}%)</span>
+                        </div>
+                        <div style="width:100%; height:8px; background:var(--card-bg); border-radius:4px; overflow:hidden; border:1px solid var(--line-color);">
+                            <div style="width:${r.pct}%; height:100%; background:${r.isWinner ? 'linear-gradient(90deg, #f59e0b, #10b981)' : 'linear-gradient(90deg, var(--accent), #10b981)'}; transition:width 0.3s ease;"></div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            bodyContent.innerHTML = `
+                <div style="margin-bottom:14px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;">
+                    <div>
+                        <span style="font-size:0.85rem; color:var(--subtext);">Obiettivo:</span>
+                        <strong style="color:var(--unlocked); font-size:0.95rem; margin-left:4px;">${c.targetXp.toLocaleString()} XP</strong>
+                    </div>
+                    ${statusBadge}
+                </div>
+                <div style="max-height:300px; overflow-y:auto; padding-right:4px;">
+                    ${rowsHtml}
+                </div>
+            `;
+
+            actionsBox.innerHTML = `
+                <button class="btn-confirm" onclick="document.getElementById('custom-modal').classList.remove('active')" style="width:100%;">Chiudi Classifica</button>
+            `;
+
+            modal.classList.add('active');
+        }
+
+        function declineChallengeInvitation(invId, fromUid, fromNickname) {
             openCustomModal(
                 "❌ Rifiuta sfida",
                 `Sei sicuro di voler rifiutare la sfida di <strong>${fromNickname}</strong>?<br><br><small style="color:var(--danger)">⚠️ Questo atleta non potrà più invitarti a una sfida per 7 giorni.</small>`,
@@ -6641,9 +6949,19 @@
         initWorkoutsSection();
     </script>
     <script>
+      // Disattiva e rimuove qualsiasi vecchia cache del Service Worker per garantire che mobile carichi sempre la versione più recente
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('./pwabuilder-sw.js');
+          navigator.serviceWorker.getRegistrations().then(function(registrations) {
+            for (let registration of registrations) {
+              registration.unregister();
+            }
+          });
+          if ('caches' in window) {
+            caches.keys().then(function(names) {
+              for (let name of names) caches.delete(name);
+            });
+          }
         });
       }
     </script>
