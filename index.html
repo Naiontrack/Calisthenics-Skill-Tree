@@ -2675,16 +2675,12 @@
                 return;
             }
             try {
-                const isGhPages = window.location.pathname.includes('/Calisthenics-Skill-Tree');
                 await OneSignal.init({
                     appId: ONESIGNAL_APP_ID,
                     allowLocalhostAsSecureOrigin: true,
-                    path: isGhPages ? "/Calisthenics-Skill-Tree/" : "/",
-                    serviceWorkerPath: "OneSignalSDKWorker.js",
-                    serviceWorkerParam: { scope: isGhPages ? "/Calisthenics-Skill-Tree/" : "/" },
                     notifyButton: { enable: false }
                 });
-                console.log("[OneSignal] Inizializzato con successo. Scope:", isGhPages ? "/Calisthenics-Skill-Tree/" : "/");
+                console.log("[OneSignal] Inizializzato con successo dalla configurazione Dashboard!");
 
                 // Ascolta cambi di stato iscrizione push per associare automaticamente l'utente
                 if (OneSignal.User && OneSignal.User.PushSubscription) {
