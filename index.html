@@ -666,6 +666,18 @@
             text-align: left;
         }
 
+        .auth-form-group select {
+            width: 100%;
+            padding: 10px;
+            box-sizing: border-box;
+            text-align: left;
+            background: var(--bg-color);
+            color: var(--text-color, inherit);
+            border: 1px solid var(--line-color);
+            border-radius: 6px;
+            font-size: 0.9rem;
+        }
+
         .auth-hint {
             font-size: 0.75rem;
             color: var(--subtext);
@@ -3753,7 +3765,12 @@
                     renderEventsList(events);
                 }, (error) => {
                     console.error("Errore nel caricamento degli eventi:", error);
-                    if (listEl) listEl.innerHTML = `<p style="color: var(--subtext); text-align:center; font-size:0.85rem;">Errore nel caricamento dei sondaggi.</p>`;
+                    eventsUnsubscribe = null; // permette di ritentare riaprendo il pannello
+                    if (listEl) {
+                        listEl.innerHTML = (error && error.code === 'permission-denied')
+                            ? `<p style="color: var(--subtext); text-align:center; font-size:0.85rem;">⚠️ Le regole di sicurezza di Firestore non permettono di leggere i sondaggi (collection "events"). Chiedi all'amministratore di aggiornarle.</p>`
+                            : `<p style="color: var(--subtext); text-align:center; font-size:0.85rem;">Errore nel caricamento dei sondaggi.</p>`;
+                    }
                 });
         }
 
@@ -3766,7 +3783,7 @@
             if (!listEl) return;
 
             if (events.length === 0) {
-                listEl.innerHTML = `<p style="color: var(--subtext); text-align:center; font-size:0.85rem;">Nessun sondaggio ancora. ${currentUser ? 'Tocca "Nuovo sondaggio" per crearne uno! 🤸' : ''}</p>`;
+                listEl.innerHTML = `<p style="color: var(--subtext); text-align:center; font-size:0.85rem;">Ancora nessun sondaggio! ${currentUser ? 'Tocca "Nuovo sondaggio" per crearne uno 🤸' : ''}</p>`;
                 return;
             }
 
@@ -3801,7 +3818,7 @@
                             <button class="event-vote-btn ${myResponse === 'no' ? 'selected-no' : ''}" ${canVote ? `onclick="voteEvent('${ev.id}', 'no')"` : 'disabled'}>❌ No, non sarò presente</button>
                             ${ev.allowMaybe ? `<button class="event-vote-btn ${myResponse === 'maybe' ? 'selected-maybe' : ''}" ${canVote ? `onclick="voteEvent('${ev.id}', 'maybe')"` : 'disabled'}>🤔 Forse</button>` : ''}
                         </div>
-                        ${ev.allowMaybe && ev.maybeDeadline ? `<div class="event-maybe-note">Chi ha scelto "forse" deve far sapere entro: ${escapeHtml(ev.maybeDeadline)}</div>` : ''}
+                        ${ev.allowMaybe && ev.maybeDeadlineDate && ev.maybeDeadlineTime ? `<div class="event-maybe-note">Chi ha scelto "forse" deve far sapere entro il ${escapeHtml(ev.maybeDeadlineDate)} alle ${escapeHtml(ev.maybeDeadlineTime)}</div>` : ''}
                         <div class="event-vote-counts">
                             <span>✅ ${yesCount}</span>
                             <span>❌ ${noCount}</span>
@@ -3863,7 +3880,11 @@
                 </div>
                 <div class="auth-form-group" id="new-event-maybe-deadline-wrap" style="display:none;">
                     <label>Entro quando devono confermare chi ha risposto "Forse"</label>
-                    <input type="time" id="new-event-maybe-deadline">
+                    <div style="display:flex; gap:6px;">
+                        <select id="new-event-maybe-day" style="flex:0.8;"></select>
+                        <select id="new-event-maybe-month" style="flex:1.4;"></select>
+                        <input type="time" id="new-event-maybe-time" style="flex:1;">
+                    </div>
                 </div>
             `;
             actionsBox.innerHTML = `
@@ -3876,10 +3897,33 @@
             document.getElementById('new-event-confirm-btn').onclick = confirmCreateEvent;
         }
 
+        const italianMonths = ['Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno', 'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre'];
+
         function toggleEventMaybeField(checked) {
             eventsAllowMaybeDraft = checked;
             const wrap = document.getElementById('new-event-maybe-deadline-wrap');
             if (wrap) wrap.style.display = checked ? 'block' : 'none';
+            if (checked) populateMaybeDeadlineSelectors();
+        }
+
+        // Popola i menu giorno/mese per la scadenza dell'opzione "Forse" (niente anno: la scadenza è sempre entro pochi giorni)
+        function populateMaybeDeadlineSelectors() {
+            const daySelect = document.getElementById('new-event-maybe-day');
+            const monthSelect = document.getElementById('new-event-maybe-month');
+            if (!daySelect || !monthSelect || daySelect.options.length > 0) return; // già popolati
+
+            for (let d = 1; d <= 31; d++) {
+                const opt = document.createElement('option');
+                opt.value = d;
+                opt.textContent = d;
+                daySelect.appendChild(opt);
+            }
+            italianMonths.forEach((name, idx) => {
+                const opt = document.createElement('option');
+                opt.value = idx + 1;
+                opt.textContent = name;
+                monthSelect.appendChild(opt);
+            });
         }
 
         function confirmCreateEvent() {
@@ -3889,19 +3933,29 @@
             const timeInput = document.getElementById('new-event-time');
             const placeInput = document.getElementById('new-event-place');
             const allowMaybe = document.getElementById('new-event-allow-maybe').checked;
-            const maybeDeadlineInput = document.getElementById('new-event-maybe-deadline');
+            const maybeDaySelect = document.getElementById('new-event-maybe-day');
+            const maybeMonthSelect = document.getElementById('new-event-maybe-month');
+            const maybeTimeInput = document.getElementById('new-event-maybe-time');
 
             const day = dayInput.value;
             const time = timeInput.value;
             const place = placeInput.value.trim();
-            const maybeDeadline = allowMaybe ? maybeDeadlineInput.value : '';
+
+            let maybeDeadlineDate = '';
+            let maybeDeadlineTime = '';
+            if (allowMaybe) {
+                const mDay = maybeDaySelect ? maybeDaySelect.value : '';
+                const mMonthIdx = maybeMonthSelect ? parseInt(maybeMonthSelect.value, 10) : NaN;
+                maybeDeadlineDate = (mDay && mMonthIdx) ? `${mDay} ${italianMonths[mMonthIdx - 1]}` : '';
+                maybeDeadlineTime = maybeTimeInput ? maybeTimeInput.value : '';
+            }
 
             if (!day || !time || !place) {
                 if (errEl) errEl.innerText = "Compila giorno, ora e luogo per creare il sondaggio.";
                 return;
             }
-            if (allowMaybe && !maybeDeadline) {
-                if (errEl) errEl.innerText = "Indica entro quando i partecipanti devono confermare l'opzione \"Forse\".";
+            if (allowMaybe && (!maybeDeadlineDate || !maybeDeadlineTime)) {
+                if (errEl) errEl.innerText = "Indica data e ora entro cui i partecipanti devono confermare l'opzione \"Forse\".";
                 return;
             }
 
@@ -3915,14 +3969,19 @@
                 time: time,
                 place: place.slice(0, 80),
                 allowMaybe: allowMaybe,
-                maybeDeadline: allowMaybe ? maybeDeadline : '',
+                maybeDeadlineDate: allowMaybe ? maybeDeadlineDate : '',
+                maybeDeadlineTime: allowMaybe ? maybeDeadlineTime : '',
                 responses: {},
                 createdAt: firebase.firestore.FieldValue.serverTimestamp()
             }).then(() => {
                 document.getElementById('custom-modal').classList.remove('active');
             }).catch((error) => {
                 console.error("Errore nella creazione del sondaggio:", error);
-                if (errEl) errEl.innerText = "Errore durante la creazione del sondaggio.";
+                if (errEl) {
+                    errEl.innerText = (error && error.code === 'permission-denied')
+                        ? "⚠️ Permessi Firestore insufficienti: le regole di sicurezza non permettono di creare sondaggi (collection \"events\"). Aggiorna le regole nella console Firebase."
+                        : "Errore durante la creazione del sondaggio.";
+                }
                 if (confirmBtn) { confirmBtn.disabled = false; confirmBtn.innerText = 'Crea sondaggio'; }
             });
         }
