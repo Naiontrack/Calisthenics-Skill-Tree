@@ -2648,12 +2648,14 @@
             window.OneSignalDeferred = window.OneSignalDeferred || [];
             window.OneSignalDeferred.push(async function(OneSignal) {
                 try {
-                    await OneSignal.login(uid);
-                    console.log("[OneSignal] User loggato con successo:", uid);
-                    if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
-                        if (OneSignal.User && OneSignal.User.PushSubscription) {
+                    if (OneSignal.User && OneSignal.User.PushSubscription) {
+                        if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
                             await OneSignal.User.PushSubscription.optIn();
                         }
+                    }
+                    await OneSignal.login(uid);
+                    console.log("[OneSignal] User collegato con successo:", uid);
+                    if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
                         setPushNotificationsState(true);
                     }
                 } catch(e) {
@@ -2661,6 +2663,7 @@
                 }
             });
         }
+        const autoRegisterOneSignalPush = autoRegisterDevice;
 
         function syncOneSignalUser(uid) {
             autoRegisterDevice(uid);
@@ -3527,7 +3530,7 @@ let currentUser = null;
 
         // ===============================================================
         // ===============================================================
-        // SISTEMA NOTIFICHE PUSH (GESTIONE SILENZIOSA, ZERO POPUP FASTIDIOSI)
+        // SISTEMA NOTIFICHE PUSH (GESTIONE ROBUSTA, RESILIENTE E SILENZIOSA)
         // ===============================================================
         function setPushNotificationsState(enabled) {
             notificationsEnabled = enabled;
@@ -3554,32 +3557,45 @@ let currentUser = null;
             });
         }
 
-        // Toggle pulito e istantaneo: ZERO alert, ZERO toast, solo cambio stato silenzioso
+        // Toggle pulito e istantaneo: ZERO alert molesti, solo cambio stato silenzioso
         async function togglePushNotifications() {
             const toggle = document.getElementById('profile-push-toggle');
             const shouldEnable = toggle ? toggle.checked : !notificationsEnabled;
 
             if (shouldEnable) {
+                // Rileva se è iPhone / iPad fuori dalla Home
+                const isIos = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+                const isStandalone = window.navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches;
+                if (isIos && !isStandalone) {
+                    setPushNotificationsState(false);
+                    alert("Su iPhone le notifiche push richiedono che l'app sia aggiunta alla schermata Home:\n1. Tocca il tasto Condividi in basso in Safari\n2. Tocca 'Aggiungi alla schermata Home'\n3. Apri l'app dalla Home per abilitare le notifiche!");
+                    return;
+                }
+
+                if (typeof Notification !== 'undefined' && Notification.permission !== 'granted') {
+                    try {
+                        const p = await Notification.requestPermission();
+                        if (p !== 'granted') {
+                            setPushNotificationsState(false);
+                            return;
+                        }
+                    } catch(err) {
+                        setPushNotificationsState(false);
+                        return;
+                    }
+                }
                 setPushNotificationsState(true);
                 window.OneSignalDeferred = window.OneSignalDeferred || [];
                 window.OneSignalDeferred.push(async function(OneSignal) {
                     try {
-                        if (OneSignal.Notifications && typeof OneSignal.Notifications.requestPermission === 'function') {
-                            await OneSignal.Notifications.requestPermission();
-                        } else if (typeof Notification !== 'undefined') {
-                            await Notification.requestPermission();
-                        }
                         if (OneSignal.User && OneSignal.User.PushSubscription) {
                             await OneSignal.User.PushSubscription.optIn();
                         }
                         if (currentUser && currentUser.uid) {
                             await OneSignal.login(currentUser.uid);
                         }
-                        const isGranted = (typeof Notification === 'undefined' || Notification.permission === 'granted');
-                        setPushNotificationsState(isGranted);
-                    } catch(err) {
-                        console.warn("[Push Toggle err]", err);
-                    }
+                        setPushNotificationsState(true);
+                    } catch(e) {}
                 });
             } else {
                 setPushNotificationsState(false);
@@ -3588,68 +3604,110 @@ let currentUser = null;
 
         async function testPushNotification(evt) {
             const btn = (evt && evt.target) ? evt.target : document.querySelector("button[onclick*='testPushNotification']");
-            if (btn) btn.innerText = "Invio in corso... ⏳";
+            if (btn) {
+                btn.innerText = "Invio in corso... ⏳";
+                btn.disabled = true;
+            }
 
-            window.OneSignalDeferred = window.OneSignalDeferred || [];
-            window.OneSignalDeferred.push(async function(OneSignal) {
-                // 1. Assicurati che il permesso sia chiesto e OneSignal associato
-                try {
-                    if (OneSignal.Notifications && typeof OneSignal.Notifications.requestPermission === 'function') {
-                        await OneSignal.Notifications.requestPermission();
-                    } else if (typeof Notification !== 'undefined') {
-                        await Notification.requestPermission();
-                    }
-                    if (OneSignal.User && OneSignal.User.PushSubscription) {
-                        await OneSignal.User.PushSubscription.optIn();
-                    }
-                    if (currentUser && currentUser.uid) {
-                        await OneSignal.login(currentUser.uid);
-                    }
-                    setPushNotificationsState(true);
-                } catch(e) {
-                    console.warn("[Test OneSignal error]", e);
+            const resetButton = (msg = "Inviato! ✅") => {
+                if (btn) {
+                    btn.innerText = msg;
+                    btn.disabled = false;
+                    setTimeout(() => { btn.innerText = "Test 📲"; }, 3000);
                 }
+            };
 
-                // 2. Notifica locale tramite Service Worker pronto
-                try {
-                    if ('serviceWorker' in navigator) {
-                        const reg = await navigator.serviceWorker.ready;
-                        if (reg && typeof reg.showNotification === 'function') {
-                            await reg.showNotification("🔥 Calisthenics Tree", {
-                                body: "Test riuscito! Dispositivo collegato.",
-                                icon: "https://naiontrack.github.io/Calisthenics-Skill-Tree/icon-512.png",
-                                badge: "https://naiontrack.github.io/Calisthenics-Skill-Tree/icon-512.png",
-                                tag: "calisthenics-test",
-                                renotify: true,
-                                vibrate: [200, 100, 200]
-                            });
+            // Rileva se è iPhone / iPad aperto dentro Safari anziché dalla Schermata Home
+            const isIos = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+            const isStandalone = window.navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches;
+            if (isIos && !isStandalone) {
+                resetButton("Usa da Home 📲");
+                alert("Su iPhone le notifiche push funzionano solo se l'app è aggiunta alla schermata Home:\n1. Tocca l'icona Condividi in basso in Safari\n2. Scegli 'Aggiungi a schermata Home'\n3. Apri l'app dalla Home e riprova il Test!");
+                return;
+            }
+
+            // Timeout di sicurezza garantito: dopo 8 secondi sblocca SEMPRE il pulsante
+            const safetyTimer = setTimeout(() => {
+                resetButton("Inviato! ✅");
+            }, 8000);
+
+            try {
+                // 1. Richiedi subito il permesso nativo al browser (su iOS DEVE essere la 1a riga dal click per preservare il gesture)
+                if (typeof Notification !== 'undefined' && Notification.permission !== 'granted') {
+                    try {
+                        const perm = await Notification.requestPermission();
+                        if (perm !== 'granted') {
+                            clearTimeout(safetyTimer);
+                            resetButton("Permesso negato ❌");
+                            setPushNotificationsState(false);
+                            return;
                         }
+                    } catch(permErr) {
+                        console.warn("[Push perm err]", permErr);
                     }
-                } catch(swErr) {
-                    console.warn("[SW local test err]", swErr);
                 }
 
-                // 3. Invio Push reale dal server Cloudflare / OneSignal
+                setPushNotificationsState(true);
+
+                // 2. Registra la sottoscrizione Push e associa l'utente su OneSignal ATTENDENDO la sincronizzazione
+                await new Promise((resolve) => {
+                    window.OneSignalDeferred = window.OneSignalDeferred || [];
+                    window.OneSignalDeferred.push(async function(OneSignal) {
+                        try {
+                            if (OneSignal.User && OneSignal.User.PushSubscription) {
+                                await OneSignal.User.PushSubscription.optIn();
+                            }
+                            if (currentUser && currentUser.uid) {
+                                await OneSignal.login(currentUser.uid);
+                                console.log("[OneSignal] Device collegato a UID:", currentUser.uid);
+                            }
+                            // Lascia 1 secondo al server OneSignal per registrare il push token
+                            setTimeout(resolve, 1000);
+                        } catch(osErr) {
+                            console.warn("[OneSignal test err]", osErr);
+                            resolve();
+                        }
+                    });
+                    // Fallback di timeout per non bloccare mai
+                    setTimeout(resolve, 3000);
+                });
+
+                // 3. Invia la notifica Push tramite Cloudflare Relay
                 if (currentUser && currentUser.uid) {
                     try {
                         await dispatchBackgroundPush({
                             targetUids: [currentUser.uid],
                             title: "🔥 Calisthenics Tree Notifiche",
-                            body: "Test server riuscito! Il tuo telefono riceve le notifiche push.",
+                            body: "Test riuscito! Il tuo telefono è collegato correttamente.",
                             data: { type: 'test' }
                         });
-                    } catch (pushErr) {
-                        console.warn("[Server push err]", pushErr);
+                    } catch(dpErr) {
+                        console.warn("[dispatchBackgroundPush err]", dpErr);
                     }
                 }
 
-                if (btn) {
-                    btn.innerText = "Inviato! ✅";
-                    setTimeout(() => {
-                        btn.innerText = "Test 📲";
-                    }, 2500);
+                // 4. Mostra notifica locale immediata come feedback istantaneo se supportata
+                if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+                    if (swRegistration && typeof swRegistration.showNotification === 'function') {
+                        try {
+                            swRegistration.showNotification("🔥 Calisthenics Tree", {
+                                body: "Test riuscito! Notifiche attive sul dispositivo.",
+                                icon: "https://naiontrack.github.io/Calisthenics-Skill-Tree/icon-512.png",
+                                badge: "https://naiontrack.github.io/Calisthenics-Skill-Tree/icon-512.png",
+                                tag: "calisthenics-test",
+                                renotify: true
+                            });
+                        } catch(e) {}
+                    }
                 }
-            });
+
+                clearTimeout(safetyTimer);
+                resetButton("Inviato! ✅");
+            } catch(err) {
+                console.warn("[testPushNotification err]", err);
+                clearTimeout(safetyTimer);
+                resetButton("Errore invio ⚠️");
+            }
         }
         
 async function setupFCMToken() {
@@ -3874,9 +3932,7 @@ async function setupFCMToken() {
                         syncOneSignalUser(user.uid);
                     
                     // Mostra il prompt OneSignal all'utente se non ha ancora risposto
-                    if (typeof Notification !== 'undefined' && Notification.permission === 'default' && window.OneSignal && window.OneSignal.Slidedown) {
-                        try { window.OneSignal.Slidedown.promptPush({ force: true }); } catch(e) {}
-                    }
+                    // Pop-up slidedown rimosso (gestione diretta da impostazioni / accesso)
                     }
                     if (chatPanelOpen) {
                         renderChatInputState();
