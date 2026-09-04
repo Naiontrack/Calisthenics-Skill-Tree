@@ -1,0 +1,28 @@
+{
+  "name": "Calisthenics Tree",
+  "short_name": "Calisthenics Tree",
+  "id": "Occhionero-Tree",
+  "description": "Occhionero's Calisthenics Tree, per utenti che si allenano nel calisthenics.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "dir": "ltr",
+  "background_color": "#0e00e5",
+  "theme_color": "#4a00ff",
+  "categories": [
+    "entertainment",
+    "fitness",
+    "health",
+    "lifestyle",
+    "social"
+  ],
+  "icons": [
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
