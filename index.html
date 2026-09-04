@@ -2651,6 +2651,16 @@
                     notifyButton: { enable: false }
                 });
                 console.log("[OneSignal] Inizializzato con successo.");
+                if (Notification.permission === 'granted') {
+                    try {
+                        await OneSignal.Notifications.requestPermission();
+                        if (OneSignal.User && OneSignal.User.PushSubscription && typeof OneSignal.User.PushSubscription.optIn === 'function') {
+                            await OneSignal.User.PushSubscription.optIn();
+                        }
+                    } catch(optErr) {
+                        console.warn("[OneSignal] Opt-in err:", optErr);
+                    }
+                }
                 if (currentUser) {
                     await OneSignal.login(currentUser.uid);
                 }
@@ -5154,9 +5164,13 @@
         }
 
         // Ascolto sempre attivo (indipendente dal pannello aperto/chiuso) per aggiornare il badge in tempo reale
+        let isInitialGeneralSnapshot = true;
+        let isInitialPrivateSnapshot = true;
         function startUnreadListeners() {
             stopUnreadListeners();
             if (!currentUser) return;
+            isInitialGeneralSnapshot = true;
+            isInitialPrivateSnapshot = true;
 
             loadLastSeenGeneral();
 
@@ -5172,6 +5186,10 @@
                     recomputeGeneralUnread();
 
                     // TRIGGER 2: Messaggio in chat pubblica generale
+                    if (isInitialGeneralSnapshot) {
+                        isInitialGeneralSnapshot = false;
+                        return;
+                    }
                     snapshot.docChanges().forEach(change => {
                         if (change.type === 'added') {
                             const data = change.doc.data();
@@ -5207,6 +5225,10 @@
                     recomputePrivateUnread();
 
                     // TRIGGER 1: Messaggio in chat privata o gruppo
+                    if (isInitialPrivateSnapshot) {
+                        isInitialPrivateSnapshot = false;
+                        return;
+                    }
                     snapshot.docChanges().forEach(change => {
                         if (change.type === 'modified' || change.type === 'added') {
                             const c = change.doc.data();
@@ -8098,9 +8120,9 @@
       // Registrazione Service Worker per Notifiche Push e PWA Standalone
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('./firebase-messaging-sw.js')
+          navigator.serviceWorker.register('./OneSignalSDKWorker.js', { scope: './' })
             .then((registration) => {
-              console.log('Firebase Messaging Service Worker registrato:', registration.scope);
+              console.log('OneSignal & Firebase Service Worker unificato attivo:', registration.scope);
               swRegistration = registration;
               if (messaging && typeof messaging.useServiceWorker === 'function') {
                 messaging.useServiceWorker(registration);
