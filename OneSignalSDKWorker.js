@@ -32,4 +32,3 @@ const messaging = firebase.messaging();
 messaging.onBackgroundMessage((payload) => {
     console.log('[Unified SW] Firebase background message:', payload);
 });
- 
