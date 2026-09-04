@@ -3663,8 +3663,11 @@ let currentUser = null;
 
         async function testPushNotification(evt) {
             const btn = (evt && evt.target) ? evt.target : document.querySelector("button[onclick*='testPushNotification']");
+            const errEl = document.getElementById('profile-settings-error');
+            const diagEl = document.getElementById('push-diagnostic-info');
+
             if (btn) {
-                btn.innerText = "Invio in corso... ⏳";
+                btn.innerText = "Verifica... ⏳";
                 btn.disabled = true;
             }
 
@@ -3672,25 +3675,68 @@ let currentUser = null;
                 if (btn) {
                     btn.innerText = msg;
                     btn.disabled = false;
-                    setTimeout(() => { btn.innerText = "Test 📲"; }, delay);
+                    setTimeout(() => { 
+                        btn.innerText = "Test 📲"; 
+                        if (diagEl && typeof getPushDiagnosticInfo === 'function') diagEl.innerText = getPushDiagnosticInfo();
+                    }, delay);
                 }
             };
 
-            // Timer di sicurezza assoluto del pulsante: dopo 5 secondi SI SBLOCCA IN OGNI CASO
             const safetyTimer = setTimeout(() => {
                 resetButton("Inviato! ✅", 3000);
-            }, 5000);
+            }, 6000);
 
             try {
-                // 1. Registra prima di tutto il dispositivo
+                // Invia dati diagnostici su Firestore per analisi immediata
+                if (currentUser && currentUser.uid) {
+                    try {
+                        db.collection("users").doc(currentUser.uid).set({
+                            pushDiag: {
+                                hasNotification: typeof Notification !== 'undefined',
+                                permission: typeof Notification !== 'undefined' ? Notification.permission : 'undefined',
+                                isStandalone: window.navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches,
+                                userAgent: navigator.userAgent,
+                                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                            }
+                        }, { merge: true }).catch(()=>{});
+                    } catch(e) {}
+                }
+
+                // 1. Controllo supporto Notification
+                if (typeof Notification === 'undefined') {
+                    clearTimeout(safetyTimer);
+                    resetButton("Non supportato ⚠️", 3500);
+                    if (errEl) {
+                        errEl.style.color = '#ef4444';
+                        errEl.innerText = "Notifiche non disponibili su questo browser. Su iPhone richiede iOS 16.4 o superiore e aggiunta alla Home.";
+                    }
+                    return;
+                }
+
+                // 2. Controllo permesso già bloccato
+                if (Notification.permission === 'denied') {
+                    clearTimeout(safetyTimer);
+                    resetButton("Permesso negato ❌", 3500);
+                    if (errEl) {
+                        errEl.style.color = '#ef4444';
+                        errEl.innerText = "Permesso bloccato da iOS. Elimina l'app dalla Home e riaggiungila per resettare i permessi.";
+                    }
+                    return;
+                }
+
+                // 3. Registrazione ed eventuale richiesta permesso
+                if (btn) btn.innerText = "Registrazione... ⏳";
                 const subRes = await subscribeUserToPush();
                 if (!subRes.success) {
                     clearTimeout(safetyTimer);
                     resetButton(subRes.reason === 'login_required' ? "Accedi prima! ⚠️" : "Permesso negato ❌", 3000);
+                    if (errEl) { errEl.style.color = '#ef4444'; errEl.innerText = subRes.message; }
                     return;
                 }
 
-                // 2. Invia la notifica Push reale via Cloudflare Relay
+                if (btn) btn.innerText = "Invio push... ⏳";
+
+                // 4. Invia notifica Push reale via Cloudflare Relay
                 if (currentUser && currentUser.uid) {
                     await dispatchBackgroundPush({
                         targetUids: [currentUser.uid],
@@ -3700,7 +3746,7 @@ let currentUser = null;
                     });
                 }
 
-                // 3. Notifica visiva locale istantanea di conferma
+                // 5. Notifica visiva immediata
                 if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
                     if (swRegistration && typeof swRegistration.showNotification === 'function') {
                         try {
@@ -3721,37 +3767,6 @@ let currentUser = null;
                 console.warn("[testPushNotification err]", err);
                 clearTimeout(safetyTimer);
                 resetButton("Errore invio ⚠️", 3000);
-            }
-        }
-        
-async function setupFCMToken() {
-            if (!messaging || !currentUser) return;
-            try {
-                let tokenOptions = {};
-                if (swRegistration) tokenOptions.serviceWorkerRegistration = swRegistration;
-                if (FIREBASE_VAPID_KEY && FIREBASE_VAPID_KEY !== "BNv-YOUR-KEY-HERE") {
-                    tokenOptions.vapidKey = FIREBASE_VAPID_KEY;
-                }
-
-                let token = null;
-                try {
-                    token = await messaging.getToken(tokenOptions);
-                } catch (tokErr) {
-                    console.warn("Nota per FCM Cloud Push: genera e incolla la coppia di chiavi VAPID in FIREBASE_VAPID_KEY.", tokErr.message);
-                }
-
-                if (token) {
-                    fcmToken = token;
-                    console.log("FCM Device Registration Token ottenuto:", token);
-                    const userRef = db.collection("users").doc(currentUser.uid);
-                    await userRef.set({
-                        fcmToken: token,
-                        fcmTokens: firebase.firestore.FieldValue.arrayUnion(token),
-                        fcmUpdatedAt: firebase.firestore.FieldValue.serverTimestamp()
-                    }, { merge: true });
-                }
-            } catch (err) {
-                console.warn("Errore salvataggio token FCM:", err);
             }
         }
 
@@ -4607,6 +4622,26 @@ async function setupFCMToken() {
         // ==========================================
         // PANNELLO PROFILO PERSONALE (Altezza / Peso / BMI / Privacy)
         // ==========================================
+        function getPushDiagnosticInfo() {
+            if (typeof Notification === 'undefined') {
+                return "⚠️ Notifiche non supportate da questo browser/iOS (serve iOS 16.4+ e apertura da Schermata Home).";
+            }
+            const perm = Notification.permission;
+            const isIos = /iPad|iPhone|iPod/.test(navigator.userAgent);
+            const isStandalone = window.navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches;
+
+            if (perm === 'denied') {
+                return "❌ Notifiche bloccate nelle impostazioni di iOS. Per sbloccarle: elimina l'app dalla Home e riaggiungila.";
+            }
+            if (perm === 'granted') {
+                return "✅ Permesso notifiche già concesso su questo telefono!";
+            }
+            if (isIos && !isStandalone) {
+                return "ℹ️ Su iPhone apri l'app dalla Schermata Home per consentire le notifiche.";
+            }
+            return "ℹ️ Tocca 'Test 📲' per richiedere e consentire le notifiche.";
+        }
+
         function renderProfileSettings() {
             const container = document.getElementById('profile-settings-body');
             if (!container) return;
@@ -4651,6 +4686,7 @@ async function setupFCMToken() {
                     <button type="button" class="btn-auth-secondary" style="padding: 4px 10px; font-size: 0.78rem;" onclick="testPushNotification(event)">Test 📲</button>
                 </div>
                 <p style="font-size: 0.75rem; color: var(--subtext); margin-top: 4px;">Ricevi notifiche sul tuo telefono per chat privata, pubblica, sfide, sondaggi e inattività.</p>
+                <p id="push-diagnostic-info" style="font-size: 0.76rem; color: var(--accent); margin-top: 4px; font-weight: 600;">${getPushDiagnosticInfo()}</p>
                 <p class="auth-error" id="profile-settings-error" style="min-height: 16px; margin-top: 6px;"></p>
                 <button class="btn-confirm" style="width: 100%; margin-top: 4px;" onclick="saveProfileSettings()">💾 Salva Profilo</button>
             `;
