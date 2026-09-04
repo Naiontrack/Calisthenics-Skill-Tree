@@ -6709,23 +6709,36 @@
             modal.classList.add('active');
         }
 
-        function declineChallengeInvitation(invId, fromUid, fromNickname) {
+        function confirmDeclineChallengeInvitation(invId, fromUid, fromNickname) {
             openCustomModal(
                 "❌ Rifiuta sfida",
-                `Sei sicuro di voler rifiutare la sfida di <strong>${fromNickname}</strong>?<br><br><small style="color:var(--danger)">⚠️ Questo atleta non potrà più invitarti a una sfida per 7 giorni.</small>`,
+                `Sei sicuro di voler rifiutare la sfida di <strong>${escapeHtml(fromNickname)}</strong>?<br><br><small style="color:var(--danger)">⚠️ Questo atleta non potrà più invitarti a una sfida per 7 giorni.</small>`,
                 "Rifiuta sfida",
                 true,
-                () => declineChallengeInvitation(invId, fromUid)
+                () => executeDeclineChallengeInvitation(invId, fromUid)
             );
         }
 
-        async function declineChallengeInvitation(invId, fromUid) {
+        // Alias per garantire compatibilità con qualsiasi chiamata
+        function declineChallengeInvitation(invId, fromUid, fromNickname) {
+            return confirmDeclineChallengeInvitation(invId, fromUid, fromNickname);
+        }
+
+        async function executeDeclineChallengeInvitation(invId, fromUid) {
             if (!currentUser) return;
             try {
-                await setCooldown(fromUid, currentUser.uid, 'challenge');
+                if (fromUid) {
+                    await setCooldown(fromUid, currentUser.uid, 'challenge');
+                }
                 await db.collection("challengeInvitations").doc(invId).delete();
+                pendingChallengeInvites = pendingChallengeInvites.filter(i => i.id !== invId);
+                renderChallengesList();
+                updateChallengesBadgeDot();
+                const modal = document.getElementById('custom-modal');
+                if (modal) modal.classList.remove('active');
             } catch (err) {
                 console.error("Errore nel rifiuto della sfida:", err);
+                alert("Errore durante il rifiuto della sfida: " + (err.message || err));
             }
         }
 
