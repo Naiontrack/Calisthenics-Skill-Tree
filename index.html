@@ -1216,6 +1216,56 @@
             background: var(--border-glow);
         }
 
+        .user-picker-divider {
+            padding: 5px 10px;
+            font-size: 0.66rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+            color: var(--subtext);
+            background: var(--card-bg);
+            border-bottom: 1px solid var(--line-color);
+        }
+
+        .selected-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin: 6px 0;
+        }
+
+        .selected-chips:empty {
+            display: none;
+            margin: 0;
+        }
+
+        .selected-chip {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            background: var(--accent);
+            color: #fff;
+            padding: 4px 8px;
+            border-radius: 999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .selected-chip button {
+            background: none;
+            border: none;
+            color: #fff;
+            cursor: pointer;
+            font-size: 0.72rem;
+            line-height: 1;
+            padding: 0;
+            opacity: 0.85;
+        }
+
+        .selected-chip button:hover {
+            opacity: 1;
+        }
+
         @media (max-width: 600px) {
             .chat-panel {
                 right: 10px;
@@ -3298,6 +3348,7 @@
                 </div>
                 <div class="auth-form-group">
                     <label id="new-chat-picker-label">Scegli un utente</label>
+                    <div class="selected-chips" id="new-chat-selected-chips"></div>
                     <input type="text" id="new-chat-search" placeholder="Cerca per nickname...">
                     <div class="user-picker-list" id="new-chat-user-list">
                         <p style="text-align:center; color:var(--subtext); font-size:0.8rem; padding:10px;">Caricamento utenti...</p>
@@ -3338,6 +3389,20 @@
             });
         }
 
+        function renderSelectedChips(containerId, selectedUsersObj, toggleFnName) {
+            const el = document.getElementById(containerId);
+            if (!el) return;
+            const entries = Object.entries(selectedUsersObj);
+            if (entries.length === 0) { el.innerHTML = ''; return; }
+            entries.sort((a, b) => a[1].localeCompare(b[1]));
+            el.innerHTML = entries.map(([uid, nickname]) => `
+                <span class="selected-chip">
+                    ${escapeHtml(nickname)}
+                    <button type="button" title="Rimuovi" onclick="${toggleFnName}('${uid}', '${escapeHtml(nickname)}')">✕</button>
+                </span>
+            `).join('');
+        }
+
         function renderUserPickerList(filterText) {
             const listEl = document.getElementById('new-chat-user-list');
             if (!listEl) return;
@@ -3345,12 +3410,7 @@
             const filter = (filterText || '').trim().toLowerCase();
             const filtered = newChatAllUsers.filter(u => u.nickname.toLowerCase().includes(filter));
 
-            if (filtered.length === 0) {
-                listEl.innerHTML = `<p style="text-align:center; color:var(--subtext); font-size:0.8rem; padding:10px;">Nessun utente trovato.</p>`;
-                return;
-            }
-
-            listEl.innerHTML = filtered.map(u => {
+            const renderItem = (u) => {
                 const isSelected = !!newChatSelectedUsers[u.uid];
                 return `
                     <div class="user-picker-item ${isSelected ? 'selected' : ''}" onclick="toggleUserPick('${u.uid}', '${escapeHtml(u.nickname)}')">
@@ -3358,7 +3418,28 @@
                         <span>${escapeHtml(u.nickname)}</span>
                     </div>
                 `;
-            }).join('');
+            };
+
+            if (filtered.length === 0) {
+                listEl.innerHTML = `<p style="text-align:center; color:var(--subtext); font-size:0.8rem; padding:10px;">Nessun utente trovato.</p>`;
+            } else if (newChatMode === 'group') {
+                // In modalità gruppo: membri già selezionati fissati in cima, ordinati alfabeticamente,
+                // seguiti dal resto degli utenti (sempre in ordine alfabetico) — così la selezione resta ordinata e visibile.
+                const selected = filtered.filter(u => !!newChatSelectedUsers[u.uid]);
+                const unselected = filtered.filter(u => !newChatSelectedUsers[u.uid]);
+                let html = '';
+                if (selected.length > 0) {
+                    html += `<div class="user-picker-divider">✅ Selezionati (${selected.length})</div>`;
+                    html += selected.map(renderItem).join('');
+                    if (unselected.length > 0) html += `<div class="user-picker-divider">Tutti gli utenti</div>`;
+                }
+                html += unselected.map(renderItem).join('');
+                listEl.innerHTML = html;
+            } else {
+                listEl.innerHTML = filtered.map(renderItem).join('');
+            }
+
+            renderSelectedChips('new-chat-selected-chips', newChatMode === 'group' ? newChatSelectedUsers : {}, 'toggleUserPick');
         }
 
         function setNewChatMode(mode) {
