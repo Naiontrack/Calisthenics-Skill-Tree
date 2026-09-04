@@ -2618,6 +2618,7 @@
         let activeConversationData = null;
         let conversationsUnsubscribe = null;
         let conversationMessagesUnsubscribe = null;
+        let conversationDocUnsubscribe = null;
         let newChatSelectedUsers = {}; // uid -> nickname, per il picker di nuova chat/gruppo
         let newChatMode = 'dm'; // 'dm' | 'group'
 
@@ -5178,6 +5179,21 @@
             stopConversationMessagesListener();
             const container = document.getElementById('chat-messages');
 
+            // Ascolta lo stato del documento della chat per rilevare se viene eliminata dall'altro partecipante
+            conversationDocUnsubscribe = db.collection("conversations").doc(convId)
+                .onSnapshot((doc) => {
+                    if (!doc.exists) {
+                        // Se la conversazione non esiste più (es. l'altro utente l'ha abbandonata/eliminata), torna alla lista
+                        if (activeChatView === 'private-thread' && activeConversationId === convId) {
+                            backToPrivateList();
+                        }
+                    } else {
+                        activeConversationData = Object.assign({ id: doc.id }, doc.data());
+                        const titleEl = document.getElementById('chat-thread-title');
+                        if (titleEl) titleEl.innerText = conversationDisplayName(activeConversationData);
+                    }
+                }, (error) => console.error("Errore listener documento conversazione:", error));
+
             conversationMessagesUnsubscribe = db.collection("conversations").doc(convId).collection("messages")
                 .orderBy("createdAt", "desc")
                 .limit(50)
@@ -5201,6 +5217,10 @@
             if (conversationMessagesUnsubscribe) {
                 conversationMessagesUnsubscribe();
                 conversationMessagesUnsubscribe = null;
+            }
+            if (conversationDocUnsubscribe) {
+                conversationDocUnsubscribe();
+                conversationDocUnsubscribe = null;
             }
         }
 
@@ -5793,9 +5813,11 @@
             if (!activeConversationData) return;
             const isGroup = activeConversationData.type === 'group';
             openCustomModal(
-                "🚪 Abbandona chat",
-                `Sei sicuro di voler abbandonare ${isGroup ? 'questo gruppo' : 'questa chat'}? Non riceverai più i messaggi.`,
-                "Abbandona",
+                isGroup ? "🚪 Abbandona gruppo" : "🚪 Abbandona ed elimina chat",
+                isGroup
+                    ? "Sei sicuro di voler abbandonare questo gruppo? Non riceverai più i messaggi."
+                    : "Sei sicuro di voler abbandonare questa chat privata? Essendo una chat tra 2 persone, abbandonandola la conversazione verrà automaticamente eliminata per entrambi.",
+                isGroup ? "Abbandona" : "Abbandona ed elimina",
                 true,
                 () => leaveConversation(),
                 () => backToPrivateList()
@@ -5805,14 +5827,16 @@
         function leaveConversation() {
             if (!activeConversationData || !currentUser) return Promise.resolve();
             const convId = activeConversationData.id;
-            const myName = userNickname || (currentUser.displayName || 'Anonimo');
+            const isGroup = activeConversationData.type === 'group';
             const remainingParticipants = (activeConversationData.participants || []).filter(uid => uid !== currentUser.uid);
 
-            if (remainingParticipants.length === 0) {
-                // Nessun partecipante rimasto: elimina l'intera chat
+            // Se è una chat privata a due (non gruppo) o se nel gruppo non resta alcun partecipante,
+            // la chat in quanto non più utile viene eliminata automaticamente per intero
+            if (!isGroup || remainingParticipants.length === 0) {
                 return deleteConversationAndMessages(convId);
             }
 
+            const myName = userNickname || (currentUser.displayName || 'Anonimo');
             const newParticipantNames = Object.assign({}, activeConversationData.participantNames);
             delete newParticipantNames[currentUser.uid];
 
