@@ -2424,7 +2424,22 @@
             </div>
         </div>
 
-        <div class="top-bar">
+        
+    <!-- BANNER PROMO NOTIFICHE PUSH / GUIDA IPHONE -->
+    <div id="push-prompt-banner" style="display: none; background: linear-gradient(135deg, #1a1e36, #2d2254); border: 1px solid #6366f1; border-radius: 10px; margin: 10px auto; max-width: 95%; padding: 10px 16px; box-shadow: 0 4px 16px rgba(0,0,0,0.4); color: #fff; align-items: center; justify-content: space-between; gap: 12px; font-size: 0.85rem;">
+        <div style="display: flex; align-items: center; gap: 10px; flex: 1;">
+            <span style="font-size: 1.4rem;" id="push-prompt-icon">📲</span>
+            <div id="push-prompt-text">
+                <strong>Attiva le Notifiche Telefono!</strong> Ricevi avvisi in tempo reale per chat, sfide e sondaggi anche a schermo bloccato.
+            </div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+            <button id="push-prompt-btn" class="btn-auth" style="padding: 5px 12px; font-size: 0.8rem; white-space: nowrap;" onclick="requestNotificationPermission()">Attiva 🔔</button>
+            <button style="background: none; border: none; color: #aaa; font-size: 1.2rem; cursor: pointer; padding: 2px 6px; line-height: 1;" onclick="dismissPushBanner()" title="Chiudi">&times;</button>
+        </div>
+    </div>
+
+<div class="top-bar">
             <h1>Occhionero's Calisthenics Tree</h1>
             <div class="controls-group">
                 <div class="selector-box">
@@ -2636,26 +2651,48 @@
         let lastChallengeScoresCache = {};
 
         // ===============================================================
-        // ONESIGNAL CONFIGURAZIONE (PUSH IN BACKGROUND SENZA CARTA DI CREDITO)
         // ===============================================================
-        const ONESIGNAL_APP_ID = "d3e5039e-0c18-4717-9c75-b2467d2f57b1"; // Inserisci qui l'App ID generato su onesignal.com
-        const PUSH_RELAY_URL = "https://curly-thunder-bdf1.severino-occhionero.workers.dev"; // Inserisci qui l'URL del Cloudflare Worker (es. https://calisthenics-push.tuonome.workers.dev)
+        // ONESIGNAL & PUSH CONFIGURAZIONE (GRATUITO, 0 CARTA DI CREDITO)
+        // ===============================================================
+        const ONESIGNAL_APP_ID = "d3e5039e-0c18-4717-9c75-b2467d2f57b1";
+        const PUSH_RELAY_URL = "https://curly-thunder-bdf1.severino-occhionero.workers.dev";
 
-        // Helper per associare in modo asincrono garantito l'utente Firebase a OneSignal
+        // Verifica accurata della piattaforma per iOS PWA e supporto Web Push
+        function getPushPlatformStatus() {
+            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+            const isStandalone = window.navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches;
+            const hasNotification = typeof window.Notification !== 'undefined';
+            const permission = hasNotification ? Notification.permission : 'unsupported';
+            return { isIOS, isStandalone, hasNotification, permission };
+        }
+
+        // Helper per associare in modo asincrono garantito il token push all'UID Firebase
+        async function syncOneSignalSubscription() {
+            window.OneSignalDeferred = window.OneSignalDeferred || [];
+            return new Promise((resolve) => {
+                window.OneSignalDeferred.push(async function(OneSignal) {
+                    try {
+                        if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+                            if (OneSignal.User && OneSignal.User.PushSubscription) {
+                                await OneSignal.User.PushSubscription.optIn();
+                            }
+                        }
+                        if (currentUser && currentUser.uid) {
+                            await OneSignal.login(currentUser.uid);
+                            console.log("[OneSignal] Login & Push Subscription associati a UID:", currentUser.uid);
+                        }
+                        resolve(true);
+                    } catch(e) {
+                        console.warn("[OneSignal] syncOneSignalSubscription error:", e);
+                        resolve(false);
+                    }
+                });
+            });
+        }
+
         function syncOneSignalUser(uid) {
             if (!uid) return;
-            window.OneSignalDeferred = window.OneSignalDeferred || [];
-            window.OneSignalDeferred.push(async function(OneSignal) {
-                try {
-                    await OneSignal.login(uid);
-                    console.log("[OneSignal] Login registrato per UID:", uid);
-                    if (Notification.permission === 'granted' && OneSignal.User && OneSignal.User.PushSubscription) {
-                        await OneSignal.User.PushSubscription.optIn();
-                    }
-                } catch(e) {
-                    console.warn("[OneSignal] syncOneSignalUser error:", e);
-                }
-            });
+            syncOneSignalSubscription();
         }
 
         window.OneSignalDeferred = window.OneSignalDeferred || [];
@@ -2677,10 +2714,22 @@
                     notifyButton: { enable: false }
                 });
                 console.log("[OneSignal] Inizializzato con successo. Scope:", osScope, "Path:", osWorkerPath);
-                console.log("[OneSignal] Inizializzato con successo.");
-                if (Notification.permission === 'granted') {
+
+                // Listener per sincronizzare automaticamente l'utente Firebase se la sottoscrizione push viene generata o aggiornata
+                if (OneSignal.User && OneSignal.User.PushSubscription) {
+                    OneSignal.User.PushSubscription.addEventListener('change', async function(change) {
+                        console.log("[OneSignal] Push subscription change:", change);
+                        if (change && change.current && change.current.optedIn && currentUser && currentUser.uid) {
+                            try {
+                                await OneSignal.login(currentUser.uid);
+                                console.log("[OneSignal] Token push agganciato a UID:", currentUser.uid);
+                            } catch(e) {}
+                        }
+                    });
+                }
+
+                if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
                     try {
-                        await OneSignal.Notifications.requestPermission();
                         if (OneSignal.User && OneSignal.User.PushSubscription && typeof OneSignal.User.PushSubscription.optIn === 'function') {
                             await OneSignal.User.PushSubscription.optIn();
                         }
@@ -2688,7 +2737,7 @@
                         console.warn("[OneSignal] Opt-in err:", optErr);
                     }
                 }
-                if (currentUser) {
+                if (currentUser && currentUser.uid) {
                     await OneSignal.login(currentUser.uid);
                 }
             } catch (e) {
@@ -2724,14 +2773,16 @@
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
+                }).then(async res => {
+                    const resJson = await res.json().catch(() => ({}));
+                    console.log("[Push Relay] Risposta server:", res.status, resJson);
                 }).catch(err => console.warn("[Push Relay] Errore invio:", err));
             } catch (e) {
                 console.warn("[Push Relay] Errore:", e);
             }
-        } 
+        }
         
-
-        let currentUser = null;
+let currentUser = null;
         let userNickname = "";
         let leaderboardUnsubscribe = null;
         let userProfileData = {}; // { heightCm, weightKg, isPublic }
@@ -3514,39 +3565,63 @@
         }
 
         // ===============================================================
-        // SISTEMA NOTIFICHE PUSH (FIREBASE MESSAGING & PWA WEB PUSH)
         // ===============================================================
+        // SISTEMA NOTIFICHE PUSH (FIREBASE MESSAGING, ONESIGNAL & PWA WEB PUSH)
+        // ===============================================================
+        function showIOSInstallPrompt() {
+            const msg = `
+                <div style="text-align: left; font-size: 0.9rem; line-height: 1.5; color: var(--text);">
+                    <p style="margin-bottom: 12px;">Su <strong>iPhone e iPad</strong> (iOS 16.4+), Apple consente le notifiche push solo per le app aggiunte alla <strong>Schermata Home</strong>.</p>
+                    <div style="background: rgba(255,255,255,0.06); padding: 14px; border-radius: 10px; margin-bottom: 12px; border: 1px solid rgba(255,255,255,0.12);">
+                        <p style="margin: 0 0 8px 0; font-weight: bold; color: var(--accent);">Come attivarle in 3 secondi:</p>
+                        <ol style="margin: 0; padding-left: 20px;">
+                            <li style="margin-bottom: 6px;">Tocca il tasto <strong>Condividi</strong> in Safari (il quadrato con la freccia in su ⬆️ in basso).</li>
+                            <li style="margin-bottom: 6px;">Scorri in basso e tocca <strong>"Aggiungi alla schermata Home"</strong>.</li>
+                            <li>Apri l'app <strong>Calisthenics Tree</strong> dalla Schermata Home e tocca "Attiva Notifiche"!</li>
+                        </ol>
+                    </div>
+                    <p style="margin: 0; font-size: 0.8rem; color: var(--subtext);">Una volta aperta dalla schermata Home, riceverai notifiche push reali anche con schermo bloccato!</p>
+                </div>
+            `;
+            openCustomModal("📲 Notifiche su iPhone / iPad", msg);
+        }
+
         async function requestNotificationPermission() {
-            if (!('Notification' in window)) {
+            const status = getPushPlatformStatus();
+            if (status.isIOS && !status.isStandalone) {
+                showIOSInstallPrompt();
+                setPushNotificationsState(false);
+                return false;
+            }
+            if (!status.hasNotification) {
                 alert("Il tuo dispositivo/browser non supporta le notifiche push di sistema.");
+                setPushNotificationsState(false);
                 return false;
             }
 
             try {
                 const permission = await Notification.requestPermission();
                 if (permission === 'granted') {
-                    localStorage.setItem('naiontrackNotificationsEnabled', 'true');
-                    notificationsEnabled = true;
+                    setPushNotificationsState(true);
+                    await syncOneSignalSubscription();
                     await setupFCMToken();
-                    if (window.OneSignal && window.OneSignal.Notifications) {
-                        try { await window.OneSignal.Notifications.requestPermission(); } catch(e) {}
-                    }
-                    showAppNotification(
+                    showInAppToast(
                         "🔔 Notifiche Telefono Attive!",
-                        "Riceverai notifiche istantanee per messaggi, sfide, sondaggi e promemoria sul tuo telefono!",
-                        { type: 'test' }
+                        "Riceverai notifiche istantanee per messaggi, sfide e sondaggi sul tuo telefono!",
+                        { type: 'info' }
                     );
                     renderProfileSettings();
+                    checkAndShowPushBanner();
                     return true;
                 } else {
-                    localStorage.setItem('naiontrackNotificationsEnabled', 'false');
-                    notificationsEnabled = false;
+                    setPushNotificationsState(false);
                     renderProfileSettings();
-                    alert("Notifiche non abilitate. Puoi autorizzarle dalle impostazioni del browser/telefono.");
+                    alert("Notifiche non autorizzate. Per riceverle, puoi abilitarle dalle impostazioni del telefono o del browser.");
                     return false;
                 }
             } catch (err) {
                 console.error("Errore richiesta permesso notifiche:", err);
+                setPushNotificationsState(false);
                 return false;
             }
         }
@@ -3576,25 +3651,20 @@
             const shouldEnable = toggle ? toggle.checked : !notificationsEnabled;
 
             if (shouldEnable) {
-                setPushNotificationsState(true);
-                showInAppToast("🔔 Notifiche attivate", "Riceverai le notifiche sul tuo telefono!", { type: 'info' });
-
-                if ('Notification' in window && Notification.permission !== 'granted') {
-                    Notification.requestPermission().then(p => {
-                        if (p !== 'granted') {
-                            setPushNotificationsState(false);
-                            alert("Notifiche non abilitate. Puoi autorizzarle dalle impostazioni del browser o del telefono.");
-                        } else {
-                            if (window.OneSignal && window.OneSignal.Notifications) {
-                                window.OneSignal.Notifications.requestPermission().catch(e => {});
-                            }
-                        }
-                    }).catch(err => {
-                        console.error("Errore permesso notifiche:", err);
-                        setPushNotificationsState(false);
+                const status = getPushPlatformStatus();
+                if (status.isIOS && !status.isStandalone) {
+                    if (toggle) toggle.checked = false;
+                    showIOSInstallPrompt();
+                    return;
+                }
+                if (status.hasNotification && Notification.permission !== 'granted') {
+                    requestNotificationPermission().then(granted => {
+                        if (!granted && toggle) toggle.checked = false;
                     });
-                } else if (window.OneSignal && window.OneSignal.Notifications) {
-                    window.OneSignal.Notifications.requestPermission().catch(e => {});
+                } else {
+                    setPushNotificationsState(true);
+                    syncOneSignalSubscription();
+                    showInAppToast("🔔 Notifiche attivate", "Riceverai le notifiche sul tuo telefono!", { type: 'info' });
                 }
             } else {
                 setPushNotificationsState(false);
@@ -3602,19 +3672,110 @@
             }
         }
 
-        function testPushNotification() {
-            if ('Notification' in window && Notification.permission !== 'granted') {
-                requestNotificationPermission();
+        async function testPushNotification() {
+            const status = getPushPlatformStatus();
+            if (status.isIOS && !status.isStandalone) {
+                showIOSInstallPrompt();
                 return;
             }
-            showAppNotification(
-                "🔥 Calisthenics Tree Notifiche",
-                "Funziona alla perfezione! Le notifiche sul tuo telefono sono collegate e pronte.",
-                { type: 'test' }
-            );
+            if (!status.hasNotification) {
+                alert("Il tuo browser non supporta le notifiche push di sistema.");
+                return;
+            }
+
+            if (Notification.permission !== 'granted') {
+                const granted = await requestNotificationPermission();
+                if (!granted) return;
+            }
+
+            setPushNotificationsState(true);
+            await syncOneSignalSubscription();
+
+            // 1. Notifica locale immediata del Service Worker
+            if (swRegistration && typeof swRegistration.showNotification === 'function') {
+                try {
+                    swRegistration.showNotification("🔥 Calisthenics Tree Notifiche", {
+                        body: "Test locale riuscito! Notifiche di sistema collegate al telefono.",
+                        icon: "https://naiontrack.github.io/Calisthenics-Skill-Tree/icon-512.png",
+                        badge: "https://naiontrack.github.io/Calisthenics-Skill-Tree/icon-512.png",
+                        tag: "calisthenics-test",
+                        renotify: true,
+                        vibrate: [200, 100, 200]
+                    });
+                } catch(swErr) {
+                    console.warn("[SW Local Test err]", swErr);
+                }
+            }
+
+            // 2. Invio Push reale tramite Cloudflare Relay -> OneSignal -> Telefono
+            if (currentUser && currentUser.uid) {
+                showInAppToast("📲 Invio test push dal server...", "Blocca lo schermo o metti l'app in background per verificare la ricezione sul telefono!", { type: 'info' });
+                try {
+                    await dispatchBackgroundPush({
+                        targetUids: [currentUser.uid],
+                        title: "🔥 Calisthenics Tree Notifiche",
+                        body: "Test server riuscito! Il tuo telefono è collegato correttamente per ricevere le notifiche push.",
+                        data: { type: 'test' }
+                    });
+                } catch (pushErr) {
+                    console.warn("[Push Test Err]", pushErr);
+                }
+            } else {
+                showInAppToast("⚠️ Accedi per testare il push server sul tuo account.", "", { type: 'warning' });
+            }
         }
 
-        async function setupFCMToken() {
+        // Banner dinamico informativo per guidare l'utente all'attivazione
+        function checkAndShowPushBanner() {
+            if (sessionStorage.getItem('naiontrackPromptDismissed')) return;
+            const banner = document.getElementById('push-prompt-banner');
+            if (!banner) return;
+            
+            const status = getPushPlatformStatus();
+            const bannerIcon = document.getElementById('push-prompt-icon');
+            const bannerText = document.getElementById('push-prompt-text');
+            const bannerBtn = document.getElementById('push-prompt-btn');
+
+            if (status.isIOS && !status.isStandalone) {
+                banner.style.display = 'flex';
+                if (bannerIcon) bannerIcon.innerText = '📱';
+                if (bannerText) {
+                    bannerText.innerHTML = '<strong>Notifiche su iPhone:</strong> Apple richiede di aggiungere l\'app alla <em>Schermata Home</em> per ricevere le notifiche push.';
+                }
+                if (bannerBtn) {
+                    bannerBtn.innerText = 'Come fare ℹ️';
+                    bannerBtn.onclick = () => showIOSInstallPrompt();
+                }
+                return;
+            }
+
+            if (status.hasNotification && Notification.permission === 'default' && currentUser) {
+                banner.style.display = 'flex';
+                if (bannerIcon) bannerIcon.innerText = '🔔';
+                if (bannerText) {
+                    bannerText.innerHTML = '<strong>Attiva le Notifiche Telefono:</strong> Ricevi subito avvisi per messaggi, sfide e sondaggi anche a telefono bloccato!';
+                }
+                if (bannerBtn) {
+                    bannerBtn.innerText = 'Attiva 📲';
+                    bannerBtn.onclick = () => {
+                        requestNotificationPermission().then(ok => {
+                            if (ok) banner.style.display = 'none';
+                        });
+                    };
+                }
+                return;
+            }
+
+            banner.style.display = 'none';
+        }
+
+        function dismissPushBanner() {
+            sessionStorage.setItem('naiontrackPromptDismissed', 'true');
+            const banner = document.getElementById('push-prompt-banner');
+            if (banner) banner.style.display = 'none';
+        }
+        
+async function setupFCMToken() {
             if (!messaging || !currentUser) return;
             try {
                 let tokenOptions = {};
