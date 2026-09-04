@@ -3,12 +3,16 @@
 <head>
     <link rel="manifest" href="./manifest.json">
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Occhionero's Calisthenics Tree</title>
     
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
     <style>
         :root {
@@ -16,15 +20,22 @@
             --bg-color: #0b0f19;
             --card-bg: #151d30;
             --accent: #38bdf8;
+            --accent-hover: #0ea5e9;
+            --accent-subtle: rgba(56, 189, 248, 0.12);
             --locked: #334155;
             --unlocked: #22c55e;
+            --unlocked-subtle: rgba(34, 197, 94, 0.12);
             --text: #f8fafc;
             --subtext: #94a3b8;
             --line-color: #1e293b;
+            --line-color-light: #334155;
             --danger: #ef4444;
+            --danger-hover: #dc2626;
             --input-bg: #0b0f19;
             --img-bg: #070a12;
-            --border-glow: rgba(56, 189, 248, 0.4);
+            --border-glow: rgba(56, 189, 248, 0.45);
+            --card-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(56, 189, 248, 0.1);
+            --card-shadow-hover: 0 12px 30px -4px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(56, 189, 248, 0.25);
         }
 
         /* TEMA CHIARO */
@@ -32,15 +43,22 @@
             --bg-color: #f1f5f9;
             --card-bg: #ffffff;
             --accent: #0284c7;
+            --accent-hover: #0369a1;
+            --accent-subtle: rgba(2, 132, 199, 0.1);
             --locked: #cbd5e1;
             --unlocked: #16a34a;
+            --unlocked-subtle: rgba(22, 163, 74, 0.1);
             --text: #0f172a;
             --subtext: #64748b;
             --line-color: #cbd5e1;
+            --line-color-light: #94a3b8;
             --danger: #dc2626;
+            --danger-hover: #b91c1c;
             --input-bg: #f8fafc;
             --img-bg: #e2e8f0;
-            --border-glow: rgba(2, 132, 199, 0.25);
+            --border-glow: rgba(2, 132, 199, 0.28);
+            --card-shadow: 0 4px 20px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(0, 0, 0, 0.05);
+            --card-shadow-hover: 0 8px 25px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(2, 132, 199, 0.25);
         }
 
         /* TEMA SCURO CLASSICO */
@@ -48,19 +66,42 @@
             --bg-color: #121212;
             --card-bg: #1e1e1e;
             --accent: #bb86fc;
+            --accent-hover: #a370db;
+            --accent-subtle: rgba(187, 134, 252, 0.12);
             --locked: #374151;
             --unlocked: #03dac6;
+            --unlocked-subtle: rgba(3, 218, 198, 0.12);
             --text: #e0e0e0;
             --subtext: #9ca3af;
             --line-color: #2d2d2d;
+            --line-color-light: #404040;
             --danger: #cf6679;
+            --danger-hover: #b00020;
             --input-bg: #121212;
             --img-bg: #2a2a2a;
-            --border-glow: rgba(187, 134, 252, 0.3);
+            --border-glow: rgba(187, 134, 252, 0.35);
+            --card-shadow: 0 8px 25px rgba(0, 0, 0, 0.45);
+            --card-shadow-hover: 0 12px 30px rgba(0, 0, 0, 0.6);
+        }
+
+        /* Sleek custom scrollbars */
+        ::-webkit-scrollbar {
+            width: 7px;
+            height: 7px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--bg-color);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--line-color);
+            border-radius: 999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--subtext);
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background-color: var(--bg-color);
             color: var(--text);
             margin: 0;
@@ -70,6 +111,28 @@
             align-items: center;
             transition: background-color 0.3s ease, color 0.3s ease;
             -webkit-tap-highlight-color: transparent;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* ========================================== */
+        /* ILLUMINAZIONE PULSANTI AL TOCCO / CURSORE  */
+        /* ========================================== */
+        button, .btn-auth, .btn-auth-secondary, .btn-confirm, .btn-danger-confirm, .chat-fab, .events-fab, .challenges-fab, .btn-social {
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+            cursor: pointer;
+        }
+
+        button:hover, .btn-auth:hover, .btn-auth-secondary:hover, .btn-confirm:hover, .btn-danger-confirm:hover, .chat-fab:hover, .events-fab:hover, .challenges-fab:hover, .btn-social:hover {
+            filter: brightness(1.22);
+            box-shadow: 0 0 18px var(--border-glow), 0 0 32px var(--border-glow) !important;
+            transform: translateY(-1.5px);
+        }
+
+        button:active, .btn-auth:active, .btn-auth-secondary:active, .btn-confirm:active, .btn-danger-confirm:active, .chat-fab:active, .events-fab:active, .challenges-fab:active {
+            filter: brightness(1.38);
+            box-shadow: 0 0 24px var(--border-glow), 0 0 45px var(--accent) !important;
+            transform: scale(0.96) !important;
         }
 
         .header {
@@ -245,17 +308,28 @@
 
         .rank-card {
             background: var(--card-bg);
-            padding: 15px;
+            padding: 20px;
             border-radius: 16px;
-            border: 2px solid var(--accent);
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--line-color);
+            box-shadow: var(--card-shadow);
             display: flex;
             flex-direction: column;
             align-items: center;
             position: relative;
             overflow: hidden;
-            transition: background-color 0.3s ease, border-color 0.3s ease;
-            margin-bottom: 15px;
+            transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+            margin-bottom: 18px;
+        }
+
+        .rank-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, var(--accent), transparent);
+            opacity: 0.9;
         }
 
         .rank-badge-box {
@@ -275,18 +349,19 @@
 
         .progress-bar {
             width: 100%;
-            height: 12px;
-            background: var(--locked);
-            border-radius: 6px;
+            height: 10px;
+            background: var(--line-color);
+            border-radius: 999px;
             overflow: hidden;
-            margin-top: 10px;
-            border: 1px solid rgba(255,255,255,0.05);
+            margin-top: 12px;
+            border: none;
         }
 
         .progress-fill {
             height: 100%;
             width: 0%;
             background: linear-gradient(90deg, var(--accent), var(--unlocked));
+            border-radius: 999px;
             transition: width 0.4s ease;
         }
 
@@ -295,58 +370,70 @@
             width: 100%;
             background: var(--card-bg);
             border-radius: 16px;
-            padding: 15px;
+            padding: 18px;
             box-sizing: border-box;
             border: 1px solid var(--line-color);
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+            box-shadow: var(--card-shadow);
             text-align: left;
         }
 
         .leaderboard-title {
-            color: var(--accent);
-            font-size: 1.1rem;
-            margin: 0 0 12px 0;
-            text-transform: uppercase;
-            letter-spacing: 1.5px;
+            color: var(--text);
+            font-size: 1.05rem;
+            margin: 0 0 14px 0;
+            font-weight: 700;
+            letter-spacing: 0.3px;
             display: flex;
             align-items: center;
-            gap: 10px;
-            border-bottom: 2px solid var(--accent);
-            padding-bottom: 6px;
+            gap: 8px;
+            border-bottom: 1px solid var(--line-color);
+            padding-bottom: 10px;
+        }
+
+        .leaderboard-title::before {
+            content: '';
+            display: inline-block;
+            width: 4px;
+            height: 16px;
+            background: var(--accent);
+            border-radius: 999px;
         }
 
         .leaderboard-list {
             display: flex;
             flex-direction: column;
             gap: 8px;
-            max-height: 250px;
+            max-height: 260px;
             overflow-y: auto;
-            padding-right: 5px;
+            padding-right: 4px;
         }
 
         .leaderboard-item {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            background: var(--bg-color);
-            padding: 8px 12px;
-            border-radius: 10px;
+            background: var(--input-bg);
+            padding: 9px 14px;
+            border-radius: 12px;
             border: 1px solid var(--line-color);
             cursor: pointer;
-            transition: border-color 0.2s ease, transform 0.1s ease;
+            transition: all 0.2s ease;
         }
 
         .leaderboard-item:hover {
-            border-color: var(--accent);
+            border-color: var(--line-color-light);
+            background: rgba(255, 255, 255, 0.02);
+            transform: translateY(-1px);
         }
 
         .leaderboard-item:active {
-            transform: scale(0.98);
+            transform: scale(0.99);
         }
 
         .leaderboard-item.current-user-item {
             border-color: var(--accent);
-            box-shadow: 0 0 10px var(--border-glow);
+            background: var(--accent-subtle);
+            box-shadow: 0 0 16px var(--border-glow);
         }
 
         .leaderboard-left {
@@ -356,9 +443,9 @@
         }
 
         .leaderboard-rank-pos {
-            font-weight: bold;
-            font-size: 0.9rem;
-            min-width: 22px;
+            font-weight: 700;
+            font-size: 0.85rem;
+            min-width: 24px;
             color: var(--subtext);
         }
 
@@ -381,9 +468,13 @@
         }
 
         .leaderboard-xp {
-            font-weight: bold;
+            font-weight: 700;
             color: var(--unlocked);
-            font-size: 0.85rem;
+            font-size: 0.82rem;
+            background: var(--unlocked-subtle);
+            padding: 2px 10px;
+            border-radius: 999px;
+            border: 1px solid rgba(34, 197, 94, 0.25);
         }
 
         .tree-container {
@@ -396,54 +487,77 @@
         }
 
         .category-title {
-            color: var(--accent);
-            border-bottom: 2px solid var(--accent);
-            padding-bottom: 6px;
-            margin-top: 10px;
-            text-transform: uppercase;
-            font-size: 1.1rem;
-            letter-spacing: 1px;
+            color: var(--text);
+            border-bottom: 1px solid var(--line-color);
+            padding-bottom: 8px;
+            margin-top: 14px;
+            font-size: 1.05rem;
+            font-weight: 700;
+            letter-spacing: 0.3px;
             display: flex;
             align-items: center;
             gap: 8px;
+        }
+
+        .category-title::before {
+            content: '';
+            display: inline-block;
+            width: 4px;
+            height: 16px;
+            background: var(--accent);
+            border-radius: 999px;
         }
 
         .skill-tree-branch {
             display: flex;
             flex-direction: column;
             position: relative;
-            padding-left: 12px;
-            border-left: 2px dashed var(--line-color);
+            padding-left: 14px;
+            border-left: 2px solid var(--line-color);
             margin-left: 8px;
-            gap: 12px;
+            gap: 14px;
         }
 
         .skill-card {
             background: var(--card-bg);
-            padding: 12px;
-            border-radius: 12px;
+            padding: 14px;
+            border-radius: 14px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            border-left: 5px solid var(--locked);
-            transition: all 0.3s ease;
-            gap: 12px;
+            border: 1px solid var(--line-color);
+            border-left: 4px solid var(--locked);
+            transition: all 0.25s ease;
+            gap: 14px;
             position: relative;
-            opacity: 0.75;
+            opacity: 0.85;
+            box-shadow: var(--card-shadow);
+        }
+
+        .skill-card:hover {
+            opacity: 0.96;
+            border-color: var(--line-color-light);
+            border-left-color: var(--locked);
         }
 
         .skill-card.unlocked-card {
+            border-color: var(--line-color);
             border-left-color: var(--unlocked);
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            box-shadow: var(--card-shadow-hover);
             opacity: 1;
+        }
+
+        .skill-card.unlocked-card:hover {
+            border-color: rgba(56, 189, 248, 0.35);
+            border-left-color: var(--unlocked);
         }
 
         .skill-card::before {
             content: '';
             position: absolute;
-            left: -14px;
+            left: -16px;
             top: 50%;
-            width: 12px;
+            width: 14px;
             height: 2px;
             background-color: var(--line-color);
         }
@@ -505,7 +619,7 @@
             z-index: 2;
         }
 
-        input[type="number"], input[type="email"], input[type="password"], input[type="text"] {
+        .actions input[type="number"] {
             width: 55px;
             padding: 6px;
             border-radius: 6px;
@@ -513,6 +627,15 @@
             background: var(--input-bg);
             color: var(--text);
             text-align: center;
+            font-size: 0.9rem;
+            touch-action: manipulation;
+        }
+
+        input[type="email"], input[type="password"], input[type="text"], input[type="number"], input[type="date"], input[type="time"] {
+            border-radius: 6px;
+            border: 1px solid var(--locked);
+            background: var(--input-bg);
+            color: var(--text);
             font-size: 0.9rem;
             touch-action: manipulation;
         }
@@ -753,7 +876,7 @@
                 justify-content: flex-end;
             }
 
-            input[type="number"] {
+            .actions input[type="number"] {
                 width: 65px;
                 padding: 8px;
             }
@@ -1684,6 +1807,500 @@
             margin-top: 10px;
             font-size: 0.9rem;
         }
+
+        /* ========================================== */
+        /* STILI PER SEZIONI A TENDINA (ACCORDION)    */
+        /* ========================================== */
+        .section-collapsible-header {
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            user-select: none;
+            padding: 4px 0;
+            transition: opacity 0.2s ease;
+        }
+
+        .section-collapsible-header:hover {
+            opacity: 0.85;
+        }
+
+        .workouts-toggle-title {
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            user-select: none;
+            flex-grow: 1;
+            transition: opacity 0.2s ease;
+        }
+
+        .workouts-toggle-title:hover {
+            opacity: 0.85;
+        }
+
+        .collapsible-icon {
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: var(--accent);
+            background: rgba(56, 189, 248, 0.1);
+            border: 1px solid var(--accent);
+            border-radius: 20px;
+            padding: 3px 10px;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            white-space: nowrap;
+        }
+
+        /* ========================================== */
+        /* BARRA DI RICERCA SKILLS                   */
+        /* ========================================== */
+        .skill-search-wrapper {
+            width: 100%;
+            max-width: 900px;
+            margin-bottom: 25px;
+        }
+
+        .skill-search-box {
+            position: relative;
+            display: flex;
+            align-items: center;
+            width: 100%;
+        }
+
+        .skill-search-icon {
+            position: absolute;
+            left: 14px;
+            font-size: 1.1rem;
+            color: var(--subtext);
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        #skill-search-input {
+            width: 100% !important;
+            padding: 12px 42px 12px 42px !important;
+            border-radius: 12px !important;
+            border: 1px solid var(--line-color) !important;
+            background: var(--card-bg) !important;
+            color: var(--text) !important;
+            font-size: 0.95rem;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+            box-sizing: border-box !important;
+            text-align: left !important;
+            outline: none;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        #skill-search-input:focus {
+            border-color: var(--accent) !important;
+            box-shadow: 0 0 12px var(--border-glow);
+        }
+
+        #skill-search-clear {
+            position: absolute;
+            right: 12px;
+            background: none;
+            border: none;
+            color: var(--subtext);
+            font-size: 1.1rem;
+            cursor: pointer;
+            display: none;
+            padding: 4px 8px;
+            line-height: 1;
+            z-index: 2;
+        }
+
+        #skill-search-clear:hover {
+            color: var(--accent);
+        }
+
+        /* ========================================== */
+        /* FIX LAYOUT FORM REGISTRAZIONE ALLENAMENTO  */
+        /* ========================================== */
+        .workout-form-row {
+            display: flex;
+            gap: 10px;
+            width: 100%;
+        }
+
+        @media (max-width: 500px) {
+            .workout-form-row {
+                flex-direction: column;
+                gap: 0;
+            }
+        }
+
+        .modal-box .auth-form-group input,
+        .modal-box .auth-form-group input[type="number"],
+        .modal-box .auth-form-group input[type="date"],
+        .modal-box .auth-form-group input[type="text"],
+        #new-workout-duration {
+            width: 100% !important;
+            box-sizing: border-box !important;
+            text-align: left !important;
+        }
+
+        /* ========================================== */
+        /* BADGE RANK IN CHAT                        */
+        /* ========================================== */
+        .chat-rank-tag {
+            display: inline-block;
+            font-size: 0.68rem;
+            font-weight: 600;
+            color: var(--accent);
+            background: rgba(56, 189, 248, 0.12);
+            border: 1px solid var(--border-glow);
+            border-radius: 6px;
+            padding: 1px 6px;
+            line-height: 1.2;
+            vertical-align: middle;
+        }
+
+        /* ========================================== */
+        /* PREVENZIONE ZOOM AUTOMATICO SU MOBILE      */
+        /* ========================================== */
+        @media (max-width: 768px) {
+            input, select, textarea,
+            input[type="text"],
+            input[type="number"],
+            input[type="email"],
+            input[type="password"],
+            input[type="date"],
+            input[type="time"],
+            .auth-form-group input,
+            .auth-form-group select,
+            .chat-input-box input,
+            .workout-exercise-row input,
+            .workout-exercise-row select,
+            #skill-search-input {
+                font-size: 16px !important;
+            }
+            .challenges-panel {
+                right: 10px;
+                bottom: 80px;
+                width: calc(100vw - 20px);
+            }
+            .challenges-fab {
+                right: 17px;
+                bottom: 138px;
+            }
+        }
+
+        /* ========================================== */
+        /* SFIDE & FAB 🏹                             */
+        /* ========================================== */
+        .challenges-fab {
+            position: fixed;
+            bottom: 148px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: var(--card-bg);
+            border: 2px solid var(--accent);
+            color: var(--accent);
+            font-size: 1.3rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: var(--card-shadow);
+            z-index: 90;
+            padding: 0;
+            cursor: pointer;
+        }
+
+        .challenges-badge-dot {
+            position: absolute;
+            top: -1px;
+            right: -1px;
+            width: 13px;
+            height: 13px;
+            border-radius: 50%;
+            background: var(--danger);
+            box-shadow: 0 0 0 2px var(--bg-color);
+            z-index: 91;
+        }
+
+        .challenges-panel {
+            position: fixed;
+            bottom: 90px;
+            right: 20px;
+            width: 350px;
+            max-width: calc(100vw - 30px);
+            height: 520px;
+            max-height: calc(100vh - 120px);
+            background: var(--card-bg);
+            border: 1px solid var(--line-color);
+            border-radius: 20px;
+            box-shadow: 0 20px 50px -10px rgba(0, 0, 0, 0.8), 0 0 0 1px var(--border-glow);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            z-index: 96;
+            transform: translateY(20px) scale(0.95);
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .challenges-panel.active {
+            transform: translateY(0) scale(1);
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .challenges-list {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding: 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .challenge-card {
+            background: var(--input-bg);
+            border: 1px solid var(--line-color);
+            border-radius: 14px;
+            padding: 14px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            transition: all 0.2s ease;
+        }
+
+        .challenge-card:hover {
+            border-color: var(--line-color-light);
+        }
+
+        .challenge-card.challenge-completed {
+            border-color: var(--unlocked);
+            background: var(--unlocked-subtle);
+        }
+
+        .challenge-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 8px;
+            gap: 6px;
+        }
+
+        .challenge-title {
+            font-weight: 700;
+            color: var(--accent);
+            font-size: 0.95rem;
+        }
+
+        .challenge-target {
+            font-size: 0.78rem;
+            font-weight: 700;
+            color: var(--unlocked);
+            background: var(--unlocked-subtle);
+            padding: 2px 8px;
+            border-radius: 999px;
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            white-space: nowrap;
+        }
+
+        .challenge-meta {
+            font-size: 0.78rem;
+            color: var(--subtext);
+            margin-bottom: 10px;
+        }
+
+        .challenge-participant-row {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            margin-top: 8px;
+            font-size: 0.8rem;
+        }
+
+        .challenge-progress-bar {
+            width: 100%;
+            height: 8px;
+            background: var(--line-color);
+            border-radius: 999px;
+            overflow: hidden;
+            margin-top: 2px;
+        }
+
+        .challenge-progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent), var(--unlocked));
+            border-radius: 999px;
+            transition: width 0.3s ease;
+        }
+
+        .challenge-actions-row {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .btn-challenge-action {
+            flex: 1;
+            padding: 7px 10px;
+            font-size: 0.8rem;
+            border-radius: 8px;
+            font-weight: 600;
+        }
+
+        /* ========================================== */
+        /* INVITI CHAT PRIVATA (ACCETTA / RIFIUTA)    */
+        /* ========================================== */
+        .chat-invites-section {
+            background: var(--input-bg);
+            border: 1px solid var(--line-color);
+            border-radius: 12px;
+            padding: 10px;
+            margin-bottom: 12px;
+        }
+
+        .chat-invites-title {
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .chat-invite-item {
+            background: var(--card-bg);
+            border: 1px solid var(--line-color-light);
+            border-radius: 10px;
+            padding: 9px 10px;
+            margin-bottom: 8px;
+            font-size: 0.82rem;
+        }
+
+        .chat-invite-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .chat-invite-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .chat-invite-btn-accept {
+            flex: 1;
+            background: var(--unlocked);
+            color: #fff;
+            padding: 5px 8px;
+            font-size: 0.76rem;
+            border-radius: 6px;
+            font-weight: 600;
+        }
+
+        .chat-invite-btn-decline {
+            flex: 1;
+            background: var(--danger);
+            color: #fff;
+            padding: 5px 8px;
+            font-size: 0.76rem;
+            border-radius: 6px;
+            font-weight: 600;
+        }
+
+        .tab-badge-dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background: var(--danger);
+            border-radius: 50%;
+            margin-left: 4px;
+            vertical-align: middle;
+        }
+
+        /* ========================================== */
+        /* RUOTA DELLA FORTUNA MODAL                  */
+        /* ========================================== */
+        .wheel-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(10, 12, 16, 0.85);
+            backdrop-filter: blur(8px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 200;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .wheel-modal-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .wheel-modal-box {
+            background: var(--card-bg);
+            border: 2px solid var(--accent);
+            border-radius: 24px;
+            padding: 24px;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.8), 0 0 35px var(--border-glow);
+            text-align: center;
+            position: relative;
+            transform: scale(0.9);
+            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .wheel-modal-overlay.active .wheel-modal-box {
+            transform: scale(1);
+        }
+
+        .wheel-wrapper {
+            position: relative;
+            width: 280px;
+            height: 280px;
+            margin: 20px auto;
+        }
+
+        .wheel-pointer {
+            position: absolute;
+            top: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 14px solid transparent;
+            border-right: 14px solid transparent;
+            border-top: 24px solid #ef4444;
+            z-index: 10;
+            filter: drop-shadow(0 2px 6px rgba(0,0,0,0.6));
+        }
+
+        #wheel-canvas {
+            border-radius: 50%;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5), 0 0 0 4px var(--accent);
+            background: var(--input-bg);
+        }
+
+        .wheel-spin-btn {
+            background: linear-gradient(135deg, var(--accent), var(--unlocked));
+            color: #fff;
+            padding: 12px 28px;
+            border-radius: 999px;
+            font-size: 1rem;
+            font-weight: 800;
+            cursor: pointer;
+            box-shadow: 0 6px 20px rgba(56, 189, 248, 0.4);
+            border: none;
+            margin-top: 10px;
+        }
     </style>
 </head>
 <body>
@@ -1736,17 +2353,36 @@
     </div>
 
     <div class="profile-settings-section" id="profile-settings-section">
-        <h3 class="leaderboard-title">📋 Il Mio Profilo</h3>
-        <div id="profile-settings-body"></div>
+        <div class="section-collapsible-header" onclick="toggleProfileSection()">
+            <h3 class="leaderboard-title" style="margin:0; border-bottom:none; padding-bottom:0;">📋 Il Mio Profilo</h3>
+            <span class="collapsible-icon" id="profile-toggle-icon">▼ Espandi</span>
+        </div>
+        <div id="profile-collapsible-content" style="display: none; margin-top: 12px; border-top: 1px solid var(--line-color); padding-top: 12px;">
+            <div id="profile-settings-body"></div>
+        </div>
     </div>
 
     <div class="workouts-section" id="workouts-section">
         <div class="workouts-section-header">
-            <h3 class="leaderboard-title">🏋️ I Miei Allenamenti</h3>
+            <div class="workouts-toggle-title" onclick="toggleWorkoutsSection()">
+                <h3 class="leaderboard-title" style="margin:0; border-bottom:none; padding-bottom:0;">🏋️ I Miei Allenamenti</h3>
+                <span class="collapsible-icon" id="workouts-toggle-icon">▼ Espandi</span>
+            </div>
             <button class="btn-confirm" id="new-workout-btn" onclick="openNewWorkoutModal()">➕ Nuovo Allenamento</button>
         </div>
-        <div id="workouts-list-container">
-            <p style="color: var(--subtext); text-align:center; font-size:0.85rem;">Caricamento allenamenti...</p>
+        <div id="workouts-collapsible-content" style="display: none; margin-top: 12px; border-top: 1px solid var(--line-color); padding-top: 12px;">
+            <div id="workouts-list-container" style="max-height: 420px; overflow-y: auto; padding-right: 4px;">
+                <p style="color: var(--subtext); text-align:center; font-size:0.85rem;">Caricamento allenamenti...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- BARRA DI RICERCA SKILLS -->
+    <div class="skill-search-wrapper">
+        <div class="skill-search-box">
+            <span class="skill-search-icon">🔍</span>
+            <input type="text" id="skill-search-input" placeholder="Cerca skill (es. Planche, Pull Ups, Dip...)" oninput="handleSkillSearch(this.value)" autocomplete="off">
+            <button type="button" id="skill-search-clear" onclick="clearSkillSearch()" title="Cancella ricerca">✕</button>
         </div>
     </div>
 
@@ -1761,6 +2397,42 @@
             <div class="modal-actions" id="modal-actions-box">
                 <button class="btn-cancel" id="modal-btn-cancel">Annulla</button>
                 <button class="btn-confirm" id="modal-btn-confirm">Conferma</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SFIDE & GARE XP (solo utenti loggati) -->
+    <button class="challenges-fab" id="challenges-fab" onclick="toggleChallengesPanel()" title="Sfide tra Atleti">
+        🏹
+        <span class="challenges-badge-dot" id="challenges-badge-dot" style="display:none;"></span>
+    </button>
+    <div class="challenges-panel" id="challenges-panel">
+        <div class="chat-panel-header">
+            <span>🏹 Sfide tra Atleti</span>
+            <button class="chat-close-btn" onclick="toggleChallengesPanel()">✕</button>
+        </div>
+        <div class="challenges-list" id="challenges-list">
+            <p style="color: var(--subtext); text-align:center; font-size:0.85rem;">Caricamento sfide...</p>
+        </div>
+        <div class="events-footer" id="challenges-footer">
+            <button class="chat-new-btn" onclick="openCreateChallengeModal()">➕ Nuova Sfida</button>
+        </div>
+    </div>
+
+    <!-- MODAL RUOTA DELLA FORTUNA -->
+    <div class="wheel-modal-overlay" id="wheel-modal">
+        <div class="wheel-modal-box">
+            <h3 style="margin:0; color:var(--accent); font-size:1.3rem;">🎉 HAI VINTO LA SFIDA!</h3>
+            <p id="wheel-challenge-title" style="margin:6px 0 12px 0; font-size:0.9rem; color:var(--subtext);"></p>
+            <p style="font-size:0.9rem; margin:0;">Gira la <strong>Ruota della Fortuna</strong> per scoprire il tuo moltiplicatore bonus (da 1.1x a 2.0x)! 🎡</p>
+            <div class="wheel-wrapper">
+                <div class="wheel-pointer"></div>
+                <canvas id="wheel-canvas" width="280" height="280"></canvas>
+            </div>
+            <button class="wheel-spin-btn" id="wheel-spin-btn" onclick="spinWheelOfFortune()">🎡 GIRA LA RUOTA!</button>
+            <div id="wheel-result-box" style="display:none; margin-top:14px;">
+                <p id="wheel-result-text" style="font-size:1.1rem; font-weight:800; color:var(--unlocked); margin:0;"></p>
+                <button class="btn-confirm" style="margin-top:12px; width:100%;" onclick="closeWheelModal()">Riscossa XP!</button>
             </div>
         </div>
     </div>
@@ -1795,7 +2467,7 @@
         </div>
         <div class="chat-tabs" id="chat-tabs">
             <button class="chat-tab-btn active" id="chat-tab-general" onclick="switchChatTab('general')">💬 Generale</button>
-            <button class="chat-tab-btn" id="chat-tab-private" onclick="switchChatTab('private')">👤 Private</button>
+            <button class="chat-tab-btn" id="chat-tab-private" onclick="switchChatTab('private')">👤 Private <span id="chat-private-dot" class="tab-badge-dot" style="display:none;"></span></button>
         </div>
         <div class="chat-thread-header" id="chat-thread-header" style="display:none;">
             <button class="chat-back-btn" onclick="backToPrivateList()">←</button>
@@ -1847,6 +2519,81 @@
         let newChatSelectedUsers = {}; // uid -> nickname, per il picker di nuova chat/gruppo
         let newChatMode = 'dm'; // 'dm' | 'group'
 
+        let userRankCache = {}; // uid -> nome grado (es. "Oro (Intermedio)")
+        let isProfileSectionOpen = false;
+        let isWorkoutsSectionOpen = false;
+        let currentSkillSearchQuery = '';
+
+        function toggleProfileSection() {
+            isProfileSectionOpen = !isProfileSectionOpen;
+            const content = document.getElementById('profile-collapsible-content');
+            const icon = document.getElementById('profile-toggle-icon');
+            if (content) content.style.display = isProfileSectionOpen ? 'block' : 'none';
+            if (icon) icon.innerText = isProfileSectionOpen ? '▲ Riduci' : '▼ Espandi';
+        }
+
+        function toggleWorkoutsSection() {
+            isWorkoutsSectionOpen = !isWorkoutsSectionOpen;
+            const content = document.getElementById('workouts-collapsible-content');
+            const icon = document.getElementById('workouts-toggle-icon');
+            if (content) content.style.display = isWorkoutsSectionOpen ? 'block' : 'none';
+            if (icon) icon.innerText = isWorkoutsSectionOpen ? '▲ Riduci' : '▼ Espandi';
+        }
+
+        function openWorkoutsSection() {
+            isWorkoutsSectionOpen = true;
+            const content = document.getElementById('workouts-collapsible-content');
+            const icon = document.getElementById('workouts-toggle-icon');
+            if (content) content.style.display = 'block';
+            if (icon) icon.innerText = '▲ Riduci';
+        }
+
+        function handleSkillSearch(val) {
+            currentSkillSearchQuery = (val || '').trim().toLowerCase();
+            const clearBtn = document.getElementById('skill-search-clear');
+            if (clearBtn) clearBtn.style.display = currentSkillSearchQuery ? 'block' : 'none';
+            updateUI();
+        }
+
+        function clearSkillSearch() {
+            currentSkillSearchQuery = '';
+            const input = document.getElementById('skill-search-input');
+            if (input) {
+                input.value = '';
+                input.focus();
+            }
+            const clearBtn = document.getElementById('skill-search-clear');
+            if (clearBtn) clearBtn.style.display = 'none';
+            updateUI();
+        }
+
+        // ---- Inviti Chat & Anti-Spam (7 giorni) ----
+        let chatInvitesUnsubscribe = null;
+        let pendingChatInvites = [];
+
+        // ---- Sfide tra Atleti 🏹 & Ruota della Fortuna ----
+        let challengesPanelOpen = false;
+        let challengesUnsubscribe = null;
+        let challengesBadgeUnsubscribe = null;
+        let challengeInvitesBadgeUnsubscribe = null;
+        let pendingChallengeInvites = [];
+        let activeChallengesList = [];
+        let lastSeenChallengesAtMillis = 0;
+        let currentWheelChallenge = null;
+        let wheelRotation = 0;
+        let isWheelSpinning = false;
+
+        function toggleChallengesPanel() {
+            const panel = document.getElementById('challenges-panel');
+            challengesPanelOpen = !challengesPanelOpen;
+            panel.classList.toggle('active', challengesPanelOpen);
+
+            if (challengesPanelOpen) {
+                initChallengesListener();
+                markChallengesAsRead();
+            }
+        }
+
         let eventsPanelOpen = false;
         let eventsUnsubscribe = null;
         let eventsAllowMaybeDraft = false; // stato del checkbox "opzione forse" nel form di creazione sondaggio
@@ -1885,17 +2632,17 @@
 
         const ranks = [
             { name: "Bronzo (Novizio)", minXp: 0, iconSvg: rankLogos.bronze },
-            { name: "Argento (Atleta Base)", minXp: 1750, iconSvg: rankLogos.silver },
-            { name: "Oro (Intermedio)", minXp: 5200, iconSvg: rankLogos.gold },
-            { name: "Platino (Avanzato)", minXp: 12700, iconSvg: rankLogos.platinum },
-            { name: "Smeraldo (Specialista)", minXp: 25500, iconSvg: rankLogos.emerald },
-            { name: "Diamante (Esperto Leve)", minXp: 46000, iconSvg: rankLogos.diamond },
-            { name: "Master (Maestro di Forza)", minXp: 75000, iconSvg: rankLogos.master },
-            { name: "GrandMaster (Elite Atleta)", minXp: 115000, iconSvg: rankLogos.grandmaster },
-            { name: "Challenger (Campione)", minXp: 172500, iconSvg: rankLogos.challenger },
-            { name: "Titano (Forza Sovrumana)", minXp: 253000, iconSvg: rankLogos.titan },
-            { name: "Overhuman (Leggenda Vivente)", minXp: 368000, iconSvg: rankLogos.overhuman },
-            { name: "Godlike (Divinità del Calisthenics)", minXp: 520000, iconSvg: rankLogos.godlike }
+            { name: "Argento (Atleta Base)", minXp: 2500, iconSvg: rankLogos.silver },
+            { name: "Oro (Intermedio)", minXp: 7000, iconSvg: rankLogos.gold },
+            { name: "Platino (Avanzato)", minXp: 17000, iconSvg: rankLogos.platinum },
+            { name: "Smeraldo (Specialista)", minXp: 34000, iconSvg: rankLogos.emerald },
+            { name: "Diamante (Esperto Leve)", minXp: 60000, iconSvg: rankLogos.diamond },
+            { name: "Master (Maestro di Forza)", minXp: 98000, iconSvg: rankLogos.master },
+            { name: "GrandMaster (Elite Atleta)", minXp: 150000, iconSvg: rankLogos.grandmaster },
+            { name: "Challenger (Campione)", minXp: 225000, iconSvg: rankLogos.challenger },
+            { name: "Titano (Forza Sovrumana)", minXp: 330000, iconSvg: rankLogos.titan },
+            { name: "Overhuman (Leggenda Vivente)", minXp: 480000, iconSvg: rankLogos.overhuman },
+            { name: "Godlike (Divinità del Calisthenics)", minXp: 680000, iconSvg: rankLogos.godlike }
         ];
 
         const skillStickmen = {
@@ -2174,6 +2921,7 @@
                 }, { merge: true }).catch(error => {
                     console.error("Errore di salvataggio su Firebase: ", error);
                 });
+                syncUserChallengeProgress(currentXp);
             } else {
                 localStorage.setItem('naiontrackState', JSON.stringify(userState));
             }
@@ -2186,6 +2934,8 @@
                 currentUser = user;
                 startUnreadListeners();
                 startEventsBadgeListener();
+                startChallengesBadgeListener();
+                startChatInvitesListener();
                 db.collection("users").doc(user.uid).get().then((doc) => {
                     if (doc.exists) {
                         const data = doc.data();
@@ -2227,6 +2977,8 @@
                 userProfileData = {};
                 stopUnreadListeners();
                 stopEventsBadgeListener();
+                stopChallengesListeners();
+                stopChatInvitesListener();
                 document.getElementById('user-status-text').innerHTML = `👤 Non autenticato (Salvataggio locale)`;
                 document.getElementById('auth-actions-container').innerHTML = `
                     <button class="btn-auth-secondary" onclick="openAuthModal('login')">Accedi</button>
@@ -2264,6 +3016,8 @@
                 userWorkoutXp = parseFloat(localStorage.getItem('naiontrackWorkoutXp')) || 0;
                 userProfileData = {};
                 stopWorkoutsListener();
+                stopChallengesListeners();
+                stopChatInvitesListener();
                 updateUI();
                 renderProfileSettings();
                 initRealtimeLeaderboard();
@@ -2403,6 +3157,7 @@
                     const xp = data.totalXp || 0;
                     const nick = data.nickname || "Anonimo";
                     const rank = getCurrentRank(xp);
+                    userRankCache[doc.id] = rank.name;
                     const isMe = currentUser && currentUser.uid === doc.id;
 
                     html += `
@@ -2447,7 +3202,18 @@
                 ? categories 
                 : categories.filter(c => c.id === currentCategoryFilter);
 
+            let totalVisibleSkills = 0;
+
             filteredCategories.forEach(cat => {
+                let skillsToRender = cat.skills;
+                if (currentSkillSearchQuery) {
+                    skillsToRender = cat.skills.filter(s => s.name.toLowerCase().includes(currentSkillSearchQuery));
+                }
+
+                if (skillsToRender.length === 0) return;
+
+                totalVisibleSkills += skillsToRender.length;
+
                 const catHeader = document.createElement('h3');
                 catHeader.className = 'category-title';
                 catHeader.innerText = cat.title;
@@ -2456,7 +3222,7 @@
                 const branch = document.createElement('div');
                 branch.className = 'skill-tree-branch';
 
-                cat.skills.forEach(skill => {
+                skillsToRender.forEach(skill => {
                     const skillData = userState[skill.id] || { unlocked: false, val: 0 };
                     const isUnlocked = skillData.unlocked;
                     const val = skillData.val || 0;
@@ -2511,6 +3277,16 @@
                 });
                 container.appendChild(branch);
             });
+
+            if (totalVisibleSkills === 0 && currentSkillSearchQuery) {
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 30px; background: var(--card-bg); border-radius: 12px; border: 1px solid var(--line-color); width: 100%; box-sizing: border-box;">
+                        <p style="font-size: 1.6rem; margin: 0 0 10px 0;">🔍</p>
+                        <p style="color: var(--subtext); margin: 0; font-size: 0.95rem;">Nessuna skill trovata per "<strong>${escapeHtml(currentSkillSearchQuery)}</strong>"</p>
+                        <button class="btn-auth-secondary" style="margin-top: 12px;" onclick="clearSkillSearch()">Azzera ricerca</button>
+                    </div>
+                `;
+            }
         }
 
         function findSkillById(id) {
@@ -3058,12 +3834,12 @@
                     <label>Nome allenamento (facoltativo)</label>
                     <input type="text" id="new-workout-name" placeholder="es. Push Day" maxlength="60">
                 </div>
-                <div style="display:flex; gap:10px;">
-                    <div class="auth-form-group" style="flex:1;">
+                <div class="workout-form-row">
+                    <div class="auth-form-group" style="flex:1; min-width:120px;">
                         <label>Data</label>
                         <input type="date" id="new-workout-date" value="${todayStr}">
                     </div>
-                    <div class="auth-form-group" style="flex:1;">
+                    <div class="auth-form-group" style="flex:1; min-width:120px;">
                         <label>Durata (min)</label>
                         <input type="number" id="new-workout-duration" min="0" max="600" placeholder="es. 45" oninput="updateWorkoutXpPreview()">
                     </div>
@@ -3213,6 +3989,7 @@
                 }).then(() => {
                     userWorkoutXp += xpEarned;
                     document.getElementById('custom-modal').classList.remove('active');
+                    openWorkoutsSection();
                     saveState();
                     showWorkoutSavedModal(xpEarned);
                 }).catch((error) => {
@@ -3236,6 +4013,7 @@
                 localStorage.setItem('naiontrackWorkoutXp', String(userWorkoutXp));
 
                 document.getElementById('custom-modal').classList.remove('active');
+                openWorkoutsSection();
                 renderLocalWorkoutsList();
                 updateUI();
                 showWorkoutSavedModal(xpEarned);
@@ -3474,13 +4252,19 @@
 
         function renderChatBadge() {
             const badge = document.getElementById('chat-badge');
-            if (!badge) return;
-            const total = unreadGeneralCount + unreadPrivateCount;
-            if (total > 0) {
-                badge.innerText = total > 99 ? '99+' : String(total);
-                badge.style.display = 'block';
-            } else {
-                badge.style.display = 'none';
+            const privateDot = document.getElementById('chat-private-dot');
+            const pendingCount = (typeof pendingChatInvites !== 'undefined' && pendingChatInvites) ? pendingChatInvites.length : 0;
+            const total = unreadGeneralCount + unreadPrivateCount + pendingCount;
+            if (badge) {
+                if (total > 0) {
+                    badge.innerText = total > 99 ? '99+' : String(total);
+                    badge.style.display = 'block';
+                } else {
+                    badge.style.display = 'none';
+                }
+            }
+            if (privateDot) {
+                privateDot.style.display = (unreadPrivateCount > 0 || pendingCount > 0) ? 'block' : 'none';
             }
         }
 
@@ -3683,6 +4467,25 @@
                     }
                 }
 
+                let rankLabel = m.rank || userRankCache[m.uid];
+                if (!rankLabel && isMe) {
+                    rankLabel = getCurrentRank(getTotalXp()).name;
+                }
+                if (!rankLabel && m.uid && userRankCache[m.uid] === undefined) {
+                    userRankCache[m.uid] = null;
+                    db.collection("users").doc(m.uid).get().then(uDoc => {
+                        if (uDoc.exists) {
+                            const uData = uDoc.data();
+                            const r = getCurrentRank(uData.totalXp || 0);
+                            userRankCache[m.uid] = r.name;
+                            document.querySelectorAll(`.chat-rank-tag[data-uid="${m.uid}"]`).forEach(el => {
+                                el.innerText = r.name;
+                                el.style.display = 'inline-block';
+                            });
+                        }
+                    }).catch(err => console.error("Errore recupero rank utente:", err));
+                }
+
                 const textHtml = m.text ? `<span class="chat-msg-text">${escapeHtml(m.text)}</span>` : '';
                 const sentTime = formatChatTime(m.createdAt);
                 const editedTime = m.edited ? formatChatTime(m.editedAt) : '';
@@ -3700,7 +4503,10 @@
 
                 html += `
                     <div class="chat-message ${isMe ? 'chat-message-mine' : ''}">
-                        <span class="chat-msg-author">${escapeHtml(m.nickname || 'Anonimo')}</span>
+                        <div style="display:flex; align-items:center; gap:6px; margin-bottom:3px; flex-wrap:wrap;">
+                            <span class="chat-msg-author" style="margin-bottom:0;">${escapeHtml(m.nickname || 'Anonimo')}</span>
+                            <span class="chat-rank-tag" data-uid="${m.uid || ''}" style="${rankLabel ? '' : 'display:none;'}">${escapeHtml(rankLabel || '')}</span>
+                        </div>
                         ${textHtml}${editedHtml}
                         <div class="chat-msg-footer">
                             ${timeHtml}
@@ -3755,10 +4561,14 @@
             const messagesRef = currentMessagesRef();
             const msgText = text.slice(0, 300);
 
+            const myRank = getCurrentRank(getTotalXp());
+            const myRankName = myRank ? myRank.name : 'Bronzo (Novizio)';
+
             input.disabled = true;
             messagesRef.add({
                 uid: currentUser.uid,
                 nickname: userNickname || (currentUser.email ? currentUser.email.split('@')[0] : 'Anonimo'),
+                rank: myRankName,
                 text: msgText,
                 createdAt: firebase.firestore.FieldValue.serverTimestamp()
             }).then(() => {
@@ -3802,12 +4612,34 @@
                     let convs = [];
                     snapshot.forEach(doc => convs.push(Object.assign({ id: doc.id }, doc.data())));
 
+                    let invitesHtml = '';
+                    if (typeof pendingChatInvites !== 'undefined' && pendingChatInvites.length > 0) {
+                        invitesHtml = `
+                            <div class="chat-invites-section">
+                                <div class="chat-invites-title">
+                                    <span>📩 Inviti ricevuti</span>
+                                    <span style="background:var(--danger); color:#fff; border-radius:999px; padding:1px 7px; font-size:0.7rem;">${pendingChatInvites.length}</span>
+                                </div>
+                                ${pendingChatInvites.map(inv => `
+                                    <div class="chat-invite-item">
+                                        <div style="font-weight:700; color:var(--text);">${inv.type === 'group' ? '👥 Gruppo: ' + escapeHtml(inv.groupName || 'Gruppo') : '👤 ' + escapeHtml(inv.fromNickname || 'Un utente')}</div>
+                                        <div style="font-size:0.75rem; color:var(--subtext); margin-top:2px;">${inv.type === 'group' ? `Invitato da <strong>${escapeHtml(inv.fromNickname || 'Anonimo')}</strong>` : `Ti ha invitato a una chat privata`}</div>
+                                        <div class="chat-invite-actions">
+                                            <button class="chat-invite-btn-accept" onclick="acceptChatInvitation('${inv.id}')">✅ Accetta</button>
+                                            <button class="chat-invite-btn-decline" onclick="confirmDeclineChatInvitation('${inv.id}', '${inv.fromUid}', '${escapeHtml(inv.fromNickname || 'questo utente')}')">❌ Rifiuta</button>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        `;
+                    }
+
                     if (convs.length === 0) {
-                        container.innerHTML = `<p style="color: var(--subtext); text-align:center; font-size:0.85rem;">Nessuna chat privata. Tocca "Nuova chat" per iniziare! 👋</p>`;
+                        container.innerHTML = invitesHtml + `<p style="color: var(--subtext); text-align:center; font-size:0.85rem; padding:12px;">${invitesHtml ? 'Nessun\'altra chat privata.' : 'Nessuna chat privata. Tocca "Nuova chat" per iniziare! 👋'}</p>`;
                         return;
                     }
 
-                    let html = '';
+                    let html = invitesHtml;
                     convs.forEach(c => {
                         const title = conversationDisplayName(c);
                         const preview = c.lastMessageText ? escapeHtml(c.lastMessageText).slice(0, 40) : 'Nessun messaggio ancora';
@@ -4077,60 +4909,120 @@
             }
         }
 
-        function findOrCreateDM(otherUid, otherNickname) {
+        async function findOrCreateDM(otherUid, otherNickname) {
             const errEl = document.getElementById('new-chat-error');
             const convId = [currentUser.uid, otherUid].sort().join('_');
             const convRef = db.collection("conversations").doc(convId);
 
-            convRef.get().then((doc) => {
+            try {
+                // 1. Se esiste già una conversazione approvata, aprila direttamente
+                const doc = await convRef.get();
                 if (doc.exists) {
-                    return Promise.resolve();
+                    document.getElementById('custom-modal').classList.remove('active');
+                    activeChatView = 'private-list';
+                    openConversation(convId);
+                    return;
                 }
-                return convRef.set({
+
+                // 2. Controllo anti-spam cooldown di 7 giorni
+                const cd = await checkCooldown(currentUser.uid, otherUid, 'chat');
+                if (cd.active) {
+                    if (errEl) errEl.innerText = `Non puoi invitare ${otherNickname}: un tuo precedente invito è stato rifiutato (${cd.daysLeft} giorni rimanenti di blocco).`;
+                    return;
+                }
+
+                // 3. Controllo se c'è già un invito in sospeso
+                const existingInv = await db.collection("chatInvitations")
+                    .where("type", "==", "dm")
+                    .where("fromUid", "==", currentUser.uid)
+                    .where("toUid", "==", otherUid)
+                    .where("status", "==", "pending")
+                    .get();
+
+                if (!existingInv.empty) {
+                    if (errEl) errEl.innerText = `Hai già un invito in sospeso per ${otherNickname}. Attendi la sua risposta!`;
+                    return;
+                }
+
+                // 4. Invia l'invito per approvazione
+                await db.collection("chatInvitations").add({
                     type: 'dm',
-                    participants: [currentUser.uid, otherUid],
+                    fromUid: currentUser.uid,
+                    fromNickname: userNickname || (currentUser.displayName || 'Anonimo'),
+                    toUid: otherUid,
+                    toNickname: otherNickname,
+                    status: 'pending',
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                document.getElementById('custom-modal').classList.remove('active');
+                openCustomModal(
+                    "📩 Invito inviato",
+                    `Hai invitato <strong>${escapeHtml(otherNickname)}</strong> a chattare privatamente! La chat verrà creata non appena accetterà l'invito.`,
+                    "OK",
+                    false,
+                    () => {}
+                );
+            } catch (error) {
+                console.error("Errore nella richiesta di chat privata:", error);
+                if (errEl) errEl.innerText = "Errore durante l'invio dell'invito.";
+            }
+        }
+
+        async function createGroup(groupName, selectedUsers) {
+            const errEl = document.getElementById('new-chat-error');
+            const selectedUids = Object.keys(selectedUsers);
+
+            try {
+                // Controllo cooldown per tutti i partecipanti scelti
+                for (const uid of selectedUids) {
+                    const cd = await checkCooldown(currentUser.uid, uid, 'chat');
+                    if (cd.active) {
+                        if (errEl) errEl.innerText = `Non puoi invitare ${selectedUsers[uid]}: un tuo precedente invito è stato rifiutato (${cd.daysLeft} giorni rimanenti).`;
+                        return;
+                    }
+                }
+
+                const creatorName = userNickname || (currentUser.displayName || 'Anonimo');
+                // Il gruppo viene creato con il solo creatore finché gli invitati non approvano
+                const docRef = await db.collection("conversations").add({
+                    type: 'group',
+                    name: groupName.slice(0, 40),
+                    participants: [currentUser.uid],
                     participantNames: {
-                        [currentUser.uid]: userNickname || 'Anonimo',
-                        [otherUid]: otherNickname
+                        [currentUser.uid]: creatorName
                     },
                     createdBy: currentUser.uid,
                     createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                    lastMessageText: '',
+                    lastMessageText: 'Gruppo creato',
                     lastMessageAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
-            }).then(() => {
-                document.getElementById('custom-modal').classList.remove('active');
-                activeChatView = 'private-list';
-                openConversation(convId);
-            }).catch((error) => {
-                console.error("Errore nella creazione della chat privata:", error);
-                if (errEl) errEl.innerText = "Errore durante la creazione della chat.";
-            });
-        }
 
-        function createGroup(groupName, selectedUsers) {
-            const errEl = document.getElementById('new-chat-error');
-            const participantNames = Object.assign({}, selectedUsers);
-            participantNames[currentUser.uid] = userNickname || 'Anonimo';
-            const participants = Object.keys(participantNames);
+                // Spedisci inviti agli utenti selezionati
+                const batch = db.batch();
+                for (const uid of selectedUids) {
+                    const invRef = db.collection("chatInvitations").doc();
+                    batch.set(invRef, {
+                        type: 'group',
+                        convId: docRef.id,
+                        groupName: groupName.slice(0, 40),
+                        fromUid: currentUser.uid,
+                        fromNickname: creatorName,
+                        toUid: uid,
+                        toNickname: selectedUsers[uid],
+                        status: 'pending',
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                }
+                await batch.commit();
 
-            db.collection("conversations").add({
-                type: 'group',
-                name: groupName.slice(0, 40),
-                participants: participants,
-                participantNames: participantNames,
-                createdBy: currentUser.uid,
-                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                lastMessageText: '',
-                lastMessageAt: firebase.firestore.FieldValue.serverTimestamp()
-            }).then((docRef) => {
                 document.getElementById('custom-modal').classList.remove('active');
                 activeChatView = 'private-list';
                 openConversation(docRef.id);
-            }).catch((error) => {
+            } catch (error) {
                 console.error("Errore nella creazione del gruppo:", error);
                 if (errEl) errEl.innerText = "Errore durante la creazione del gruppo.";
-            });
+            }
         }
 
         // ==========================================
@@ -4292,7 +5184,7 @@
             renderAddMembersList(document.getElementById('add-members-search').value);
         }
 
-        function confirmAddMembers() {
+        async function confirmAddMembers() {
             const errEl = document.getElementById('add-members-error');
             const selectedUids = Object.keys(addMembersSelectedUsers);
 
@@ -4303,21 +5195,49 @@
             if (!activeConversationData || !isConversationCreator(activeConversationData)) return;
 
             const convId = activeConversationData.id;
-            const newParticipantNames = Object.assign({}, activeConversationData.participantNames, addMembersSelectedUsers);
-            const newParticipants = (activeConversationData.participants || []).concat(selectedUids);
+            const groupTitle = activeConversationData.name || 'Gruppo';
+            const creatorName = userNickname || (currentUser.displayName || 'Anonimo');
 
-            db.collection("conversations").doc(convId).update({
-                participants: firebase.firestore.FieldValue.arrayUnion(...selectedUids),
-                participantNames: newParticipantNames
-            }).then(() => {
-                activeConversationData.participants = newParticipants;
-                activeConversationData.participantNames = newParticipantNames;
+            try {
+                // Controllo cooldown per ogni utente selezionato
+                for (const uid of selectedUids) {
+                    const cd = await checkCooldown(currentUser.uid, uid, 'chat');
+                    if (cd.active) {
+                        if (errEl) errEl.innerText = `Non puoi invitare ${addMembersSelectedUsers[uid]}: un tuo precedente invito è stato rifiutato (${cd.daysLeft} giorni rimanenti).`;
+                        return;
+                    }
+                }
+
+                // Invia inviti invece di aggiungere subito senza approvazione
+                const batch = db.batch();
+                for (const uid of selectedUids) {
+                    const invRef = db.collection("chatInvitations").doc();
+                    batch.set(invRef, {
+                        type: 'group',
+                        convId: convId,
+                        groupName: groupTitle,
+                        fromUid: currentUser.uid,
+                        fromNickname: creatorName,
+                        toUid: uid,
+                        toNickname: addMembersSelectedUsers[uid],
+                        status: 'pending',
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                }
+                await batch.commit();
+
                 document.getElementById('custom-modal').classList.remove('active');
-                openConversationOptionsModal();
-            }).catch((error) => {
+                openCustomModal(
+                    "📩 Inviti inviati",
+                    `Gli inviti sono stati spediti agli utenti selezionati. Entreranno nel gruppo non appena avranno accettato.`,
+                    "OK",
+                    false,
+                    () => openConversationOptionsModal()
+                );
+            } catch (error) {
                 console.error("Errore aggiunta membri:", error);
-                errEl.innerText = "Errore durante l'aggiunta dei membri.";
-            });
+                if (errEl) errEl.innerText = "Errore durante l'invio degli inviti.";
+            }
         }
 
         // ---- Rimozione membri (solo creatore, solo gruppi) ----
@@ -4839,38 +5759,894 @@
             });
         }
 
+        // ==========================================
+        // SISTEMA ANTI-SPAM COOLDOWN (7 GIORNI)
+        // ==========================================
+        const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
+
+        function getCooldownKey(fromUid, toUid, type) {
+            return `${type}Cooldown_${fromUid}_${toUid}`;
+        }
+
+        async function checkCooldown(fromUid, toUid, type) {
+            const localKey = getCooldownKey(fromUid, toUid, type);
+            const cached = localStorage.getItem(localKey);
+            const now = Date.now();
+            if (cached) {
+                const expiresAt = parseInt(cached, 10);
+                if (expiresAt > now) {
+                    const daysLeft = Math.ceil((expiresAt - now) / (24 * 60 * 60 * 1000));
+                    return { active: true, daysLeft: daysLeft };
+                } else {
+                    localStorage.removeItem(localKey);
+                }
+            }
+
+            try {
+                const col = type === 'challenge' ? 'challengeCooldowns' : 'chatCooldowns';
+                const docId = `${fromUid}_${toUid}`;
+                const doc = await db.collection(col).doc(docId).get();
+                if (doc.exists) {
+                    const data = doc.data();
+                    const expiresAt = data.expiresAtMillis || 0;
+                    if (expiresAt > now) {
+                        localStorage.setItem(localKey, String(expiresAt));
+                        const daysLeft = Math.ceil((expiresAt - now) / (24 * 60 * 60 * 1000));
+                        return { active: true, daysLeft: daysLeft };
+                    }
+                }
+            } catch (err) {
+                console.warn("Errore verifica cooldown:", err);
+            }
+            return { active: false, daysLeft: 0 };
+        }
+
+        async function setCooldown(fromUid, toUid, type) {
+            const now = Date.now();
+            const expiresAt = now + SEVEN_DAYS_MS;
+            const localKey = getCooldownKey(fromUid, toUid, type);
+            localStorage.setItem(localKey, String(expiresAt));
+
+            try {
+                const col = type === 'challenge' ? 'challengeCooldowns' : 'chatCooldowns';
+                const docId = `${fromUid}_${toUid}`;
+                await db.collection(col).doc(docId).set({
+                    fromUid: fromUid,
+                    toUid: toUid,
+                    type: type,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    expiresAtMillis: expiresAt
+                });
+            } catch (err) {
+                console.warn("Errore salvataggio cooldown:", err);
+            }
+        }
+
+        // ==========================================
+        // GESTIONE INVITI CHAT PRIVATA & ANTI-SPAM
+        // ==========================================
+        function startChatInvitesListener() {
+            stopChatInvitesListener();
+            if (!currentUser) return;
+
+            chatInvitesUnsubscribe = db.collection("chatInvitations")
+                .where("toUid", "==", currentUser.uid)
+                .where("status", "==", "pending")
+                .onSnapshot((snapshot) => {
+                    pendingChatInvites = [];
+                    snapshot.forEach(doc => {
+                        pendingChatInvites.push(Object.assign({ id: doc.id }, doc.data()));
+                    });
+                    renderChatBadge();
+                    if (chatPanelOpen && activeChatView === 'private-list') {
+                        updateChatInvitesBanner();
+                    }
+                }, (err) => {
+                    console.warn("Errore ascolto inviti chat:", err);
+                });
+        }
+
+        function stopChatInvitesListener() {
+            if (chatInvitesUnsubscribe) {
+                chatInvitesUnsubscribe();
+                chatInvitesUnsubscribe = null;
+            }
+            pendingChatInvites = [];
+            renderChatBadge();
+        }
+
+        function updateChatInvitesBanner() {
+            const container = document.getElementById('chat-messages');
+            if (!container) return;
+            const existingBanner = container.querySelector('.chat-invites-section');
+
+            if (!pendingChatInvites || pendingChatInvites.length === 0) {
+                if (existingBanner) existingBanner.remove();
+                return;
+            }
+
+            const bannerHtml = `
+                <div class="chat-invites-title">
+                    <span>📩 Inviti ricevuti</span>
+                    <span style="background:var(--danger); color:#fff; border-radius:999px; padding:1px 7px; font-size:0.7rem;">${pendingChatInvites.length}</span>
+                </div>
+                ${pendingChatInvites.map(inv => `
+                    <div class="chat-invite-item">
+                        <div style="font-weight:700; color:var(--text);">${inv.type === 'group' ? '👥 Gruppo: ' + escapeHtml(inv.groupName || 'Gruppo') : '👤 ' + escapeHtml(inv.fromNickname || 'Un utente')}</div>
+                        <div style="font-size:0.75rem; color:var(--subtext); margin-top:2px;">${inv.type === 'group' ? `Invitato da <strong>${escapeHtml(inv.fromNickname || 'Anonimo')}</strong>` : `Ti ha invitato a una chat privata`}</div>
+                        <div class="chat-invite-actions">
+                            <button class="chat-invite-btn-accept" onclick="acceptChatInvitation('${inv.id}')">✅ Accetta</button>
+                            <button class="chat-invite-btn-decline" onclick="confirmDeclineChatInvitation('${inv.id}', '${inv.fromUid}', '${escapeHtml(inv.fromNickname || 'questo utente')}')">❌ Rifiuta</button>
+                        </div>
+                    </div>
+                `).join('')}
+            `;
+
+            if (existingBanner) {
+                existingBanner.innerHTML = bannerHtml;
+            } else {
+                const div = document.createElement('div');
+                div.className = 'chat-invites-section';
+                div.innerHTML = bannerHtml;
+                container.prepend(div);
+            }
+        }
+
+        async function acceptChatInvitation(invId) {
+            const inv = pendingChatInvites.find(i => i.id === invId);
+            if (!inv || !currentUser) return;
+
+            try {
+                if (inv.type === 'dm') {
+                    const convId = [inv.fromUid, currentUser.uid].sort().join('_');
+                    const convRef = db.collection("conversations").doc(convId);
+                    await convRef.set({
+                        type: 'dm',
+                        participants: [inv.fromUid, currentUser.uid],
+                        participantNames: {
+                            [inv.fromUid]: inv.fromNickname || 'Utente',
+                            [currentUser.uid]: userNickname || (currentUser.displayName || 'Anonimo')
+                        },
+                        createdBy: inv.fromUid,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                        lastMessageText: 'Chat avviata!',
+                        lastMessageAt: firebase.firestore.FieldValue.serverTimestamp()
+                    }, { merge: true });
+
+                    await db.collection("chatInvitations").doc(invId).delete();
+                    activeChatView = 'private-list';
+                    openConversation(convId);
+                } else if (inv.type === 'group' && inv.convId) {
+                    const convRef = db.collection("conversations").doc(inv.convId);
+                    await convRef.update({
+                        participants: firebase.firestore.FieldValue.arrayUnion(currentUser.uid),
+                        [`participantNames.${currentUser.uid}`]: userNickname || (currentUser.displayName || 'Anonimo')
+                    });
+
+                    await db.collection("chatInvitations").doc(invId).delete();
+                    activeChatView = 'private-list';
+                    openConversation(inv.convId);
+                }
+            } catch (err) {
+                console.error("Errore accettazione invito chat:", err);
+                alert("Si è verificato un errore durante l'accettazione dell'invito.");
+            }
+        }
+
+        function confirmDeclineChatInvitation(invId, fromUid, fromNickname) {
+            openCustomModal(
+                "❌ Rifiuta invito",
+                `Sei sicuro di voler rifiutare l'invito di <strong>${fromNickname}</strong>?<br><br><small style="color:var(--danger)">⚠️ Questo utente non potrà più inviarti inviti a una chat per 7 giorni.</small>`,
+                "Rifiuta invito",
+                true,
+                () => declineChatInvitation(invId, fromUid)
+            );
+        }
+
+        async function declineChatInvitation(invId, fromUid) {
+            if (!currentUser) return;
+            try {
+                await setCooldown(fromUid, currentUser.uid, 'chat');
+                await db.collection("chatInvitations").doc(invId).delete();
+            } catch (err) {
+                console.error("Errore nel rifiuto invito chat:", err);
+            }
+        }
+
+        // ==========================================
+        // SFIDE TRA ATLETI 🏹
+        // ==========================================
+        function getLastSeenChallengesStorageKey() {
+            return currentUser ? `lastSeenChallenges_${currentUser.uid}` : null;
+        }
+
+        function loadLastSeenChallenges() {
+            const key = getLastSeenChallengesStorageKey();
+            const stored = key ? localStorage.getItem(key) : null;
+            lastSeenChallengesAtMillis = stored ? (parseInt(stored, 10) || 0) : 0;
+        }
+
+        function markChallengesAsRead() {
+            if (!currentUser) return;
+            lastSeenChallengesAtMillis = Date.now();
+            const key = getLastSeenChallengesStorageKey();
+            if (key) localStorage.setItem(key, String(lastSeenChallengesAtMillis));
+            updateChallengesBadgeDot();
+        }
+
+        function updateChallengesBadgeDot() {
+            const dot = document.getElementById('challenges-badge-dot');
+            if (!dot) return;
+            if (!currentUser) {
+                dot.style.display = 'none';
+                return;
+            }
+            const hasPendingInvites = pendingChallengeInvites.length > 0;
+            const hasUnclaimedBonus = activeChallengesList.some(c => c.winnerUid === currentUser.uid && !c.bonusClaimed);
+            const hasNewChallenges = activeChallengesList.some(c => {
+                const ts = (c.createdAt && c.createdAt.toMillis) ? c.createdAt.toMillis() : 0;
+                return ts > lastSeenChallengesAtMillis;
+            });
+
+            if (hasPendingInvites || hasUnclaimedBonus || hasNewChallenges) {
+                dot.style.display = 'block';
+            } else {
+                dot.style.display = 'none';
+            }
+        }
+
+        function startChallengesBadgeListener() {
+            stopChallengesBadgeListener();
+            if (!currentUser) return;
+            loadLastSeenChallenges();
+
+            challengeInvitesBadgeUnsubscribe = db.collection("challengeInvitations")
+                .where("toUid", "==", currentUser.uid)
+                .where("status", "==", "pending")
+                .onSnapshot((snapshot) => {
+                    pendingChallengeInvites = [];
+                    snapshot.forEach(doc => {
+                        pendingChallengeInvites.push(Object.assign({ id: doc.id }, doc.data()));
+                    });
+                    updateChallengesBadgeDot();
+                    if (challengesPanelOpen) {
+                        renderChallengesList();
+                    }
+                }, (err) => console.warn("Errore ascolto inviti sfide:", err));
+
+            challengesBadgeUnsubscribe = db.collection("challenges")
+                .where("participants", "array-contains", currentUser.uid)
+                .onSnapshot((snapshot) => {
+                    activeChallengesList = [];
+                    snapshot.forEach(doc => {
+                        activeChallengesList.push(Object.assign({ id: doc.id }, doc.data()));
+                    });
+                    updateChallengesBadgeDot();
+                    if (challengesPanelOpen) {
+                        renderChallengesList();
+                    }
+                }, (err) => console.warn("Errore ascolto sfide badge:", err));
+        }
+
+        function stopChallengesBadgeListener() {
+            if (challengeInvitesBadgeUnsubscribe) {
+                challengeInvitesBadgeUnsubscribe();
+                challengeInvitesBadgeUnsubscribe = null;
+            }
+            if (challengesBadgeUnsubscribe) {
+                challengesBadgeUnsubscribe();
+                challengesBadgeUnsubscribe = null;
+            }
+            pendingChallengeInvites = [];
+            activeChallengesList = [];
+            updateChallengesBadgeDot();
+        }
+
+        function stopChallengesListeners() {
+            stopChallengesBadgeListener();
+            stopChallengesListener();
+        }
+
+        function initChallengesListener() {
+            renderChallengesList();
+        }
+
+        function stopChallengesListener() {
+            if (challengesUnsubscribe) {
+                challengesUnsubscribe();
+                challengesUnsubscribe = null;
+            }
+        }
+
+        function renderChallengesList() {
+            const listEl = document.getElementById('challenges-list');
+            if (!listEl) return;
+
+            if (!currentUser) {
+                listEl.innerHTML = `<p style="color: var(--subtext); text-align:center; font-size:0.85rem;">🔒 Accedi per partecipare e creare sfide tra atleti.</p>`;
+                return;
+            }
+
+            let html = '';
+
+            // Sezione inviti ricevuti
+            if (pendingChallengeInvites.length > 0) {
+                html += `
+                    <div class="chat-invites-section" style="border-color:var(--accent);">
+                        <div class="chat-invites-title">
+                            <span>🏹 Inviti alle sfide</span>
+                            <span style="background:var(--danger); color:#fff; border-radius:999px; padding:1px 7px; font-size:0.7rem;">${pendingChallengeInvites.length}</span>
+                        </div>
+                        ${pendingChallengeInvites.map(inv => `
+                            <div class="chat-invite-item">
+                                <div style="font-weight:700; color:var(--accent); font-size:0.9rem;">${escapeHtml(inv.challengeTitle || 'Sfida')}</div>
+                                <div style="font-size:0.78rem; color:var(--subtext); margin-top:2px;">
+                                    Obiettivo: <strong style="color:var(--unlocked);">${inv.targetXp} XP</strong><br>
+                                    Lanciata da <strong>${escapeHtml(inv.fromNickname || 'Anonimo')}</strong>
+                                </div>
+                                <div class="chat-invite-actions">
+                                    <button class="chat-invite-btn-accept" onclick="acceptChallengeInvitation('${inv.id}')">✅ Accetta Sfida</button>
+                                    <button class="chat-invite-btn-decline" onclick="confirmDeclineChallengeInvitation('${inv.id}', '${inv.fromUid}', '${escapeHtml(inv.fromNickname || 'questo atleta')}')">❌ Rifiuta</button>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            }
+
+            if (activeChallengesList.length === 0 && pendingChallengeInvites.length === 0) {
+                listEl.innerHTML = `<p style="color: var(--subtext); text-align:center; font-size:0.85rem; padding:20px 10px;">Nessuna sfida attiva al momento.<br><br>Tocca <strong>"Nuova Sfida"</strong> qui sotto per sfidare uno o più atleti! 🏹</p>`;
+                return;
+            }
+
+            const sortedChallenges = [...activeChallengesList].sort((a, b) => {
+                const aUnclaimed = a.winnerUid === currentUser.uid && !a.bonusClaimed;
+                const bUnclaimed = b.winnerUid === currentUser.uid && !b.bonusClaimed;
+                if (aUnclaimed && !bUnclaimed) return -1;
+                if (!aUnclaimed && bUnclaimed) return 1;
+                if (a.status === 'active' && b.status !== 'active') return -1;
+                if (a.status !== 'active' && b.status === 'active') return 1;
+                const aTime = (a.createdAt && a.createdAt.toMillis) ? a.createdAt.toMillis() : 0;
+                const bTime = (b.createdAt && b.createdAt.toMillis) ? b.createdAt.toMillis() : 0;
+                return bTime - aTime;
+            });
+
+            sortedChallenges.forEach(c => {
+                const isCompleted = c.status === 'completed';
+                const isWinner = c.winnerUid === currentUser.uid;
+                const pDataMap = c.participantData || {};
+                const participants = c.participants || [];
+
+                let participantsHtml = '';
+                participants.forEach(uid => {
+                    const p = pDataMap[uid] || { name: 'Atleta', startXp: 0, currentXp: 0 };
+                    const gainedXp = Math.max(0, (p.currentXp || 0) - (p.startXp || 0));
+                    const pct = Math.min(100, Math.floor((gainedXp / c.targetXp) * 100));
+                    const isRowWinner = isCompleted && c.winnerUid === uid;
+                    const isMe = uid === currentUser.uid;
+
+                    participantsHtml += `
+                        <div class="challenge-participant-row">
+                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                                <span style="font-weight:${isMe ? '700' : '500'}; color:${isRowWinner ? 'var(--unlocked)' : 'var(--text)'};">
+                                    ${escapeHtml(p.name || 'Atleta')}${isMe ? ' (Tu)' : ''}${isRowWinner ? ' 👑 VINCITORE' : ''}
+                                </span>
+                                <span style="color:var(--subtext); font-size:0.75rem;">
+                                    ${gainedXp} / ${c.targetXp} XP (${pct}%)
+                                </span>
+                            </div>
+                            <div class="challenge-progress-bar">
+                                <div class="challenge-progress-fill" style="width:${pct}%; ${isRowWinner ? 'background:linear-gradient(90deg, #f59e0b, #10b981);' : ''}"></div>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                let footerActionHtml = '';
+                if (isCompleted) {
+                    if (isWinner) {
+                        if (!c.bonusClaimed) {
+                            footerActionHtml = `
+                                <button class="wheel-spin-btn" style="width:100%; margin-top:10px; font-size:0.88rem; padding:9px;" onclick="openWheelModal('${c.id}')">
+                                    🎡 GIRA LA RUOTA DELLA FORTUNA!
+                                </button>
+                            `;
+                        } else {
+                            footerActionHtml = `
+                                <div style="margin-top:10px; padding:6px 10px; background:rgba(34,197,94,0.15); border:1px solid var(--unlocked); border-radius:8px; font-size:0.8rem; color:var(--unlocked); text-align:center; font-weight:700;">
+                                    ✨ Bonus riscosso: ${c.wonMultiplier}x (+${c.wonBonusXp} XP)!
+                                </div>
+                            `;
+                        }
+                    } else {
+                        footerActionHtml = `
+                            <div style="margin-top:8px; font-size:0.78rem; color:var(--subtext); text-align:center;">
+                                🏆 Sfida vinta da <strong>${escapeHtml(c.winnerName || 'un altro atleta')}</strong>!
+                            </div>
+                        `;
+                    }
+                }
+
+                html += `
+                    <div class="challenge-card ${isCompleted ? 'challenge-completed' : ''}">
+                        <div class="challenge-header">
+                            <span class="challenge-title">🏹 ${escapeHtml(c.title || 'Sfida')}</span>
+                            <span class="challenge-target">🎯 ${c.targetXp} XP</span>
+                        </div>
+                        <div class="challenge-meta">
+                            Creata da ${escapeHtml(c.creatorName || 'Anonimo')} • ${participants.length} partecipanti
+                        </div>
+                        ${participantsHtml}
+                        ${footerActionHtml}
+                    </div>
+                `;
+            });
+
+            listEl.innerHTML = html;
+        }
+
+        let challengeSelectedUsers = {};
+        let challengeAllUsers = [];
+
+        function openCreateChallengeModal() {
+            if (!currentUser) return;
+            challengeSelectedUsers = {};
+
+            const modal = document.getElementById('custom-modal');
+            const titleEl = document.getElementById('modal-title');
+            const bodyContent = document.getElementById('modal-body-content');
+            const actionsBox = document.getElementById('modal-actions-box');
+
+            titleEl.innerText = "🏹 Nuova Sfida tra Atleti";
+            bodyContent.innerHTML = `
+                <div class="auth-error" id="new-challenge-error"></div>
+                <div class="auth-form-group">
+                    <label>Titolo della Sfida</label>
+                    <input type="text" id="new-challenge-title" placeholder="es. Sfida 2000 XP della settimana" maxlength="50">
+                </div>
+                <div class="auth-form-group">
+                    <label>XP da raggiungere per vincere (500 - 25.000 XP)</label>
+                    <input type="number" id="new-challenge-target" min="500" max="25000" step="100" value="1000" placeholder="Min 500, Max 25000">
+                    <small style="color:var(--subtext); font-size:0.75rem;">Il primo atleta che accumula questi XP dalla partenza vincerà e girerà la Ruota della Fortuna!</small>
+                </div>
+                <div class="auth-form-group">
+                    <label>Seleziona atleti da sfidare (minimo 1)</label>
+                    <input type="text" id="new-challenge-search" placeholder="Cerca atleta per nickname...">
+                    <div class="user-picker-list" id="new-challenge-user-list">
+                        <p style="text-align:center; color:var(--subtext); font-size:0.8rem; padding:10px;">Caricamento atleti...</p>
+                    </div>
+                </div>
+            `;
+            actionsBox.innerHTML = `
+                <button class="btn-cancel" id="modal-btn-cancel">Annulla</button>
+                <button class="btn-confirm" id="new-challenge-confirm-btn">Lancia Sfida</button>
+            `;
+
+            modal.classList.add('active');
+            document.getElementById('modal-btn-cancel').onclick = () => modal.classList.remove('active');
+            document.getElementById('new-challenge-search').oninput = (e) => renderChallengeUserList(e.target.value);
+            document.getElementById('new-challenge-confirm-btn').onclick = confirmCreateChallenge;
+
+            loadUsersForChallenge();
+        }
+
+        function loadUsersForChallenge() {
+            db.collection("users").get().then((snapshot) => {
+                challengeAllUsers = [];
+                snapshot.forEach(doc => {
+                    if (doc.id === currentUser.uid) return;
+                    const data = doc.data();
+                    if (data.nickname) {
+                        challengeAllUsers.push({ uid: doc.id, nickname: data.nickname });
+                    }
+                });
+                challengeAllUsers.sort((a, b) => a.nickname.localeCompare(b.nickname));
+                renderChallengeUserList('');
+            }).catch((err) => {
+                console.error("Errore caricamento utenti per sfida:", err);
+                const listEl = document.getElementById('new-challenge-user-list');
+                if (listEl) listEl.innerHTML = `<p style="text-align:center; color:var(--subtext); font-size:0.8rem; padding:10px;">Errore caricamento utenti.</p>`;
+            });
+        }
+
+        function renderChallengeUserList(filterText) {
+            const listEl = document.getElementById('new-challenge-user-list');
+            if (!listEl) return;
+
+            const filter = (filterText || '').trim().toLowerCase();
+            const filtered = challengeAllUsers.filter(u => u.nickname.toLowerCase().includes(filter));
+
+            if (filtered.length === 0) {
+                listEl.innerHTML = `<p style="text-align:center; color:var(--subtext); font-size:0.8rem; padding:10px;">Nessun atleta trovato.</p>`;
+                return;
+            }
+
+            listEl.innerHTML = filtered.map(u => {
+                const isSelected = !!challengeSelectedUsers[u.uid];
+                return `
+                    <div class="user-picker-item ${isSelected ? 'selected' : ''}" onclick="toggleChallengeUserPick('${u.uid}', '${escapeHtml(u.nickname)}')">
+                        <input type="checkbox" ${isSelected ? 'checked' : ''} onclick="event.stopPropagation(); toggleChallengeUserPick('${u.uid}', '${escapeHtml(u.nickname)}')">
+                        <span>${escapeHtml(u.nickname)}</span>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function toggleChallengeUserPick(uid, nickname) {
+            if (challengeSelectedUsers[uid]) {
+                delete challengeSelectedUsers[uid];
+            } else {
+                challengeSelectedUsers[uid] = nickname;
+            }
+            renderChallengeUserList(document.getElementById('new-challenge-search').value);
+        }
+
+        async function confirmCreateChallenge() {
+            if (!currentUser) return;
+            const errEl = document.getElementById('new-challenge-error');
+            const titleInput = document.getElementById('new-challenge-title');
+            const targetInput = document.getElementById('new-challenge-target');
+            const confirmBtn = document.getElementById('new-challenge-confirm-btn');
+
+            const title = (titleInput ? titleInput.value : '').trim() || 'Sfida Calisthenics';
+            const targetXp = targetInput ? parseInt(targetInput.value, 10) : NaN;
+            const selectedUids = Object.keys(challengeSelectedUsers);
+
+            if (isNaN(targetXp) || targetXp < 500 || targetXp > 25000) {
+                if (errEl) errEl.innerText = "Il numero di XP da raggiungere deve essere obbligatoriamente tra 500 e 25.000 XP.";
+                return;
+            }
+
+            if (selectedUids.length === 0) {
+                if (errEl) errEl.innerText = "Seleziona almeno un atleta da sfidare (la sfida deve avere almeno 2 partecipanti).";
+                return;
+            }
+
+            if (confirmBtn) { confirmBtn.disabled = true; confirmBtn.innerText = 'Verifica in corso...'; }
+
+            try {
+                // Controllo cooldown per ogni utente selezionato
+                for (const uid of selectedUids) {
+                    const cd = await checkCooldown(currentUser.uid, uid, 'challenge');
+                    if (cd.active) {
+                        if (errEl) errEl.innerText = `Non puoi invitare ${challengeSelectedUsers[uid]}: ha rifiutato una tua precedente sfida (${cd.daysLeft} giorni rimanenti di blocco).`;
+                        if (confirmBtn) { confirmBtn.disabled = false; confirmBtn.innerText = 'Lancia Sfida'; }
+                        return;
+                    }
+                }
+
+                const creatorName = userNickname || (currentUser.displayName || 'Anonimo');
+                const currentXp = getTotalXp();
+
+                // Creazione della sfida
+                const challengeDoc = await db.collection("challenges").add({
+                    title: title,
+                    targetXp: targetXp,
+                    creatorUid: currentUser.uid,
+                    creatorName: creatorName,
+                    participants: [currentUser.uid],
+                    participantData: {
+                        [currentUser.uid]: {
+                            name: creatorName,
+                            startXp: currentXp,
+                            currentXp: currentXp,
+                            joinedAt: Date.now()
+                        }
+                    },
+                    status: 'active',
+                    winnerUid: null,
+                    winnerName: null,
+                    bonusClaimed: false,
+                    wonMultiplier: null,
+                    wonBonusXp: null,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                // Invia inviti per tutti gli atleti selezionati
+                const batch = db.batch();
+                for (const uid of selectedUids) {
+                    const invRef = db.collection("challengeInvitations").doc();
+                    batch.set(invRef, {
+                        challengeId: challengeDoc.id,
+                        challengeTitle: title,
+                        targetXp: targetXp,
+                        fromUid: currentUser.uid,
+                        fromNickname: creatorName,
+                        toUid: uid,
+                        toNickname: challengeSelectedUsers[uid],
+                        status: 'pending',
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                }
+                await batch.commit();
+
+                document.getElementById('custom-modal').classList.remove('active');
+                openCustomModal(
+                    "🏹 Sfida Creata!",
+                    `La sfida "<strong>${escapeHtml(title)}</strong>" da <strong>${targetXp} XP</strong> è stata lanciata! Gli inviti sono stati inviati agli atleti. Buon allenamento! 🔥`,
+                    "Perfetto!",
+                    false,
+                    () => {}
+                );
+            } catch (err) {
+                console.error("Errore creazione sfida:", err);
+                if (errEl) errEl.innerText = "Errore durante la creazione della sfida.";
+                if (confirmBtn) { confirmBtn.disabled = false; confirmBtn.innerText = 'Lancia Sfida'; }
+            }
+        }
+
+        async function acceptChallengeInvitation(invId) {
+            const inv = pendingChallengeInvites.find(i => i.id === invId);
+            if (!inv || !currentUser) return;
+
+            try {
+                const challengeRef = db.collection("challenges").doc(inv.challengeId);
+                const currentXp = getTotalXp();
+                const myName = userNickname || (currentUser.displayName || 'Anonimo');
+
+                await challengeRef.update({
+                    participants: firebase.firestore.FieldValue.arrayUnion(currentUser.uid),
+                    [`participantData.${currentUser.uid}`]: {
+                        name: myName,
+                        startXp: currentXp,
+                        currentXp: currentXp,
+                        joinedAt: Date.now()
+                    }
+                });
+
+                await db.collection("challengeInvitations").doc(invId).delete();
+            } catch (err) {
+                console.error("Errore accettazione sfida:", err);
+                alert("Errore durante l'accettazione della sfida.");
+            }
+        }
+
+        function confirmDeclineChallengeInvitation(invId, fromUid, fromNickname) {
+            openCustomModal(
+                "❌ Rifiuta sfida",
+                `Sei sicuro di voler rifiutare la sfida di <strong>${fromNickname}</strong>?<br><br><small style="color:var(--danger)">⚠️ Questo atleta non potrà più invitarti a una sfida per 7 giorni.</small>`,
+                "Rifiuta sfida",
+                true,
+                () => declineChallengeInvitation(invId, fromUid)
+            );
+        }
+
+        async function declineChallengeInvitation(invId, fromUid) {
+            if (!currentUser) return;
+            try {
+                await setCooldown(fromUid, currentUser.uid, 'challenge');
+                await db.collection("challengeInvitations").doc(invId).delete();
+            } catch (err) {
+                console.error("Errore nel rifiuto della sfida:", err);
+            }
+        }
+
+        function syncUserChallengeProgress(currentXp) {
+            if (!currentUser) return;
+            db.collection("challenges")
+                .where("status", "==", "active")
+                .where("participants", "array-contains", currentUser.uid)
+                .get()
+                .then((snapshot) => {
+                    snapshot.forEach((doc) => {
+                        const data = doc.data();
+                        const pData = data.participantData && data.participantData[currentUser.uid];
+                        if (!pData) return;
+                        const startXp = pData.startXp || currentXp;
+                        const progress = currentXp - startXp;
+                        const updateObj = {
+                            [`participantData.${currentUser.uid}.currentXp`]: currentXp
+                        };
+                        if (progress >= data.targetXp && !data.winnerUid) {
+                            updateObj.status = 'completed';
+                            updateObj.winnerUid = currentUser.uid;
+                            updateObj.winnerName = userNickname || (currentUser.displayName || 'Anonimo');
+                            updateObj.completedAt = firebase.firestore.FieldValue.serverTimestamp();
+                        }
+                        doc.ref.update(updateObj).catch(e => console.warn("Errore sync progresso sfida:", e));
+                    });
+                })
+                .catch((e) => console.warn("Errore recupero sfide attive:", e));
+        }
+
+        // ==========================================
+        // RUOTA DELLA FORTUNA 🎡
+        // ==========================================
+        const wheelSlices = [
+            { label: "1.1x", multiplier: 1.1, color: "#2563eb", text: "#ffffff" },
+            { label: "1.25x", multiplier: 1.25, color: "#059669", text: "#ffffff" },
+            { label: "1.4x", multiplier: 1.4, color: "#d97706", text: "#ffffff" },
+            { label: "1.5x", multiplier: 1.5, color: "#7c3aed", text: "#ffffff" },
+            { label: "1.7x", multiplier: 1.7, color: "#0891b2", text: "#ffffff" },
+            { label: "1.85x", multiplier: 1.85, color: "#db2777", text: "#ffffff" },
+            { label: "2.0x 🌟", multiplier: 2.0, color: "#eab308", text: "#111827" }
+        ];
+
+        function drawWheel(angle) {
+            const canvas = document.getElementById('wheel-canvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            const numSlices = wheelSlices.length;
+            const sliceAngle = (2 * Math.PI) / numSlices;
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            const radius = centerX - 8;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Disegna fette
+            for (let i = 0; i < numSlices; i++) {
+                const slice = wheelSlices[i];
+                const startA = angle + i * sliceAngle;
+                const endA = startA + sliceAngle;
+
+                ctx.beginPath();
+                ctx.moveTo(centerX, centerY);
+                ctx.arc(centerX, centerY, radius, startA, endA);
+                ctx.closePath();
+                ctx.fillStyle = slice.color;
+                ctx.fill();
+                ctx.strokeStyle = '#ffffff';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+
+                // Testo fetta
+                ctx.save();
+                ctx.translate(centerX, centerY);
+                ctx.rotate(startA + sliceAngle / 2);
+                ctx.textAlign = 'right';
+                ctx.fillStyle = slice.text;
+                ctx.font = 'bold 13px "Plus Jakarta Sans", sans-serif';
+                ctx.shadowColor = 'rgba(0,0,0,0.5)';
+                ctx.shadowBlur = 4;
+                ctx.fillText(slice.label, radius - 14, 5);
+                ctx.restore();
+            }
+
+            // Perno centrale
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, 18, 0, 2 * Math.PI);
+            ctx.fillStyle = '#1e293b';
+            ctx.fill();
+            ctx.strokeStyle = '#38bdf8';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, 8, 0, 2 * Math.PI);
+            ctx.fillStyle = '#f59e0b';
+            ctx.fill();
+        }
+
+        function openWheelModal(challengeId) {
+            const c = activeChallengesList.find(item => item.id === challengeId);
+            if (!c) return;
+            currentWheelChallenge = c;
+            isWheelSpinning = false;
+            wheelRotation = 0;
+
+            const modal = document.getElementById('wheel-modal');
+            const titleEl = document.getElementById('wheel-challenge-title');
+            const spinBtn = document.getElementById('wheel-spin-btn');
+            const resultBox = document.getElementById('wheel-result-box');
+
+            if (titleEl) titleEl.innerText = `Sfida: "${c.title || 'Sfida'}" • Obiettivo: ${c.targetXp} XP`;
+            if (spinBtn) {
+                spinBtn.style.display = 'inline-block';
+                spinBtn.disabled = false;
+                spinBtn.innerText = '🎡 GIRA LA RUOTA!';
+            }
+            if (resultBox) resultBox.style.display = 'none';
+
+            modal.classList.add('active');
+            drawWheel(0);
+        }
+
+        function closeWheelModal() {
+            const modal = document.getElementById('wheel-modal');
+            modal.classList.remove('active');
+            currentWheelChallenge = null;
+            if (challengesPanelOpen) {
+                renderChallengesList();
+            }
+        }
+
+        function spinWheelOfFortune() {
+            if (isWheelSpinning || !currentWheelChallenge || !currentUser) return;
+            isWheelSpinning = true;
+
+            const spinBtn = document.getElementById('wheel-spin-btn');
+            if (spinBtn) {
+                spinBtn.disabled = true;
+                spinBtn.innerText = 'La ruota gira... 🎡';
+            }
+
+            const numSlices = wheelSlices.length;
+            const sliceAngle = (2 * Math.PI) / numSlices;
+            const winningIndex = Math.floor(Math.random() * numSlices);
+            const winningSlice = wheelSlices[winningIndex];
+
+            const extraRotations = 6;
+            const targetCenterAngle = winningIndex * sliceAngle + sliceAngle / 2;
+            const topPointerAngle = 3 * Math.PI / 2;
+            const finalAngle = topPointerAngle - targetCenterAngle + (extraRotations * 2 * Math.PI);
+
+            const startAngle = wheelRotation % (2 * Math.PI);
+            const totalDelta = finalAngle - startAngle;
+            const durationMs = 4500;
+            const startTime = performance.now();
+
+            function animateWheel(now) {
+                const elapsed = now - startTime;
+                const progress = Math.min(1, elapsed / durationMs);
+                const easeOut = 1 - Math.pow(1 - progress, 3);
+                const currentA = startAngle + totalDelta * easeOut;
+
+                wheelRotation = currentA;
+                drawWheel(currentA);
+
+                if (progress < 1) {
+                    requestAnimationFrame(animateWheel);
+                } else {
+                    isWheelSpinning = false;
+                    onWheelFinished(winningSlice);
+                }
+            }
+
+            requestAnimationFrame(animateWheel);
+        }
+
+        function onWheelFinished(winningSlice) {
+            if (!currentWheelChallenge || !currentUser) return;
+
+            const targetXp = currentWheelChallenge.targetXp || 1000;
+            const totalAwardedXp = Math.round(targetXp * winningSlice.multiplier);
+            const bonusXpGained = totalAwardedXp;
+
+            userWorkoutXp = (userWorkoutXp || 0) + bonusXpGained;
+            saveState();
+
+            db.collection("challenges").doc(currentWheelChallenge.id).update({
+                bonusClaimed: true,
+                wonMultiplier: winningSlice.multiplier,
+                wonBonusXp: bonusXpGained,
+                bonusClaimedAt: firebase.firestore.FieldValue.serverTimestamp()
+            }).catch(err => console.error("Errore aggiornamento riscatto ruota:", err));
+
+            currentWheelChallenge.bonusClaimed = true;
+            currentWheelChallenge.wonMultiplier = winningSlice.multiplier;
+            currentWheelChallenge.wonBonusXp = bonusXpGained;
+
+            const spinBtn = document.getElementById('wheel-spin-btn');
+            const resultBox = document.getElementById('wheel-result-box');
+            const resultText = document.getElementById('wheel-result-text');
+
+            if (spinBtn) spinBtn.style.display = 'none';
+            if (resultText) {
+                resultText.innerHTML = `
+                    🎉 COMPLIMENTI!<br>
+                    Hai ottenuto il moltiplicatore <span style="color:var(--accent); font-size:1.4rem;">${winningSlice.label}</span>!<br>
+                    <span style="color:var(--unlocked); font-size:1.3rem;">+${bonusXpGained} XP</span> aggiunti al tuo profilo!
+                `;
+            }
+            if (resultBox) resultBox.style.display = 'block';
+
+            updateChallengesBadgeDot();
+        }
+
+
         initCategorySelect();
         applyTheme(currentTheme);
         renderProfileSettings();
         initWorkoutsSection();
     </script>
     <script>
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./pwabuilder-sw.js');
-    });
-  }
-        <script>
-  // 1. La tua configurazione esistente
-  const firebaseConfig = {
-    apiKey: "BEKd6PyJKq4bND7nJUTOkBBDH82Frv3BiPJCPDC2ZXTUYO7hOWMRTHcYretZcHQuJXZ6zXsW8hY6SW4EzT2qJXI",
-    authDomain: "...",
-    // ...
-  };
-  
-  // 2. Inizializzazione che hai già
-  firebase.initializeApp(firebaseConfig);
-
-  // --- 3. INCOLLA QUI IL NUOVO CODICE ---
-  const messaging = firebase.messaging();
-
-  function richiediPermessiNotifiche() {
-    // ... tutto il resto del codice che ti ho dato prima ...
-  }
-  
-  richiediPermessiNotifiche();
-  // --------------------------------------
-</script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('./pwabuilder-sw.js');
+        });
+      }
+    </script>
 </body>
 </html>
 
