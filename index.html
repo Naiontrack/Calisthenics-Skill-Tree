@@ -2676,17 +2676,15 @@
             }
             try {
                 const isGhPages = window.location.pathname.includes('/Calisthenics-Skill-Tree');
-                const osWorkerPath = isGhPages ? 'Calisthenics-Skill-Tree/OneSignalSDKWorker.js' : 'OneSignalSDKWorker.js';
-                const osScope = isGhPages ? '/Calisthenics-Skill-Tree/' : './';
-
                 await OneSignal.init({
                     appId: ONESIGNAL_APP_ID,
                     allowLocalhostAsSecureOrigin: true,
-                    serviceWorkerParam: { scope: osScope },
-                    serviceWorkerPath: osWorkerPath,
+                    path: isGhPages ? "/Calisthenics-Skill-Tree/" : "/",
+                    serviceWorkerPath: "OneSignalSDKWorker.js",
+                    serviceWorkerParam: { scope: isGhPages ? "/Calisthenics-Skill-Tree/" : "/" },
                     notifyButton: { enable: false }
                 });
-                console.log("[OneSignal] Inizializzato con successo. Scope:", osScope);
+                console.log("[OneSignal] Inizializzato con successo. Scope:", isGhPages ? "/Calisthenics-Skill-Tree/" : "/");
 
                 // Ascolta cambi di stato iscrizione push per associare automaticamente l'utente
                 if (OneSignal.User && OneSignal.User.PushSubscription) {
@@ -3530,7 +3528,7 @@ let currentUser = null;
 
         // ===============================================================
         // ===============================================================
-        // SISTEMA NOTIFICHE PUSH (GESTIONE ROBUSTA, RESILIENTE E SILENZIOSA)
+        // SISTEMA NOTIFICHE PUSH (REGISTRAZIONE REALE E VERIFICATA)
         // ===============================================================
         function setPushNotificationsState(enabled) {
             notificationsEnabled = enabled;
@@ -3557,118 +3555,141 @@ let currentUser = null;
             });
         }
 
-        // Toggle pulito e istantaneo: ZERO alert, ZERO pop-up, solo cambio stato silenzioso
-        async function togglePushNotifications() {
-            const toggle = document.getElementById('profile-push-toggle');
-            const shouldEnable = toggle ? toggle.checked : !notificationsEnabled;
+        // Funzione centrale di registrazione: associa l'utente autenticato a OneSignal e verifica l'ID
+        async function subscribeUserToPush() {
+            if (!currentUser || !currentUser.uid) {
+                return { success: false, reason: "login_required", message: "Effettua prima l'accesso con un account!" };
+            }
 
-            if (shouldEnable) {
-                if (typeof Notification !== 'undefined' && Notification.permission !== 'granted') {
+            // 1. Richiedi permesso nativo se non ancora concesso
+            if (typeof Notification !== 'undefined') {
+                if (Notification.permission !== 'granted') {
                     try {
-                        const p = await Notification.requestPermission();
-                        if (p !== 'granted') {
+                        const perm = await Notification.requestPermission();
+                        if (perm !== 'granted') {
                             setPushNotificationsState(false);
-                            return;
+                            return { success: false, reason: "permission_denied", message: "Permesso notifiche non concesso sul telefono." };
                         }
-                    } catch(err) {
-                        setPushNotificationsState(false);
-                        return;
+                    } catch(permErr) {
+                        console.warn("[Push perm err]", permErr);
                     }
                 }
-                setPushNotificationsState(true);
+            }
+
+            setPushNotificationsState(true);
+
+            // 2. Registra su OneSignal e attendi l'ID reale
+            return new Promise((resolve) => {
                 window.OneSignalDeferred = window.OneSignalDeferred || [];
                 window.OneSignalDeferred.push(async function(OneSignal) {
                     try {
                         if (OneSignal.User && OneSignal.User.PushSubscription) {
                             await OneSignal.User.PushSubscription.optIn();
                         }
-                        if (currentUser && currentUser.uid) {
-                            await OneSignal.login(currentUser.uid);
+                        await OneSignal.login(currentUser.uid);
+                        console.log("[OneSignal] Login effettuato per UID:", currentUser.uid);
+
+                        // Attendi che OneSignal generi l'ID dispositivo (fino a 4 secondi)
+                        let subId = (OneSignal.User && OneSignal.User.PushSubscription) ? OneSignal.User.PushSubscription.id : null;
+                        let attempts = 0;
+                        while (!subId && attempts < 8) {
+                            await new Promise(r => setTimeout(r, 500));
+                            subId = (OneSignal.User && OneSignal.User.PushSubscription) ? OneSignal.User.PushSubscription.id : null;
+                            attempts++;
                         }
-                        setPushNotificationsState(true);
-                    } catch(e) {}
+
+                        // Salva su Firestore per conferma nel database
+                        if (subId) {
+                            try {
+                                await db.collection("users").doc(currentUser.uid).set({
+                                    oneSignalPlayerId: subId,
+                                    pushEnabled: true,
+                                    pushUpdatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                                }, { merge: true });
+                                console.log("[OneSignal] ID registrato nel database:", subId);
+                            } catch(fsErr) {}
+                        }
+
+                        resolve({
+                            success: true,
+                            subId: subId,
+                            message: subId ? "Dispositivo registrato con successo!" : "Registrazione inviata a OneSignal."
+                        });
+                    } catch(err) {
+                        console.warn("[subscribeUserToPush err]", err);
+                        resolve({ success: false, reason: "onesignal_error", message: err.message || "Errore OneSignal" });
+                    }
                 });
+            });
+        }
+
+        // Toggle impostazioni: attiva o disattiva e registra nel database
+        async function togglePushNotifications() {
+            const toggle = document.getElementById('profile-push-toggle');
+            const shouldEnable = toggle ? toggle.checked : !notificationsEnabled;
+            const errEl = document.getElementById('profile-settings-error');
+
+            if (shouldEnable) {
+                if (errEl) { errEl.style.color = 'var(--text)'; errEl.innerText = "Attivazione notifiche in corso... ⏳"; }
+                const res = await subscribeUserToPush();
+                if (!res.success) {
+                    setPushNotificationsState(false);
+                    if (toggle) toggle.checked = false;
+                    if (errEl) { errEl.style.color = '#ef4444'; errEl.innerText = res.message; }
+                    return;
+                }
+                setPushNotificationsState(true);
+                if (errEl) {
+                    errEl.style.color = '#10b981';
+                    errEl.innerText = "✅ Notifiche attivate e dispositivo registrato su OneSignal!";
+                    setTimeout(() => { if (errEl) errEl.innerText = ''; }, 4500);
+                }
             } else {
                 setPushNotificationsState(false);
+                if (errEl) {
+                    errEl.style.color = 'var(--subtext)';
+                    errEl.innerText = "Notifiche telefono disattivate.";
+                    setTimeout(() => { if (errEl) errEl.innerText = ''; }, 3000);
+                }
             }
         }
 
         async function testPushNotification(evt) {
             const btn = (evt && evt.target) ? evt.target : document.querySelector("button[onclick*='testPushNotification']");
             if (btn) {
-                btn.innerText = "Invio in corso... ⏳";
+                btn.innerText = "Registrazione... ⏳";
                 btn.disabled = true;
             }
 
-            const resetButton = (msg = "Inviato! ✅") => {
+            const resetButton = (msg = "Inviato! ✅", delay = 3500) => {
                 if (btn) {
                     btn.innerText = msg;
                     btn.disabled = false;
-                    setTimeout(() => { btn.innerText = "Test 📲"; }, 3000);
+                    setTimeout(() => { btn.innerText = "Test 📲"; }, delay);
                 }
             };
 
-            // Timeout di sicurezza garantito: dopo 7 secondi sblocca SEMPRE il pulsante
-            const safetyTimer = setTimeout(() => {
-                resetButton("Inviato! ✅");
-            }, 7000);
-
             try {
-                // 1. Richiedi subito il permesso nativo al browser (su iOS DEVE essere la 1a riga dal tap per preservare il gesture nativo)
-                if (typeof Notification !== 'undefined' && Notification.permission !== 'granted') {
-                    try {
-                        const perm = await Notification.requestPermission();
-                        if (perm !== 'granted') {
-                            clearTimeout(safetyTimer);
-                            resetButton("Permesso negato ❌");
-                            setPushNotificationsState(false);
-                            return;
-                        }
-                    } catch(permErr) {
-                        console.warn("[Push perm err]", permErr);
-                    }
+                // 1. Registra prima di tutto il dispositivo su OneSignal e nel database
+                const subRes = await subscribeUserToPush();
+                if (!subRes.success) {
+                    resetButton(subRes.reason === 'login_required' ? "Accedi prima! ⚠️" : "Permesso negato ❌", 3000);
+                    return;
                 }
 
-                setPushNotificationsState(true);
+                if (btn) btn.innerText = "Invio push... ⏳";
 
-                // 2. Registra la sottoscrizione Push e associa l'utente su OneSignal ATTENDENDO la sincronizzazione
-                await new Promise((resolve) => {
-                    window.OneSignalDeferred = window.OneSignalDeferred || [];
-                    window.OneSignalDeferred.push(async function(OneSignal) {
-                        try {
-                            if (OneSignal.User && OneSignal.User.PushSubscription) {
-                                await OneSignal.User.PushSubscription.optIn();
-                            }
-                            if (currentUser && currentUser.uid) {
-                                await OneSignal.login(currentUser.uid);
-                                console.log("[OneSignal] Device collegato a UID:", currentUser.uid);
-                            }
-                            // Lascia 1 secondo al server OneSignal per registrare il push token
-                            setTimeout(resolve, 1000);
-                        } catch(osErr) {
-                            console.warn("[OneSignal test err]", osErr);
-                            resolve();
-                        }
-                    });
-                    // Fallback di timeout per non bloccare mai
-                    setTimeout(resolve, 3000);
-                });
-
-                // 3. Invia la notifica Push tramite Cloudflare Relay
+                // 2. Invia la notifica Push reale via Cloudflare Relay
                 if (currentUser && currentUser.uid) {
-                    try {
-                        await dispatchBackgroundPush({
-                            targetUids: [currentUser.uid],
-                            title: "🔥 Calisthenics Tree Notifiche",
-                            body: "Test riuscito! Il tuo telefono è collegato correttamente.",
-                            data: { type: 'test' }
-                        });
-                    } catch(dpErr) {
-                        console.warn("[dispatchBackgroundPush err]", dpErr);
-                    }
+                    await dispatchBackgroundPush({
+                        targetUids: [currentUser.uid],
+                        title: "🔥 Calisthenics Tree Notifiche",
+                        body: "Test riuscito! Il tuo telefono è collegato correttamente a OneSignal.",
+                        data: { type: 'test' }
+                    });
                 }
 
-                // 4. Mostra notifica locale immediata se supportata
+                // 3. Notifica visiva locale istantanea
                 if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
                     if (swRegistration && typeof swRegistration.showNotification === 'function') {
                         try {
@@ -3683,12 +3704,10 @@ let currentUser = null;
                     }
                 }
 
-                clearTimeout(safetyTimer);
-                resetButton("Inviato! ✅");
+                resetButton(subRes.subId ? "Registrato & Inviato! ✅" : "Inviato! ✅", 3500);
             } catch(err) {
                 console.warn("[testPushNotification err]", err);
-                clearTimeout(safetyTimer);
-                resetButton("Errore invio ⚠️");
+                resetButton("Errore invio ⚠️", 3000);
             }
         }
         
