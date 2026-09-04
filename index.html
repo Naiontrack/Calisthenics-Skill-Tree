@@ -2643,13 +2643,18 @@
                 return;
             }
             try {
+                const isGhPages = window.location.pathname.includes('/Calisthenics-Skill-Tree');
+                const osWorkerPath = isGhPages ? 'Calisthenics-Skill-Tree/OneSignalSDKWorker.js' : 'OneSignalSDKWorker.js';
+                const osScope = isGhPages ? '/Calisthenics-Skill-Tree/' : './';
+
                 await OneSignal.init({
                     appId: ONESIGNAL_APP_ID,
                     allowLocalhostAsSecureOrigin: true,
-                    serviceWorkerParam: { scope: "./" },
-                    serviceWorkerPath: "./OneSignalSDKWorker.js",
+                    serviceWorkerParam: { scope: osScope },
+                    serviceWorkerPath: osWorkerPath,
                     notifyButton: { enable: false }
                 });
+                console.log("[OneSignal] Inizializzato con successo. Scope:", osScope, "Path:", osWorkerPath);
                 console.log("[OneSignal] Inizializzato con successo.");
                 if (Notification.permission === 'granted') {
                     try {
@@ -8120,7 +8125,10 @@
       // Registrazione Service Worker per Notifiche Push e PWA Standalone
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('./OneSignalSDKWorker.js', { scope: './' })
+          const isGhPages = window.location.pathname.includes('/Calisthenics-Skill-Tree');
+          const swFile = isGhPages ? '/Calisthenics-Skill-Tree/OneSignalSDKWorker.js' : './OneSignalSDKWorker.js';
+          const swScope = isGhPages ? '/Calisthenics-Skill-Tree/' : './';
+          navigator.serviceWorker.register(swFile, { scope: swScope })
             .then((registration) => {
               console.log('OneSignal & Firebase Service Worker unificato attivo:', registration.scope);
               swRegistration = registration;
