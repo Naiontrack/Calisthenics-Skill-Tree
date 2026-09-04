@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
+    <link rel="manifest" href="./manifest.json">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Occhionero's Calisthenics Tree</title>
@@ -10,10 +11,80 @@
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
     <style>
+        media screen and (max-width: 768px) {
+    input[type="text"], input[type="number"], input[type="email"], 
+    input[type="password"], select, textarea {
+        font-size: 16px !important;
+    }
+}
+
+/* Barra di ricerca Skills */
+.search-container {
+    width: 100%;
+    max-width: 900px;
+    margin-bottom: 15px;
+}
+.search-bar {
+    width: 100%;
+    padding: 12px;
+    border-radius: 10px;
+    border: 1px solid var(--accent);
+    background: var(--card-bg);
+    color: var(--text);
+    box-sizing: border-box;
+}
+
+/* Sezioni a tendina (Accordion) */
+.collapsible-header {
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 15px;
+}
+.collapsible-header::after {
+    content: '▼';
+    font-size: 0.8rem;
+    transition: transform 0.3s;
+}
+.collapsible-header.active::after {
+    transform: rotate(180deg);
+}
+.collapsible-content {
+    display: none; /* Nascosto di default */
+    padding: 15px;
+    border-top: 1px solid var(--line-color);
+}
+.collapsible-content.show {
+    display: block;
+}
+
+/* Fix durata allenamento mobile */
+.workout-meta-row {
+    display: flex;
+    gap: 10px;
+    width: 100%;
+}
+.workout-meta-row .auth-form-group {
+    flex: 1;
+}
+
+/* Badge Rank in Chat */
+.chat-rank-tag {
+    font-size: 0.65rem;
+    padding: 2px 5px;
+    border-radius: 4px;
+    background: var(--accent);
+    color: #000;
+    font-weight: bold;
+    margin-left: 5px;
+    vertical-align: middle;
+    text-transform: uppercase;
+}
         :root {
             /* TEMA PREDEFINITO (Futuristic Dark) */
             --bg-color: #0b0f19;
-            --card-bg: #151d30; 
+            --card-bg: #151d30;
             --accent: #38bdf8;
             --locked: #334155;
             --unlocked: #22c55e;
@@ -1739,15 +1810,32 @@
         <div id="profile-settings-body"></div>
     </div>
 
-    <div class="workouts-section" id="workouts-section">
-        <div class="workouts-section-header">
-            <h3 class="leaderboard-title">🏋️ I Miei Allenamenti</h3>
-            <button class="btn-confirm" id="new-workout-btn" onclick="openNewWorkoutModal()">➕ Nuovo Allenamento</button>
+   <!-- SEZIONE PROFILO A TENDINA -->
+    <div class="profile-settings-section" id="profile-settings-section">
+        <div class="collapsible-header" onclick="toggleSection('profile-content', this)">
+            <h3 class="leaderboard-title" style="margin:0; border:none;">📋 Il Mio Profilo</h3>
         </div>
-        <div id="workouts-list-container">
-            <p style="color: var(--subtext); text-align:center; font-size:0.85rem;">Caricamento allenamenti...</p>
+        <div id="profile-content" class="collapsible-content">
+            <div id="profile-settings-body"></div>
         </div>
     </div>
+
+    <!-- SEZIONE ALLENAMENTI A TENDINA -->
+    <div class="workouts-section" id="workouts-section">
+        <div class="collapsible-header" onclick="toggleSection('workouts-content', this)">
+            <h3 class="leaderboard-title" style="margin:0; border:none;">🏋️ I Miei Allenamenti</h3>
+        </div>
+        <div id="workouts-content" class="collapsible-content">
+            <div class="workouts-section-header">
+                <button class="btn-confirm" id="new-workout-btn" onclick="openNewWorkoutModal()" style="width:100%">➕ Nuovo Allenamento</button>
+            </div>
+            <div id="workouts-list-container">
+                <p style="color: var(--subtext); text-align:center; font-size:0.85rem;">Caricamento allenamenti...</p>
+            </div>
+        </div>
+    </div>
+    <input type="text" id="skillSearch" class="search-bar" placeholder="🔍 Cerca una skill (es. Planche, Pull up...)" oninput="updateUI()">
+</div>
 
     <div class="tree-container" id="tree"></div>
 
@@ -1824,9 +1912,12 @@
         };
 
         // Inizializzazione Firebase
-        firebase.initializeApp(firebaseConfig);
+        firebase.initializeApp(firebaseConfig); 
+        
+         
         const auth = firebase.auth();
-        const db = firebase.firestore();
+        const db = firebase.firestore(); 
+        
 
         let currentUser = null;
         let userNickname = "";
@@ -2420,94 +2511,106 @@
             });
         }
 
-        function updateUI() {
-            const currentXp = getTotalXp();
-            const currentRank = getCurrentRank(currentXp);
+function updateUI() {
+    const currentXp = getTotalXp();
+    const currentRank = getCurrentRank(currentXp);
+    
+    // 1. RECUPERO TESTO RICERCA
+    const searchInput = document.getElementById('skillSearch');
+    const searchQuery = searchInput ? searchInput.value.toLowerCase() : "";
+
+    let rankIndex = ranks.indexOf(currentRank);
+    let nextRank = ranks[rankIndex + 1] || currentRank;
+
+    document.getElementById('rank-icon-box').innerHTML = currentRank.iconSvg;
+    document.getElementById('user-rank').innerText = `GRADO: ${currentRank.name}`;
+    document.getElementById('total-xp').innerText = `XP Totali: ${currentXp}`;
+    
+    const prevRankXp = currentRank.minXp;
+    const nextRankXp = nextRank.minXp;
+    const progressPercent = nextRankXp === prevRankXp ? 100 : Math.min(((currentXp - prevRankXp) / (nextRankXp - prevRankXp)) * 100, 100);
+    document.getElementById('rank-progress').style.width = `${progressPercent}%`;
+
+    const container = document.getElementById('tree');
+    container.innerHTML = '';
+
+    const filteredCategories = currentCategoryFilter === 'all' 
+        ? categories 
+        : categories.filter(c => c.id === currentCategoryFilter);
+
+    filteredCategories.forEach(cat => {
+        
+        // 2. FILTRO DELLE SKILL PER NOME
+        const skillsFiltrate = cat.skills.filter(s => s.name.toLowerCase().includes(searchQuery));
+        
+        // 3. SE NON CI SONO SKILL CORRISPONDENTI NELLA CATEGORIA, LA SALTIAMO
+        if (skillsFiltrate.length === 0) return;
+
+        const catHeader = document.createElement('h3');
+        catHeader.className = 'category-title';
+        catHeader.innerText = cat.title;
+        container.appendChild(catHeader);
+
+        const branch = document.createElement('div');
+        branch.className = 'skill-tree-branch';
+
+        // 4. CICLO SULLE SKILL FILTRATE
+        skillsFiltrate.forEach(skill => {
+            const skillData = userState[skill.id] || { unlocked: false, val: 0 };
+            const isUnlocked = skillData.unlocked;
+            const val = skillData.val || 0;
             
-            let rankIndex = ranks.indexOf(currentRank);
-            let nextRank = ranks[rankIndex + 1] || currentRank;
+            let dynamicTarget = skill.baseTarget;
+            let goalsReached = 0;
+            while (val >= dynamicTarget) {
+                goalsReached++;
+                dynamicTarget += skill.step;
+            }
 
-            document.getElementById('rank-icon-box').innerHTML = currentRank.iconSvg;
-            document.getElementById('user-rank').innerText = `GRADO: ${currentRank.name}`;
-            document.getElementById('total-xp').innerText = `XP Totali: ${currentXp}`;
-            
-            const prevRankXp = currentRank.minXp;
-            const nextRankXp = nextRank.minXp;
-            const progressPercent = nextRankXp === prevRankXp ? 100 : Math.min(((currentXp - prevRankXp) / (nextRankXp - prevRankXp)) * 100, 100);
-            document.getElementById('rank-progress').style.width = `${progressPercent}%`;
+            const unit = skill.type === 'rep' ? 'rip' : 'sec';
+            const baseSkillXp = val * skill.xpPerUnit;
+            const totalSkillXp = isUnlocked ? (skill.unlockXp + baseSkillXp + (goalsReached * skill.goalBonusXp)) : 0;
 
-            const container = document.getElementById('tree');
-            container.innerHTML = '';
+            const card = document.createElement('div');
+            card.className = `skill-card ${isUnlocked ? 'unlocked-card' : ''}`;
 
-            const filteredCategories = currentCategoryFilter === 'all' 
-                ? categories 
-                : categories.filter(c => c.id === currentCategoryFilter);
+            const stickmanSvg = skillStickmen[skill.id] || `<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="20" fill="var(--accent)"/></svg>`;
 
-            filteredCategories.forEach(cat => {
-                const catHeader = document.createElement('h3');
-                catHeader.className = 'category-title';
-                catHeader.innerText = cat.title;
-                container.appendChild(catHeader);
-
-                const branch = document.createElement('div');
-                branch.className = 'skill-tree-branch';
-
-                cat.skills.forEach(skill => {
-                    const skillData = userState[skill.id] || { unlocked: false, val: 0 };
-                    const isUnlocked = skillData.unlocked;
-                    const val = skillData.val || 0;
-                    
-                    let dynamicTarget = skill.baseTarget;
-                    let goalsReached = 0;
-                    while (val >= dynamicTarget) {
-                        goalsReached++;
-                        dynamicTarget += skill.step;
-                    }
-
-                    const unit = skill.type === 'rep' ? 'rip' : 'sec';
-                    const baseSkillXp = val * skill.xpPerUnit;
-                    const totalSkillXp = isUnlocked ? (skill.unlockXp + baseSkillXp + (goalsReached * skill.goalBonusXp)) : 0;
-
-                    const card = document.createElement('div');
-                    card.className = `skill-card ${isUnlocked ? 'unlocked-card' : ''}`;
-
-                    const stickmanSvg = skillStickmen[skill.id] || `<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="20" fill="var(--accent)"/></svg>`;
-
-                    card.innerHTML = `
-                        <div class="skill-content" onclick="handleCardTap('${skill.id}')">
-                            <div class="skill-img-box">
-                                ${stickmanSvg}
-                            </div>
-                            <div class="skill-info">
-                                <h4>${skill.name} ${isUnlocked ? '' : '🔒'}</h4>
-                                ${isUnlocked ? `
-                                    <p>Prossimo Obiettivo: <strong>${dynamicTarget} ${unit}</strong> (+${skill.goalBonusXp} XP Bonus)</p>
-                                    <p style="color: var(--unlocked); font-weight: bold;">
-                                        Record: ${val} ${unit} (${totalSkillXp} XP Totali)
-                                    </p>
-                                ` : `
-                                    <p style="color: #eab308; font-weight: bold;">
-                                        Sblocca per: +${skill.unlockXp} XP!
-                                    </p>
-                                    <p>Tocca per sbloccare</p>
-                                `}
-                            </div>
-                        </div>
-                        <div class="actions">
-                            ${isUnlocked ? `
-                                <input type="number" id="input-${skill.id}" value="${val}" min="0" onclick="event.stopPropagation()">
-                                <button onclick="event.stopPropagation(); updateSkill('${skill.id}')">Salva</button>
-                                <button class="relock-btn" title="Blocca di nuovo la skill" onclick="event.stopPropagation(); askRelock('${skill.id}')">🔒</button>
-                            ` : `
-                                <button class="unlock-btn" onclick="event.stopPropagation(); askUnlock('${skill.id}')">🔓 Sblocca</button>
-                            `}
-                        </div>
-                    `;
-                    branch.appendChild(card);
-                });
-                container.appendChild(branch);
-            });
-        }
+            card.innerHTML = `
+                <div class="skill-content" onclick="handleCardTap('${skill.id}')">
+                    <div class="skill-img-box">
+                        ${stickmanSvg}
+                    </div>
+                    <div class="skill-info">
+                        <h4>${skill.name} ${isUnlocked ? '' : '🔒'}</h4>
+                        ${isUnlocked ? `
+                            <p>Prossimo Obiettivo: <strong>${dynamicTarget} ${unit}</strong> (+${skill.goalBonusXp} XP Bonus)</p>
+                            <p style="color: var(--unlocked); font-weight: bold;">
+                                Record: ${val} ${unit} (${totalSkillXp} XP Totali)
+                            </p>
+                        ` : `
+                            <p style="color: #eab308; font-weight: bold;">
+                                Sblocca per: +${skill.unlockXp} XP!
+                            </p>
+                            <p>Tocca per sbloccare</p>
+                        `}
+                    </div>
+                </div>
+                <div class="actions">
+                    ${isUnlocked ? `
+                        <input type="number" id="input-${skill.id}" value="${val}" min="0" onclick="event.stopPropagation()">
+                        <button onclick="event.stopPropagation(); updateSkill('${skill.id}')">Salva</button>
+                        <button class="relock-btn" title="Blocca di nuovo la skill" onclick="event.stopPropagation(); askRelock('${skill.id}')">🔒</button>
+                    ` : `
+                        <button class="unlock-btn" onclick="event.stopPropagation(); askUnlock('${skill.id}')">🔓 Sblocca</button>
+                    `}
+                </div>
+            `;
+            branch.appendChild(card);
+        });
+        container.appendChild(branch);
+    });
+}
 
         function findSkillById(id) {
             for (let cat of categories) {
@@ -4839,6 +4942,39 @@
         applyTheme(currentTheme);
         renderProfileSettings();
         initWorkoutsSection();
+        function toggleSection(contentId, headerEl) {
+    const content = document.getElementById(contentId);
+    const isOpen = content.style.display === "block";
+    content.style.display = isOpen ? "none" : "block";
+    headerEl.classList.toggle("active", !isOpen);
     </script>
+    <script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./pwabuilder-sw.js');
+    });
+  }
+        <script>
+  // 1. La tua configurazione esistente
+  const firebaseConfig = {
+    apiKey: "BEKd6PyJKq4bND7nJUTOkBBDH82Frv3BiPJCPDC2ZXTUYO7hOWMRTHcYretZcHQuJXZ6zXsW8hY6SW4EzT2qJXI",
+    authDomain: "...",
+    // ...
+  };
+  
+  // 2. Inizializzazione che hai già
+  firebase.initializeApp(firebaseConfig);
+
+  // --- 3. INCOLLA QUI IL NUOVO CODICE ---
+  const messaging = firebase.messaging();
+
+  function richiediPermessiNotifiche() {
+    // ... tutto il resto del codice che ti ho dato prima ...
+  }
+  
+  richiediPermessiNotifiche();
+  // --------------------------------------
+</script>
 </body>
 </html>
+
