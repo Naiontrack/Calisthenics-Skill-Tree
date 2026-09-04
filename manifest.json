@@ -13,7 +13,7 @@
         :root {
             /* TEMA PREDEFINITO (Futuristic Dark) */
             --bg-color: #0b0f19;
-            --card-bg: #151d30;
+            --card-bg: #151d30; 
             --accent: #38bdf8;
             --locked: #334155;
             --unlocked: #22c55e;
