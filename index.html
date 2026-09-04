@@ -4202,31 +4202,32 @@
         // ALLENAMENTI PERSONALI
         // ==========================================
         function initWorkoutsSection() {
+            stopWorkoutsListener();
+            const listEl = document.getElementById('workouts-list-container');
+            const countBadge = document.getElementById('workouts-count-badge');
+
             if (currentUser) {
-                stopWorkoutsListener();
-                const listEl = document.getElementById('workouts-list-container');
                 workoutsUnsubscribe = db.collection("users").doc(currentUser.uid).collection("workouts")
                     .orderBy("createdAt", "desc")
-                    .limit(30)
+                    .limit(50)
                     .onSnapshot((snapshot) => {
                         const workouts = [];
                         snapshot.forEach(doc => workouts.push(Object.assign({ id: doc.id }, doc.data())));
-                        const countBadge = document.getElementById('workouts-count-badge');
                         if (countBadge) countBadge.innerText = `(${snapshot.size})`;
+                        if (workouts.length > 0) {
+                            saveLocalWorkouts(workouts);
+                        }
                         renderWorkoutsList(workouts);
                     }, (error) => {
-                        console.error("Errore nel caricamento degli allenamenti:", error);
+                        console.error("Errore nel caricamento degli allenamenti da Firestore:", error);
                         workoutsUnsubscribe = null;
-                        if (listEl) {
-                            listEl.innerHTML = (error && error.code === 'permission-denied')
-                                ? `<p style="color: var(--subtext); text-align:center; font-size:0.85rem;">⚠️ Le regole di sicurezza di Firestore non permettono di leggere gli allenamenti (collection "workouts"). Aggiorna le regole nella console Firebase.</p>`
-                                : `<p style="color: var(--subtext); text-align:center; font-size:0.85rem;">Errore nel caricamento degli allenamenti.</p>`;
-                        }
+                        // Fallback trasparente: mostra gli allenamenti salvati in locale senza bloccare l'interfaccia
+                        const local = getLocalWorkouts();
+                        if (countBadge) countBadge.innerText = `(${local.length})`;
+                        renderWorkoutsList(local);
                     });
             } else {
-                stopWorkoutsListener();
                 const local = getLocalWorkouts();
-                const countBadge = document.getElementById('workouts-count-badge');
                 if (countBadge) countBadge.innerText = `(${local.length})`;
                 renderLocalWorkoutsList();
             }
@@ -4454,19 +4455,34 @@
                     }, { merge: true });
                 }).then(() => {
                     userWorkoutXp += xpEarned;
+                    // Salva anche una copia locale per ridondanza
+                    const local = getLocalWorkouts();
+                    workoutData.id = 'cloud_' + Date.now();
+                    workoutData.createdAt = Date.now();
+                    local.unshift(workoutData);
+                    saveLocalWorkouts(local);
+
                     document.getElementById('custom-modal').classList.remove('active');
                     openWorkoutsSection();
                     saveState();
                     showWorkoutSavedModal(xpEarned);
                 }).catch((error) => {
-                    console.error("Errore nel salvataggio dell'allenamento:", error);
-                    if (errEl) {
-                        errEl.innerText = (error && error.code === 'permission-denied')
-                            ? "⚠️ Permessi Firestore insufficienti per salvare l'allenamento (collection \"workouts\"). Aggiorna le regole nella console Firebase."
-                            : "Errore durante il salvataggio dell'allenamento.";
-                    }
-                    if (confirmBtn) { confirmBtn.disabled = false; confirmBtn.innerText = 'Salva allenamento'; }
-                    if (cancelBtn) cancelBtn.disabled = false;
+                    console.warn("Salvataggio su cloud non riuscito, fallback istantaneo su locale:", error);
+                    // Se Firestore rifiuta la scrittura per le regole, salva in locale per non perdere i dati
+                    const list = getLocalWorkouts();
+                    workoutData.id = 'local_' + Date.now();
+                    workoutData.createdAt = Date.now();
+                    list.unshift(workoutData);
+                    saveLocalWorkouts(list);
+
+                    userWorkoutXp += xpEarned;
+                    localStorage.setItem('naiontrackWorkoutXp', String(userWorkoutXp));
+
+                    document.getElementById('custom-modal').classList.remove('active');
+                    openWorkoutsSection();
+                    renderLocalWorkoutsList();
+                    updateUI();
+                    showWorkoutSavedModal(xpEarned);
                 });
             } else {
                 const list = getLocalWorkouts();
@@ -4512,21 +4528,30 @@
         }
 
         function deleteWorkout(workoutId, xpToRemove) {
+            // Rimuove sempre dalla copia locale
+            const list = getLocalWorkouts().filter(w => w.id !== workoutId);
+            saveLocalWorkouts(list);
+
             if (currentUser) {
                 const userRef = db.collection("users").doc(currentUser.uid);
                 return userRef.collection("workouts").doc(workoutId).delete().then(() => {
                     return userRef.set({
                         workoutXp: firebase.firestore.FieldValue.increment(-(xpToRemove || 0))
                     }, { merge: true });
+                }).catch(err => {
+                    console.warn("Eliminazione da Firestore non riuscita, rimosso localmente:", err);
                 }).then(() => {
                     userWorkoutXp = Math.max(0, userWorkoutXp - (xpToRemove || 0));
                     saveState();
+                    const countBadge = document.getElementById('workouts-count-badge');
+                    if (countBadge) countBadge.innerText = `(${list.length})`;
+                    renderWorkoutsList(list);
                 });
             } else {
-                const list = getLocalWorkouts().filter(w => w.id !== workoutId);
-                saveLocalWorkouts(list);
                 userWorkoutXp = Math.max(0, userWorkoutXp - (xpToRemove || 0));
                 localStorage.setItem('naiontrackWorkoutXp', String(userWorkoutXp));
+                const countBadge = document.getElementById('workouts-count-badge');
+                if (countBadge) countBadge.innerText = `(${list.length})`;
                 renderLocalWorkoutsList();
                 updateUI();
                 return Promise.resolve();
