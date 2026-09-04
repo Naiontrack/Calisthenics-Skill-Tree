@@ -143,9 +143,24 @@
             outline: none;
         }
 
-        button:focus:not(:focus-visible) {
-            box-shadow: none !important;
-            filter: none !important;
+        /* Feedback touch immediato e persistente durante la pressione */
+        button:active, .btn-auth:active, .btn-auth-secondary:active, .btn-confirm:active, .btn-danger-confirm:active, .chat-fab:active, .events-fab:active, .challenges-fab:active,
+        button.is-pressed, .btn-auth.is-pressed, .btn-auth-secondary.is-pressed, .btn-confirm.is-pressed, .btn-danger-confirm.is-pressed, .chat-fab.is-pressed, .events-fab.is-pressed, .challenges-fab.is-pressed {
+            filter: brightness(1.35) !important;
+            box-shadow: 0 0 20px var(--border-glow), 0 0 35px var(--accent) !important;
+            transform: scale(0.96) !important;
+        }
+
+        button:focus {
+            outline: none;
+        }
+
+        /* Previene il bagliore sticky su mobile quando il pulsante mantiene il focus dopo il tocco */
+        button:not(:active):not(.is-pressed):focus:not(:focus-visible),
+        .btn-auth:not(:active):not(.is-pressed):focus:not(:focus-visible),
+        .btn-confirm:not(:active):not(.is-pressed):focus:not(:focus-visible) {
+            box-shadow: none;
+            filter: none;
         }
 
         .workouts-count-badge {
@@ -1213,14 +1228,19 @@
 
         .chat-tab-btn {
             flex: 1;
+            position: relative;
             background: none;
             border: none;
             border-radius: 0;
-            padding: 8px 4px;
-            font-size: 0.8rem;
+            padding: 10px 8px;
+            font-size: 0.82rem;
             color: var(--subtext);
             cursor: pointer;
             border-bottom: 2px solid transparent;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
         }
 
         .chat-tab-btn.active {
@@ -1279,13 +1299,26 @@
         }
 
         .chat-list-item {
+            position: relative;
             display: flex;
             align-items: center;
             gap: 10px;
-            padding: 8px 6px;
+            padding: 8px 26px 8px 8px;
             border-radius: 10px;
             border: 1px solid var(--line-color);
             cursor: pointer;
+        }
+
+        .chat-item-unread-dot {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 9px;
+            height: 9px;
+            background: #ef4444;
+            border-radius: 50%;
+            box-shadow: 0 0 7px #ef4444;
+            pointer-events: none;
         }
 
         .chat-list-item:hover {
@@ -2276,12 +2309,16 @@
 
         .tab-badge-dot {
             display: inline-block;
+            position: absolute;
+            top: 6px;
+            right: 12px;
             width: 8px;
             height: 8px;
-            background: var(--danger);
+            background: #ef4444;
             border-radius: 50%;
-            margin-left: 4px;
-            vertical-align: middle;
+            box-shadow: 0 0 6px rgba(239, 68, 68, 0.9);
+            margin: 0;
+            pointer-events: none;
         }
 
         /* ========================================== */
@@ -2531,7 +2568,7 @@
             <button class="chat-close-btn" onclick="toggleChatPanel()">✕</button>
         </div>
         <div class="chat-tabs" id="chat-tabs">
-            <button class="chat-tab-btn active" id="chat-tab-general" onclick="switchChatTab('general')">💬 Generale</button>
+            <button class="chat-tab-btn active" id="chat-tab-general" onclick="switchChatTab('general')">💬 Generale <span id="chat-general-dot" class="tab-badge-dot" style="display:none;"></span></button>
             <button class="chat-tab-btn" id="chat-tab-private" onclick="switchChatTab('private')">👤 Private <span id="chat-private-dot" class="tab-badge-dot" style="display:none;"></span></button>
         </div>
         <div class="chat-thread-header" id="chat-thread-header" style="display:none;">
@@ -2681,18 +2718,371 @@
         let lastSeenGeneralAtMillis = 0; // persistito in localStorage, per utente
 
         const rankLogos = {
-            bronze: `<svg viewBox="0 0 100 100"><defs><linearGradient id="b" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#d97706"/><stop offset="100%" stop-color="#78350f"/></linearGradient></defs><polygon points="50,5 90,25 90,75 50,95 10,75 10,25" fill="url(#b)" stroke="#f59e0b" stroke-width="3"/><path d="M50 20 L75 70 L25 70 Z" fill="#451a03" opacity="0.6"/><circle cx="50" cy="50" r="15" fill="#f59e0b"/></svg>`,
-            silver: `<svg viewBox="0 0 100 100"><defs><linearGradient id="s" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#e2e8f0"/><stop offset="100%" stop-color="#475569"/></linearGradient></defs><polygon points="50,5 95,30 80,85 20,85 5,30" fill="url(#s)" stroke="#f8fafc" stroke-width="3"/><polygon points="50,20 75,50 50,80 25,50" fill="#94a3b8"/><circle cx="50" cy="50" r="12" fill="#f8fafc"/></svg>`,
-            gold: `<svg viewBox="0 0 100 100"><defs><linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#facc15"/><stop offset="100%" stop-color="#854d0e"/></linearGradient></defs><path d="M50 5 L85 25 L85 75 L50 95 L15 75 L15 25 Z" fill="url(#g)" stroke="#fef08a" stroke-width="3"/><polygon points="50,15 65,40 90,45 70,65 75,90 50,75 25,90 30,65 10,45 35,40" fill="#fef08a"/></svg>`,
-            platinum: `<svg viewBox="0 0 100 100"><defs><linearGradient id="p" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#22d3ee"/><stop offset="100%" stop-color="#0e7490"/></linearGradient></defs><polygon points="50,0 90,35 70,95 30,95 10,35" fill="url(#p)" stroke="#67e8f9" stroke-width="3"/><polygon points="50,15 80,40 50,85 20,40" fill="#a5f3fc"/><circle cx="50" cy="45" r="8" fill="#0891b2"/></svg>`,
-            emerald: `<svg viewBox="0 0 100 100"><defs><linearGradient id="e" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#34d399"/><stop offset="100%" stop-color="#064e3b"/></linearGradient></defs><polygon points="50,5 95,35 75,90 25,90 5,35" fill="url(#e)" stroke="#a7f3d0" stroke-width="3"/><polygon points="50,15 80,40 50,80 20,40" fill="#10b981"/></svg>`,
-            diamond: `<svg viewBox="0 0 100 100"><defs><linearGradient id="d" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#60a5fa"/><stop offset="100%" stop-color="#1e3a8a"/></linearGradient></defs><polygon points="50,5 95,50 50,95 5,50" fill="url(#d)" stroke="#bfdbfe" stroke-width="3"/><polygon points="50,20 80,50 50,80 20,50" fill="#3b82f6"/><polygon points="50,30 65,50 50,70 35,50" fill="#eff6ff"/></svg>`,
-            master: `<svg viewBox="0 0 100 100"><defs><linearGradient id="m" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#c084fc"/><stop offset="100%" stop-color="#581c87"/></linearGradient></defs><path d="M50 5 L90 25 L90 75 L50 95 L10 75 L10 25 Z" fill="url(#m)" stroke="#e9d5ff" stroke-width="3"/><path d="M30 40 L50 20 L70 40 L60 80 L40 80 Z" fill="#a855f7"/></svg>`,
-            grandmaster: `<svg viewBox="0 0 100 100"><defs><linearGradient id="gm" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#f43f5e"/><stop offset="100%" stop-color="#881337"/></linearGradient></defs><polygon points="50,2 98,38 80,98 20,98 2,38" fill="url(#gm)" stroke="#fecdd3" stroke-width="4"/><path d="M50 15 L65 45 L95 45 L70 65 L80 95 L50 75 L20 95 L30 65 L5 45 L35 45 Z" fill="#e11d48"/></svg>`,
-            challenger: `<svg viewBox="0 0 100 100"><defs><linearGradient id="c" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#fbbf24"/><stop offset="100%" stop-color="#b45309"/></linearGradient></defs><polygon points="50,0 100,50 50,100 0,50" fill="url(#c)" stroke="#fff" stroke-width="3"/><circle cx="50" cy="50" r="30" fill="#d97706" stroke="#fef08a" stroke-width="3"/><path d="M50 25 L60 42 L80 45 L65 60 L70 80 L50 70 L30 80 L35 60 L20 45 L40 42 Z" fill="#fff"/></svg>`,
-            titan: `<svg viewBox="0 0 100 100"><defs><linearGradient id="t" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#38bdf8"/><stop offset="100%" stop-color="#0369a1"/></linearGradient></defs><path d="M10 20 L50 0 L90 20 L90 80 L50 100 L10 80 Z" fill="url(#t)" stroke="#e0f2fe" stroke-width="4"/><path d="M30 30 L50 15 L70 30 L70 70 L50 85 L30 70 Z" fill="#0284c7"/></svg>`,
-            overhuman: `<svg viewBox="0 0 100 100"><defs><linearGradient id="oh" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#f43f5e"/><stop offset="50%" stop-color="#a855f7"/><stop offset="100%" stop-color="#06b6d4"/></linearGradient></defs><polygon points="50,0 95,25 95,75 50,100 5,75 5,25" fill="url(#oh)" stroke="#fff" stroke-width="4"/><circle cx="50" cy="50" r="25" fill="#0f172a" stroke="#fff" stroke-width="3"/><path d="M50 30 L60 45 L75 50 L60 60 L65 75 L50 65 L35 75 L40 60 L25 50 L40 45 Z" fill="#fff"/></svg>`,
-            godlike: `<svg viewBox="0 0 100 100"><defs><radialGradient id="gdl"><stop offset="0%" stop-color="#ffffff"/><stop offset="50%" stop-color="#fef08a"/><stop offset="100%" stop-color="#ca8a04"/></radialGradient></defs><circle cx="50" cy="50" r="45" fill="url(#gdl)" stroke="#fff" stroke-width="5"/><polygon points="50,10 63,35 90,38 70,57 76,84 50,70 24,84 30,57 10,38 37,35" fill="#a16207"/></svg>`
+            bronze: `<svg viewBox="0 0 100 100" width="100%" height="100%">
+              <defs>
+                <linearGradient id="rk-bz-shield" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#b45309"/>
+                  <stop offset="30%" stop-color="#d97706"/>
+                  <stop offset="70%" stop-color="#92400e"/>
+                  <stop offset="100%" stop-color="#451a03"/>
+                </linearGradient>
+                <linearGradient id="rk-bz-rim" x1="0%" y1="0%" x2="0%" y2="100%">
+                  <stop offset="0%" stop-color="#f59e0b"/>
+                  <stop offset="50%" stop-color="#78350f"/>
+                  <stop offset="100%" stop-color="#451a03"/>
+                </linearGradient>
+                <linearGradient id="rk-bz-bevel" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stop-color="#fef3c7" stop-opacity="0.6"/>
+                  <stop offset="50%" stop-color="#f59e0b" stop-opacity="0.2"/>
+                  <stop offset="100%" stop-color="#000" stop-opacity="0.4"/>
+                </linearGradient>
+              </defs>
+              <!-- Outer Bronze Shield -->
+              <polygon points="50,6 88,22 88,60 50,94 12,60 12,22" fill="url(#rk-bz-shield)" stroke="url(#rk-bz-rim)" stroke-width="3"/>
+              <!-- Bevel facet left -->
+              <polygon points="50,12 18,26 18,56 50,88" fill="url(#rk-bz-bevel)"/>
+              <!-- Inner Shield -->
+              <polygon points="50,18 80,30 80,56 50,84 20,56 20,30" fill="#2d1204" stroke="#b45309" stroke-width="1.5"/>
+              <!-- Bronze Emblem: crossed gladius / chevron -->
+              <path d="M50,26 L68,48 L50,72 L32,48 Z" fill="url(#rk-bz-shield)" stroke="#f59e0b" stroke-width="2"/>
+              <!-- Core rivet/gem -->
+              <circle cx="50" cy="48" r="6" fill="#f59e0b" stroke="#fef3c7" stroke-width="1.5"/>
+              <!-- Corner rivets -->
+              <circle cx="20" cy="26" r="2" fill="#fcd34d"/>
+              <circle cx="80" cy="26" r="2" fill="#fcd34d"/>
+              <circle cx="50" cy="88" r="2" fill="#fcd34d"/>
+            </svg>`,
+            silver: `<svg viewBox="0 0 100 100" width="100%" height="100%">
+              <defs>
+                <linearGradient id="rk-sv-steel" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#ffffff"/>
+                  <stop offset="35%" stop-color="#cbd5e1"/>
+                  <stop offset="70%" stop-color="#64748b"/>
+                  <stop offset="100%" stop-color="#334155"/>
+                </linearGradient>
+                <linearGradient id="rk-sv-glow" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stop-color="#ffffff" stop-opacity="0.8"/>
+                  <stop offset="100%" stop-color="#94a3b8" stop-opacity="0.2"/>
+                </linearGradient>
+              </defs>
+              <!-- Winged crest backing -->
+              <polygon points="50,4 94,20 84,70 50,96 16,70 6,20" fill="url(#rk-sv-steel)" stroke="#ffffff" stroke-width="2"/>
+              <!-- Left reflective side -->
+              <polygon points="50,4 16,20 24,68 50,94" fill="url(#rk-sv-glow)"/>
+              <!-- Inner Knight Shield -->
+              <polygon points="50,14 82,27 74,65 50,86 26,65 18,27" fill="#1e293b" stroke="#cbd5e1" stroke-width="2"/>
+              <!-- Silver Starburst / Chevron -->
+              <polygon points="50,22 60,42 80,48 60,54 50,76 40,54 20,48 40,42" fill="url(#rk-sv-steel)" stroke="#ffffff" stroke-width="1.5"/>
+              <!-- Polished Gem center -->
+              <circle cx="50" cy="48" r="5" fill="#ffffff" stroke="#94a3b8" stroke-width="1.5"/>
+              <!-- Specular glint -->
+              <circle cx="48" cy="46" r="1.8" fill="#ffffff"/>
+            </svg>`,
+            gold: `<svg viewBox="0 0 100 100" width="100%" height="100%">
+              <defs>
+                <linearGradient id="rk-gd-gold" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#fef08a"/>
+                  <stop offset="30%" stop-color="#facc15"/>
+                  <stop offset="70%" stop-color="#ca8a04"/>
+                  <stop offset="100%" stop-color="#854d0e"/>
+                </linearGradient>
+                <linearGradient id="rk-gd-core" x1="0%" y1="0%" x2="0%" y2="100%">
+                  <stop offset="0%" stop-color="#fef9c3"/>
+                  <stop offset="100%" stop-color="#eab308"/>
+                </linearGradient>
+                <filter id="rk-gd-sh" x="-20%" y="-20%" width="140%" height="140%">
+                  <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#ca8a04" flood-opacity="0.5"/>
+                </filter>
+              </defs>
+              <!-- Solar Radiant Sunburst Wings -->
+              <polygon points="50,2 62,18 78,10 74,28 92,28 80,42 96,52 78,60 84,78 66,74 58,92 50,80 42,92 34,74 16,78 22,60 4,52 20,42 8,28 26,28 22,10 38,18" fill="url(#rk-gd-gold)" opacity="0.6"/>
+              <!-- Royal Crown Shield -->
+              <polygon points="50,8 90,26 84,68 50,96 16,68 10,26" fill="url(#rk-gd-gold)" stroke="#fef08a" stroke-width="2.5" filter="url(#rk-gd-sh)"/>
+              <!-- Inner Velvet Crest -->
+              <polygon points="50,18 80,32 74,64 50,86 26,64 20,32" fill="#422006" stroke="#fef08a" stroke-width="1.8"/>
+              <!-- Golden Crown / Eagle Star -->
+              <polygon points="50,24 64,42 82,44 67,58 72,78 50,66 28,78 33,58 18,44 36,42" fill="url(#rk-gd-core)" stroke="#fef08a" stroke-width="1.5"/>
+              <!-- Brilliant Top Diamond -->
+              <polygon points="50,34 57,48 50,60 43,48" fill="#ffffff" stroke="#facc15" stroke-width="1"/>
+            </svg>`,
+            platinum: `<svg viewBox="0 0 100 100" width="100%" height="100%">
+              <defs>
+                <linearGradient id="rk-pl-cyan" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#cffafe"/>
+                  <stop offset="30%" stop-color="#38bdf8"/>
+                  <stop offset="75%" stop-color="#0284c7"/>
+                  <stop offset="100%" stop-color="#083344"/>
+                </linearGradient>
+                <linearGradient id="rk-pl-ice" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stop-color="#ffffff"/>
+                  <stop offset="100%" stop-color="#7dd3fc"/>
+                </linearGradient>
+              </defs>
+              <!-- Sharp Aerodynamic Outer Wings -->
+              <polygon points="50,0 98,28 84,62 50,100 16,62 2,28" fill="url(#rk-pl-cyan)" stroke="#a5f3fc" stroke-width="2"/>
+              <!-- Prismatic Bevel Cuts -->
+              <polygon points="50,0 2,28 50,54" fill="#ffffff" opacity="0.3"/>
+              <polygon points="50,0 98,28 50,54" fill="#0369a1" opacity="0.4"/>
+              <!-- Inner Crystal Core -->
+              <polygon points="50,14 84,36 72,76 50,90 28,76 16,36" fill="#0f172a" stroke="#38bdf8" stroke-width="2"/>
+              <!-- Flying Crystalline Chevron -->
+              <polygon points="50,22 76,46 50,64 24,46" fill="url(#rk-pl-ice)" stroke="#cffafe" stroke-width="1.5"/>
+              <polygon points="50,48 70,68 50,84 30,68" fill="url(#rk-pl-cyan)" stroke="#7dd3fc" stroke-width="1.2"/>
+              <!-- Specular Sparkle -->
+              <polygon points="50,30 53,40 63,43 53,46 50,56 47,46 37,43 47,40" fill="#ffffff"/>
+            </svg>`,
+            emerald: `<svg viewBox="0 0 100 100" width="100%" height="100%">
+              <defs>
+                <linearGradient id="rk-em-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#a7f3d0"/>
+                  <stop offset="35%" stop-color="#10b981"/>
+                  <stop offset="75%" stop-color="#047857"/>
+                  <stop offset="100%" stop-color="#022c22"/>
+                </linearGradient>
+                <linearGradient id="rk-em-jade" x1="0%" y1="0%" x2="0%" y2="100%">
+                  <stop offset="0%" stop-color="#6ee7b7"/>
+                  <stop offset="100%" stop-color="#065f46"/>
+                </linearGradient>
+              </defs>
+              <!-- Hexagonal Arcane Rune Crest -->
+              <polygon points="50,2 94,26 94,74 50,98 6,74 6,26" fill="url(#rk-em-grad)" stroke="#6ee7b7" stroke-width="2.5"/>
+              <!-- Facet Edges -->
+              <polygon points="50,2 50,98 6,74 6,26" fill="#ffffff" opacity="0.15"/>
+              <polygon points="50,14 84,32 84,68 50,86 16,68 16,32" fill="#022c22" stroke="#34d399" stroke-width="2"/>
+              <!-- Emerald Gem Cut -->
+              <polygon points="50,22 78,38 78,62 50,78 22,62 22,38" fill="url(#rk-em-jade)" stroke="#a7f3d0" stroke-width="2"/>
+              <!-- Inner Sacred Rune Diamond -->
+              <polygon points="50,30 68,50 50,70 32,50" fill="#047857" stroke="#6ee7b7" stroke-width="1.8"/>
+              <circle cx="50" cy="50" r="5" fill="#d1fae5" stroke="#10b981" stroke-width="2"/>
+              <!-- Rune energy nodes -->
+              <circle cx="50" cy="14" r="2.5" fill="#a7f3d0"/>
+              <circle cx="84" cy="50" r="2.5" fill="#a7f3d0"/>
+              <circle cx="16" cy="50" r="2.5" fill="#a7f3d0"/>
+              <circle cx="50" cy="86" r="2.5" fill="#a7f3d0"/>
+            </svg>`,
+            diamond: `<svg viewBox="0 0 100 100" width="100%" height="100%">
+              <defs>
+                <linearGradient id="rk-dm-core" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#ffffff"/>
+                  <stop offset="25%" stop-color="#bfdbfe"/>
+                  <stop offset="60%" stop-color="#3b82f6"/>
+                  <stop offset="100%" stop-color="#1e1b4b"/>
+                </linearGradient>
+                <linearGradient id="rk-dm-facet" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stop-color="#ffffff" stop-opacity="0.9"/>
+                  <stop offset="100%" stop-color="#93c5fd" stop-opacity="0.3"/>
+                </linearGradient>
+                <filter id="rk-dm-glint">
+                  <feGaussianBlur stdDeviation="2" result="blur"/>
+                  <feMerge>
+                    <feMergeNode in="blur"/>
+                    <feMergeNode in="SourceGraphic"/>
+                  </feMerge>
+                </filter>
+              </defs>
+              <!-- Diamond Shape Outer Shield -->
+              <polygon points="50,2 98,40 76,96 24,96 2,40" fill="url(#rk-dm-core)" stroke="#ffffff" stroke-width="2.5"/>
+              <!-- Prismatic Top Table -->
+              <polygon points="50,2 80,18 20,18" fill="url(#rk-dm-facet)"/>
+              <!-- Star Diamond Cuts -->
+              <polygon points="50,18 80,18 98,40 50,56" fill="#60a5fa" opacity="0.6"/>
+              <polygon points="50,18 20,18 2,40 50,56" fill="#bfdbfe" opacity="0.75"/>
+              <polygon points="2,40 50,56 24,96" fill="#1d4ed8" opacity="0.8"/>
+              <polygon points="98,40 50,56 76,96" fill="#1e40af" opacity="0.9"/>
+              <polygon points="50,56 24,96 76,96" fill="#2563eb" opacity="0.85"/>
+              <!-- Center Pure Diamond Star -->
+              <polygon points="50,26 62,48 84,50 64,64 70,86 50,72 30,86 36,64 16,50 38,48" fill="#eff6ff" stroke="#ffffff" stroke-width="1.5" filter="url(#rk-dm-glint)"/>
+              <!-- Brilliant 4-Point Specular Glare -->
+              <polygon points="50,38 53,48 63,50 53,52 50,62 47,52 37,50 47,48" fill="#ffffff"/>
+              <circle cx="50" cy="50" r="2.5" fill="#ffffff"/>
+            </svg>`,
+            master: `<svg viewBox="0 0 100 100" width="100%" height="100%">
+              <defs>
+                <linearGradient id="rk-ms-purple" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#f3e8ff"/>
+                  <stop offset="30%" stop-color="#a855f7"/>
+                  <stop offset="70%" stop-color="#6b21a8"/>
+                  <stop offset="100%" stop-color="#2e1065"/>
+                </linearGradient>
+                <linearGradient id="rk-ms-dark" x1="0%" y1="0%" x2="0%" y2="100%">
+                  <stop offset="0%" stop-color="#4c1d95"/>
+                  <stop offset="100%" stop-color="#0f0728"/>
+                </linearGradient>
+              </defs>
+              <!-- Horned Master Crest Wings -->
+              <polygon points="50,4 78,0 96,24 84,62 88,88 50,100 12,88 16,62 4,24 22,0" fill="url(#rk-ms-purple)" stroke="#e9d5ff" stroke-width="2.5"/>
+              <!-- Left Wing Highlight -->
+              <polygon points="50,4 22,0 4,24 16,62 50,80" fill="#ffffff" opacity="0.18"/>
+              <!-- Inner Obsidian Armor -->
+              <polygon points="50,14 82,24 74,68 50,88 26,68 18,24" fill="url(#rk-ms-dark)" stroke="#c084fc" stroke-width="2"/>
+              <!-- Winged Void Crown -->
+              <path d="M50,24 L62,40 L80,36 L68,54 L74,74 L50,62 L26,74 L32,54 L20,36 L38,40 Z" fill="url(#rk-ms-purple)" stroke="#f3e8ff" stroke-width="1.6"/>
+              <!-- Void Crystal -->
+              <polygon points="50,34 60,48 50,64 40,48" fill="#d8b4fe" stroke="#ffffff" stroke-width="1.5"/>
+              <circle cx="50" cy="48" r="3" fill="#ffffff"/>
+              <!-- Mystic runes -->
+              <circle cx="28" cy="24" r="2" fill="#c084fc"/>
+              <circle cx="72" cy="24" r="2" fill="#c084fc"/>
+            </svg>`,
+            grandmaster: `<svg viewBox="0 0 100 100" width="100%" height="100%">
+              <defs>
+                <linearGradient id="rk-gm-ruby" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#ffe4e6"/>
+                  <stop offset="25%" stop-color="#fb7185"/>
+                  <stop offset="60%" stop-color="#e11d48"/>
+                  <stop offset="85%" stop-color="#881337"/>
+                  <stop offset="100%" stop-color="#4c0519"/>
+                </linearGradient>
+                <linearGradient id="rk-gm-flame" x1="0%" y1="100%" x2="0%" y2="0%">
+                  <stop offset="0%" stop-color="#be123c"/>
+                  <stop offset="60%" stop-color="#fbbf24"/>
+                  <stop offset="100%" stop-color="#ffffff"/>
+                </linearGradient>
+                <filter id="rk-gm-glow">
+                  <feDropShadow dx="0" dy="0" stdDeviation="3" flood-color="#f43f5e" flood-opacity="0.8"/>
+                </filter>
+              </defs>
+              <!-- Blazing Phoenix Crest -->
+              <polygon points="50,0 72,12 98,16 86,46 98,72 76,80 78,98 50,88 22,98 24,80 2,72 14,46 2,16 28,12" fill="url(#rk-gm-ruby)" stroke="#fda4af" stroke-width="2.5" filter="url(#rk-gm-glow)"/>
+              <!-- Inner Crimson Core Shield -->
+              <polygon points="50,14 84,28 76,70 50,90 24,70 16,28" fill="#31040f" stroke="#f43f5e" stroke-width="2"/>
+              <!-- Fire Phoenix Bird Symbol -->
+              <path d="M50,20 C54,32 68,36 82,34 C72,46 64,52 64,62 L50,78 L36,62 C36,52 28,46 18,34 C32,36 46,32 50,20 Z" fill="url(#rk-gm-flame)" stroke="#ffffff" stroke-width="1.5"/>
+              <!-- Fiery Heart Core -->
+              <polygon points="50,38 60,52 50,68 40,52" fill="#ffffff" stroke="#fb7185" stroke-width="1.5"/>
+              <circle cx="50" cy="52" r="3" fill="#fef08a"/>
+            </svg>`,
+            challenger: `<svg viewBox="0 0 100 100" width="100%" height="100%">
+              <defs>
+                <linearGradient id="rk-ch-gold" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#ffffff"/>
+                  <stop offset="20%" stop-color="#fef08a"/>
+                  <stop offset="50%" stop-color="#eab308"/>
+                  <stop offset="80%" stop-color="#a16207"/>
+                  <stop offset="100%" stop-color="#713f12"/>
+                </linearGradient>
+                <linearGradient id="rk-ch-wing" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stop-color="#ffffff"/>
+                  <stop offset="50%" stop-color="#fde047"/>
+                  <stop offset="100%" stop-color="#ca8a04"/>
+                </linearGradient>
+                <filter id="rk-ch-sh">
+                  <feDropShadow dx="0" dy="0" stdDeviation="4" flood-color="#facc15" flood-opacity="0.9"/>
+                </filter>
+              </defs>
+              <!-- Triple Crown Pinnacle with Grand Wings -->
+              <path d="M50,0 L66,18 L86,6 L82,32 L100,42 L84,60 92,84 68,82 50,100 32,82 8,84 16,60 0,42 18,32 14,6 34,18 Z" fill="url(#rk-ch-gold)" stroke="#ffffff" stroke-width="2.5" filter="url(#rk-ch-sh)"/>
+              <!-- Wing Feathers Layer -->
+              <path d="M22,34 L50,56 L78,34 L82,56 L50,82 L18,56 Z" fill="url(#rk-ch-wing)" opacity="0.5"/>
+              <!-- Royal Blue Shield Inset -->
+              <polygon points="50,18 80,32 72,70 50,88 28,70 20,32" fill="#0f172a" stroke="#fef08a" stroke-width="2"/>
+              <!-- Grand 8-Point Champion Star -->
+              <polygon points="50,26 56,40 70,36 60,48 72,58 58,60 50,74 42,60 28,58 40,48 30,36 44,40" fill="url(#rk-ch-gold)" stroke="#ffffff" stroke-width="1.6"/>
+              <!-- Diamond Jewel Center -->
+              <polygon points="50,42 56,48 50,54 44,48" fill="#38bdf8" stroke="#ffffff" stroke-width="1.2"/>
+              <circle cx="50" cy="48" r="2" fill="#ffffff"/>
+            </svg>`,
+            titan: `<svg viewBox="0 0 100 100" width="100%" height="100%">
+              <defs>
+                <linearGradient id="rk-tt-steel" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#e0f2fe"/>
+                  <stop offset="25%" stop-color="#38bdf8"/>
+                  <stop offset="60%" stop-color="#0284c7"/>
+                  <stop offset="85%" stop-color="#0c4a6e"/>
+                  <stop offset="100%" stop-color="#082f49"/>
+                </linearGradient>
+                <linearGradient id="rk-tt-plasma" x1="0%" y1="0%" x2="0%" y2="100%">
+                  <stop offset="0%" stop-color="#ffffff"/>
+                  <stop offset="50%" stop-color="#67e8f9"/>
+                  <stop offset="100%" stop-color="#0284c7"/>
+                </linearGradient>
+                <filter id="rk-tt-lightning">
+                  <feDropShadow dx="0" dy="0" stdDeviation="4" flood-color="#38bdf8" flood-opacity="0.95"/>
+                </filter>
+              </defs>
+              <!-- Heavy Armored Mech-Titan Crest -->
+              <polygon points="50,0 84,10 98,34 90,74 68,90 50,100 32,90 10,74 2,34 16,10" fill="url(#rk-tt-steel)" stroke="#bae6fd" stroke-width="3" filter="url(#rk-tt-lightning)"/>
+              <!-- Side Lightning Pylons -->
+              <path d="M12,24 L28,24 L18,48 L32,48 L14,80 L22,54 L8,54 Z" fill="url(#rk-tt-plasma)" stroke="#ffffff" stroke-width="1"/>
+              <path d="M88,24 L72,24 L82,48 L68,48 L86,80 L78,54 L92,54 Z" fill="url(#rk-tt-plasma)" stroke="#ffffff" stroke-width="1"/>
+              <!-- Central Reactor Chasis -->
+              <polygon points="50,12 76,28 70,68 50,86 30,68 24,28" fill="#031525" stroke="#38bdf8" stroke-width="2.5"/>
+              <!-- Pulsing Titan Core Reactor -->
+              <circle cx="50" cy="48" r="18" fill="none" stroke="#38bdf8" stroke-width="2.5" stroke-dasharray="6,3"/>
+              <circle cx="50" cy="48" r="11" fill="url(#rk-tt-plasma)" stroke="#ffffff" stroke-width="2"/>
+              <polygon points="50,39 53,46 60,48 53,50 50,57 47,50 40,48 47,46" fill="#ffffff"/>
+              <!-- Heavy Industrial Bolts -->
+              <circle cx="28" cy="18" r="2.5" fill="#bae6fd"/>
+              <circle cx="72" cy="18" r="2.5" fill="#bae6fd"/>
+              <circle cx="50" cy="92" r="2.5" fill="#bae6fd"/>
+            </svg>`,
+            overhuman: `<svg viewBox="0 0 100 100" width="100%" height="100%">
+              <defs>
+                <linearGradient id="rk-oh-nebula" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#ffffff"/>
+                  <stop offset="20%" stop-color="#f43f5e"/>
+                  <stop offset="50%" stop-color="#a855f7"/>
+                  <stop offset="80%" stop-color="#06b6d4"/>
+                  <stop offset="100%" stop-color="#3b82f6"/>
+                </linearGradient>
+                <linearGradient id="rk-oh-ring" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stop-color="#f43f5e"/>
+                  <stop offset="50%" stop-color="#ffffff"/>
+                  <stop offset="100%" stop-color="#06b6d4"/>
+                </linearGradient>
+                <filter id="rk-oh-glow">
+                  <feDropShadow dx="0" dy="0" stdDeviation="5" flood-color="#d946ef" flood-opacity="0.9"/>
+                </filter>
+              </defs>
+              <!-- Cosmic Octagon Crest with Chromatic Shift -->
+              <polygon points="50,0 85,15 100,50 85,85 50,100 15,85 0,50 15,15" fill="url(#rk-oh-nebula)" stroke="#ffffff" stroke-width="3" filter="url(#rk-oh-glow)"/>
+              <!-- Ethereal Gyroscopic Orbit Ring -->
+              <ellipse cx="50" cy="50" rx="42" ry="16" fill="none" stroke="url(#rk-oh-ring)" stroke-width="2.5" transform="rotate(-30 50 50)"/>
+              <ellipse cx="50" cy="50" rx="42" ry="16" fill="none" stroke="url(#rk-oh-ring)" stroke-width="2.5" transform="rotate(30 50 50)"/>
+              <!-- Singularity Void Core -->
+              <circle cx="50" cy="50" r="22" fill="#090514" stroke="#e879f9" stroke-width="2"/>
+              <!-- Overhuman Transcendent Star -->
+              <polygon points="50,22 55,38 70,34 59,46 72,58 56,58 50,74 44,58 28,58 41,46 30,34 45,38" fill="url(#rk-oh-nebula)" stroke="#ffffff" stroke-width="1.5"/>
+              <!-- Nova Core -->
+              <circle cx="50" cy="48" r="5" fill="#ffffff"/>
+              <polygon points="50,36 52,45 61,48 52,51 50,60 48,51 39,48 48,45" fill="#ffffff"/>
+            </svg>`,
+            godlike: `<svg viewBox="0 0 100 100" width="100%" height="100%">
+              <defs>
+                <radialGradient id="rk-gl-sun" cx="50%" cy="50%" r="50%">
+                  <stop offset="0%" stop-color="#ffffff"/>
+                  <stop offset="25%" stop-color="#fef08a"/>
+                  <stop offset="55%" stop-color="#f59e0b"/>
+                  <stop offset="85%" stop-color="#d97706"/>
+                  <stop offset="100%" stop-color="#78350f"/>
+                </radialGradient>
+                <linearGradient id="rk-gl-halo" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#ffffff"/>
+                  <stop offset="35%" stop-color="#fde047"/>
+                  <stop offset="70%" stop-color="#ca8a04"/>
+                  <stop offset="100%" stop-color="#e11d48"/>
+                </linearGradient>
+                <filter id="rk-gl-supernova">
+                  <feDropShadow dx="0" dy="0" stdDeviation="6" flood-color="#facc15" flood-opacity="1"/>
+                </filter>
+              </defs>
+              <!-- Solar Deity 12-Ray Sunburst Wheel -->
+              <g filter="url(#rk-gl-supernova)">
+                <polygon points="50,0 54,16 68,4 64,20 80,12 70,26 88,24 74,36 94,40 76,48 96,56 76,60 92,72 72,70 82,86 64,78 68,96 52,82 50,100 48,82 32,96 36,78 18,86 28,70 8,72 24,60 4,56 24,48 6,40 26,36 12,24 30,26 20,12 36,20 32,4 46,16" fill="url(#rk-gl-halo)"/>
+              </g>
+              <!-- Sacred Angelic Golden Wings -->
+              <path d="M50,16 C68,6 94,14 100,38 C90,44 78,44 70,40 C80,48 88,58 84,72 C74,68 64,62 58,54 L50,86 L42,54 C36,62 26,68 16,72 C12,58 20,48 30,40 C22,44 10,44 0,38 C6,14 32,6 50,16 Z" fill="url(#rk-gl-halo)" stroke="#ffffff" stroke-width="2"/>
+              <!-- Celestial Golden Halo Ring -->
+              <circle cx="50" cy="50" r="32" fill="#1c1002" stroke="#fde047" stroke-width="3"/>
+              <circle cx="50" cy="50" r="28" fill="none" stroke="#ffffff" stroke-width="1.5" stroke-dasharray="4,2"/>
+              <!-- Grand Solar Core Sun -->
+              <circle cx="50" cy="50" r="22" fill="url(#rk-gl-sun)" stroke="#ffffff" stroke-width="2.5"/>
+              <!-- Holy 8-Point Divine Cross Star -->
+              <polygon points="50,22 54,42 74,44 57,53 66,72 50,59 34,72 43,53 26,44 46,42" fill="#ffffff" stroke="#facc15" stroke-width="1.5"/>
+              <!-- Blazing Pure Godlike Eye Flare -->
+              <polygon points="50,38 52,48 62,50 52,52 50,62 48,52 38,50 48,48" fill="#ffffff"/>
+              <circle cx="50" cy="50" r="3" fill="#ffffff"/>
+            </svg>`
         };
 
         const ranks = [
@@ -3004,6 +3394,11 @@
                 startUnreadListeners();
                 startEventsBadgeListener();
                 startChallengesBadgeListener();
+                if (typeof eventsPanelOpen !== 'undefined' && eventsPanelOpen) {
+                    stopEventsListener();
+                    initEventsListener();
+                    renderEventsFooter();
+                }
                 startChatInvitesListener();
                 db.collection("users").doc(user.uid).get().then((doc) => {
                     if (doc.exists) {
@@ -3047,6 +3442,11 @@
                 stopUnreadListeners();
                 stopEventsBadgeListener();
                 stopChallengesListeners();
+                if (typeof eventsPanelOpen !== 'undefined' && eventsPanelOpen) {
+                    stopEventsListener();
+                    initEventsListener();
+                    renderEventsFooter();
+                }
                 stopChatInvitesListener();
                 document.getElementById('user-status-text').innerHTML = `👤 Non autenticato (Salvataggio locale)`;
                 document.getElementById('auth-actions-container').innerHTML = `
@@ -4318,6 +4718,7 @@
         function renderChatBadge() {
             const badge = document.getElementById('chat-badge');
             const privateDot = document.getElementById('chat-private-dot');
+            const generalDot = document.getElementById('chat-general-dot');
             const pendingCount = (typeof pendingChatInvites !== 'undefined' && pendingChatInvites) ? pendingChatInvites.length : 0;
             const total = unreadGeneralCount + unreadPrivateCount + pendingCount;
             if (badge) {
@@ -4330,6 +4731,9 @@
             }
             if (privateDot) {
                 privateDot.style.display = (unreadPrivateCount > 0 || pendingCount > 0) ? 'block' : 'none';
+            }
+            if (generalDot) {
+                generalDot.style.display = (unreadGeneralCount > 0) ? 'block' : 'none';
             }
         }
 
@@ -4521,7 +4925,6 @@
             let lastDayKey = null;
 
             msgs.forEach(m => {
-                const isMe = currentUser && m.uid === currentUser.uid;
                 const msgDate = timestampToDate(m.createdAt);
 
                 if (msgDate) {
@@ -4531,6 +4934,22 @@
                         lastDayKey = dayKey;
                     }
                 }
+
+                // Rendering messaggi di sistema (es. "X ha abbandonato la chat", "Y ha aggiunto Z")
+                if (m.isSystem || m.type === 'system') {
+                    const timeStr = formatChatTime(m.createdAt);
+                    html += `
+                        <div class="chat-system-message-row" style="display:flex; justify-content:center; margin:8px 0; width:100%;">
+                            <div class="chat-system-message" style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 14px; padding: 5px 12px; font-size: 0.76rem; color: var(--subtext); text-align: center; max-width: 85%; line-height: 1.35; display: inline-flex; align-items: center; gap: 6px;">
+                                <span>💬 ${escapeHtml(m.text || '')}</span>
+                                ${timeStr ? `<span style="opacity:0.6; font-size:0.68rem;">${timeStr}</span>` : ''}
+                            </div>
+                        </div>
+                    `;
+                    return;
+                }
+
+                const isMe = currentUser && m.uid === currentUser.uid;
 
                 let rankLabel = m.rank || userRankCache[m.uid];
                 if (!rankLabel && isMe) {
@@ -4709,6 +5128,24 @@
                         const title = conversationDisplayName(c);
                         const preview = c.lastMessageText ? escapeHtml(c.lastMessageText).slice(0, 40) : 'Nessun messaggio ancora';
                         const icon = c.type === 'group' ? '👥' : '👤';
+
+                        // Controllo se la specifica chat ha messaggi non letti per l'utente corrente
+                        let isUnread = false;
+                        if (currentUser && c.lastMessageAt && c.lastMessageAt.toMillis) {
+                            if (c.lastMessageSenderUid !== currentUser.uid) {
+                                const lastMsgMillis = c.lastMessageAt.toMillis();
+                                const readTs = c.lastRead && c.lastRead[currentUser.uid];
+                                const readMillis = (readTs && readTs.toMillis) ? readTs.toMillis() : 0;
+                                if (lastMsgMillis > readMillis) {
+                                    isUnread = true;
+                                }
+                            }
+                        }
+
+                        const unreadDotHtml = isUnread
+                            ? `<span class="chat-item-unread-dot" title="Nuovi messaggi"></span>`
+                            : '';
+
                         html += `
                             <div class="chat-list-item" onclick="openConversation('${c.id}')">
                                 <span class="chat-list-icon">${icon}</span>
@@ -4716,6 +5153,7 @@
                                     <span class="chat-list-name">${escapeHtml(title)}</span>
                                     <span class="chat-list-preview">${preview}</span>
                                 </div>
+                                ${unreadDotHtml}
                             </div>
                         `;
                     });
@@ -5325,12 +5763,25 @@
                 return Promise.reject(new Error("Non hai i permessi per rimuovere questo membro."));
             }
             const convId = activeConversationData.id;
+            const creatorName = userNickname || (currentUser.displayName || 'Il creatore');
+            const removedName = (activeConversationData.participantNames && activeConversationData.participantNames[uid]) || 'Un membro';
             const newParticipantNames = Object.assign({}, activeConversationData.participantNames);
             delete newParticipantNames[uid];
 
+            const sysMsg = `${creatorName} ha rimosso ${removedName}`;
+
+            db.collection("conversations").doc(convId).collection("messages").add({
+                isSystem: true,
+                text: sysMsg,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            }).catch(e => console.error("Errore invio messaggio sistema:", e));
+
             return db.collection("conversations").doc(convId).update({
                 participants: firebase.firestore.FieldValue.arrayRemove(uid),
-                participantNames: newParticipantNames
+                participantNames: newParticipantNames,
+                lastMessageText: sysMsg,
+                lastMessageSenderUid: currentUser.uid,
+                lastMessageAt: firebase.firestore.FieldValue.serverTimestamp()
             }).then(() => {
                 activeConversationData.participants = (activeConversationData.participants || []).filter(p => p !== uid);
                 activeConversationData.participantNames = newParticipantNames;
@@ -5354,6 +5805,7 @@
         function leaveConversation() {
             if (!activeConversationData || !currentUser) return Promise.resolve();
             const convId = activeConversationData.id;
+            const myName = userNickname || (currentUser.displayName || 'Anonimo');
             const remainingParticipants = (activeConversationData.participants || []).filter(uid => uid !== currentUser.uid);
 
             if (remainingParticipants.length === 0) {
@@ -5363,10 +5815,24 @@
 
             const newParticipantNames = Object.assign({}, activeConversationData.participantNames);
             delete newParticipantNames[currentUser.uid];
-            return db.collection("conversations").doc(convId).update({
-                participants: firebase.firestore.FieldValue.arrayRemove(currentUser.uid),
-                participantNames: newParticipantNames
+
+            const sysMsg = `${myName} ha abbandonato la chat`;
+
+            const msgPromise = db.collection("conversations").doc(convId).collection("messages").add({
+                isSystem: true,
+                text: sysMsg,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
             });
+
+            const updatePromise = db.collection("conversations").doc(convId).update({
+                participants: firebase.firestore.FieldValue.arrayRemove(currentUser.uid),
+                participantNames: newParticipantNames,
+                lastMessageText: sysMsg,
+                lastMessageSenderUid: currentUser.uid,
+                lastMessageAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+
+            return Promise.all([msgPromise, updatePromise]);
         }
 
         // ---- Elimina chat (solo il creatore) ----
@@ -5522,6 +5988,14 @@
             if (eventsUnsubscribe) return;
             const listEl = document.getElementById('events-list');
 
+            // Se l'utente non ha effettuato l'accesso, mostra un messaggio pulito senza tentare la lettura da Firestore
+            if (!currentUser) {
+                if (listEl) {
+                    listEl.innerHTML = `<p style="color: var(--subtext); text-align:center; font-size:0.88rem; padding: 25px 15px; margin:0;">🔒 Effettua l'accesso per visualizzare gli allenamenti in programma.</p>`;
+                }
+                return;
+            }
+
             eventsUnsubscribe = db.collection("events")
                 .orderBy("sortKey", "asc")
                 .onSnapshot((snapshot) => {
@@ -5532,9 +6006,13 @@
                     console.error("Errore nel caricamento degli eventi:", error);
                     eventsUnsubscribe = null; // permette di ritentare riaprendo il pannello
                     if (listEl) {
-                        listEl.innerHTML = (error && error.code === 'permission-denied')
-                            ? `<p style="color: var(--subtext); text-align:center; font-size:0.85rem;">⚠️ Le regole di sicurezza di Firestore non permettono di leggere i sondaggi (collection "events"). Chiedi all'amministratore di aggiornarle.</p>`
-                            : `<p style="color: var(--subtext); text-align:center; font-size:0.85rem;">Errore nel caricamento dei sondaggi.</p>`;
+                        if (!currentUser) {
+                            listEl.innerHTML = `<p style="color: var(--subtext); text-align:center; font-size:0.88rem; padding: 25px 15px; margin:0;">🔒 Effettua l'accesso per visualizzare gli allenamenti in programma.</p>`;
+                        } else {
+                            listEl.innerHTML = (error && error.code === 'permission-denied')
+                                ? `<p style="color: var(--subtext); text-align:center; font-size:0.85rem;">⚠️ Le regole di sicurezza di Firestore non permettono di leggere i sondaggi (collection "events"). Chiedi all'amministratore di aggiornarle.</p>`
+                                : `<p style="color: var(--subtext); text-align:center; font-size:0.85rem;">Errore nel caricamento dei sondaggi.</p>`;
+                        }
                     }
                 });
         }
@@ -5964,30 +6442,53 @@
             if (!inv || !currentUser) return;
 
             try {
+                const myName = userNickname || (currentUser.displayName || 'Anonimo');
+                const creatorName = inv.fromNickname || 'Un atleta';
+
                 if (inv.type === 'dm') {
                     const convId = [inv.fromUid, currentUser.uid].sort().join('_');
                     const convRef = db.collection("conversations").doc(convId);
+                    const sysMsg = `${creatorName} ha aggiunto ${myName}`;
+
                     await convRef.set({
                         type: 'dm',
                         participants: [inv.fromUid, currentUser.uid],
                         participantNames: {
-                            [inv.fromUid]: inv.fromNickname || 'Utente',
-                            [currentUser.uid]: userNickname || (currentUser.displayName || 'Anonimo')
+                            [inv.fromUid]: creatorName,
+                            [currentUser.uid]: myName
                         },
                         createdBy: inv.fromUid,
                         createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                        lastMessageText: 'Chat avviata!',
+                        lastMessageText: sysMsg,
+                        lastMessageSenderUid: inv.fromUid,
                         lastMessageAt: firebase.firestore.FieldValue.serverTimestamp()
                     }, { merge: true });
+
+                    await convRef.collection("messages").add({
+                        isSystem: true,
+                        text: sysMsg,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
 
                     await db.collection("chatInvitations").doc(invId).delete();
                     activeChatView = 'private-list';
                     openConversation(convId);
                 } else if (inv.type === 'group' && inv.convId) {
                     const convRef = db.collection("conversations").doc(inv.convId);
+                    const sysMsg = `${creatorName} ha aggiunto ${myName}`;
+
                     await convRef.update({
                         participants: firebase.firestore.FieldValue.arrayUnion(currentUser.uid),
-                        [`participantNames.${currentUser.uid}`]: userNickname || (currentUser.displayName || 'Anonimo')
+                        [`participantNames.${currentUser.uid}`]: myName,
+                        lastMessageText: sysMsg,
+                        lastMessageSenderUid: currentUser.uid,
+                        lastMessageAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+
+                    await convRef.collection("messages").add({
+                        isSystem: true,
+                        text: sysMsg,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
                     });
 
                     await db.collection("chatInvitations").doc(invId).delete();
@@ -6955,6 +7456,32 @@
             updateChallengesBadgeDot();
         }
 
+
+        // Feedback bagliore touch fluido e immediato per dispositivi mobili
+        document.addEventListener('touchstart', function(e) {
+            const btn = e.target.closest('button, .btn-auth, .btn-auth-secondary, .btn-confirm, .btn-danger-confirm, .chat-fab, .events-fab, .challenges-fab');
+            if (btn) {
+                btn.classList.add('is-pressed');
+            }
+        }, { passive: true });
+
+        document.addEventListener('touchend', function(e) {
+            const pressed = document.querySelectorAll('.is-pressed');
+            pressed.forEach(el => {
+                setTimeout(() => {
+                    el.classList.remove('is-pressed');
+                    if (typeof el.blur === 'function') el.blur();
+                }, 160);
+            });
+        }, { passive: true });
+
+        document.addEventListener('touchcancel', function(e) {
+            const pressed = document.querySelectorAll('.is-pressed');
+            pressed.forEach(el => {
+                el.classList.remove('is-pressed');
+                if (typeof el.blur === 'function') el.blur();
+            });
+        }, { passive: true });
 
         initCategorySelect();
         applyTheme(currentTheme);
