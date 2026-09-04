@@ -1533,6 +1533,156 @@
             height: 17px;
             accent-color: var(--accent);
         }
+
+        /* ========================================== */
+        /* SEZIONE ALLENAMENTI PERSONALI */
+        /* ========================================== */
+        .workouts-section {
+            width: 100%;
+            max-width: 900px;
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 15px;
+            box-sizing: border-box;
+            border: 1px solid var(--line-color);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+            text-align: left;
+            margin-bottom: 25px;
+        }
+
+        .workouts-section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .workouts-section-header h3 {
+            margin: 0;
+        }
+
+        .workouts-section-header button {
+            white-space: nowrap;
+        }
+
+        .workout-card {
+            background: var(--bg-color);
+            border: 1px solid var(--line-color);
+            border-radius: 10px;
+            padding: 12px;
+            margin-bottom: 10px;
+        }
+
+        .workout-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 6px;
+            margin-bottom: 6px;
+        }
+
+        .workout-card-title {
+            font-weight: bold;
+            color: var(--accent);
+            font-size: 0.95rem;
+        }
+
+        .workout-card-date {
+            color: var(--subtext);
+            font-weight: normal;
+            font-size: 0.8rem;
+        }
+
+        .workout-card-meta {
+            font-size: 0.8rem;
+            color: var(--subtext);
+            margin-bottom: 6px;
+        }
+
+        .workout-exercises-summary {
+            font-size: 0.85rem;
+            line-height: 1.5;
+        }
+
+        .workout-exercise-line {
+            margin: 1px 0;
+        }
+
+        .workout-card-notes {
+            font-size: 0.8rem;
+            color: var(--subtext);
+            font-style: italic;
+            margin-top: 6px;
+        }
+
+        .workout-xp-badge {
+            display: inline-block;
+            margin-top: 8px;
+            background: var(--accent);
+            color: #fff;
+            font-weight: bold;
+            font-size: 0.8rem;
+            padding: 3px 10px;
+            border-radius: 20px;
+        }
+
+        .workout-exercise-row {
+            display: grid;
+            grid-template-columns: 1.6fr 1fr 0.7fr 0.7fr auto;
+            gap: 6px;
+            margin-bottom: 6px;
+            align-items: center;
+        }
+
+        .workout-exercise-row input,
+        .workout-exercise-row select {
+            padding: 8px 6px;
+            font-size: 0.8rem;
+            box-sizing: border-box;
+            width: 100%;
+            background: var(--input-bg);
+            color: var(--text);
+            border: 1px solid var(--line-color);
+            border-radius: 6px;
+        }
+
+        .ex-remove-btn {
+            background: none;
+            border: none;
+            color: var(--danger);
+            font-size: 1rem;
+            cursor: pointer;
+            padding: 4px;
+        }
+
+        @media (max-width: 500px) {
+            .workout-exercise-row {
+                grid-template-columns: 1fr 1fr;
+                grid-template-areas:
+                    "name name"
+                    "type sets"
+                    "value remove";
+            }
+            .workout-exercise-row .ex-name { grid-area: name; }
+            .workout-exercise-row .ex-type { grid-area: type; }
+            .workout-exercise-row .ex-sets { grid-area: sets; }
+            .workout-exercise-row .ex-value { grid-area: value; }
+            .workout-exercise-row .ex-remove-btn { grid-area: remove; justify-self: end; }
+        }
+
+        .workout-xp-preview {
+            text-align: center;
+            font-weight: bold;
+            color: var(--accent);
+            background: var(--bg-color);
+            border: 1px dashed var(--accent);
+            border-radius: 8px;
+            padding: 8px;
+            margin-top: 10px;
+            font-size: 0.9rem;
+        }
     </style>
 </head>
 <body>
@@ -1587,6 +1737,16 @@
     <div class="profile-settings-section" id="profile-settings-section">
         <h3 class="leaderboard-title">📋 Il Mio Profilo</h3>
         <div id="profile-settings-body"></div>
+    </div>
+
+    <div class="workouts-section" id="workouts-section">
+        <div class="workouts-section-header">
+            <h3 class="leaderboard-title">🏋️ I Miei Allenamenti</h3>
+            <button class="btn-confirm" id="new-workout-btn" onclick="openNewWorkoutModal()">➕ Nuovo Allenamento</button>
+        </div>
+        <div id="workouts-list-container">
+            <p style="color: var(--subtext); text-align:center; font-size:0.85rem;">Caricamento allenamenti...</p>
+        </div>
     </div>
 
     <div class="tree-container" id="tree"></div>
@@ -1686,6 +1846,11 @@
         let eventsPanelOpen = false;
         let eventsUnsubscribe = null;
         let eventsAllowMaybeDraft = false; // stato del checkbox "opzione forse" nel form di creazione sondaggio
+
+        // ---- Allenamenti personali ----
+        let userWorkoutXp = 0; // XP totali guadagnati registrando allenamenti (si somma agli XP delle skill)
+        let workoutsUnsubscribe = null;
+        let workoutRowCounter = 0; // contatore per generare id univoci alle righe esercizio nel form
 
         // ---- Notifica pallino rosso (nuovi sondaggi) ----
         let eventsBadgeUnsubscribe = null;
@@ -1994,12 +2159,13 @@
 
         // SALVATAGGIO DATI (Locale o Firebase)
         function saveState() {
-            const currentXp = calculateXP();
+            const currentXp = getTotalXp();
             if (currentUser) {
                 db.collection("users").doc(currentUser.uid).set({
                     nickname: userNickname || currentUser.displayName || currentUser.email.split('@')[0],
                     totalXp: currentXp,
                     skills: userState,
+                    workoutXp: userWorkoutXp || 0,
                     updatedAt: firebase.firestore.FieldValue.serverTimestamp()
                 }, { merge: true }).catch(error => {
                     console.error("Errore di salvataggio su Firebase: ", error);
@@ -2026,10 +2192,12 @@
                             weightKg: data.weightKg || null,
                             isPublic: data.isPublic !== false
                         };
+                        userWorkoutXp = data.workoutXp || 0;
                     } else {
                         userState = {};
                         userNickname = user.displayName || "";
                         userProfileData = { heightCm: null, weightKg: null, isPublic: true };
+                        userWorkoutXp = 0;
                     }
 
                     if (!userNickname) {
@@ -2041,6 +2209,7 @@
                     updateUI();
                     renderProfileSettings();
                     initRealtimeLeaderboard();
+                    initWorkoutsSection();
                     if (chatPanelOpen) {
                         renderChatInputState();
                         resumeActiveChatListener();
@@ -2061,9 +2230,11 @@
                 `;
 
                 userState = JSON.parse(localStorage.getItem('naiontrackState')) || {};
+                userWorkoutXp = parseFloat(localStorage.getItem('naiontrackWorkoutXp')) || 0;
                 updateUI();
                 renderProfileSettings();
                 initRealtimeLeaderboard();
+                initWorkoutsSection();
                 if (chatPanelOpen) {
                     renderChatInputState();
                 }
@@ -2086,10 +2257,13 @@
         function logoutUser() {
             auth.signOut().then(() => {
                 userState = JSON.parse(localStorage.getItem('naiontrackState')) || {};
+                userWorkoutXp = parseFloat(localStorage.getItem('naiontrackWorkoutXp')) || 0;
                 userProfileData = {};
+                stopWorkoutsListener();
                 updateUI();
                 renderProfileSettings();
                 initRealtimeLeaderboard();
+                initWorkoutsSection();
                 if (chatUnsubscribe) {
                     chatUnsubscribe();
                     chatUnsubscribe = null;
@@ -2144,6 +2318,66 @@
             return current;
         }
 
+        // XP totali del giocatore: quelli guadagnati dall'albero delle skill
+        // più quelli guadagnati registrando gli allenamenti personali.
+        function getTotalXp() {
+            return calculateXP() + (userWorkoutXp || 0);
+        }
+
+        // ==========================================
+        // ALLENAMENTI PERSONALI: calcolo XP in base allo sforzo e al grado attuale
+        // ==========================================
+        // Quanti allenamenti "medi" (sforzo = 100) servono per salire di grado:
+        // più basso il numero, più XP vale un singolo allenamento nel complesso.
+        const WORKOUT_RANKUP_COUNT = 25;
+        const WORKOUT_REFERENCE_EFFORT = 100; // sforzo di un allenamento "medio" di riferimento
+        const WORKOUT_MIN_RATIO = 0.05; // uno sforzo minimo non azzera mai completamente l'XP
+        const WORKOUT_MAX_RATIO = 5;    // uno sforzo eccezionale non può moltiplicare all'infinito
+
+        // Quanto XP separa il grado corrente dal prossimo: più un grado è alto, più
+        // questo valore cresce, quindi lo stesso sforzo "assoluto" vale relativamente
+        // meno per un rank alto e relativamente di più per un rank basso.
+        function getRankXpGap(rankIndex) {
+            const current = ranks[rankIndex];
+            const next = ranks[rankIndex + 1];
+            if (next) return next.minXp - current.minXp;
+            // Grado massimo (Godlike): non esiste un "prossimo" salto, quindi stimiamo
+            // un gap coerente con la crescita degli ultimi gradini.
+            const prev = ranks[rankIndex - 1];
+            return prev ? (current.minXp - prev.minXp) * 1.3 : (current.minXp || 1000);
+        }
+
+        // Converte gli esercizi svolti in un "punteggio di sforzo" grezzo (non è ancora XP).
+        function calculateWorkoutEffort(exercises, durationMin, intensity) {
+            let volume = 0;
+            exercises.forEach(ex => {
+                // Le ripetizioni "pesano" per intero, i secondi vengono normalizzati (/3)
+                // per essere paragonabili in termini di sforzo.
+                const perSetValue = ex.type === 'time' ? (ex.value / 3) : ex.value;
+                volume += perSetValue * (ex.sets || 1);
+            });
+            const intensityFactor = (intensity || 5) / 5;
+            const durationBonus = (durationMin || 0) * 1.5;
+            const effort = (volume * intensityFactor) + durationBonus;
+            return Math.round(effort * 10) / 10;
+        }
+
+        // Trasforma lo sforzo in XP, "pesandolo" in relazione al grado attuale del giocatore:
+        // a parità di sforzo, un rank basso riceve un moltiplicatore relativo maggiore
+        // (perché gli basta poco XP assoluto per salire), un rank alto uno minore
+        // (perché gli serve moltissimo XP assoluto per progredire).
+        function calculateWorkoutXp(effortScore, currentTotalXp) {
+            const rank = getCurrentRank(currentTotalXp);
+            const rankIndex = ranks.indexOf(rank);
+            const gapXp = getRankXpGap(rankIndex);
+            const baseXpForRank = gapXp / WORKOUT_RANKUP_COUNT;
+
+            let ratio = effortScore / WORKOUT_REFERENCE_EFFORT;
+            ratio = Math.max(WORKOUT_MIN_RATIO, Math.min(ratio, WORKOUT_MAX_RATIO));
+
+            return Math.max(1, Math.round(baseXpForRank * ratio));
+        }
+
         // CLASSIFICA IN TEMPO REALE CON onSnapshot
         function initRealtimeLeaderboard() {
             const container = document.getElementById('leaderboard-container');
@@ -2187,7 +2421,7 @@
         }
 
         function updateUI() {
-            const currentXp = calculateXP();
+            const currentXp = getTotalXp();
             const currentRank = getCurrentRank(currentXp);
             
             let rankIndex = ranks.indexOf(currentRank);
@@ -2721,6 +2955,334 @@
                 console.error("Errore salvataggio profilo:", error);
                 errEl.innerText = "Errore durante il salvataggio del profilo.";
             });
+        }
+
+        // ==========================================
+        // ALLENAMENTI PERSONALI
+        // ==========================================
+        function initWorkoutsSection() {
+            if (currentUser) {
+                stopWorkoutsListener();
+                const listEl = document.getElementById('workouts-list-container');
+                workoutsUnsubscribe = db.collection("users").doc(currentUser.uid).collection("workouts")
+                    .orderBy("createdAt", "desc")
+                    .limit(30)
+                    .onSnapshot((snapshot) => {
+                        const workouts = [];
+                        snapshot.forEach(doc => workouts.push(Object.assign({ id: doc.id }, doc.data())));
+                        renderWorkoutsList(workouts);
+                    }, (error) => {
+                        console.error("Errore nel caricamento degli allenamenti:", error);
+                        workoutsUnsubscribe = null;
+                        if (listEl) {
+                            listEl.innerHTML = (error && error.code === 'permission-denied')
+                                ? `<p style="color: var(--subtext); text-align:center; font-size:0.85rem;">⚠️ Le regole di sicurezza di Firestore non permettono di leggere gli allenamenti (collection "workouts"). Aggiorna le regole nella console Firebase.</p>`
+                                : `<p style="color: var(--subtext); text-align:center; font-size:0.85rem;">Errore nel caricamento degli allenamenti.</p>`;
+                        }
+                    });
+            } else {
+                stopWorkoutsListener();
+                renderLocalWorkoutsList();
+            }
+        }
+
+        function stopWorkoutsListener() {
+            if (workoutsUnsubscribe) { workoutsUnsubscribe(); workoutsUnsubscribe = null; }
+        }
+
+        function getLocalWorkouts() {
+            return JSON.parse(localStorage.getItem('naiontrackWorkouts')) || [];
+        }
+
+        function saveLocalWorkouts(list) {
+            localStorage.setItem('naiontrackWorkouts', JSON.stringify(list));
+        }
+
+        function renderLocalWorkoutsList() {
+            renderWorkoutsList(getLocalWorkouts());
+        }
+
+        function renderWorkoutsList(workouts) {
+            const listEl = document.getElementById('workouts-list-container');
+            if (!listEl) return;
+
+            if (!workouts || workouts.length === 0) {
+                listEl.innerHTML = `<p style="color: var(--subtext); text-align:center; font-size:0.85rem;">Nessun allenamento registrato ancora. Tocca "➕ Nuovo Allenamento" per iniziare! 💪</p>`;
+                return;
+            }
+
+            let html = '';
+            workouts.forEach(w => {
+                const exercisesHtml = (w.exercises || []).map(ex => {
+                    const unit = ex.type === 'time' ? 'sec' : 'rip';
+                    return `<div class="workout-exercise-line">• ${escapeHtml(ex.name)}: ${ex.sets}×${ex.value} ${unit}</div>`;
+                }).join('');
+
+                html += `
+                    <div class="workout-card">
+                        <div class="workout-card-header">
+                            <span class="workout-card-title">${escapeHtml(w.name || 'Allenamento')} <span class="workout-card-date">— ${escapeHtml(w.date || '')}</span></span>
+                            <button class="event-delete-btn" title="Elimina allenamento" onclick="askDeleteWorkout('${w.id}', ${w.xpEarned || 0})">🗑️</button>
+                        </div>
+                        <div class="workout-card-meta">
+                            ⏱️ ${w.durationMin || 0} min &nbsp;|&nbsp; 🔥 Intensità ${w.intensity || 5}/10
+                        </div>
+                        <div class="workout-exercises-summary">
+                            ${exercisesHtml || '<span style="color:var(--subtext);">Nessun esercizio dettagliato.</span>'}
+                        </div>
+                        ${w.notes ? `<div class="workout-card-notes">📝 ${escapeHtml(w.notes)}</div>` : ''}
+                        <div class="workout-xp-badge">+${w.xpEarned || 0} XP</div>
+                    </div>
+                `;
+            });
+
+            listEl.innerHTML = html;
+        }
+
+        function openNewWorkoutModal() {
+            const modal = document.getElementById('custom-modal');
+            const titleEl = document.getElementById('modal-title');
+            const bodyContent = document.getElementById('modal-body-content');
+            const actionsBox = document.getElementById('modal-actions-box');
+
+            const todayStr = new Date().toISOString().slice(0, 10);
+
+            titleEl.innerText = "🏋️ Nuovo Allenamento";
+            bodyContent.innerHTML = `
+                <div class="auth-error" id="new-workout-error"></div>
+                <div class="auth-form-group">
+                    <label>Nome allenamento (facoltativo)</label>
+                    <input type="text" id="new-workout-name" placeholder="es. Push Day" maxlength="60">
+                </div>
+                <div style="display:flex; gap:10px;">
+                    <div class="auth-form-group" style="flex:1;">
+                        <label>Data</label>
+                        <input type="date" id="new-workout-date" value="${todayStr}">
+                    </div>
+                    <div class="auth-form-group" style="flex:1;">
+                        <label>Durata (min)</label>
+                        <input type="number" id="new-workout-duration" min="0" max="600" placeholder="es. 45" oninput="updateWorkoutXpPreview()">
+                    </div>
+                </div>
+                <div class="auth-form-group">
+                    <label>Intensità percepita: <span id="workout-intensity-value">5</span>/10</label>
+                    <input type="range" id="new-workout-intensity" min="1" max="10" value="5" style="width:100%;" oninput="document.getElementById('workout-intensity-value').innerText = this.value; updateWorkoutXpPreview();">
+                </div>
+                <div class="auth-form-group">
+                    <label>Esercizi svolti</label>
+                    <div id="workout-exercises-list"></div>
+                    <button type="button" class="btn-auth-secondary" style="margin-top:6px; width:100%;" onclick="addWorkoutExerciseRow()">➕ Aggiungi esercizio</button>
+                </div>
+                <div class="auth-form-group">
+                    <label>Note (facoltative)</label>
+                    <input type="text" id="new-workout-notes" placeholder="Come ti sei sentito, sensazioni..." maxlength="200">
+                </div>
+                <div class="workout-xp-preview" id="workout-xp-preview">Stima XP: +0</div>
+            `;
+            actionsBox.innerHTML = `
+                <button class="btn-cancel" id="modal-btn-cancel">Annulla</button>
+                <button class="btn-confirm" id="new-workout-confirm-btn">Salva allenamento</button>
+            `;
+
+            modal.classList.add('active');
+            document.getElementById('modal-btn-cancel').onclick = () => modal.classList.remove('active');
+            document.getElementById('new-workout-confirm-btn').onclick = confirmCreateWorkout;
+
+            document.getElementById('workout-exercises-list').innerHTML = '';
+            addWorkoutExerciseRow();
+        }
+
+        function addWorkoutExerciseRow() {
+            const container = document.getElementById('workout-exercises-list');
+            if (!container) return;
+            const id = ++workoutRowCounter;
+            const row = document.createElement('div');
+            row.className = 'workout-exercise-row';
+            row.dataset.rowId = id;
+            row.innerHTML = `
+                <input type="text" class="ex-name" placeholder="Esercizio (es. Trazioni)" maxlength="40" oninput="updateWorkoutXpPreview()">
+                <select class="ex-type" onchange="updateWorkoutXpPreview()">
+                    <option value="rep">Ripetizioni</option>
+                    <option value="time">Secondi</option>
+                </select>
+                <input type="number" class="ex-sets" placeholder="Serie" min="1" max="50" value="3" oninput="updateWorkoutXpPreview()">
+                <input type="number" class="ex-value" placeholder="Rip/Sec" min="0" max="2000" value="10" oninput="updateWorkoutXpPreview()">
+                <button type="button" class="ex-remove-btn" title="Rimuovi esercizio" onclick="removeWorkoutExerciseRow(${id})">✕</button>
+            `;
+            container.appendChild(row);
+            updateWorkoutXpPreview();
+        }
+
+        function removeWorkoutExerciseRow(id) {
+            const container = document.getElementById('workout-exercises-list');
+            if (!container) return;
+            const row = container.querySelector(`[data-row-id="${id}"]`);
+            if (row) row.remove();
+            updateWorkoutXpPreview();
+        }
+
+        function readWorkoutExercisesFromForm() {
+            const rows = document.querySelectorAll('#workout-exercises-list .workout-exercise-row');
+            const exercises = [];
+            rows.forEach(row => {
+                const nameInput = row.querySelector('.ex-name');
+                const typeInput = row.querySelector('.ex-type');
+                const setsInput = row.querySelector('.ex-sets');
+                const valueInput = row.querySelector('.ex-value');
+                if (!nameInput || !typeInput || !setsInput || !valueInput) return;
+
+                const name = nameInput.value.trim();
+                const type = typeInput.value;
+                const sets = parseInt(setsInput.value, 10) || 0;
+                const value = parseFloat(valueInput.value) || 0;
+
+                if (name && sets > 0 && value > 0) {
+                    exercises.push({ name: name.slice(0, 40), type, sets, value });
+                }
+            });
+            return exercises;
+        }
+
+        function updateWorkoutXpPreview() {
+            const previewEl = document.getElementById('workout-xp-preview');
+            if (!previewEl) return;
+
+            const durationInput = document.getElementById('new-workout-duration');
+            const intensityInput = document.getElementById('new-workout-intensity');
+            const duration = durationInput ? (parseFloat(durationInput.value) || 0) : 0;
+            const intensity = intensityInput ? (parseInt(intensityInput.value, 10) || 5) : 5;
+            const exercises = readWorkoutExercisesFromForm();
+
+            const effort = calculateWorkoutEffort(exercises, duration, intensity);
+            const xp = calculateWorkoutXp(effort, getTotalXp());
+            previewEl.innerText = `Stima XP: +${xp} (in relazione al tuo grado attuale)`;
+        }
+
+        function confirmCreateWorkout() {
+            const errEl = document.getElementById('new-workout-error');
+            const nameInput = document.getElementById('new-workout-name');
+            const dateInput = document.getElementById('new-workout-date');
+            const durationInput = document.getElementById('new-workout-duration');
+            const intensityInput = document.getElementById('new-workout-intensity');
+            const notesInput = document.getElementById('new-workout-notes');
+
+            const exercises = readWorkoutExercisesFromForm();
+            const duration = parseFloat(durationInput.value) || 0;
+            const intensity = parseInt(intensityInput.value, 10) || 5;
+            const date = dateInput.value || new Date().toISOString().slice(0, 10);
+            const name = (nameInput.value || '').trim().slice(0, 60);
+            const notes = (notesInput.value || '').trim().slice(0, 200);
+
+            if (exercises.length === 0 && duration <= 0) {
+                if (errEl) errEl.innerText = "Aggiungi almeno un esercizio o indica la durata dell'allenamento.";
+                return;
+            }
+
+            const effort = calculateWorkoutEffort(exercises, duration, intensity);
+            const currentTotalXp = getTotalXp();
+            const xpEarned = calculateWorkoutXp(effort, currentTotalXp);
+
+            const workoutData = {
+                name: name || 'Allenamento',
+                date: date,
+                durationMin: duration,
+                intensity: intensity,
+                exercises: exercises,
+                notes: notes,
+                effortScore: effort,
+                xpEarned: xpEarned
+            };
+
+            const confirmBtn = document.getElementById('new-workout-confirm-btn');
+            const cancelBtn = document.getElementById('modal-btn-cancel');
+            if (confirmBtn) { confirmBtn.disabled = true; confirmBtn.innerText = '...'; }
+            if (cancelBtn) cancelBtn.disabled = true;
+
+            if (currentUser) {
+                const userRef = db.collection("users").doc(currentUser.uid);
+                userRef.collection("workouts").add(Object.assign({}, workoutData, {
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                })).then(() => {
+                    return userRef.set({
+                        workoutXp: firebase.firestore.FieldValue.increment(xpEarned)
+                    }, { merge: true });
+                }).then(() => {
+                    userWorkoutXp += xpEarned;
+                    document.getElementById('custom-modal').classList.remove('active');
+                    saveState();
+                    showWorkoutSavedModal(xpEarned);
+                }).catch((error) => {
+                    console.error("Errore nel salvataggio dell'allenamento:", error);
+                    if (errEl) {
+                        errEl.innerText = (error && error.code === 'permission-denied')
+                            ? "⚠️ Permessi Firestore insufficienti per salvare l'allenamento (collection \"workouts\"). Aggiorna le regole nella console Firebase."
+                            : "Errore durante il salvataggio dell'allenamento.";
+                    }
+                    if (confirmBtn) { confirmBtn.disabled = false; confirmBtn.innerText = 'Salva allenamento'; }
+                    if (cancelBtn) cancelBtn.disabled = false;
+                });
+            } else {
+                const list = getLocalWorkouts();
+                workoutData.id = 'local_' + Date.now();
+                workoutData.createdAt = Date.now();
+                list.unshift(workoutData);
+                saveLocalWorkouts(list);
+
+                userWorkoutXp += xpEarned;
+                localStorage.setItem('naiontrackWorkoutXp', String(userWorkoutXp));
+
+                document.getElementById('custom-modal').classList.remove('active');
+                renderLocalWorkoutsList();
+                updateUI();
+                showWorkoutSavedModal(xpEarned);
+            }
+        }
+
+        function showWorkoutSavedModal(xp) {
+            const modal = document.getElementById('custom-modal');
+            const titleEl = document.getElementById('modal-title');
+            const bodyContent = document.getElementById('modal-body-content');
+            const actionsBox = document.getElementById('modal-actions-box');
+            const rank = getCurrentRank(getTotalXp());
+
+            titleEl.innerText = "🎉 Allenamento salvato!";
+            bodyContent.innerHTML = `<p style="text-align:center;">Hai guadagnato <strong style="color:var(--accent);">+${xp} XP</strong>!<br>Grado attuale: <strong>${escapeHtml(rank.name)}</strong></p>`;
+            actionsBox.innerHTML = `<button class="btn-confirm" id="modal-btn-cancel" style="flex:1;">Fantastico!</button>`;
+
+            modal.classList.add('active');
+            document.getElementById('modal-btn-cancel').onclick = () => modal.classList.remove('active');
+        }
+
+        function askDeleteWorkout(workoutId, xpToRemove) {
+            openCustomModal(
+                "🗑️ Elimina Allenamento",
+                "Sei sicuro di voler eliminare questo allenamento? Gli XP guadagnati verranno rimossi.",
+                "Elimina",
+                true,
+                () => deleteWorkout(workoutId, xpToRemove)
+            );
+        }
+
+        function deleteWorkout(workoutId, xpToRemove) {
+            if (currentUser) {
+                const userRef = db.collection("users").doc(currentUser.uid);
+                return userRef.collection("workouts").doc(workoutId).delete().then(() => {
+                    return userRef.set({
+                        workoutXp: firebase.firestore.FieldValue.increment(-(xpToRemove || 0))
+                    }, { merge: true });
+                }).then(() => {
+                    userWorkoutXp = Math.max(0, userWorkoutXp - (xpToRemove || 0));
+                    saveState();
+                });
+            } else {
+                const list = getLocalWorkouts().filter(w => w.id !== workoutId);
+                saveLocalWorkouts(list);
+                userWorkoutXp = Math.max(0, userWorkoutXp - (xpToRemove || 0));
+                localStorage.setItem('naiontrackWorkoutXp', String(userWorkoutXp));
+                renderLocalWorkoutsList();
+                updateUI();
+                return Promise.resolve();
+            }
         }
 
         // ==========================================
@@ -4276,6 +4838,7 @@
         initCategorySelect();
         applyTheme(currentTheme);
         renderProfileSettings();
+        initWorkoutsSection();
     </script>
 </body>
 </html>
