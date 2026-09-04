@@ -5,6 +5,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Occhionero's Calisthenics Tree</title>
+    <!-- Configurazione PWA specifica per iOS / iPhone -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Calisthenics Tree">
+    <link rel="apple-touch-icon" href="./icon-512.png">
     
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
@@ -2636,6 +2641,23 @@
         const ONESIGNAL_APP_ID = "d3e5039e-0c18-4717-9c75-b2467d2f57b1"; // Inserisci qui l'App ID generato su onesignal.com
         const PUSH_RELAY_URL = "https://curly-thunder-bdf1.severino-occhionero.workers.dev"; // Inserisci qui l'URL del Cloudflare Worker (es. https://calisthenics-push.tuonome.workers.dev)
 
+        // Helper per associare in modo asincrono garantito l'utente Firebase a OneSignal
+        function syncOneSignalUser(uid) {
+            if (!uid) return;
+            window.OneSignalDeferred = window.OneSignalDeferred || [];
+            window.OneSignalDeferred.push(async function(OneSignal) {
+                try {
+                    await OneSignal.login(uid);
+                    console.log("[OneSignal] Login registrato per UID:", uid);
+                    if (Notification.permission === 'granted' && OneSignal.User && OneSignal.User.PushSubscription) {
+                        await OneSignal.User.PushSubscription.optIn();
+                    }
+                } catch(e) {
+                    console.warn("[OneSignal] syncOneSignalUser error:", e);
+                }
+            });
+        }
+
         window.OneSignalDeferred = window.OneSignalDeferred || [];
         OneSignalDeferred.push(async function(OneSignal) {
             if (!ONESIGNAL_APP_ID || ONESIGNAL_APP_ID === "YOUR-ONESIGNAL-APP-ID") {
@@ -3810,8 +3832,8 @@
                     initWorkoutsSection();
                     setupFCMToken();
                     checkInactivityReminder();
-                    if (window.OneSignal && user) {
-                        try { window.OneSignal.login(user.uid); } catch(e) {}
+                    if (user) {
+                        syncOneSignalUser(user.uid);
                     }
                     if (chatPanelOpen) {
                         renderChatInputState();
@@ -3872,9 +3894,10 @@
                 stopWorkoutsListener();
                 stopChallengesListeners();
                 stopChatInvitesListener();
-                if (window.OneSignal) {
-                    try { window.OneSignal.logout(); } catch(e) {}
-                }
+                window.OneSignalDeferred = window.OneSignalDeferred || [];
+                window.OneSignalDeferred.push(async function(OneSignal) {
+                    try { await OneSignal.logout(); } catch(e) {}
+                });
                 updateUI();
                 renderProfileSettings();
                 initRealtimeLeaderboard();
