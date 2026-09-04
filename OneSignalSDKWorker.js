@@ -2,6 +2,14 @@
 // ONESIGNAL & FIREBASE UNIFIED SERVICE WORKER - CALISTHENICS TREE
 // =========================================================================
 
+self.addEventListener('install', (event) => {
+    self.skipWaiting();
+});
+
+self.addEventListener('activate', (event) => {
+    event.waitUntil(clients.claim());
+});
+
 // 1. OneSignal Web SDK Service Worker (priorità push background)
 importScripts("https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.sw.js");
 
