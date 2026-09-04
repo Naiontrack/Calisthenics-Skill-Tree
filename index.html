@@ -9,6 +9,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-messaging-compat.js"></script>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -2603,7 +2604,29 @@
         
          
         const auth = firebase.auth();
-        const db = firebase.firestore(); 
+        const db = firebase.firestore();
+
+        // Configurazione Firebase Cloud Messaging (Web Push)
+        let messaging = null;
+        let swRegistration = null;
+        let fcmToken = null;
+        let notificationsEnabled = localStorage.getItem('naiontrackNotificationsEnabled') !== 'false';
+        const FIREBASE_VAPID_KEY = "BNv-YOUR-KEY-HERE"; // Incolla qui la chiave VAPID da Firebase Console -> Impostazioni progetto -> Cloud Messaging -> Web Push certificates
+
+        try {
+            if (typeof firebase.messaging === 'function' && firebase.messaging.isSupported()) {
+                messaging = firebase.messaging();
+            }
+        } catch (e) {
+            console.warn("Firebase Messaging non supportato o contesto non sicuro:", e);
+        }
+
+        // Cache di deduplicazione notifiche per non inviare alert doppi
+        const notifiedMessageIds = new Set();
+        const notifiedInvites = new Set();
+        const notifiedOvercome = new Set();
+        const notifiedEvents = new Set();
+        let lastChallengeScoresCache = {}; 
         
 
         let currentUser = null;
@@ -3388,6 +3411,248 @@
             updateUI();
         }
 
+        // ===============================================================
+        // SISTEMA NOTIFICHE PUSH (FIREBASE MESSAGING & PWA WEB PUSH)
+        // ===============================================================
+        async function requestNotificationPermission() {
+            if (!('Notification' in window)) {
+                alert("Il tuo dispositivo/browser non supporta le notifiche push di sistema.");
+                return false;
+            }
+
+            try {
+                const permission = await Notification.requestPermission();
+                if (permission === 'granted') {
+                    localStorage.setItem('naiontrackNotificationsEnabled', 'true');
+                    notificationsEnabled = true;
+                    await setupFCMToken();
+                    showAppNotification(
+                        "🔔 Notifiche Telefono Attive!",
+                        "Riceverai notifiche istantanee per messaggi, sfide, sondaggi e promemoria sul tuo telefono!",
+                        { type: 'test' }
+                    );
+                    renderProfileSettings();
+                    return true;
+                } else {
+                    localStorage.setItem('naiontrackNotificationsEnabled', 'false');
+                    notificationsEnabled = false;
+                    renderProfileSettings();
+                    alert("Notifiche non abilitate. Puoi autorizzarle dalle impostazioni del browser/telefono.");
+                    return false;
+                }
+            } catch (err) {
+                console.error("Errore richiesta permesso notifiche:", err);
+                return false;
+            }
+        }
+
+        function togglePushNotifications() {
+            if (!notificationsEnabled || ('Notification' in window && Notification.permission !== 'granted')) {
+                requestNotificationPermission();
+            } else {
+                notificationsEnabled = false;
+                localStorage.setItem('naiontrackNotificationsEnabled', 'false');
+                renderProfileSettings();
+                showInAppToast("🔕 Notifiche disattivate", "Non riceverai più notifiche su questo dispositivo.", { type: 'info' });
+            }
+        }
+
+        function testPushNotification() {
+            if ('Notification' in window && Notification.permission !== 'granted') {
+                requestNotificationPermission();
+                return;
+            }
+            showAppNotification(
+                "🔥 Calisthenics Tree Notifiche",
+                "Funziona alla perfezione! Le notifiche sul tuo telefono sono collegate e pronte.",
+                { type: 'test' }
+            );
+        }
+
+        async function setupFCMToken() {
+            if (!messaging || !currentUser) return;
+            try {
+                let tokenOptions = {};
+                if (swRegistration) tokenOptions.serviceWorkerRegistration = swRegistration;
+                if (FIREBASE_VAPID_KEY && FIREBASE_VAPID_KEY !== "BNv-YOUR-KEY-HERE") {
+                    tokenOptions.vapidKey = FIREBASE_VAPID_KEY;
+                }
+
+                let token = null;
+                try {
+                    token = await messaging.getToken(tokenOptions);
+                } catch (tokErr) {
+                    console.warn("Nota per FCM Cloud Push: genera e incolla la coppia di chiavi VAPID in FIREBASE_VAPID_KEY.", tokErr.message);
+                }
+
+                if (token) {
+                    fcmToken = token;
+                    console.log("FCM Device Registration Token ottenuto:", token);
+                    const userRef = db.collection("users").doc(currentUser.uid);
+                    await userRef.set({
+                        fcmToken: token,
+                        fcmTokens: firebase.firestore.FieldValue.arrayUnion(token),
+                        fcmUpdatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    }, { merge: true });
+                }
+            } catch (err) {
+                console.warn("Errore salvataggio token FCM:", err);
+            }
+        }
+
+        function initPushNotificationsAuto() {
+            if ('Notification' in window && Notification.permission === 'granted' && notificationsEnabled) {
+                setupFCMToken();
+            }
+        }
+
+        // DISPATCHER PRINCIPALE DELLE NOTIFICHE
+        function showAppNotification(title, body, options = {}) {
+            if (!notificationsEnabled) return;
+
+            const iconUrl = './icon-512.png';
+            const tag = options.type ? `calisthenics-${options.type}` : 'calisthenics-general';
+
+            // 1. Notifica di sistema del telefono / browser
+            if ('Notification' in window && Notification.permission === 'granted') {
+                if (swRegistration && typeof swRegistration.showNotification === 'function') {
+                    swRegistration.showNotification(title, {
+                        body: body,
+                        icon: iconUrl,
+                        badge: iconUrl,
+                        tag: tag,
+                        renotify: true,
+                        vibrate: [150, 75, 150, 75, 150],
+                        data: Object.assign({ url: './index.html' }, options)
+                    }).catch(err => {
+                        console.warn("Fallback notifica standard:", err);
+                        try {
+                            new Notification(title, { body: body, icon: iconUrl, tag: tag });
+                        } catch(e){}
+                    });
+                } else {
+                    try {
+                        new Notification(title, { body: body, icon: iconUrl, tag: tag });
+                    } catch(e){}
+                }
+            }
+
+            // 2. Notifica toast visiva in-app
+            showInAppToast(title, body, options);
+        }
+
+        function showInAppToast(title, body, options) {
+            let container = document.getElementById('in-app-toast-container');
+            if (!container) {
+                container = document.createElement('div');
+                container.id = 'in-app-toast-container';
+                container.style.cssText = 'position:fixed; top:16px; left:50%; transform:translateX(-50%); z-index:99999; display:flex; flex-direction:column; gap:8px; pointer-events:none; width:92%; max-width:400px;';
+                document.body.appendChild(container);
+            }
+
+            const toast = document.createElement('div');
+            toast.style.cssText = 'background:rgba(21, 29, 48, 0.95); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); border:1px solid var(--accent); box-shadow:0 8px 30px rgba(0,0,0,0.7), 0 0 20px var(--border-glow); border-radius:14px; padding:12px 14px; color:#fff; pointer-events:auto; display:flex; align-items:center; gap:12px; cursor:pointer; animation:toastIn 0.35s cubic-bezier(0.16, 1, 0.3, 1);';
+            toast.innerHTML = `
+                <img src="./icon-512.png" style="width:36px; height:36px; border-radius:8px; flex-shrink:0; border:1px solid var(--accent);">
+                <div style="flex:1; min-width:0;">
+                    <div style="font-weight:700; font-size:0.86rem; color:var(--accent); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHtml(title)}</div>
+                    <div style="font-size:0.78rem; color:var(--text); margin-top:2px; line-height:1.25; overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;">${escapeHtml(body)}</div>
+                </div>
+            `;
+
+            toast.onclick = () => {
+                toast.remove();
+                handleNotificationClick(options);
+            };
+
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.transition = 'all 0.35s ease';
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateY(-15px)';
+                setTimeout(() => toast.remove(), 350);
+            }, 4500);
+        }
+
+        function handleNotificationClick(options) {
+            if (!options) return;
+            if (options.type === 'chat' && options.id) {
+                if (!chatPanelOpen) toggleChatPanel();
+                switchChatTab('private');
+                openConversation(options.id);
+            } else if (options.type === 'general') {
+                if (!chatPanelOpen) toggleChatPanel();
+                switchChatTab('general');
+            } else if (options.type === 'chatInvite') {
+                if (!chatPanelOpen) toggleChatPanel();
+                switchChatTab('private');
+            } else if (options.type === 'challenge' || options.type === 'challengeInvite') {
+                if (!challengesPanelOpen) toggleChallengesPanel();
+            } else if (options.type === 'event') {
+                if (!eventsPanelOpen) toggleEventsPanel();
+            } else if (options.type === 'inactivity') {
+                openWorkoutsSection();
+            }
+        }
+
+        // Controllo automatico inattività (7 giorni senza allenarsi)
+        function checkInactivityReminder() {
+            if (!currentUser || !notificationsEnabled) return;
+            const workouts = getLocalWorkouts();
+            let lastWorkoutMillis = 0;
+            if (workouts.length > 0) {
+                const w = workouts[0];
+                if (w.createdAt) {
+                    lastWorkoutMillis = typeof w.createdAt === 'number' ? w.createdAt : (w.createdAt.toMillis ? w.createdAt.toMillis() : (w.createdAt.seconds ? w.createdAt.seconds * 1000 : 0));
+                } else if (w.date) {
+                    lastWorkoutMillis = new Date(w.date).getTime();
+                }
+            }
+
+            if (lastWorkoutMillis > 0) {
+                const now = Date.now();
+                const sevenDaysMs = 7 * 24 * 60 * 60 * 1000;
+                if (now - lastWorkoutMillis >= sevenDaysMs) {
+                    const lastAlert = parseInt(localStorage.getItem('lastInactivityAlertMillis') || '0', 10);
+                    if (now - lastAlert > 24 * 60 * 60 * 1000) {
+                        localStorage.setItem('lastInactivityAlertMillis', String(now));
+                        const days = Math.floor((now - lastWorkoutMillis) / (24 * 60 * 60 * 1000));
+                        showAppNotification(
+                            "🔥 Non mollare il ritmo!",
+                            `Non registri un allenamento da ${days} giorni. È ora di tornare alla sbarra per non perdere i progressi! 🤸`,
+                            { type: 'inactivity' }
+                        );
+                    }
+                }
+            }
+        }
+
+        // Controllo promemoria scadenza sondaggio (entro 24h)
+        function checkPollDeadlineReminder(events) {
+            if (!currentUser || !notificationsEnabled || !events) return;
+            const now = Date.now();
+            events.forEach(ev => {
+                const responses = ev.responses || {};
+                const hasVoted = !!responses[currentUser.uid];
+                if (!hasVoted && ev.sortKey) {
+                    const eventDateMillis = new Date(ev.sortKey).getTime();
+                    const hoursLeft = (eventDateMillis - now) / (60 * 60 * 1000);
+                    if (hoursLeft > 0 && hoursLeft <= 24) {
+                        const alertKey = `poll_reminder_${ev.id}`;
+                        const lastAlert = parseInt(localStorage.getItem(alertKey) || '0', 10);
+                        if (now - lastAlert > 12 * 60 * 60 * 1000) {
+                            localStorage.setItem(alertKey, String(now));
+                            showAppNotification(
+                                "⏰ Sondaggio Allenamento in scadenza!",
+                                `Fai sapere se ci sarai all'allenamento "${ev.title || 'in programma'}"! Mancano meno di ${Math.ceil(hoursLeft)} ore.`,
+                                { type: 'event', id: ev.id }
+                            );
+                        }
+                    }
+                }
+            });
+        }
+
         // CARICAMENTO STATO UTENTE
         function loadUserData(user) {
             if (user) {
@@ -3429,6 +3694,8 @@
                     renderProfileSettings();
                     initRealtimeLeaderboard();
                     initWorkoutsSection();
+                    setupFCMToken();
+                    checkInactivityReminder();
                     if (chatPanelOpen) {
                         renderChatInputState();
                         resumeActiveChatListener();
@@ -4114,6 +4381,17 @@
                     <span id="privacy-toggle-label" style="font-size: 0.85rem; font-weight: 600;">${isPublic ? '🌐 Profilo Pubblico' : '🔒 Profilo Privato'}</span>
                 </div>
                 <p style="font-size: 0.75rem; color: var(--subtext); margin-top: 6px;">Se il profilo è pubblico, gli altri utenti potranno vedere le skill sbloccate, l'altezza e il peso cliccando sul tuo nome in classifica. Se è privato, nessuno potrà vederli.</p>
+                <div class="privacy-toggle-row" style="margin-top: 14px; padding-top: 12px; border-top: 1px dashed var(--line-color); justify-content: space-between;">
+                    <div style="display:flex; align-items:center; gap: 8px;">
+                        <label class="switch">
+                            <input type="checkbox" id="profile-push-toggle" ${notificationsEnabled ? 'checked' : ''} onchange="togglePushNotifications()">
+                            <span class="slider"></span>
+                        </label>
+                        <span id="push-toggle-label" style="font-size: 0.85rem; font-weight: 600;">${notificationsEnabled ? '🔔 Notifiche Telefono: Attive' : '🔕 Notifiche Telefono: Disattivate'}</span>
+                    </div>
+                    <button type="button" class="btn-auth-secondary" style="padding: 4px 10px; font-size: 0.78rem;" onclick="testPushNotification()">Test 📲</button>
+                </div>
+                <p style="font-size: 0.75rem; color: var(--subtext); margin-top: 4px;">Ricevi notifiche sul tuo telefono per chat privata, pubblica, sfide, sondaggi e inattività.</p>
                 <p class="auth-error" id="profile-settings-error" style="min-height: 16px; margin-top: 6px;"></p>
                 <button class="btn-confirm" style="width: 100%; margin-top: 4px;" onclick="saveProfileSettings()">💾 Salva Profilo</button>
             `;
@@ -4822,6 +5100,26 @@
                         unreadGeneralMessagesCache.push({ uid: data.uid, createdAt: data.createdAt });
                     });
                     recomputeGeneralUnread();
+
+                    // TRIGGER 2: Messaggio in chat pubblica generale
+                    snapshot.docChanges().forEach(change => {
+                        if (change.type === 'added') {
+                            const data = change.doc.data();
+                            const msgTs = data.createdAt?.toMillis ? data.createdAt.toMillis() : (data.createdAt?.seconds ? data.createdAt.seconds * 1000 : 0);
+                            const isFresh = (Date.now() - msgTs) < 30000;
+                            const isViewingGeneral = chatPanelOpen && activeChatView === 'general';
+                            const notifKey = 'gen_' + change.doc.id;
+                            if (data.uid && data.uid !== currentUser.uid && isFresh && !isViewingGeneral && !notifiedMessageIds.has(notifKey)) {
+                                notifiedMessageIds.add(notifKey);
+                                const author = data.nickname || 'Un atleta';
+                                showAppNotification(
+                                    `🌐 Chat Generale - ${author}`,
+                                    data.text || 'Nuovo messaggio inviato nella chat generale',
+                                    { type: 'general' }
+                                );
+                            }
+                        }
+                    });
                 }, (error) => console.error("Errore nel calcolo dei messaggi non letti:", error));
 
             unreadConversationsUnsubscribe = db.collection("conversations")
@@ -4837,6 +5135,31 @@
                         });
                     });
                     recomputePrivateUnread();
+
+                    // TRIGGER 1: Messaggio in chat privata o gruppo
+                    snapshot.docChanges().forEach(change => {
+                        if (change.type === 'modified' || change.type === 'added') {
+                            const c = change.doc.data();
+                            const convId = change.doc.id;
+                            if (c.lastMessageSenderUid && c.lastMessageSenderUid !== currentUser.uid && c.lastMessageAt) {
+                                const msgTs = c.lastMessageAt.toMillis ? c.lastMessageAt.toMillis() : (c.lastMessageAt.seconds ? c.lastMessageAt.seconds * 1000 : 0);
+                                const isFresh = (Date.now() - msgTs) < 30000;
+                                const isViewingThisThread = chatPanelOpen && activeChatView === 'private-thread' && activeConversationId === convId;
+                                const notifKey = 'conv_msg_' + convId + '_' + msgTs;
+                                if (isFresh && !isViewingThisThread && !notifiedMessageIds.has(notifKey)) {
+                                    notifiedMessageIds.add(notifKey);
+                                    const senderName = (c.participantNames && c.participantNames[c.lastMessageSenderUid]) || 'Un atleta';
+                                    const isGroup = c.type === 'group';
+                                    const title = isGroup ? `👥 ${c.name || 'Gruppo'} - ${senderName}` : `💬 ${senderName}`;
+                                    showAppNotification(
+                                        title,
+                                        c.lastMessageText || 'Nuovo messaggio ricevuto',
+                                        { type: 'chat', id: convId }
+                                    );
+                                }
+                            }
+                        }
+                    });
                 }, (error) => console.error("Errore nel calcolo delle chat non lette:", error));
         }
 
@@ -4895,11 +5218,36 @@
                 .limit(20)
                 .onSnapshot((snapshot) => {
                     eventsBadgeCache = [];
+                    const allEvents = [];
                     snapshot.forEach(doc => {
                         const data = doc.data();
                         eventsBadgeCache.push({ creatorUid: data.creatorUid, createdAt: data.createdAt });
+                        allEvents.push(Object.assign({ id: doc.id }, data));
                     });
                     renderEventsBadge();
+
+                    // TRIGGER 7: Nuovo sondaggio pubblicato da un altro atleta
+                    snapshot.docChanges().forEach(change => {
+                        if (change.type === 'added') {
+                            const ev = change.doc.data();
+                            const evId = change.doc.id;
+                            const evTs = ev.createdAt?.toMillis ? ev.createdAt.toMillis() : (ev.createdAt?.seconds ? ev.createdAt.seconds * 1000 : 0);
+                            const isFresh = (Date.now() - evTs) < 45000;
+                            const notifKey = 'event_new_' + evId;
+                            if (ev.creatorUid && ev.creatorUid !== currentUser?.uid && isFresh && !notifiedEvents.has(notifKey)) {
+                                notifiedEvents.add(notifKey);
+                                const creator = ev.creatorNickname || 'Un atleta';
+                                showAppNotification(
+                                    "📢 Nuovo Allenamento di Gruppo in Programma!",
+                                    `${creator} ha proposto un nuovo allenamento: "${ev.title || 'Sondaggio'}". Fai sapere se ci sarai!`,
+                                    { type: 'event', id: evId }
+                                );
+                            }
+                        }
+                    });
+
+                    // TRIGGER 6: Promemoria voto sondaggio (entro 24h)
+                    checkPollDeadlineReminder(allEvents);
                 }, (error) => console.error("Errore nel calcolo dei sondaggi non letti:", error));
         }
 
@@ -6073,6 +6421,7 @@
         function renderEventsList(events) {
             const listEl = document.getElementById('events-list');
             if (!listEl) return;
+            checkPollDeadlineReminder(events);
 
             if (events.length === 0) {
                 listEl.innerHTML = `<p style="color: var(--subtext); text-align:center; font-size:0.85rem;">Ancora nessun sondaggio! ${currentUser ? 'Tocca "Nuovo sondaggio" per crearne uno 🤸' : ''}</p>`;
@@ -6435,6 +6784,25 @@
                     if (chatPanelOpen && activeChatView === 'private-list') {
                         updateChatInvitesBanner();
                     }
+
+                    // TRIGGER 3a: Nuovo invito a chattare in privato o in un gruppo
+                    snapshot.docChanges().forEach(change => {
+                        if (change.type === 'added') {
+                            const inv = change.doc.data();
+                            const invId = change.doc.id;
+                            const notifKey = 'chat_inv_' + invId;
+                            if (inv.toUid === currentUser.uid && !notifiedInvites.has(notifKey)) {
+                                notifiedInvites.add(notifKey);
+                                const fromName = inv.fromNickname || 'Un atleta';
+                                const isGroup = inv.type === 'group';
+                                showAppNotification(
+                                    isGroup ? "👥 Nuovo invito al gruppo!" : "✉️ Nuovo invito in chat privata!",
+                                    `${fromName} ti ha inviato un invito ${isGroup ? 'al gruppo "' + (inv.groupName || 'Allenamento') + '"' : 'a chattare in privato'}. Tocca per rispondere!`,
+                                    { type: 'chatInvite', id: invId }
+                                );
+                            }
+                        }
+                    });
                 }, (err) => {
                     console.warn("Errore ascolto inviti chat:", err);
                 });
@@ -6629,6 +6997,24 @@
                     if (challengesPanelOpen) {
                         renderChallengesList();
                     }
+
+                    // TRIGGER 3b: Nuovo invito a fare una sfida
+                    snapshot.docChanges().forEach(change => {
+                        if (change.type === 'added') {
+                            const inv = change.doc.data();
+                            const invId = change.doc.id;
+                            const notifKey = 'chal_inv_' + invId;
+                            if (inv.toUid === currentUser.uid && !notifiedInvites.has(notifKey)) {
+                                notifiedInvites.add(notifKey);
+                                const fromName = inv.fromNickname || 'Un atleta';
+                                showAppNotification(
+                                    "🏹 Nuova sfida ricevuta!",
+                                    `${fromName} ti ha sfidato: "${inv.challengeTitle || 'Sfida Calisthenics'}". Accetta la sfida e dimostra la tua forza!`,
+                                    { type: 'challengeInvite', id: invId }
+                                );
+                            }
+                        }
+                    });
                 }, (err) => console.warn("Errore ascolto inviti sfide:", err));
 
             challengesBadgeUnsubscribe = db.collection("challenges")
@@ -6642,6 +7028,37 @@
                     if (challengesPanelOpen) {
                         renderChallengesList();
                     }
+
+                    // TRIGGER 4: Quando ti battono o superano in una sfida
+                    snapshot.docChanges().forEach(change => {
+                        const ch = change.doc.data();
+                        const chId = change.doc.id;
+                        const myScore = ch.scores ? (ch.scores[currentUser.uid] || 0) : 0;
+                        const prevScores = lastChallengeScoresCache[chId] || {};
+
+                        if (ch.scores) {
+                            Object.keys(ch.scores).forEach(uid => {
+                                if (uid !== currentUser.uid) {
+                                    const oppScore = ch.scores[uid] || 0;
+                                    const prevOppScore = prevScores[uid] !== undefined ? prevScores[uid] : 0;
+                                    if (oppScore > myScore && prevOppScore <= myScore && change.type === 'modified') {
+                                        const notifKey = `overcome_${chId}_${uid}_${oppScore}`;
+                                        if (!notifiedOvercome.has(notifKey)) {
+                                            notifiedOvercome.add(notifKey);
+                                            const oppName = (ch.participantNames && ch.participantNames[uid]) || 'Il tuo avversario';
+                                            const chTitle = ch.title || ch.skillName || 'Sfida';
+                                            showAppNotification(
+                                                "🏆 Attenzione! Sei stato superato!",
+                                                `${oppName} ti ha appena superato nella sfida "${chTitle}" con ${oppScore} punti! Torna ad allenarti per rimontare!`,
+                                                { type: 'challenge', id: chId }
+                                            );
+                                        }
+                                    }
+                                }
+                            });
+                            lastChallengeScoresCache[chId] = Object.assign({}, ch.scores);
+                        }
+                    });
                 }, (err) => console.warn("Errore ascolto sfide badge:", err));
         }
 
@@ -7538,21 +7955,28 @@
         initWorkoutsSection();
     </script>
     <script>
-      // Disattiva e rimuove qualsiasi vecchia cache del Service Worker per garantire che mobile carichi sempre la versione più recente
+      // Registrazione Service Worker per Notifiche Push e PWA Standalone
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.getRegistrations().then(function(registrations) {
-            for (let registration of registrations) {
-              registration.unregister();
-            }
-          });
-          if ('caches' in window) {
-            caches.keys().then(function(names) {
-              for (let name of names) caches.delete(name);
+          navigator.serviceWorker.register('./firebase-messaging-sw.js')
+            .then((registration) => {
+              console.log('Firebase Messaging Service Worker registrato:', registration.scope);
+              swRegistration = registration;
+              if (messaging && typeof messaging.useServiceWorker === 'function') {
+                messaging.useServiceWorker(registration);
+              }
+              initPushNotificationsAuto();
+            })
+            .catch((err) => {
+              console.warn('Registrazione Service Worker fallita:', err);
             });
-          }
         });
       }
+
+      // Controllo periodico inattività ogni 2 ore
+      setInterval(() => {
+        if (typeof checkInactivityReminder === 'function') checkInactivityReminder();
+      }, 2 * 60 * 60 * 1000);
     </script>
 </body>
 </html>
