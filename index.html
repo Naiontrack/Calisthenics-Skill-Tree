@@ -10,6 +10,8 @@
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-messaging-compat.js"></script>
+    <!-- OneSignal Web Push SDK (per notifiche a schermo spento / app chiusa) -->
+    <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -2611,7 +2613,7 @@
         let swRegistration = null;
         let fcmToken = null;
         let notificationsEnabled = localStorage.getItem('naiontrackNotificationsEnabled') !== 'false';
-        const FIREBASE_VAPID_KEY = "BEKd6PyJKq4bND7nJUTOkBBDH82Frv3BiPJCPDC2ZXTUYO7hOWMRTHcYretZcHQuJXZ6zXsW8hY6SW4EzT2qJXI"; // Incolla qui la chiave VAPID da Firebase Console -> Impostazioni progetto -> Cloud Messaging -> Web Push certificates
+        const FIREBASE_VAPID_KEY = "BNv-YOUR-KEY-HERE"; // Incolla qui la chiave VAPID da Firebase Console -> Impostazioni progetto -> Cloud Messaging -> Web Push certificates
 
         try {
             if (typeof firebase.messaging === 'function' && firebase.messaging.isSupported()) {
@@ -2626,7 +2628,66 @@
         const notifiedInvites = new Set();
         const notifiedOvercome = new Set();
         const notifiedEvents = new Set();
-        let lastChallengeScoresCache = {}; 
+        let lastChallengeScoresCache = {};
+
+        // ===============================================================
+        // ONESIGNAL CONFIGURAZIONE (PUSH IN BACKGROUND SENZA CARTA DI CREDITO)
+        // ===============================================================
+        const ONESIGNAL_APP_ID = "d3e5039e-0c18-4717-9c75-b2467d2f57b1"; // Inserisci qui l'App ID generato su onesignal.com
+        const PUSH_RELAY_URL = ""; // Inserisci qui l'URL del Cloudflare Worker (es. https://calisthenics-push.tuonome.workers.dev)
+
+        window.OneSignalDeferred = window.OneSignalDeferred || [];
+        OneSignalDeferred.push(async function(OneSignal) {
+            if (!ONESIGNAL_APP_ID || ONESIGNAL_APP_ID === "YOUR-ONESIGNAL-APP-ID") {
+                console.log("[OneSignal] In attesa dell'App ID in ONESIGNAL_APP_ID.");
+                return;
+            }
+            try {
+                await OneSignal.init({
+                    appId: ONESIGNAL_APP_ID,
+                    allowLocalhostAsSecureOrigin: true,
+                    serviceWorkerParam: { scope: "./" },
+                    serviceWorkerPath: "./OneSignalSDKWorker.js",
+                    notifyButton: { enable: false }
+                });
+                console.log("[OneSignal] Inizializzato con successo.");
+                if (currentUser) {
+                    await OneSignal.login(currentUser.uid);
+                }
+            } catch (e) {
+                console.warn("[OneSignal] Errore init:", e);
+            }
+        });
+
+        // Funzione per inviare notifiche push in background tramite il Relay Cloudflare
+        async function dispatchBackgroundPush({ targetUids = [], sendToAll = false, title, body, data = {} }) {
+            if (!PUSH_RELAY_URL || !ONESIGNAL_APP_ID || ONESIGNAL_APP_ID === "YOUR-ONESIGNAL-APP-ID") {
+                return;
+            }
+            try {
+                const payload = {
+                    app_id: ONESIGNAL_APP_ID,
+                    headings: { en: title, it: title },
+                    contents: { en: body, it: body },
+                    data: data
+                };
+                if (sendToAll) {
+                    payload.included_segments = ["Total Subscriptions"];
+                } else if (targetUids && targetUids.length > 0) {
+                    payload.include_aliases = { external_id: targetUids };
+                    payload.target_channel = "push";
+                } else {
+                    return;
+                }
+                fetch(PUSH_RELAY_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                }).catch(err => console.warn("[Push Relay] Errore invio:", err));
+            } catch (e) {
+                console.warn("[Push Relay] Errore:", e);
+            }
+        } 
         
 
         let currentUser = null;
@@ -3426,6 +3487,9 @@
                     localStorage.setItem('naiontrackNotificationsEnabled', 'true');
                     notificationsEnabled = true;
                     await setupFCMToken();
+                    if (window.OneSignal && window.OneSignal.Notifications) {
+                        try { await window.OneSignal.Notifications.requestPermission(); } catch(e) {}
+                    }
                     showAppNotification(
                         "🔔 Notifiche Telefono Attive!",
                         "Riceverai notifiche istantanee per messaggi, sfide, sondaggi e promemoria sul tuo telefono!",
@@ -3696,6 +3760,9 @@
                     initWorkoutsSection();
                     setupFCMToken();
                     checkInactivityReminder();
+                    if (window.OneSignal && user) {
+                        try { window.OneSignal.login(user.uid); } catch(e) {}
+                    }
                     if (chatPanelOpen) {
                         renderChatInputState();
                         resumeActiveChatListener();
@@ -3755,6 +3822,9 @@
                 stopWorkoutsListener();
                 stopChallengesListeners();
                 stopChatInvitesListener();
+                if (window.OneSignal) {
+                    try { window.OneSignal.logout(); } catch(e) {}
+                }
                 updateUI();
                 renderProfileSettings();
                 initRealtimeLeaderboard();
@@ -5440,8 +5510,32 @@
                         lastMessageSenderUid: currentUser.uid,
                         [`lastRead.${currentUser.uid}`]: firebase.firestore.FieldValue.serverTimestamp()
                     }).catch((error) => console.error("Errore aggiornamento anteprima chat:", error));
+
+                    // TRIGGER 1 PUSH BACKGROUND: invio notifica ai partecipanti della chat privata / gruppo
+                    if (activeConversationData && activeConversationData.participants) {
+                        const targetUids = activeConversationData.participants.filter(uid => uid !== currentUser.uid);
+                        const senderName = userNickname || (currentUser.displayName || 'Un atleta');
+                        const chatTitle = activeConversationData.type === 'group'
+                            ? (activeConversationData.name || 'Gruppo')
+                            : senderName;
+                        dispatchBackgroundPush({
+                            targetUids: targetUids,
+                            title: `💬 ${chatTitle}`,
+                            body: `${senderName}: ${msgText}`,
+                            data: { type: 'chat', id: activeConversationId }
+                        });
+                    }
                 } else {
                     markGeneralChatAsRead();
+
+                    // TRIGGER 2 PUSH BACKGROUND: invio notifica a tutti per la chat pubblica
+                    const senderName = userNickname || (currentUser.displayName || 'Un atleta');
+                    dispatchBackgroundPush({
+                        sendToAll: true,
+                        title: `🌐 Chat Generale - ${senderName}`,
+                        body: msgText,
+                        data: { type: 'general' }
+                    });
                 }
             }).catch((error) => {
                 console.error("Errore invio messaggio:", error);
@@ -5851,6 +5945,15 @@
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
 
+                // TRIGGER 3a PUSH BACKGROUND: notifica di invito a chattare in privato
+                const myName = userNickname || (currentUser.displayName || 'Un atleta');
+                dispatchBackgroundPush({
+                    targetUids: [otherUid],
+                    title: "✉️ Nuovo invito in chat privata!",
+                    body: `${myName} ti ha invitato a chattare privatamente. Tocca per visualizzare l'invito!`,
+                    data: { type: 'chatInvite' }
+                });
+
                 document.getElementById('custom-modal').classList.remove('active');
                 openCustomModal(
                     "📩 Invito inviato",
@@ -5911,6 +6014,14 @@
                     });
                 }
                 await batch.commit();
+
+                // TRIGGER 3b PUSH BACKGROUND: notifica di invito a una sfida a tutti gli atleti selezionati
+                dispatchBackgroundPush({
+                    targetUids: selectedUids,
+                    title: "🏹 Nuova sfida ricevuta!",
+                    body: `${creatorName} ti ha sfidato: "${title}". Accetta la sfida e dimostra la tua forza!`,
+                    data: { type: 'challengeInvite', id: challengeDoc.id }
+                });
 
                 document.getElementById('custom-modal').classList.remove('active');
                 activeChatView = 'private-list';
@@ -6691,6 +6802,15 @@
                 createdAt: firebase.firestore.FieldValue.serverTimestamp()
             }).then(() => {
                 document.getElementById('custom-modal').classList.remove('active');
+
+                // TRIGGER 7 PUSH BACKGROUND: notifica a tutti per il nuovo sondaggio
+                const creator = userNickname || (currentUser.displayName || 'Un atleta');
+                dispatchBackgroundPush({
+                    sendToAll: true,
+                    title: "📅 Nuovo Sondaggio Allenamento!",
+                    body: `${creator} ha proposto un allenamento per ${dayLabel} ore ${time} presso ${place.slice(0, 50)}. Fai sapere se ci sarai!`,
+                    data: { type: 'event' }
+                });
             }).catch((error) => {
                 console.error("Errore nella creazione del sondaggio:", error);
                 if (errEl) {
@@ -7721,6 +7841,7 @@
                         const pData = data.participantData && data.participantData[currentUser.uid];
                         if (!pData) return;
                         const startXp = pData.startXp || currentXp;
+                        const myOldProgress = Math.max(0, (pData.currentXp || startXp) - startXp);
                         const progress = currentXp - startXp;
                         const updateObj = {
                             [`participantData.${currentUser.uid}.currentXp`]: currentXp
@@ -7732,6 +7853,25 @@
                             updateObj.completedAt = firebase.firestore.FieldValue.serverTimestamp();
                         }
                         doc.ref.update(updateObj).catch(e => console.warn("Errore sync progresso sfida:", e));
+
+                        // TRIGGER 4 PUSH BACKGROUND: notifica all'avversario se viene superato
+                        if (data.participantData) {
+                            const myName = userNickname || (currentUser.displayName || 'Un atleta');
+                            Object.keys(data.participantData).forEach(oppUid => {
+                                if (oppUid !== currentUser.uid) {
+                                    const opp = data.participantData[oppUid];
+                                    const oppGained = Math.max(0, (opp.currentXp || 0) - (opp.startXp || 0));
+                                    if (progress > oppGained && myOldProgress <= oppGained) {
+                                        dispatchBackgroundPush({
+                                            targetUids: [oppUid],
+                                            title: "🏆 Attenzione! Sei stato superato!",
+                                            body: `${myName} ti ha appena superato nella sfida "${data.title || 'Sfida'}" con ${progress} XP! Torna ad allenarti per rimontare!`,
+                                            data: { type: 'challenge', id: doc.id }
+                                        });
+                                    }
+                                }
+                            });
+                        }
                     });
                 })
                 .catch((e) => console.warn("Errore recupero sfide attive:", e));
