@@ -2424,16 +2424,7 @@
             </div>
         </div>
 
-        
-    
-        </div>
-        <div style="display: flex; align-items: center; gap: 8px;">
-            <button id="push-prompt-btn" class="btn-auth" style="padding: 5px 12px; font-size: 0.8rem; white-space: nowrap;" onclick="requestNotificationPermission()">Attiva 🔔</button>
-            <button style="background: none; border: none; color: #aaa; font-size: 1.2rem; cursor: pointer; padding: 2px 6px; line-height: 1;" onclick="dismissPushBanner()" title="Chiudi">&times;</button>
-        </div>
-    </div>
-
-<div class="top-bar">
+        <div class="top-bar">
             <h1>Occhionero's Calisthenics Tree</h1>
             <div class="controls-group">
                 <div class="selector-box">
@@ -2626,7 +2617,7 @@
         let messaging = null;
         let swRegistration = null;
         let fcmToken = null;
-        let notificationsEnabled = localStorage.getItem('naiontrackNotificationsEnabled') !== 'false';
+        let notificationsEnabled = localStorage.getItem('naiontrackNotificationsEnabled') === 'true' && (typeof Notification === 'undefined' || Notification.permission === 'granted');
         const FIREBASE_VAPID_KEY = "BNv-YOUR-KEY-HERE"; // Incolla qui la chiave VAPID da Firebase Console -> Impostazioni progetto -> Cloud Messaging -> Web Push certificates
 
         try {
@@ -2697,22 +2688,24 @@
                     serviceWorkerParam: { scope: osScope },
                     serviceWorkerPath: osWorkerPath,
                     notifyButton: { enable: false },
-                    slidedown: {
-                        prompts: [
-                            {
-                                type: "push",
-                                autoPrompt: true,
-                                text: {
-                                    actionMessage: "Vuoi ricevere notifiche per messaggi privati, sfide e sondaggi sul tuo telefono?",
-                                    acceptButton: "Attiva Notifiche",
-                                    cancelButton: "Non ora"
-                                },
-                                delay: {
-                                    pageViews: 1,
-                                    timeDelay: 2
+                    promptOptions: {
+                        slidedown: {
+                            prompts: [
+                                {
+                                    type: "push",
+                                    autoPrompt: true,
+                                    text: {
+                                        actionMessage: "Vuoi ricevere notifiche per messaggi privati, sfide e sondaggi sul tuo telefono?",
+                                        acceptButton: "Attiva Notifiche",
+                                        cancelButton: "Non ora"
+                                    },
+                                    delay: {
+                                        pageViews: 1,
+                                        timeDelay: 1
+                                    }
                                 }
-                            }
-                        ]
+                            ]
+                        }
                     }
                 });
                 console.log("[OneSignal] Inizializzato con successo. Scope:", osScope, "Path:", osWorkerPath);
@@ -3620,34 +3613,53 @@ let currentUser = null;
             const shouldEnable = toggle ? toggle.checked : !notificationsEnabled;
 
             if (shouldEnable) {
-                setPushNotificationsState(true);
-                showInAppToast("🔔 Notifiche attivate", "Riceverai le notifiche sul tuo dispositivo!", { type: 'info' });
+                // Se è iPhone in Safari normale (non aggiunto alla schermata Home)
+                const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+                const isStandalone = window.navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches;
+                if (isIOS && !isStandalone) {
+                    alert("Su iPhone le notifiche push richiedono l'installazione sulla Schermata Home:\n\n1. Tocca il tasto Condividi in Safari (l'icona del quadrato con la freccia ⬆️ in basso al centro)\n2. Tocca 'Aggiungi alla schermata Home'\n3. Apri Calisthenics Tree dall'icona sulla Home e attiva le notifiche!");
+                    if (toggle) toggle.checked = false;
+                    return;
+                }
+
+                showInAppToast("🔔 Attivazione in corso...", "Concedi il permesso alle notifiche quando richiesto...", { type: 'info' });
 
                 try {
+                    let granted = false;
                     if (window.OneSignal) {
                         if (window.OneSignal.Notifications && typeof window.OneSignal.Notifications.requestPermission === 'function') {
-                            await window.OneSignal.Notifications.requestPermission();
+                            const res = await window.OneSignal.Notifications.requestPermission();
+                            granted = (res === 'granted' || Notification.permission === 'granted');
                         }
                         if (window.OneSignal.User && window.OneSignal.User.PushSubscription) {
                             await window.OneSignal.User.PushSubscription.optIn();
                         }
                         if (currentUser && currentUser.uid) {
                             await window.OneSignal.login(currentUser.uid);
+                            console.log("[OneSignal] Login registrato per UID:", currentUser.uid);
                         }
-                    } else if (typeof Notification !== 'undefined' && Notification.permission !== 'granted') {
-                        await Notification.requestPermission();
+                    } else if (typeof Notification !== 'undefined') {
+                        const p = await Notification.requestPermission();
+                        granted = (p === 'granted');
+                    }
+
+                    if (granted || (typeof Notification !== 'undefined' && Notification.permission === 'granted')) {
+                        setPushNotificationsState(true);
+                        showInAppToast("🔔 Notifiche attivate con successo!", "Questo dispositivo riceverà le notifiche.", { type: 'success' });
+                    } else {
+                        setPushNotificationsState(false);
+                        alert("Permesso notifiche non concesso. Puoi autorizzarlo dalle impostazioni del browser o del telefono.");
                     }
                 } catch (err) {
                     console.warn("[Push Toggle err]", err);
+                    setPushNotificationsState(false);
                 }
             } else {
                 setPushNotificationsState(false);
                 showInAppToast("🔕 Notifiche disattivate", "Non riceverai più notifiche su questo dispositivo.", { type: 'info' });
-                try {
-                    if (window.OneSignal && window.OneSignal.User && window.OneSignal.User.PushSubscription) {
-                        await window.OneSignal.User.PushSubscription.optOut();
-                    }
-                } catch(err) {}
+                if (window.OneSignal && window.OneSignal.User && window.OneSignal.User.PushSubscription) {
+                    window.OneSignal.User.PushSubscription.optOut().catch(() => {});
+                }
             }
         }
 
@@ -3928,6 +3940,10 @@ async function setupFCMToken() {
                     checkInactivityReminder();
                     if (user) {
                         syncOneSignalUser(user.uid);
+                    // Mostra il prompt OneSignal all'utente se non ha ancora risposto
+                    if (typeof Notification !== 'undefined' && Notification.permission === 'default' && window.OneSignal && window.OneSignal.Slidedown) {
+                        try { window.OneSignal.Slidedown.promptPush({ force: true }); } catch(e) {}
+                    }
                     }
                     if (chatPanelOpen) {
                         renderChatInputState();
