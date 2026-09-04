@@ -3557,21 +3557,12 @@ let currentUser = null;
             });
         }
 
-        // Toggle pulito e istantaneo: ZERO alert molesti, solo cambio stato silenzioso
+        // Toggle pulito e istantaneo: ZERO alert, ZERO pop-up, solo cambio stato silenzioso
         async function togglePushNotifications() {
             const toggle = document.getElementById('profile-push-toggle');
             const shouldEnable = toggle ? toggle.checked : !notificationsEnabled;
 
             if (shouldEnable) {
-                // Rileva se è iPhone / iPad fuori dalla Home
-                const isIos = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-                const isStandalone = window.navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches;
-                if (isIos && !isStandalone) {
-                    setPushNotificationsState(false);
-                    alert("Su iPhone le notifiche push richiedono che l'app sia aggiunta alla schermata Home:\n1. Tocca il tasto Condividi in basso in Safari\n2. Tocca 'Aggiungi alla schermata Home'\n3. Apri l'app dalla Home per abilitare le notifiche!");
-                    return;
-                }
-
                 if (typeof Notification !== 'undefined' && Notification.permission !== 'granted') {
                     try {
                         const p = await Notification.requestPermission();
@@ -3617,22 +3608,13 @@ let currentUser = null;
                 }
             };
 
-            // Rileva se è iPhone / iPad aperto dentro Safari anziché dalla Schermata Home
-            const isIos = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-            const isStandalone = window.navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches;
-            if (isIos && !isStandalone) {
-                resetButton("Usa da Home 📲");
-                alert("Su iPhone le notifiche push funzionano solo se l'app è aggiunta alla schermata Home:\n1. Tocca l'icona Condividi in basso in Safari\n2. Scegli 'Aggiungi a schermata Home'\n3. Apri l'app dalla Home e riprova il Test!");
-                return;
-            }
-
-            // Timeout di sicurezza garantito: dopo 8 secondi sblocca SEMPRE il pulsante
+            // Timeout di sicurezza garantito: dopo 7 secondi sblocca SEMPRE il pulsante
             const safetyTimer = setTimeout(() => {
                 resetButton("Inviato! ✅");
-            }, 8000);
+            }, 7000);
 
             try {
-                // 1. Richiedi subito il permesso nativo al browser (su iOS DEVE essere la 1a riga dal click per preservare il gesture)
+                // 1. Richiedi subito il permesso nativo al browser (su iOS DEVE essere la 1a riga dal tap per preservare il gesture nativo)
                 if (typeof Notification !== 'undefined' && Notification.permission !== 'granted') {
                     try {
                         const perm = await Notification.requestPermission();
@@ -3686,7 +3668,7 @@ let currentUser = null;
                     }
                 }
 
-                // 4. Mostra notifica locale immediata come feedback istantaneo se supportata
+                // 4. Mostra notifica locale immediata se supportata
                 if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
                     if (swRegistration && typeof swRegistration.showNotification === 'function') {
                         try {
