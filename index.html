@@ -2680,10 +2680,14 @@
                 return;
             }
             try {
+                const collapseId = data.id || data.type || 'calisthenics-update';
                 const payload = {
                     app_id: ONESIGNAL_APP_ID,
                     headings: { en: title, it: title },
                     contents: { en: body, it: body },
+                    collapse_id: String(collapseId),
+                    chrome_web_icon: "https://naiontrack.github.io/Calisthenics-Skill-Tree/icon-512.png",
+                    chrome_web_badge: "https://naiontrack.github.io/Calisthenics-Skill-Tree/icon-512.png",
                     data: data
                 };
                 if (sendToAll) {
@@ -3525,13 +3529,53 @@
             }
         }
 
+        function setPushNotificationsState(enabled) {
+            notificationsEnabled = enabled;
+            localStorage.setItem('naiontrackNotificationsEnabled', enabled ? 'true' : 'false');
+
+            const toggle = document.getElementById('profile-push-toggle');
+            const label = document.getElementById('push-toggle-label');
+            if (toggle) toggle.checked = enabled;
+            if (label) {
+                label.innerText = enabled ? '🔔 Notifiche Telefono: Attive' : '🔕 Notifiche Telefono: Disattivate';
+            }
+
+            if (window.OneSignal && window.OneSignal.User && window.OneSignal.User.PushSubscription) {
+                if (enabled) {
+                    window.OneSignal.User.PushSubscription.optIn().catch(e => console.warn("[OneSignal optIn]", e));
+                } else {
+                    window.OneSignal.User.PushSubscription.optOut().catch(e => console.warn("[OneSignal optOut]", e));
+                }
+            }
+        }
+
         function togglePushNotifications() {
-            if (!notificationsEnabled || ('Notification' in window && Notification.permission !== 'granted')) {
-                requestNotificationPermission();
+            const toggle = document.getElementById('profile-push-toggle');
+            const shouldEnable = toggle ? toggle.checked : !notificationsEnabled;
+
+            if (shouldEnable) {
+                setPushNotificationsState(true);
+                showInAppToast("🔔 Notifiche attivate", "Riceverai le notifiche sul tuo telefono!", { type: 'info' });
+
+                if ('Notification' in window && Notification.permission !== 'granted') {
+                    Notification.requestPermission().then(p => {
+                        if (p !== 'granted') {
+                            setPushNotificationsState(false);
+                            alert("Notifiche non abilitate. Puoi autorizzarle dalle impostazioni del browser o del telefono.");
+                        } else {
+                            if (window.OneSignal && window.OneSignal.Notifications) {
+                                window.OneSignal.Notifications.requestPermission().catch(e => {});
+                            }
+                        }
+                    }).catch(err => {
+                        console.error("Errore permesso notifiche:", err);
+                        setPushNotificationsState(false);
+                    });
+                } else if (window.OneSignal && window.OneSignal.Notifications) {
+                    window.OneSignal.Notifications.requestPermission().catch(e => {});
+                }
             } else {
-                notificationsEnabled = false;
-                localStorage.setItem('naiontrackNotificationsEnabled', 'false');
-                renderProfileSettings();
+                setPushNotificationsState(false);
                 showInAppToast("🔕 Notifiche disattivate", "Non riceverai più notifiche su questo dispositivo.", { type: 'info' });
             }
         }
@@ -3585,39 +3629,30 @@
             }
         }
 
-        // DISPATCHER PRINCIPALE DELLE NOTIFICHE
+        // DISPATCHER PRINCIPALE DELLE NOTIFICHE (CON PROTEZIONE ANTI-DOPPIONI)
         function showAppNotification(title, body, options = {}) {
             if (!notificationsEnabled) return;
 
-            const iconUrl = './icon-512.png';
-            const tag = options.type ? `calisthenics-${options.type}` : 'calisthenics-general';
+            // Mostra sempre il toast grafico elegante all'interno dell'app
+            showInAppToast(title, body, options);
 
-            // 1. Notifica di sistema del telefono / browser
-            if ('Notification' in window && Notification.permission === 'granted') {
+            // Mostra la notifica di sistema solo se la finestra è nascosta / in background
+            // ed evita duplicati grazie al tag univoco e renotify: false
+            if (document.hidden && 'Notification' in window && Notification.permission === 'granted') {
+                const iconUrl = 'https://naiontrack.github.io/Calisthenics-Skill-Tree/icon-512.png';
+                const tag = options.id ? `calisthenics-${options.type}-${options.id}` : `calisthenics-${options.type || 'gen'}`;
                 if (swRegistration && typeof swRegistration.showNotification === 'function') {
                     swRegistration.showNotification(title, {
                         body: body,
                         icon: iconUrl,
                         badge: iconUrl,
                         tag: tag,
-                        renotify: true,
-                        vibrate: [150, 75, 150, 75, 150],
+                        renotify: false,
+                        vibrate: [150, 75, 150],
                         data: Object.assign({ url: './index.html' }, options)
-                    }).catch(err => {
-                        console.warn("Fallback notifica standard:", err);
-                        try {
-                            new Notification(title, { body: body, icon: iconUrl, tag: tag });
-                        } catch(e){}
-                    });
-                } else {
-                    try {
-                        new Notification(title, { body: body, icon: iconUrl, tag: tag });
-                    } catch(e){}
+                    }).catch(e => {});
                 }
             }
-
-            // 2. Notifica toast visiva in-app
-            showInAppToast(title, body, options);
         }
 
         function showInAppToast(title, body, options) {
