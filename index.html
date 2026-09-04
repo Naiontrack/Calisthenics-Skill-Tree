@@ -1825,9 +1825,12 @@
         };
 
         // Inizializzazione Firebase
-        firebase.initializeApp(firebaseConfig);
+        firebase.initializeApp(firebaseConfig); 
+        
+         
         const auth = firebase.auth();
-        const db = firebase.firestore();
+        const db = firebase.firestore(); 
+        
 
         let currentUser = null;
         let userNickname = "";
@@ -4847,6 +4850,27 @@
       navigator.serviceWorker.register('./pwabuilder-sw.js');
     });
   }
+        <script>
+  // 1. La tua configurazione esistente
+  const firebaseConfig = {
+    apiKey: "BEKd6PyJKq4bND7nJUTOkBBDH82Frv3BiPJCPDC2ZXTUYO7hOWMRTHcYretZcHQuJXZ6zXsW8hY6SW4EzT2qJXI",
+    authDomain: "...",
+    // ...
+  };
+  
+  // 2. Inizializzazione che hai già
+  firebase.initializeApp(firebaseConfig);
+
+  // --- 3. INCOLLA QUI IL NUOVO CODICE ---
+  const messaging = firebase.messaging();
+
+  function richiediPermessiNotifiche() {
+    // ... tutto il resto del codice che ti ho dato prima ...
+  }
+  
+  richiediPermessiNotifiche();
+  // --------------------------------------
 </script>
 </body>
 </html>
+
