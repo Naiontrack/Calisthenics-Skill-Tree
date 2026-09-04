@@ -1334,7 +1334,7 @@
             font-style: italic;
         }
 
-        .event-delete-btn {
+        .event-delete-btn, .event-info-btn {
             background: none;
             border: none;
             color: var(--subtext);
@@ -1346,6 +1346,51 @@
 
         .event-delete-btn:hover {
             color: var(--danger);
+        }
+
+        .event-info-btn:hover {
+            color: var(--accent);
+        }
+
+        .event-header-actions {
+            display: flex;
+            gap: 2px;
+            flex-shrink: 0;
+        }
+
+        .events-badge-dot {
+            position: absolute;
+            top: -1px;
+            right: -1px;
+            width: 13px;
+            height: 13px;
+            border-radius: 50%;
+            background: var(--danger);
+            box-shadow: 0 0 0 2px var(--bg-color);
+            z-index: 91;
+        }
+
+        .event-voters-group {
+            margin-bottom: 12px;
+        }
+
+        .event-voters-group-title {
+            font-weight: bold;
+            font-size: 0.8rem;
+            color: var(--text);
+            margin-bottom: 4px;
+        }
+
+        .event-voters-names {
+            font-size: 0.8rem;
+            color: var(--subtext);
+            line-height: 1.5;
+        }
+
+        .event-voters-empty {
+            font-size: 0.78rem;
+            color: var(--subtext);
+            font-style: italic;
         }
 
         .event-vote-row {
@@ -1494,6 +1539,7 @@
     <!-- EVENTI & SONDAGGI ALLENAMENTI (solo utenti loggati) -->
     <button class="events-fab" id="events-fab" onclick="toggleEventsPanel()" title="Eventi & Sondaggi Allenamenti">
         📅
+        <span class="events-badge-dot" id="events-badge-dot" style="display:none;"></span>
     </button>
     <div class="events-panel" id="events-panel">
         <div class="chat-panel-header">
@@ -1572,6 +1618,11 @@
         let eventsPanelOpen = false;
         let eventsUnsubscribe = null;
         let eventsAllowMaybeDraft = false; // stato del checkbox "opzione forse" nel form di creazione sondaggio
+
+        // ---- Notifica pallino rosso (nuovi sondaggi) ----
+        let eventsBadgeUnsubscribe = null;
+        let eventsBadgeCache = []; // ultimi sondaggi (per ricalcolare il pallino)
+        let lastSeenEventsAtMillis = 0; // persistito in localStorage, per utente
 
         // ---- Notifiche non lette (badge sull'icona chat) ----
         let unreadGeneralUnsubscribe = null;
@@ -1896,6 +1947,7 @@
             if (user) {
                 currentUser = user;
                 startUnreadListeners();
+                startEventsBadgeListener();
                 db.collection("users").doc(user.uid).get().then((doc) => {
                     if (doc.exists) {
                         const data = doc.data();
@@ -1933,6 +1985,7 @@
                 userNickname = "";
                 userProfileData = {};
                 stopUnreadListeners();
+                stopEventsBadgeListener();
                 document.getElementById('user-status-text').innerHTML = `👤 Non autenticato (Salvataggio locale)`;
                 document.getElementById('auth-actions-container').innerHTML = `
                     <button class="btn-auth-secondary" onclick="openAuthModal('login')">Accedi</button>
@@ -2885,6 +2938,65 @@
         }
 
         // ==========================================
+        // NOTIFICA PALLINO ROSSO (NUOVI SONDAGGI)
+        // ==========================================
+        function renderEventsBadge() {
+            const dot = document.getElementById('events-badge-dot');
+            if (!dot) return;
+            const hasUnseen = eventsBadgeCache.some(ev => {
+                if (ev.creatorUid === currentUser?.uid) return false; // i propri sondaggi non contano
+                const ts = (ev.createdAt && ev.createdAt.toMillis) ? ev.createdAt.toMillis() : 0;
+                return ts > lastSeenEventsAtMillis;
+            });
+            dot.style.display = hasUnseen ? 'block' : 'none';
+        }
+
+        function getLastSeenEventsStorageKey() {
+            return currentUser ? `lastSeenEvents_${currentUser.uid}` : null;
+        }
+
+        function loadLastSeenEvents() {
+            const key = getLastSeenEventsStorageKey();
+            const stored = key ? localStorage.getItem(key) : null;
+            lastSeenEventsAtMillis = stored ? (parseInt(stored, 10) || 0) : 0;
+        }
+
+        // Da chiamare quando l'utente apre il pannello sondaggi
+        function markEventsAsRead() {
+            if (!currentUser) return;
+            lastSeenEventsAtMillis = Date.now();
+            const key = getLastSeenEventsStorageKey();
+            if (key) localStorage.setItem(key, String(lastSeenEventsAtMillis));
+            renderEventsBadge();
+        }
+
+        // Ascolto sempre attivo (indipendente dal pannello aperto/chiuso) per aggiornare il pallino in tempo reale
+        function startEventsBadgeListener() {
+            stopEventsBadgeListener();
+            if (!currentUser) return;
+
+            loadLastSeenEvents();
+
+            eventsBadgeUnsubscribe = db.collection("events")
+                .orderBy("createdAt", "desc")
+                .limit(20)
+                .onSnapshot((snapshot) => {
+                    eventsBadgeCache = [];
+                    snapshot.forEach(doc => {
+                        const data = doc.data();
+                        eventsBadgeCache.push({ creatorUid: data.creatorUid, createdAt: data.createdAt });
+                    });
+                    renderEventsBadge();
+                }, (error) => console.error("Errore nel calcolo dei sondaggi non letti:", error));
+        }
+
+        function stopEventsBadgeListener() {
+            if (eventsBadgeUnsubscribe) { eventsBadgeUnsubscribe(); eventsBadgeUnsubscribe = null; }
+            eventsBadgeCache = [];
+            renderEventsBadge();
+        }
+
+        // ==========================================
         // FORMATTAZIONE DATA/ORA MESSAGGI
         // ==========================================
         function timestampToDate(ts) {
@@ -3740,6 +3852,7 @@
             if (eventsPanelOpen) {
                 renderEventsFooter();
                 initEventsListener();
+                markEventsAsRead();
             }
         }
 
@@ -3758,7 +3871,7 @@
             const listEl = document.getElementById('events-list');
 
             eventsUnsubscribe = db.collection("events")
-                .orderBy("day", "asc")
+                .orderBy("sortKey", "asc")
                 .onSnapshot((snapshot) => {
                     let events = [];
                     snapshot.forEach(doc => events.push(Object.assign({ id: doc.id }, doc.data())));
@@ -3805,7 +3918,10 @@
                     <div class="event-card">
                         <div class="event-card-header">
                             <span class="event-card-title">🤸 Allenamento</span>
-                            ${isCreator ? `<button class="event-delete-btn" title="Elimina sondaggio" onclick="askDeleteEvent('${ev.id}')">🗑️</button>` : ''}
+                            <div class="event-header-actions">
+                                <button class="event-info-btn" title="Chi ha votato" onclick="openEventVotersModal('${ev.id}')">ℹ️</button>
+                                ${isCreator ? `<button class="event-delete-btn" title="Elimina sondaggio" onclick="askDeleteEvent('${ev.id}')">🗑️</button>` : ''}
+                            </div>
                         </div>
                         <div class="event-card-meta">
                             📆 ${escapeHtml(ev.day || '')}<br>
@@ -3840,6 +3956,61 @@
             });
         }
 
+        function openEventVotersModal(eventId) {
+            const modal = document.getElementById('custom-modal');
+            const titleEl = document.getElementById('modal-title');
+            const bodyContent = document.getElementById('modal-body-content');
+            const actionsBox = document.getElementById('modal-actions-box');
+
+            titleEl.innerText = "👥 Chi ha votato";
+            bodyContent.innerHTML = `<p style="text-align:center; color:var(--subtext); font-size:0.85rem;">Caricamento...</p>`;
+            actionsBox.innerHTML = `<button class="btn-cancel" id="modal-btn-cancel">Chiudi</button>`;
+
+            modal.classList.add('active');
+            document.getElementById('modal-btn-cancel').onclick = () => modal.classList.remove('active');
+
+            Promise.all([
+                db.collection("events").doc(eventId).get(),
+                db.collection("users").get()
+            ]).then(([eventDoc, usersSnapshot]) => {
+                if (!eventDoc.exists) {
+                    bodyContent.innerHTML = `<p style="text-align:center; color:var(--subtext); font-size:0.85rem;">Sondaggio non trovato.</p>`;
+                    return;
+                }
+
+                const nicknameMap = {};
+                usersSnapshot.forEach(doc => {
+                    const data = doc.data();
+                    nicknameMap[doc.id] = data.nickname || 'Utente';
+                });
+
+                const ev = eventDoc.data();
+                const responses = ev.responses || {};
+                const groups = { yes: [], no: [], maybe: [] };
+                Object.keys(responses).forEach(uid => {
+                    const val = responses[uid];
+                    if (!groups[val]) return;
+                    groups[val].push(nicknameMap[uid] || 'Utente sconosciuto');
+                });
+                Object.values(groups).forEach(arr => arr.sort((a, b) => a.localeCompare(b)));
+
+                const renderGroup = (label, icon, names) => `
+                    <div class="event-voters-group">
+                        <div class="event-voters-group-title">${icon} ${label} (${names.length})</div>
+                        ${names.length ? `<div class="event-voters-names">${names.map(escapeHtml).join(', ')}</div>` : `<div class="event-voters-empty">Nessuno</div>`}
+                    </div>
+                `;
+
+                let html = renderGroup('Sì', '✅', groups.yes) + renderGroup('No', '❌', groups.no);
+                if (ev.allowMaybe) html += renderGroup('Forse', '🤔', groups.maybe);
+
+                bodyContent.innerHTML = html;
+            }).catch((error) => {
+                console.error("Errore nel caricamento dei voti:", error);
+                bodyContent.innerHTML = `<p style="text-align:center; color:var(--subtext); font-size:0.85rem;">Errore nel caricamento dei voti.</p>`;
+            });
+        }
+
         function askDeleteEvent(eventId) {
             openCustomModal(
                 "🗑️ Elimina Sondaggio",
@@ -3864,7 +4035,10 @@
                 <div class="auth-error" id="new-event-error"></div>
                 <div class="auth-form-group">
                     <label>Giorno</label>
-                    <input type="date" id="new-event-day">
+                    <div style="display:flex; gap:6px;">
+                        <select id="new-event-day-select" style="flex:0.8;"></select>
+                        <select id="new-event-month-select" style="flex:1.4;"></select>
+                    </div>
                 </div>
                 <div class="auth-form-group">
                     <label>Ora</label>
@@ -3895,6 +4069,8 @@
             modal.classList.add('active');
             document.getElementById('modal-btn-cancel').onclick = () => modal.classList.remove('active');
             document.getElementById('new-event-confirm-btn').onclick = confirmCreateEvent;
+
+            populateDayMonthSelectors('new-event-day-select', 'new-event-month-select');
         }
 
         const italianMonths = ['Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno', 'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre'];
@@ -3903,13 +4079,14 @@
             eventsAllowMaybeDraft = checked;
             const wrap = document.getElementById('new-event-maybe-deadline-wrap');
             if (wrap) wrap.style.display = checked ? 'block' : 'none';
-            if (checked) populateMaybeDeadlineSelectors();
+            if (checked) populateDayMonthSelectors('new-event-maybe-day', 'new-event-maybe-month');
         }
 
-        // Popola i menu giorno/mese per la scadenza dell'opzione "Forse" (niente anno: la scadenza è sempre entro pochi giorni)
-        function populateMaybeDeadlineSelectors() {
-            const daySelect = document.getElementById('new-event-maybe-day');
-            const monthSelect = document.getElementById('new-event-maybe-month');
+        // Popola due menu a tendina giorno/mese (niente anno: usato sia per il giorno del sondaggio
+        // sia per la scadenza dell'opzione "Forse")
+        function populateDayMonthSelectors(daySelectId, monthSelectId) {
+            const daySelect = document.getElementById(daySelectId);
+            const monthSelect = document.getElementById(monthSelectId);
             if (!daySelect || !monthSelect || daySelect.options.length > 0) return; // già popolati
 
             for (let d = 1; d <= 31; d++) {
@@ -3924,12 +4101,18 @@
                 opt.textContent = name;
                 monthSelect.appendChild(opt);
             });
+
+            // Preseleziona la data odierna come punto di partenza comodo
+            const today = new Date();
+            daySelect.value = String(today.getDate());
+            monthSelect.value = String(today.getMonth() + 1);
         }
 
         function confirmCreateEvent() {
             if (!currentUser) return;
             const errEl = document.getElementById('new-event-error');
-            const dayInput = document.getElementById('new-event-day');
+            const daySelect = document.getElementById('new-event-day-select');
+            const monthSelect = document.getElementById('new-event-month-select');
             const timeInput = document.getElementById('new-event-time');
             const placeInput = document.getElementById('new-event-place');
             const allowMaybe = document.getElementById('new-event-allow-maybe').checked;
@@ -3937,7 +4120,9 @@
             const maybeMonthSelect = document.getElementById('new-event-maybe-month');
             const maybeTimeInput = document.getElementById('new-event-maybe-time');
 
-            const day = dayInput.value;
+            const dayNum = daySelect ? parseInt(daySelect.value, 10) : NaN;
+            const monthNum = monthSelect ? parseInt(monthSelect.value, 10) : NaN;
+            const dayLabel = (dayNum && monthNum) ? `${dayNum} ${italianMonths[monthNum - 1]}` : '';
             const time = timeInput.value;
             const place = placeInput.value.trim();
 
@@ -3950,7 +4135,7 @@
                 maybeDeadlineTime = maybeTimeInput ? maybeTimeInput.value : '';
             }
 
-            if (!day || !time || !place) {
+            if (!dayLabel || !time || !place) {
                 if (errEl) errEl.innerText = "Compila giorno, ora e luogo per creare il sondaggio.";
                 return;
             }
@@ -3965,7 +4150,10 @@
             db.collection("events").add({
                 creatorUid: currentUser.uid,
                 creatorName: userNickname || (currentUser.email ? currentUser.email.split('@')[0] : 'Anonimo'),
-                day: day,
+                day: dayLabel,
+                dayNum: dayNum,
+                monthNum: monthNum,
+                sortKey: monthNum * 100 + dayNum, // per ordinare cronologicamente senza usare l'anno
                 time: time,
                 place: place.slice(0, 80),
                 allowMaybe: allowMaybe,
