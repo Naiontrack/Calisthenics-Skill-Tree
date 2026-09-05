@@ -8785,11 +8785,35 @@ let currentUser = null;
             return DUEL_EXERCISES[randomIndex];
         }
 
+        // Genera 3 esercizi distinti estratti a sorte dall'algoritmo per ciascuno dei 3 round
+        function generateDuelRoundExercises() {
+            const pool = [...DUEL_EXERCISES].sort(() => 0.5 - Math.random());
+            return {
+                '1': pool[0],
+                '2': pool[1],
+                '3': pool[2]
+            };
+        }
+
+        // Recupera il nome dell'esercizio assegnato al singolo round
+        function getDuelRoundExercise(c, roundNum) {
+            if (!c) return 'Push-ups';
+            const rKey = String(roundNum);
+            if (c.roundExercises && c.roundExercises[rKey]) {
+                const val = c.roundExercises[rKey];
+                return (typeof val === 'object' && val.name) ? val.name : val;
+            }
+            if (c.rounds && c.rounds[rKey] && c.rounds[rKey].exercise) {
+                return c.rounds[rKey].exercise;
+            }
+            return c.exercise || 'Push-ups';
+        }
+
         // Variabili stato modale creazione sfida
         let currentChallengeModalMode = 'standard';
         let selectedSoloDifficulty = 'facile';
         let currentSoloExercisesPreview = [];
-        let currentDuelExercise = null;
+        let currentDuelRoundExercises = generateDuelRoundExercises();
         let duelSelectedOpponentUid = null;
         let duelSelectedOpponentName = '';
 
@@ -8817,11 +8841,11 @@ let currentUser = null;
                             return `
                             <div class="chat-invite-item" style="${isDuel ? 'border-left: 3px solid #f59e0b; padding-left: 8px;' : ''}">
                                 <div style="font-weight:700; color:${isDuel ? '#f59e0b' : 'var(--accent)'}; font-size:0.9rem;">
-                                    ${isDuel ? `⚔️ (Duello) - ${escapeHtml(inv.exercise || 'Esercizio')}` : escapeHtml(inv.challengeTitle || 'Sfida')}
+                                    ${isDuel ? `⚔️ (Duello) - 3 Esercizi Diversi` : escapeHtml(inv.challengeTitle || 'Sfida')}
                                 </div>
                                 <div style="font-size:0.78rem; color:var(--subtext); margin-top:2px;">
                                     ${isDuel 
-                                        ? `Massimale su <strong>3 Round</strong> • Premio: <strong style="color:var(--unlocked);">5.000 XP</strong><br>Lanciato da <strong>${escapeHtml(inv.fromNickname || 'Anonimo')}</strong>`
+                                        ? `3 Round: <strong>${escapeHtml(inv.exercise || 'Esercizi diversi')}</strong> • Premio: <strong style="color:var(--unlocked);">5.000 XP</strong><br>Lanciato da <strong>${escapeHtml(inv.fromNickname || 'Anonimo')}</strong>`
                                         : `Obiettivo: <strong style="color:var(--unlocked);">${inv.targetXp} XP</strong><br>Lanciata da <strong>${escapeHtml(inv.fromNickname || 'Anonimo')}</strong>`
                                     }
                                 </div>
@@ -8944,7 +8968,8 @@ let currentUser = null;
                     } else if (isCompleted) {
                         statusBadgeHtml = `<span style="background:rgba(34,197,94,0.15); color:var(--unlocked); border:1px solid var(--unlocked); padding:2px 8px; border-radius:999px; font-size:0.75rem; font-weight:700;">🏁 Terminato (Best of 3)</span>`;
                     } else {
-                        statusBadgeHtml = `<span style="background:rgba(245,158,11,0.15); color:#f59e0b; border:1px solid #f59e0b; padding:2px 8px; border-radius:999px; font-size:0.75rem; font-weight:700;">🔥 Round ${currentRound} di 3</span>`;
+                        const currentExName = getDuelRoundExercise(c, currentRound);
+                        statusBadgeHtml = `<span style="background:rgba(245,158,11,0.15); color:#f59e0b; border:1px solid #f59e0b; padding:2px 8px; border-radius:999px; font-size:0.75rem; font-weight:700;">🔥 Round ${currentRound} di 3 (${escapeHtml(currentExName)})</span>`;
                     }
 
                     // Scoreboard Header
@@ -8989,6 +9014,7 @@ let currentUser = null;
                             const roundDone = (myReps != null && oppReps != null);
                             const isCurrent = (currentRound === r && !isCompleted);
                             const isFuture = (r > currentRound && !roundDone);
+                            const rExName = getDuelRoundExercise(c, r);
 
                             let rStatusText = '';
                             if (roundDone) {
@@ -9010,9 +9036,9 @@ let currentUser = null;
                                 if (myReps == null) {
                                     rStatusText = `
                                         <div style="margin-top:8px;">
-                                            <div style="font-size:0.75rem; color:#facc15; margin-bottom:4px; font-weight:600;">⚡ Tocca a te! Inserisci il tuo massimale per il Round ${r}:</div>
+                                            <div style="font-size:0.75rem; color:#facc15; margin-bottom:4px; font-weight:600;">⚡ Tocca a te! Inserisci il massimale di <strong>${escapeHtml(rExName)}</strong> per il Round ${r}:</div>
                                             <div style="display:flex; gap:6px;">
-                                                <input type="number" id="duel-reps-${c.id}-${r}" placeholder="Massimale reps" min="1" max="500" style="flex:1; padding:7px 10px; background:var(--input-bg); border:1px solid var(--accent); border-radius:8px; color:var(--text); font-size:0.85rem;">
+                                                <input type="number" id="duel-reps-${c.id}-${r}" placeholder="Massimale ${escapeHtml(rExName)}" min="1" max="500" style="flex:1; padding:7px 10px; background:var(--input-bg); border:1px solid var(--accent); border-radius:8px; color:var(--text); font-size:0.85rem;">
                                                 <button class="btn-confirm" onclick="submitDuelRoundScore('${c.id}', ${r})" style="padding:7px 12px; font-size:0.82rem; font-weight:700; background:#f59e0b; border-color:#f59e0b; white-space:nowrap;">Invia Reps</button>
                                             </div>
                                         </div>
@@ -9020,7 +9046,7 @@ let currentUser = null;
                                 } else {
                                     rStatusText = `
                                         <div style="margin-top:6px; font-size:0.8rem; color:var(--accent);">
-                                            ✅ Hai inserito: <strong>${myReps} reps</strong>.<br>
+                                            ✅ Hai inserito: <strong>${myReps} reps</strong> (${escapeHtml(rExName)}).<br>
                                             <span style="font-size:0.75rem; color:var(--subtext);">⏳ In attesa che <strong>${escapeHtml(oppName)}</strong> inserisca il suo massimale...</span>
                                         </div>
                                     `;
@@ -9028,7 +9054,7 @@ let currentUser = null;
                             } else if (isFuture) {
                                 rStatusText = `
                                     <div style="font-size:0.75rem; color:var(--subtext); margin-top:2px;">
-                                        🔒 In attesa del completamento dei round precedenti
+                                        🔒 In attesa del completamento del Round ${r - 1}
                                     </div>
                                 `;
                             }
@@ -9037,7 +9063,7 @@ let currentUser = null;
                                 <div class="duel-round-card ${isCurrent ? 'current' : ''}" style="margin-bottom:6px;">
                                     <div style="display:flex; justify-content:space-between; align-items:center;">
                                         <span style="font-weight:700; font-size:0.85rem; color:${isCurrent ? '#f59e0b' : 'var(--text)'};">Round ${r}</span>
-                                        <span style="font-size:0.72rem; color:var(--subtext);">${c.exercise || 'Reps'}</span>
+                                        <span style="font-weight:700; font-size:0.8rem; color:${isCurrent ? '#f59e0b' : 'var(--accent)'}; background:rgba(56,189,248,0.1); padding:2px 8px; border-radius:6px; border:1px solid rgba(56,189,248,0.25);">🎯 ${escapeHtml(rExName)}</span>
                                     </div>
                                     ${rStatusText}
                                 </div>
@@ -9076,13 +9102,13 @@ let currentUser = null;
                         <div class="challenge-card ${isCompleted ? 'challenge-completed' : ''}">
                             <div class="challenge-header" style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
                                 <div style="display:flex; align-items:center; gap:6px;">
-                                    <span style="background:rgba(245, 158, 11, 0.15); color:#f59e0b; border:1px solid #f59e0b; padding:2px 8px; border-radius:999px; font-size:0.75rem; font-weight:700;">⚔️ (Duello) - ${escapeHtml(c.exercise || 'Esercizio')}</span>
+                                    <span style="background:rgba(245, 158, 11, 0.15); color:#f59e0b; border:1px solid #f59e0b; padding:2px 8px; border-radius:999px; font-size:0.75rem; font-weight:700;">⚔️ (Duello) Reps Battle</span>
                                     ${statusBadgeHtml}
                                 </div>
-                                ${isCreator ? `<button onclick="confirmDeleteChallenge('${c.id}', 'Duello di ${escapeHtml(c.exercise || 'Esercizio')}')" title="Elimina duello" style="background:rgba(239, 68, 68, 0.15); border:1px solid #ef4444; color:#ef4444; font-size:0.8rem; border-radius:6px; padding:3px 7px; cursor:pointer; font-weight:700;">🗑️</button>` : ''}
+                                ${isCreator ? `<button onclick="confirmDeleteChallenge('${c.id}', 'Duello')" title="Elimina duello" style="background:rgba(239, 68, 68, 0.15); border:1px solid #ef4444; color:#ef4444; font-size:0.8rem; border-radius:6px; padding:3px 7px; cursor:pointer; font-weight:700;">🗑️</button>` : ''}
                             </div>
                             <div class="challenge-meta" style="margin-bottom:6px;">
-                                Best of 3 • Vince chi vince almeno 2 su 3 round • 🏆 Premio: <strong style="color:var(--unlocked);">5.000 XP</strong>
+                                Best of 3 (Esercizio diverso ogni round) • 🏆 Premio: <strong style="color:var(--unlocked);">5.000 XP</strong>
                             </div>
                             ${scoreTallyHtml}
                             ${roundsHtml}
@@ -9214,7 +9240,7 @@ let currentUser = null;
             currentChallengeModalMode = 'standard';
             selectedSoloDifficulty = 'facile';
             currentSoloExercisesPreview = generateSoloExercises('facile');
-            currentDuelExercise = getRandomDuelExercise();
+            currentDuelRoundExercises = generateDuelRoundExercises();
             duelSelectedOpponentUid = null;
             duelSelectedOpponentName = '';
 
@@ -9295,17 +9321,17 @@ let currentUser = null;
                 <div id="challenge-mode-container-duel" style="display:none;">
                     <div style="padding:10px 12px; background:rgba(245, 158, 11, 0.1); border:1px solid rgba(245, 158, 11, 0.3); border-radius:10px; font-size:0.8rem; color:#facc15; margin-bottom:14px; line-height:1.45;">
                         ⚔️ <strong>Reps Battle 1vs1 (3 Round):</strong><br>
-                        Esercizio estratto a sorte dall'algoritmo tra Push-ups, Crunch, Pull-ups e Squats. In ogni round vince l'atleta con il massimale più alto.<br>
+                        Un esercizio diverso estratto per ogni round tra Push-ups, Crunch, Pull-ups e Squats! In ogni round vince l'atleta con il massimale più alto.<br>
                         Vince la sfida chi vince almeno <strong>2/3 round</strong>!<br>
                         <strong>🏆 Premio in palio: 5.000 XP</strong>
                     </div>
 
-                    <div style="padding:14px; background:var(--input-bg); border:2px solid #f59e0b; border-radius:12px; text-align:center; margin-bottom:14px;">
-                        <div style="font-size:0.75rem; text-transform:uppercase; letter-spacing:1px; color:var(--subtext); font-weight:700;">🎯 Esercizio Estratto dall'Algoritmo</div>
-                        <div id="duel-exercise-display" style="font-size:1.35rem; font-weight:800; color:#f59e0b; margin:6px 0;">
-                            ${currentDuelExercise.icon} ${currentDuelExercise.name}
+                    <div style="padding:14px; background:var(--input-bg); border:2px solid #f59e0b; border-radius:12px; margin-bottom:14px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                            <span style="font-size:0.75rem; text-transform:uppercase; letter-spacing:1px; color:var(--subtext); font-weight:700;">🎯 Esercizi per Round</span>
+                            <button type="button" onclick="rerollDuelExercises()" style="background:rgba(245,158,11,0.15); border:1px solid #f59e0b; color:#facc15; font-size:0.75rem; border-radius:6px; padding:3px 8px; cursor:pointer; font-weight:700;">🎲 Rimescola</button>
                         </div>
-                        <button type="button" onclick="rerollDuelExercise()" style="background:rgba(245,158,11,0.15); border:1px solid #f59e0b; color:#facc15; font-size:0.75rem; border-radius:6px; padding:4px 10px; cursor:pointer; font-weight:700;">🎲 Estrai Altro Esercizio</button>
+                        <div id="duel-round-exercises-preview" style="display:flex; flex-direction:column; gap:6px;"></div>
                     </div>
 
                     <div class="auth-form-group">
@@ -9331,6 +9357,7 @@ let currentUser = null;
             document.getElementById('modal-btn-confirm-action').onclick = confirmCreateChallenge;
 
             renderSoloExercisesPreview();
+            renderDuelRoundExercisesPreview();
             loadUsersForChallenge();
         }
 
@@ -9379,6 +9406,7 @@ let currentUser = null;
                     confirmBtn.style.color = "#000000";
                     confirmBtn.onclick = confirmCreateDuelChallenge;
                 }
+                renderDuelRoundExercisesPreview();
                 renderDuelOpponentList('');
             }
         }
@@ -9413,12 +9441,32 @@ let currentUser = null;
             `).join('');
         }
 
-        function rerollDuelExercise() {
-            currentDuelExercise = getRandomDuelExercise();
-            const disp = document.getElementById('duel-exercise-display');
-            if (disp && currentDuelExercise) {
-                disp.innerHTML = `${currentDuelExercise.icon} ${escapeHtml(currentDuelExercise.name)}`;
-            }
+        function renderDuelRoundExercisesPreview() {
+            const listEl = document.getElementById('duel-round-exercises-preview');
+            if (!listEl) return;
+            const ex1 = currentDuelRoundExercises['1'] || DUEL_EXERCISES[0];
+            const ex2 = currentDuelRoundExercises['2'] || DUEL_EXERCISES[1];
+            const ex3 = currentDuelRoundExercises['3'] || DUEL_EXERCISES[2];
+
+            listEl.innerHTML = `
+                <div style="display:flex; justify-content:space-between; align-items:center; background:var(--card-bg); padding:7px 12px; border-radius:8px; border:1px solid var(--line-color);">
+                    <span style="font-weight:700; font-size:0.82rem; color:#f59e0b;">Round 1</span>
+                    <span style="font-weight:700; font-size:0.9rem; color:var(--text);">${ex1.icon} ${escapeHtml(ex1.name)}</span>
+                </div>
+                <div style="display:flex; justify-content:space-between; align-items:center; background:var(--card-bg); padding:7px 12px; border-radius:8px; border:1px solid var(--line-color);">
+                    <span style="font-weight:700; font-size:0.82rem; color:#f59e0b;">Round 2</span>
+                    <span style="font-weight:700; font-size:0.9rem; color:var(--text);">${ex2.icon} ${escapeHtml(ex2.name)}</span>
+                </div>
+                <div style="display:flex; justify-content:space-between; align-items:center; background:var(--card-bg); padding:7px 12px; border-radius:8px; border:1px solid var(--line-color);">
+                    <span style="font-weight:700; font-size:0.82rem; color:#f59e0b;">Round 3</span>
+                    <span style="font-weight:700; font-size:0.9rem; color:var(--text);">${ex3.icon} ${escapeHtml(ex3.name)}</span>
+                </div>
+            `;
+        }
+
+        function rerollDuelExercises() {
+            currentDuelRoundExercises = generateDuelRoundExercises();
+            renderDuelRoundExercisesPreview();
         }
 
         function renderDuelOpponentList(filterText) {
@@ -9789,12 +9837,19 @@ let currentUser = null;
                 }
 
                 const creatorName = userNickname || (currentUser.displayName || 'Atleta');
-                const ex = currentDuelExercise || getRandomDuelExercise();
+                const duelExs = currentDuelRoundExercises || generateDuelRoundExercises();
+                const roundExercises = {
+                    '1': duelExs['1'].name,
+                    '2': duelExs['2'].name,
+                    '3': duelExs['3'].name
+                };
+                const summaryExercises = `${roundExercises['1']} • ${roundExercises['2']} • ${roundExercises['3']}`;
 
                 const duelDoc = await db.collection("challenges").add({
                     mode: 'duel',
-                    title: `Duello: ${ex.name} (3 Round)`,
-                    exercise: ex.name,
+                    title: `Duello Reps Battle (3 Round)`,
+                    exercise: summaryExercises,
+                    roundExercises: roundExercises,
                     creatorUid: currentUser.uid,
                     creatorName: creatorName,
                     opponentUid: duelSelectedOpponentUid,
@@ -9808,9 +9863,9 @@ let currentUser = null;
                     status: 'waiting',
                     currentRound: 1,
                     rounds: {
-                        '1': { [currentUser.uid]: null, [duelSelectedOpponentUid]: null, winnerUid: null },
-                        '2': { [currentUser.uid]: null, [duelSelectedOpponentUid]: null, winnerUid: null },
-                        '3': { [currentUser.uid]: null, [duelSelectedOpponentUid]: null, winnerUid: null }
+                        '1': { [currentUser.uid]: null, [duelSelectedOpponentUid]: null, winnerUid: null, exercise: roundExercises['1'] },
+                        '2': { [currentUser.uid]: null, [duelSelectedOpponentUid]: null, winnerUid: null, exercise: roundExercises['2'] },
+                        '3': { [currentUser.uid]: null, [duelSelectedOpponentUid]: null, winnerUid: null, exercise: roundExercises['3'] }
                     },
                     scores: {
                         [currentUser.uid]: 0,
@@ -9826,8 +9881,9 @@ let currentUser = null;
                 await db.collection("challengeInvitations").add({
                     challengeId: duelDoc.id,
                     challengeMode: 'duel',
-                    challengeTitle: `Duello: ${ex.name} (3 Round)`,
-                    exercise: ex.name,
+                    challengeTitle: `Duello Reps Battle (3 Round)`,
+                    exercise: summaryExercises,
+                    roundExercises: roundExercises,
                     fromUid: currentUser.uid,
                     fromNickname: creatorName,
                     toUid: duelSelectedOpponentUid,
@@ -9841,14 +9897,14 @@ let currentUser = null;
                 dispatchBackgroundPush({
                     targetUids: [duelSelectedOpponentUid],
                     title: "⚔️ Nuovo Duello Ricevuto!",
-                    body: `${creatorName} ti ha sfidato a un Duello (3 Round) di ${ex.name}! Accetta per combattere!`,
+                    body: `${creatorName} ti ha sfidato a un Duello su 3 Round (R1: ${roundExercises['1']}, R2: ${roundExercises['2']}, R3: ${roundExercises['3']})! Accetta per combattere!`,
                     data: { type: 'challengeDuel', id: duelDoc.id }
                 });
 
                 document.getElementById('custom-modal').classList.remove('active');
                 openCustomModal(
                     "⚔️ Duello Lanciato!",
-                    `Hai sfidato <strong>${escapeHtml(duelSelectedOpponentName)}</strong> a un Duello di <strong>${ex.name}</strong> su 3 Round!<br><br>⏳ <em>La sfida partirà non appena l'atleta accetterà l'invito.</em>`,
+                    `Hai sfidato <strong>${escapeHtml(duelSelectedOpponentName)}</strong> a un Duello su 3 Round con esercizi diversi:<br><br>• Round 1: <strong>${escapeHtml(roundExercises['1'])}</strong><br>• Round 2: <strong>${escapeHtml(roundExercises['2'])}</strong><br>• Round 3: <strong>${escapeHtml(roundExercises['3'])}</strong><br><br>⏳ <em>La sfida partirà non appena l'atleta accetterà l'invito.</em>`,
                     "Perfetto!",
                     false,
                     () => {}
@@ -9896,6 +9952,7 @@ let currentUser = null;
                     return;
                 }
 
+                const currentRoundEx = getDuelRoundExercise(c, roundNum);
                 const oppUid = (currentUser.uid === c.creatorUid) ? c.opponentUid : c.creatorUid;
                 const oppReps = currentRData[oppUid];
                 const myName = userNickname || (currentUser.displayName || 'Atleta');
@@ -9909,8 +9966,8 @@ let currentUser = null;
                     // Invia push all'avversario
                     dispatchBackgroundPush({
                         targetUids: [oppUid],
-                        title: `⚔️ Round ${roundNum} Duello!`,
-                        body: `${myName} ha registrato il suo massimale in ${c.exercise} (${inputReps} reps). Tocca a te superarlo!`,
+                        title: `⚔️ Round ${roundNum} Duello (${currentRoundEx})!`,
+                        body: `${myName} ha registrato il suo massimale in ${currentRoundEx} (${inputReps} reps). Tocca a te superarlo!`,
                         data: { type: 'challengeDuel', id: challengeId }
                     });
                     return;
@@ -9993,20 +10050,21 @@ let currentUser = null;
                     dispatchBackgroundPush({
                         targetUids: [finalWinnerUid],
                         title: "🏆 Vittoria nel Duello!",
-                        body: `Hai vinto il Duello di ${c.exercise} (${newScores[finalWinnerUid]} round a ${newScores[loserUid]})! Riscuoti i tuoi 5.000 XP!`,
+                        body: `Hai vinto il Duello su 3 Round (${newScores[finalWinnerUid]} a ${newScores[loserUid]})! Riscuoti i tuoi 5.000 XP!`,
                         data: { type: 'challengeDuel', id: challengeId }
                     });
                     dispatchBackgroundPush({
                         targetUids: [loserUid],
                         title: "⚔️ Duello Concluso",
-                        body: `${finalWinnerName} ha vinto il Duello di ${c.exercise} (${newScores[finalWinnerUid]} round a ${newScores[loserUid]}). Bella battaglia!`,
+                        body: `${finalWinnerName} ha vinto il Duello (${newScores[finalWinnerUid]} a ${newScores[loserUid]}). Bella battaglia!`,
                         data: { type: 'challengeDuel', id: challengeId }
                     });
                 } else {
+                    const nextRoundEx = getDuelRoundExercise(c, roundNum + 1);
                     dispatchBackgroundPush({
                         targetUids: [currentUser.uid, oppUid],
-                        title: `⚔️ Inizia il Round ${roundNum + 1}!`,
-                        body: `Round ${roundNum} terminato! Preparati per il Round ${roundNum + 1} di ${c.exercise}!`,
+                        title: `⚔️ Inizia il Round ${roundNum + 1} (${nextRoundEx})!`,
+                        body: `Round ${roundNum} terminato! Preparati per il Round ${roundNum + 1} di ${nextRoundEx}!`,
                         data: { type: 'challengeDuel', id: challengeId }
                     });
                 }
@@ -10041,7 +10099,7 @@ let currentUser = null;
 
                 openCustomModal(
                     "🏆 Vittoria nel Duello!",
-                    `Congratulazioni Campione! Hai vinto il <strong>Duello di ${escapeHtml(c.exercise || 'Calisthenics')}</strong> (Best of 3)!<br><br><span style="color:var(--unlocked); font-size:1.4rem; font-weight:800;">+5.000 XP</span> aggiunti al tuo profilo!`,
+                    `Congratulazioni Campione! Hai vinto il <strong>Duello Reps Battle</strong> su 3 Round (Best of 3)!<br><br><span style="color:var(--unlocked); font-size:1.4rem; font-weight:800;">+5.000 XP</span> aggiunti al tuo profilo!`,
                     "Trionfo! ⚔️",
                     false,
                     () => {}
@@ -10085,10 +10143,11 @@ let currentUser = null;
                     await db.collection("challengeInvitations").doc(invId).delete();
 
                     // Notifica push al creatore del duello
+                    const r1Ex = getDuelRoundExercise(cData, 1);
                     dispatchBackgroundPush({
                         targetUids: [cData.creatorUid],
                         title: "⚔️ Duello Accettato!",
-                        body: `${myName} ha accettato il tuo Duello di ${cData.exercise || 'Reps Battle'}! Inizia il Round 1!`,
+                        body: `${myName} ha accettato il tuo Duello! Inizia il Round 1 (${r1Ex})!`,
                         data: { type: 'challengeDuel', id: inv.challengeId }
                     });
                     return;
@@ -10375,7 +10434,6 @@ let currentUser = null;
                 })
                 .catch((e) => console.warn("Errore recupero sfide attive:", e));
         }
-
 
         // ==========================================
         // RUOTA DELLA FORTUNA 🎡
