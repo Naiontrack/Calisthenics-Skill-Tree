@@ -4062,26 +4062,8 @@ let currentUser = null;
                         if (reg && typeof reg.getNotifications === 'function') {
                             reg.getNotifications().then(notifications => {
                                 notifications.forEach(n => {
-                                    if (!identifier) {
-                                        n.close();
-                                        return;
-                                    }
-                                    const d = n.data || {};
-                                    const custom = (d.custom && d.custom.a) ? d.custom.a : (d.custom || {});
-                                    const convId = d.id || custom.id || d.convId || custom.convId;
-                                    const msgId = d.msgId || custom.msgId;
-                                    const tag = n.tag || '';
-
-                                    if (
-                                        !convId ||
-                                        tag === identifier ||
-                                        tag.includes(identifier) ||
-                                        convId === identifier ||
-                                        msgId === identifier ||
-                                        (identifier === 'general' && (d.type === 'general' || tag.includes('general') || tag.includes('calisthenics-general')))
-                                    ) {
-                                        n.close();
-                                    }
+                                    // Chiudi la notifica
+                                    try { n.close(); } catch(e) {}
                                 });
                             }).catch(() => {});
                         }
@@ -4100,11 +4082,14 @@ let currentUser = null;
         function updateActiveChatPresence(convId, isActive) {
             if (!currentUser || !convId) return;
             try {
-                db.collection("conversations").doc(convId).set({
-                    activeViewers: {
-                        [currentUser.uid]: isActive ? Date.now() : 0
-                    }
-                }, { merge: true }).catch(() => {});
+                const nowVal = isActive ? Date.now() : 0;
+                db.collection("conversations").doc(convId).update({
+                    [`activeViewers.${currentUser.uid}`]: nowVal
+                }).catch(() => {
+                    db.collection("conversations").doc(convId).set({
+                        activeViewers: { [currentUser.uid]: nowVal }
+                    }, { merge: true }).catch(() => {});
+                });
             } catch(e) {}
         }
 
@@ -6581,6 +6566,10 @@ let currentUser = null;
                             dismissAppNotification(convId);
                         }
                     });
+                    // Se la chat è aperta e visibile, elimina all'istante qualsiasi notifica sovrapposta
+                    if (activeChatView === 'private-thread' && activeConversationId === convId && !document.hidden) {
+                        dismissAppNotification(convId);
+                    }
                     lastRenderedConversationMsgs = msgs;
                     renderMessagesIntoContainer(msgs, container);
                 }, (error) => {
@@ -7567,40 +7556,13 @@ let currentUser = null;
                         return convRef.update({
                             lastMessageText: '',
                             lastMessageSenderUid: null
-                        }).then(() => {
-                            if (activeConversationData && activeConversationData.participants) {
-                                const targetUids = activeConversationData.participants.filter(uid => uid !== currentUser.uid);
-                                const chatTitle = activeConversationData.type === 'group'
-                                    ? (activeConversationData.name || 'Gruppo')
-                                    : (userNickname || (currentUser.displayName || 'Un atleta'));
-                                dispatchBackgroundPush({
-                                    targetUids: targetUids,
-                                    title: `💬 ${chatTitle}`,
-                                    body: "Un messaggio è stato eliminato",
-                                    data: { type: 'chat', id: convId }
-                                });
-                            }
                         });
                     }
                     const lastMsg = snapshot.docs[0].data();
-                    const senderName = (activeConversationData && activeConversationData.participantNames && activeConversationData.participantNames[lastMsg.uid]) || 'Un atleta';
                     return convRef.update({
                         lastMessageText: lastMsg.text || '',
                         lastMessageAt: lastMsg.createdAt || firebase.firestore.FieldValue.serverTimestamp(),
                         lastMessageSenderUid: lastMsg.uid || null
-                    }).then(() => {
-                        if (activeConversationData && activeConversationData.participants) {
-                            const targetUids = activeConversationData.participants.filter(uid => uid !== currentUser.uid);
-                            const chatTitle = activeConversationData.type === 'group'
-                                ? (activeConversationData.name || 'Gruppo')
-                                : senderName;
-                            dispatchBackgroundPush({
-                                targetUids: targetUids,
-                                title: `💬 ${chatTitle}`,
-                                body: `${senderName}: ${lastMsg.text || 'Messaggio'}`,
-                                data: { type: 'chat', id: convId }
-                            });
-                        }
                     });
                 })
                 .catch((error) => {
