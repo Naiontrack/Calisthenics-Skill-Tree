@@ -3621,7 +3621,7 @@ let currentUser = null;
                 return { 
                     success: false, 
                     reason: "ios_version_unsupported", 
-                    message: `⚠️ Il tuo iPhone ha iOS ${ios.raw}. Apple ha introdotto le notifiche push solo da iOS 16.4 in poi.` 
+                    message: "Funzione notifiche supportata per iOS 16.4 o più recente" 
                 };
             }
 
@@ -3733,7 +3733,7 @@ let currentUser = null;
                     if (toggle) toggle.checked = false;
                     if (errEl) {
                         errEl.style.color = '#ef4444';
-                        errEl.innerText = `⚠️ Il tuo iPhone ha iOS ${ios.raw}. Apple ha introdotto le notifiche push solo da iOS 16.4 in poi.`;
+                        errEl.innerText = "Funzione notifiche supportata per iOS 16.4 o più recente";
                     }
                     if (diagEl && typeof getPushDiagnosticInfo === 'function') diagEl.innerText = getPushDiagnosticInfo();
                     return;
@@ -3765,12 +3765,34 @@ let currentUser = null;
                     return;
                 }
                 setPushNotificationsState(true);
-                if (errEl) {
-                    errEl.style.color = '#10b981';
-                    errEl.innerText = "✅ Notifiche attivate con successo!";
-                    setTimeout(() => { if (errEl) errEl.innerText = ''; }, 4000);
-                }
+                if (errEl) errEl.innerText = '';
                 if (diagEl && typeof getPushDiagnosticInfo === 'function') diagEl.innerText = getPushDiagnosticInfo();
+
+                // Notifica richiesta all'attivazione: esce solo "Le notifiche sono state attivate!"
+                if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+                    if (swRegistration && typeof swRegistration.showNotification === 'function') {
+                        try {
+                            swRegistration.showNotification("🔥 Calisthenics Tree", {
+                                body: "Le notifiche sono state attivate!",
+                                icon: "https://naiontrack.github.io/Calisthenics-Skill-Tree/icon-512.png",
+                                badge: "https://naiontrack.github.io/Calisthenics-Skill-Tree/icon-512.png",
+                                tag: "calisthenics-activated",
+                                renotify: true,
+                                vibrate: [200, 100, 200]
+                            });
+                        } catch(e) {}
+                    }
+                }
+                showInAppToast("🔥 Calisthenics Tree", "Le notifiche sono state attivate!");
+
+                if (currentUser && currentUser.uid) {
+                    dispatchBackgroundPush({
+                        targetUids: [currentUser.uid],
+                        title: "🔥 Calisthenics Tree",
+                        body: "Le notifiche sono state attivate!",
+                        data: { type: 'activation' }
+                    });
+                }
             } else {
                 setPushNotificationsState(false);
                 if (errEl) {
@@ -4837,7 +4859,7 @@ let currentUser = null;
         function getPushDiagnosticInfo() {
             const ios = getIOSInfo();
             if (ios.isIOS && !ios.isSupported) {
-                return `⚠️ Il tuo iPhone ha iOS ${ios.raw}. Apple ha introdotto le notifiche push solo da iOS 16.4 in poi.`;
+                return "⚠️ Funzione notifiche supportata per iOS 16.4 o più recente";
             }
             const isStandalone = window.navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches;
             if (ios.isIOS && !isStandalone) {
@@ -4848,12 +4870,9 @@ let currentUser = null;
             }
             const perm = Notification.permission;
             if (perm === 'denied') {
-                return "❌ Notifiche bloccate nelle impostazioni. Su iPhone elimina l'icona dell'app dalla Home e riaggiungila per sbloccarle.";
+                return "❌ Notifiche bloccate nelle impostazioni del telefono.";
             }
-            if (perm === 'granted') {
-                return "✅ Permesso notifiche concesso! Tocca 'Test 📲' per verificare l'arrivo.";
-            }
-            return "ℹ️ Attiva l'interruttore o tocca 'Test 📲' per consentire le notifiche sul telefono.";
+            return "";
         }
 
         function renderProfileSettings() {
@@ -4870,8 +4889,11 @@ let currentUser = null;
             const isPublic = userProfileData.isPublic !== false;
 
             const ios = getIOSInfo();
-            const isPushUnsupported = ios.isIOS && !ios.isSupported;
-            const isToggleActive = notificationsEnabled && !isPushUnsupported;
+            const isUnsupportedIOS = ios.isIOS && !ios.isSupported;
+            const isToggleActive = notificationsEnabled && !isUnsupportedIOS;
+            const pushRowStyle = isUnsupportedIOS 
+                ? 'margin-top: 14px; padding-top: 12px; border-top: 1px dashed var(--line-color); opacity: 0.38; filter: grayscale(0.9); cursor: not-allowed;' 
+                : 'margin-top: 14px; padding-top: 12px; border-top: 1px dashed var(--line-color);';
 
             container.innerHTML = `
                 <div class="profile-settings-grid">
@@ -4893,18 +4915,23 @@ let currentUser = null;
                     <span id="privacy-toggle-label" style="font-size: 0.85rem; font-weight: 600;">${isPublic ? '🌐 Profilo Pubblico' : '🔒 Profilo Privato'}</span>
                 </div>
                 <p style="font-size: 0.75rem; color: var(--subtext); margin-top: 6px;">Se il profilo è pubblico, gli altri utenti potranno vedere le skill sbloccate, l'altezza e il peso cliccando sul tuo nome in classifica. Se è privato, nessuno potrà vederli.</p>
-                <div class="privacy-toggle-row" style="margin-top: 14px; padding-top: 12px; border-top: 1px dashed var(--line-color); justify-content: space-between;">
+                <div class="privacy-toggle-row" style="${pushRowStyle}">
                     <div style="display:flex; align-items:center; gap: 8px;">
-                        <label class="switch">
-                            <input type="checkbox" id="profile-push-toggle" ${isToggleActive ? 'checked' : ''} onchange="togglePushNotifications()">
-                            <span class="slider"></span>
+                        <label class="switch" style="${isUnsupportedIOS ? 'cursor: not-allowed;' : ''}">
+                            <input type="checkbox" id="profile-push-toggle" ${isToggleActive ? 'checked' : ''} ${isUnsupportedIOS ? 'disabled' : ''} onchange="togglePushNotifications()">
+                            <span class="slider" style="${isUnsupportedIOS ? 'cursor: not-allowed;' : ''}"></span>
                         </label>
                         <span id="push-toggle-label" style="font-size: 0.85rem; font-weight: 600;">${isToggleActive ? '🔔 Notifiche Telefono: Attive' : '🔕 Notifiche Telefono: Disattivate'}</span>
                     </div>
-                    <button type="button" class="btn-auth-secondary" style="padding: 4px 10px; font-size: 0.78rem;" onclick="testPushNotification(event)">Test 📲</button>
                 </div>
+                ${isUnsupportedIOS ? `
+                <p style="font-size: 0.76rem; color: #f59e0b; margin-top: 6px; font-weight: 600; display: flex; align-items: center; gap: 5px;">
+                    ⚠️ Funzione notifiche supportata per iOS 16.4 o più recente
+                </p>
+                ` : `
                 <p style="font-size: 0.75rem; color: var(--subtext); margin-top: 4px;">Ricevi notifiche sul tuo telefono per chat privata, pubblica, sfide, sondaggi e inattività.</p>
-                <p id="push-diagnostic-info" style="font-size: 0.76rem; color: var(--accent); margin-top: 4px; font-weight: 600;">${getPushDiagnosticInfo()}</p>
+                `}
+                <p id="push-diagnostic-info" style="font-size: 0.76rem; color: var(--accent); margin-top: 4px; font-weight: 600;">${isUnsupportedIOS ? '' : getPushDiagnosticInfo()}</p>
                 <p class="auth-error" id="profile-settings-error" style="min-height: 16px; margin-top: 6px;"></p>
                 <button class="btn-confirm" style="width: 100%; margin-top: 4px;" onclick="saveProfileSettings()">💾 Salva Profilo</button>
             `;
