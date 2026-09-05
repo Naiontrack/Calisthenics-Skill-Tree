@@ -3,13 +3,17 @@
 <head>
     <link rel="manifest" href="./manifest.json">
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Occhionero's Calisthenics Tree</title>
     <!-- Configurazione PWA specifica per iOS / iPhone -->
     <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Calisthenics Tree">
     <link rel="apple-touch-icon" href="./icon-512.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="./icon-512.png">
+    <link rel="apple-touch-icon" sizes="192x192" href="./icon-512.png">
+    <link rel="apple-touch-icon" sizes="512x512" href="./icon-512.png">
     
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
@@ -2709,11 +2713,28 @@
         });
 
         // Funzione per inviare notifiche push in background tramite il Relay Cloudflare
-        async function dispatchBackgroundPush({ targetUids = [], sendToAll = false, title, body, data = {} }) {
+        async function dispatchBackgroundPush({ targetUids = [], sendToAll = false, excludeUids = [], title, body, data = {} }) {
             if (!PUSH_RELAY_URL || !ONESIGNAL_APP_ID || ONESIGNAL_APP_ID === "YOUR-ONESIGNAL-APP-ID") {
                 return;
             }
             try {
+                let finalTargetUids = (targetUids && targetUids.length > 0) ? [...targetUids] : [];
+
+                // Se invio a tutti con esclusione di determinati utenti (es. il creatore del sondaggio)
+                if (sendToAll && excludeUids && excludeUids.length > 0) {
+                    try {
+                        const usersSnap = await db.collection("users").get();
+                        finalTargetUids = [];
+                        usersSnap.forEach(doc => {
+                            if (!excludeUids.includes(doc.id)) {
+                                finalTargetUids.push(doc.id);
+                            }
+                        });
+                    } catch(e) {
+                        console.warn("[dispatchBackgroundPush excludeUids err]", e);
+                    }
+                }
+
                 const collapseId = data.id || data.type || 'calisthenics-update';
                 const payload = {
                     app_id: ONESIGNAL_APP_ID,
@@ -2724,11 +2745,12 @@
                     chrome_web_badge: "https://naiontrack.github.io/Calisthenics-Skill-Tree/icon-512.png",
                     data: data
                 };
-                if (sendToAll) {
-                    payload.included_segments = ["Total Subscriptions"];
-                } else if (targetUids && targetUids.length > 0) {
-                    payload.include_aliases = { external_id: targetUids };
+
+                if (finalTargetUids && finalTargetUids.length > 0) {
+                    payload.include_aliases = { external_id: finalTargetUids };
                     payload.target_channel = "push";
+                } else if (sendToAll && (!excludeUids || excludeUids.length === 0)) {
+                    payload.included_segments = ["Total Subscriptions"];
                 } else {
                     return;
                 }
@@ -7263,6 +7285,7 @@ let currentUser = null;
                 const creator = userNickname || (currentUser.displayName || 'Un atleta');
                 dispatchBackgroundPush({
                     sendToAll: true,
+                    excludeUids: [currentUser.uid],
                     title: "📅 Nuovo Sondaggio Allenamento!",
                     body: `${creator} ha proposto un allenamento per ${dayLabel} ore ${time} presso ${place.slice(0, 50)}. Fai sapere se ci sarai!`,
                     data: { type: 'event' }
