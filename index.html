@@ -4054,6 +4054,15 @@ let currentUser = null;
             }, 4500);
         }
 
+        function showAppToast(message, type = 'info') {
+            let title = '💬 Calisthenics Tree';
+            if (type === 'success') title = '✅ Successo';
+            else if (type === 'error') title = '⚠️ Errore';
+            else if (type === 'warning') title = '⚠️ Avviso';
+            else if (type === 'info') title = 'ℹ️ Informazione';
+            showInAppToast(title, message);
+        }
+
         function handleNotificationClick(options) {
             if (!options) return;
             if (options.type === 'chat' && options.id) {
@@ -6124,6 +6133,16 @@ let currentUser = null;
             if (!text) return;
 
             const isPrivateThread = activeChatView === 'private-thread' && activeConversationId;
+
+            // Se l'utente è stato rimosso dal gruppo, blocca l'invio ed elimina la schermata chat
+            if (isPrivateThread && activeConversationData && activeConversationData.participants) {
+                if (!activeConversationData.participants.includes(currentUser.uid)) {
+                    showAppToast("Non fai più parte di questo gruppo. Non puoi inviare messaggi.", "warning");
+                    backToPrivateList();
+                    return;
+                }
+            }
+
             const messagesRef = currentMessagesRef();
             const msgText = text.slice(0, 300);
 
@@ -6305,7 +6324,15 @@ let currentUser = null;
                         if (currentUser && data.participants && !data.participants.includes(currentUser.uid)) {
                             if (activeChatView === 'private-thread' && activeConversationId === convId) {
                                 showAppToast("Sei stato rimosso da questo gruppo. La chat è stata rimossa.", "warning");
-                                backToPrivateList();
+                                stopConversationMessagesListener();
+                                activeChatView = 'private-list';
+                                activeConversationId = null;
+                                activeConversationData = null;
+                                document.getElementById('chat-thread-header').style.display = 'none';
+                                const pollBtn = document.getElementById('chat-thread-poll-btn');
+                                if (pollBtn) pollBtn.style.display = 'none';
+                                renderChatInputState();
+                                initConversationsListener();
                                 return;
                             }
                         }
@@ -6451,13 +6478,25 @@ let currentUser = null;
             document.getElementById('chat-messages').innerHTML = `<p style="color: var(--subtext); text-align:center; font-size:0.85rem;">Caricamento...</p>`;
 
             db.collection("conversations").doc(convId).get().then((doc) => {
-                if (!doc.exists) return;
-                activeConversationData = Object.assign({ id: doc.id }, doc.data());
+                if (!doc.exists) {
+                    showAppToast("Questa conversazione non esiste più.", "warning");
+                    backToPrivateList();
+                    return;
+                }
+                const data = doc.data();
+                // Se l'utente non è presente tra i partecipanti (es. rimosso dal creatore)
+                if (data.participants && !data.participants.includes(currentUser.uid)) {
+                    showAppToast("Non fai parte di questo gruppo.", "warning");
+                    backToPrivateList();
+                    return;
+                }
+                activeConversationData = Object.assign({ id: doc.id }, data);
                 document.getElementById('chat-thread-title').innerText = conversationDisplayName(activeConversationData);
                 const pollBtn = document.getElementById('chat-thread-poll-btn');
                 if (pollBtn) {
                     pollBtn.style.display = activeConversationData.type === 'group' ? 'inline-block' : 'none';
                 }
+                renderChatInputState();
             }).catch((error) => console.error("Errore nel recupero della conversazione:", error));
 
             // Segna la conversazione come letta
@@ -7134,6 +7173,7 @@ let currentUser = null;
                 return Promise.reject(new Error("Non hai i permessi per rimuovere questo membro."));
             }
             const convId = activeConversationData.id;
+            const groupTitle = activeConversationData.name || 'Gruppo';
             const creatorName = userNickname || (currentUser.displayName || 'Il creatore');
             const removedName = (activeConversationData.participantNames && activeConversationData.participantNames[uid]) || 'Un membro';
             const newParticipantNames = Object.assign({}, activeConversationData.participantNames);
@@ -7141,17 +7181,18 @@ let currentUser = null;
 
             const sysMsg = `${creatorName} ha rimosso ${removedName}`;
 
+            // Messaggio di sistema nel log del gruppo
             db.collection("conversations").doc(convId).collection("messages").add({
                 isSystem: true,
                 text: sysMsg,
                 createdAt: firebase.firestore.FieldValue.serverTimestamp()
             }).catch(e => console.error("Errore invio messaggio sistema:", e));
 
-            // Invia notifica push alla persona rimossa
+            // Invia notifica push alla persona rimossa per informarla
             dispatchBackgroundPush({
                 targetUids: [uid],
                 title: "👥 Aggiornamento Gruppo",
-                body: `Sei stato rimosso dal gruppo "${activeConversationData.name || 'Gruppo'}".`,
+                body: `Sei stato rimosso dal gruppo "${groupTitle}".`,
                 data: { type: 'chat' }
             });
 
@@ -7162,8 +7203,10 @@ let currentUser = null;
                 lastMessageSenderUid: currentUser.uid,
                 lastMessageAt: firebase.firestore.FieldValue.serverTimestamp()
             }).then(() => {
-                activeConversationData.participants = (activeConversationData.participants || []).filter(p => p !== uid);
-                activeConversationData.participantNames = newParticipantNames;
+                if (activeConversationData) {
+                    activeConversationData.participants = (activeConversationData.participants || []).filter(p => p !== uid);
+                    activeConversationData.participantNames = newParticipantNames;
+                }
                 showAppToast(`${removedName} è stato rimosso dal gruppo.`, "info");
                 openConversationOptionsModal();
             });
