@@ -2339,6 +2339,98 @@
             border-radius: 8px;
             font-weight: 600;
         }
+        /* Nuove Modalità di Sfida: (Solitaria) e (Duello) */
+        .challenge-mode-tabs {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 16px;
+            background: var(--input-bg);
+            padding: 4px;
+            border-radius: 10px;
+            border: 1px solid var(--line-color);
+        }
+
+        .challenge-mode-tab {
+            flex: 1;
+            padding: 8px 6px;
+            font-size: 0.82rem;
+            font-weight: 700;
+            border: 1px solid transparent;
+            border-radius: 8px;
+            background: transparent;
+            color: var(--subtext);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: center;
+        }
+
+        .challenge-mode-tab.active {
+            background: var(--card-bg);
+            color: var(--text);
+            border-color: var(--accent);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+        }
+
+        .diff-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .diff-card {
+            border: 2px solid var(--line-color);
+            border-radius: 10px;
+            padding: 10px 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: center;
+            background: var(--input-bg);
+        }
+
+        .diff-card:hover {
+            border-color: var(--line-color-light);
+        }
+
+        .diff-card.selected {
+            box-shadow: 0 0 12px rgba(56, 189, 248, 0.25);
+        }
+
+        .solo-exercise-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 10px;
+            border-radius: 8px;
+            background: var(--card-bg);
+            border: 1px solid var(--line-color);
+            margin-bottom: 6px;
+            transition: all 0.2s ease;
+        }
+
+        .solo-exercise-item.completed {
+            background: rgba(16, 185, 129, 0.08);
+            border-color: rgba(16, 185, 129, 0.4);
+        }
+
+        .duel-rounds-box {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .duel-round-card {
+            background: var(--card-bg);
+            border: 1px solid var(--line-color);
+            border-radius: 10px;
+            padding: 10px;
+        }
+
+        .duel-round-card.current {
+            border-color: #f59e0b;
+            box-shadow: 0 0 10px rgba(245, 158, 11, 0.2);
+        }
 
         /* ========================================== */
         /* INVITI CHAT PRIVATA (ACCETTA / RIFIUTA)    */
@@ -8490,11 +8582,19 @@ let currentUser = null;
                             if (inv.toUid === currentUser.uid && !notifiedInvites.has(notifKey)) {
                                 notifiedInvites.add(notifKey);
                                 const fromName = inv.fromNickname || 'Un atleta';
-                                showAppNotification(
-                                    "🏹 Nuova sfida ricevuta!",
-                                    `${fromName} ti ha sfidato: "${inv.challengeTitle || 'Sfida Calisthenics'}". Accetta la sfida e dimostra la tua forza!`,
-                                    { type: 'challengeInvite', id: invId }
-                                );
+                                if (inv.challengeMode === 'duel') {
+                                    showAppNotification(
+                                        "⚔️ Nuovo Duello ricevuto!",
+                                        `${fromName} ti ha sfidato a un Duello (3 Round) di ${inv.exercise || 'Calisthenics'}! Accetta e dimostra chi ha il massimale più alto!`,
+                                        { type: 'challengeInvite', id: invId }
+                                    );
+                                } else {
+                                    showAppNotification(
+                                        "🏹 Nuova sfida ricevuta!",
+                                        `${fromName} ti ha sfidato: "${inv.challengeTitle || 'Sfida Calisthenics'}". Accetta la sfida e dimostra la tua forza!`,
+                                        { type: 'challengeInvite', id: invId }
+                                    );
+                                }
                             }
                         }
                     });
@@ -8575,6 +8675,124 @@ let currentUser = null;
             }
         }
 
+        // ==========================================
+        // DIZIONARI & GENERATORI MODALITÀ DI SFIDA
+        // ==========================================
+        const SOLO_DIFFICULTIES = {
+            facile: {
+                key: 'facile',
+                label: 'Facile',
+                rewardXp: 1000,
+                color: '#10b981',
+                desc: 'Basse ripetizioni ed esercizi base',
+                exercises: [
+                    { name: 'Knee Push-ups', minReps: 8, maxReps: 12, unit: 'reps' },
+                    { name: 'Australian Pull-ups', minReps: 6, maxReps: 10, unit: 'reps' },
+                    { name: 'Frog Stand Hold', minReps: 10, maxReps: 20, unit: 'sec' },
+                    { name: 'Incline Push-ups', minReps: 10, maxReps: 15, unit: 'reps' },
+                    { name: 'Bench Dips', minReps: 8, maxReps: 14, unit: 'reps' },
+                    { name: 'Plank Hold', minReps: 20, maxReps: 35, unit: 'sec' },
+                    { name: 'Bodyweight Squats', minReps: 12, maxReps: 18, unit: 'reps' },
+                    { name: 'Dead Bug', minReps: 10, maxReps: 15, unit: 'reps' },
+                    { name: 'Scapular Pull-ups', minReps: 6, maxReps: 10, unit: 'reps' },
+                    { name: 'Hollow Body Hold', minReps: 15, maxReps: 25, unit: 'sec' }
+                ]
+            },
+            normale: {
+                key: 'normale',
+                label: 'Normale',
+                rewardXp: 2500,
+                color: '#38bdf8',
+                desc: 'Medie ripetizioni e movimenti calisthenici standard',
+                exercises: [
+                    { name: 'Standard Push-ups', minReps: 15, maxReps: 22, unit: 'reps' },
+                    { name: 'Pull-ups', minReps: 6, maxReps: 10, unit: 'reps' },
+                    { name: 'Parallel Bar Dips', minReps: 8, maxReps: 14, unit: 'reps' },
+                    { name: 'Elbow Lever Hold', minReps: 10, maxReps: 20, unit: 'sec' },
+                    { name: 'L-Sit Hold', minReps: 8, maxReps: 15, unit: 'sec' },
+                    { name: 'Pike Push-ups', minReps: 8, maxReps: 12, unit: 'reps' },
+                    { name: 'Chin-ups', minReps: 6, maxReps: 10, unit: 'reps' },
+                    { name: 'Archer Push-ups', minReps: 6, maxReps: 10, unit: 'reps/lato' },
+                    { name: 'Tuck Front Lever Hold', minReps: 8, maxReps: 15, unit: 'sec' },
+                    { name: 'Wall Handstand Hold', minReps: 20, maxReps: 35, unit: 'sec' }
+                ]
+            },
+            difficile: {
+                key: 'difficile',
+                label: 'Difficile',
+                rewardXp: 5000,
+                color: '#f59e0b',
+                desc: 'Medio-alte ripetizioni calibrate e propedeutiche avanzate',
+                exercises: [
+                    { name: 'One-Arm Push-ups', minReps: 4, maxReps: 7, unit: 'reps/braccio' },
+                    { name: 'Muscle-ups', minReps: 5, maxReps: 8, unit: 'reps' },
+                    { name: 'Clap Push-ups', minReps: 12, maxReps: 18, unit: 'reps' },
+                    { name: 'Double Clap Push-ups', minReps: 6, maxReps: 10, unit: 'reps' },
+                    { name: 'Advanced Tuck Planche Hold', minReps: 8, maxReps: 15, unit: 'sec' },
+                    { name: 'Front Lever Straddle Hold', minReps: 6, maxReps: 12, unit: 'sec' },
+                    { name: 'Handstand Push-ups al muro', minReps: 5, maxReps: 9, unit: 'reps' },
+                    { name: 'Pistol Squats', minReps: 8, maxReps: 12, unit: 'reps/gamba' },
+                    { name: 'Dragon Flag', minReps: 6, maxReps: 10, unit: 'reps' },
+                    { name: 'Back Lever Hold', minReps: 8, maxReps: 15, unit: 'sec' }
+                ]
+            },
+            estremo: {
+                key: 'estremo',
+                label: 'Estremo',
+                rewardXp: 10000,
+                color: '#ef4444',
+                desc: 'Skill d\'élite ed esecuzioni massimali realistiche',
+                exercises: [
+                    { name: 'One-Arm Russian Push-ups', minReps: 4, maxReps: 7, unit: 'reps' },
+                    { name: 'One-Arm Pull-ups', minReps: 2, maxReps: 5, unit: 'reps' },
+                    { name: 'Behind-The-Back Clap Push-ups', minReps: 4, maxReps: 8, unit: 'reps' },
+                    { name: 'Straddle Planche Hold', minReps: 6, maxReps: 12, unit: 'sec' },
+                    { name: 'Full Planche Hold', minReps: 4, maxReps: 8, unit: 'sec' },
+                    { name: 'Full Front Lever Hold', minReps: 8, maxReps: 14, unit: 'sec' },
+                    { name: '90-Degree Push-ups', minReps: 3, maxReps: 6, unit: 'reps' },
+                    { name: 'Victorian Cross su parallele Hold', minReps: 4, maxReps: 8, unit: 'sec' },
+                    { name: 'Impossible Dips', minReps: 3, maxReps: 6, unit: 'reps' },
+                    { name: 'One-Arm Handstand Hold', minReps: 4, maxReps: 8, unit: 'sec' }
+                ]
+            }
+        };
+
+        function generateSoloExercises(diffKey) {
+            const diff = SOLO_DIFFICULTIES[diffKey] || SOLO_DIFFICULTIES.facile;
+            const pool = [...diff.exercises].sort(() => 0.5 - Math.random());
+            const selected = pool.slice(0, 5);
+            return selected.map((ex, idx) => {
+                const target = Math.floor(Math.random() * (ex.maxReps - ex.minReps + 1)) + ex.minReps;
+                return {
+                    id: 'ex_' + (idx + 1) + '_' + Math.random().toString(36).substring(2, 7),
+                    name: ex.name,
+                    target: target,
+                    unit: ex.unit,
+                    completed: false
+                };
+            });
+        }
+
+        const DUEL_EXERCISES = [
+            { key: 'push_ups', name: 'Push-ups', icon: '💪', unit: 'reps' },
+            { key: 'crunch', name: 'Crunch', icon: '⚡', unit: 'reps' },
+            { key: 'pull_ups', name: 'Pull-ups', icon: '🏋️', unit: 'reps' },
+            { key: 'squats', name: 'Squats', icon: '🦵', unit: 'reps' }
+        ];
+
+        function getRandomDuelExercise() {
+            const randomIndex = Math.floor(Math.random() * DUEL_EXERCISES.length);
+            return DUEL_EXERCISES[randomIndex];
+        }
+
+        // Variabili stato modale creazione sfida
+        let currentChallengeModalMode = 'standard';
+        let selectedSoloDifficulty = 'facile';
+        let currentSoloExercisesPreview = [];
+        let currentDuelExercise = null;
+        let duelSelectedOpponentUid = null;
+        let duelSelectedOpponentName = '';
+
         function renderChallengesList() {
             const listEl = document.getElementById('challenges-list');
             if (!listEl) return;
@@ -8594,31 +8812,39 @@ let currentUser = null;
                             <span>🏹 Inviti alle sfide</span>
                             <span style="background:var(--danger); color:#fff; border-radius:999px; padding:1px 7px; font-size:0.7rem;">${pendingChallengeInvites.length}</span>
                         </div>
-                        ${pendingChallengeInvites.map(inv => `
-                            <div class="chat-invite-item">
-                                <div style="font-weight:700; color:var(--accent); font-size:0.9rem;">${escapeHtml(inv.challengeTitle || 'Sfida')}</div>
+                        ${pendingChallengeInvites.map(inv => {
+                            const isDuel = inv.challengeMode === 'duel';
+                            return `
+                            <div class="chat-invite-item" style="${isDuel ? 'border-left: 3px solid #f59e0b; padding-left: 8px;' : ''}">
+                                <div style="font-weight:700; color:${isDuel ? '#f59e0b' : 'var(--accent)'}; font-size:0.9rem;">
+                                    ${isDuel ? `⚔️ (Duello) - ${escapeHtml(inv.exercise || 'Esercizio')}` : escapeHtml(inv.challengeTitle || 'Sfida')}
+                                </div>
                                 <div style="font-size:0.78rem; color:var(--subtext); margin-top:2px;">
-                                    Obiettivo: <strong style="color:var(--unlocked);">${inv.targetXp} XP</strong><br>
-                                    Lanciata da <strong>${escapeHtml(inv.fromNickname || 'Anonimo')}</strong>
+                                    ${isDuel 
+                                        ? `Massimale su <strong>3 Round</strong> • Premio: <strong style="color:var(--unlocked);">5.000 XP</strong><br>Lanciato da <strong>${escapeHtml(inv.fromNickname || 'Anonimo')}</strong>`
+                                        : `Obiettivo: <strong style="color:var(--unlocked);">${inv.targetXp} XP</strong><br>Lanciata da <strong>${escapeHtml(inv.fromNickname || 'Anonimo')}</strong>`
+                                    }
                                 </div>
                                 <div class="chat-invite-actions">
-                                    <button class="chat-invite-btn-accept" onclick="acceptChallengeInvitation('${inv.id}')">✅ Accetta Sfida</button>
+                                    <button class="chat-invite-btn-accept" onclick="acceptChallengeInvitation('${inv.id}')" style="${isDuel ? 'background:#f59e0b; border-color:#f59e0b;' : ''}">
+                                        ${isDuel ? '⚔️ Accetta Duello' : '✅ Accetta Sfida'}
+                                    </button>
                                     <button class="chat-invite-btn-decline" onclick="confirmDeclineChallengeInvitation('${inv.id}', '${inv.fromUid}', '${escapeHtml(inv.fromNickname || 'questo atleta')}')">❌ Rifiuta</button>
                                 </div>
                             </div>
-                        `).join('')}
+                        `;}).join('')}
                     </div>
                 `;
             }
 
             if (activeChallengesList.length === 0 && pendingChallengeInvites.length === 0) {
-                listEl.innerHTML = `<p style="color: var(--subtext); text-align:center; font-size:0.85rem; padding:20px 10px;">Nessuna sfida attiva al momento.<br><br>Tocca <strong>"Nuova Sfida"</strong> qui sotto per sfidare uno o più atleti! 🏹</p>`;
+                listEl.innerHTML = `<p style="color: var(--subtext); text-align:center; font-size:0.85rem; padding:20px 10px;">Nessuna sfida attiva al momento.<br><br>Tocca <strong>"Nuova Sfida"</strong> qui sotto per avviare una sfida (Solitaria), un (Duello) o una Corsa XP Standard! 🏹</p>`;
                 return;
             }
 
             const sortedChallenges = [...activeChallengesList].sort((a, b) => {
-                const aUnclaimed = a.winnerUid === currentUser.uid && !a.bonusClaimed;
-                const bUnclaimed = b.winnerUid === currentUser.uid && !b.bonusClaimed;
+                const aUnclaimed = (a.mode === 'solo' ? (a.completedCount >= 5 && !a.bonusClaimed) : (a.winnerUid === currentUser.uid && !a.bonusClaimed));
+                const bUnclaimed = (b.mode === 'solo' ? (b.completedCount >= 5 && !b.bonusClaimed) : (b.winnerUid === currentUser.uid && !b.bonusClaimed));
                 if (aUnclaimed && !bUnclaimed) return -1;
                 if (!aUnclaimed && bUnclaimed) return 1;
                 if (a.status === 'active' && b.status !== 'active') return -1;
@@ -8629,6 +8855,246 @@ let currentUser = null;
             });
 
             sortedChallenges.forEach(c => {
+                // ==========================================
+                // SCHEDA SFIDA MODALITÀ: (Solitaria)
+                // ==========================================
+                if (c.mode === 'solo') {
+                    const isCompleted = c.status === 'completed' || (c.completedCount >= 5);
+                    const diffKey = c.difficulty || 'facile';
+                    const diff = SOLO_DIFFICULTIES[diffKey] || { label: 'Facile', color: '#10b981', rewardXp: c.rewardXp || 1000 };
+                    const exercises = c.exercises || [];
+                    const completedCount = exercises.filter(e => e.completed).length;
+                    const pct = Math.min(100, Math.floor((completedCount / 5) * 100));
+
+                    const exercisesHtml = exercises.map(ex => `
+                        <div class="solo-exercise-item ${ex.completed ? 'completed' : ''}" style="cursor: ${c.bonusClaimed ? 'default' : 'pointer'};" onclick="if (!${c.bonusClaimed}) toggleSoloExercise('${c.id}', '${ex.id}', !${ex.completed})">
+                            <input type="checkbox" ${ex.completed ? 'checked' : ''} ${c.bonusClaimed ? 'disabled' : ''} onclick="event.stopPropagation(); toggleSoloExercise('${c.id}', '${ex.id}', this.checked)" style="width:18px; height:18px; accent-color:${diff.color}; cursor:pointer;">
+                            <span style="flex:1; font-size:0.85rem; ${ex.completed ? 'text-decoration:line-through; color:var(--subtext);' : 'color:var(--text); font-weight:600;'}">
+                                ${escapeHtml(ex.name)}: <strong style="color:${diff.color};">${ex.target} ${ex.unit || 'reps'}</strong>
+                            </span>
+                        </div>
+                    `).join('');
+
+                    let actionHtml = '';
+                    if (completedCount >= 5) {
+                        if (!c.bonusClaimed) {
+                            actionHtml = `
+                                <button class="btn-confirm" onclick="claimSoloChallengeReward('${c.id}')" style="width:100%; margin-top:10px; background:linear-gradient(90deg, #10b981, #059669); border-color:#10b981; font-weight:800; padding:10px; font-size:0.9rem;">
+                                    🎁 RISCUOTI ${(c.rewardXp || 1000).toLocaleString()} XP!
+                                </button>
+                            `;
+                        } else {
+                            actionHtml = `
+                                <div style="margin-top:10px; padding:6px 10px; background:rgba(34,197,94,0.15); border:1px solid var(--unlocked); border-radius:8px; font-size:0.8rem; color:var(--unlocked); text-align:center; font-weight:700;">
+                                    ✨ Ricompensa di ${(c.rewardXp || 1000).toLocaleString()} XP già riscossa!
+                                </div>
+                            `;
+                        }
+                    }
+
+                    html += `
+                        <div class="challenge-card ${isCompleted ? 'challenge-completed' : ''}">
+                            <div class="challenge-header" style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
+                                <div style="display:flex; align-items:center; gap:6px;">
+                                    <span style="background:rgba(16, 185, 129, 0.15); color:${diff.color}; border:1px solid ${diff.color}; padding:2px 8px; border-radius:999px; font-size:0.75rem; font-weight:700;">🎯 (Solitaria) - ${escapeHtml(diff.label)}</span>
+                                </div>
+                                <button onclick="confirmDeleteChallenge('${c.id}', 'Sfida (Solitaria) - ${escapeHtml(diff.label)}')" title="Elimina sfida" style="background:rgba(239, 68, 68, 0.15); border:1px solid #ef4444; color:#ef4444; font-size:0.8rem; border-radius:6px; padding:3px 7px; cursor:pointer; font-weight:700;">🗑️</button>
+                            </div>
+                            <div class="challenge-meta" style="margin-bottom:6px;">
+                                Premio completamento: <strong style="color:var(--unlocked);">+${(c.rewardXp || 1000).toLocaleString()} XP</strong> • Progresso: ${completedCount}/5 esercizi
+                            </div>
+                            <div style="font-size:0.72rem; color:var(--subtext); margin-bottom:10px; font-style:italic;">
+                                💡 per i rank più bassi è consigliabile una difficoltà facile/normale
+                            </div>
+                            <div class="challenge-progress-bar" style="margin-bottom:10px;">
+                                <div class="challenge-progress-fill" style="width:${pct}%; background:${diff.color};"></div>
+                            </div>
+                            <div style="display:flex; flex-direction:column; gap:4px;">
+                                ${exercisesHtml}
+                            </div>
+                            ${actionHtml}
+                        </div>
+                    `;
+                    return;
+                }
+
+                // ==========================================
+                // SCHEDA SFIDA MODALITÀ: (Duello)
+                // ==========================================
+                if (c.mode === 'duel') {
+                    const isCreator = c.creatorUid === currentUser.uid;
+                    const isWaiting = c.status === 'waiting';
+                    const isDeclined = c.status === 'declined';
+                    const isCompleted = c.status === 'completed';
+                    const isWinner = c.winnerUid === currentUser.uid;
+                    const oppUid = isCreator ? c.opponentUid : c.creatorUid;
+                    const oppName = (c.participantNames && c.participantNames[oppUid]) || (isCreator ? (c.opponentName || 'Avversario') : (c.creatorName || 'Sfidante'));
+                    const myName = userNickname || (currentUser.displayName || 'Tu');
+                    const scores = c.scores || {};
+                    const myScore = scores[currentUser.uid] || 0;
+                    const oppScore = scores[oppUid] || 0;
+                    const currentRound = c.currentRound || 1;
+                    const rounds = c.rounds || {};
+
+                    let statusBadgeHtml = '';
+                    if (isDeclined) {
+                        statusBadgeHtml = `<span style="background:rgba(239,68,68,0.15); color:#ef4444; border:1px solid #ef4444; padding:2px 8px; border-radius:999px; font-size:0.75rem; font-weight:700;">❌ Duello Rifiutato</span>`;
+                    } else if (isWaiting) {
+                        statusBadgeHtml = `<span style="background:rgba(234,179,8,0.15); color:#facc15; border:1px solid #eab308; padding:2px 8px; border-radius:999px; font-size:0.75rem; font-weight:700;">⏳ In attesa di accettazione</span>`;
+                    } else if (isCompleted) {
+                        statusBadgeHtml = `<span style="background:rgba(34,197,94,0.15); color:var(--unlocked); border:1px solid var(--unlocked); padding:2px 8px; border-radius:999px; font-size:0.75rem; font-weight:700;">🏁 Terminato (Best of 3)</span>`;
+                    } else {
+                        statusBadgeHtml = `<span style="background:rgba(245,158,11,0.15); color:#f59e0b; border:1px solid #f59e0b; padding:2px 8px; border-radius:999px; font-size:0.75rem; font-weight:700;">🔥 Round ${currentRound} di 3</span>`;
+                    }
+
+                    // Scoreboard Header
+                    let scoreTallyHtml = '';
+                    if (!isWaiting && !isDeclined) {
+                        scoreTallyHtml = `
+                            <div style="display:flex; justify-content:space-around; align-items:center; background:var(--card-bg); border:1px solid var(--line-color); border-radius:8px; padding:8px; margin:8px 0; text-align:center;">
+                                <div style="flex:1;">
+                                    <div style="font-size:0.75rem; color:var(--subtext);">${escapeHtml(myName)} (Tu)</div>
+                                    <div style="font-size:1.2rem; font-weight:800; color:${myScore > oppScore ? 'var(--unlocked)' : 'var(--text)'};">${myScore} ${myScore > oppScore ? '👑' : ''}</div>
+                                </div>
+                                <div style="font-weight:700; color:var(--subtext); font-size:0.85rem; padding:0 8px;">VS</div>
+                                <div style="flex:1;">
+                                    <div style="font-size:0.75rem; color:var(--subtext);">${escapeHtml(oppName)}</div>
+                                    <div style="font-size:1.2rem; font-weight:800; color:${oppScore > myScore ? 'var(--unlocked)' : 'var(--text)'};">${oppScore} ${oppScore > myScore ? '👑' : ''}</div>
+                                </div>
+                            </div>
+                        `;
+                    }
+
+                    // 3 Rounds Breakdown
+                    let roundsHtml = '';
+                    if (isDeclined) {
+                        roundsHtml = `
+                            <div style="margin-top:10px; padding:10px; background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.3); border-radius:8px; font-size:0.8rem; color:#ef4444; text-align:center;">
+                                ❌ <strong>${escapeHtml(oppName)}</strong> ha rifiutato l'invito a questo duello.
+                            </div>
+                        `;
+                    } else if (isWaiting) {
+                        roundsHtml = `
+                            <div style="margin-top:10px; padding:10px; background:rgba(234, 179, 8, 0.1); border:1px solid rgba(234, 179, 8, 0.3); border-radius:8px; font-size:0.8rem; color:#facc15; text-align:center;">
+                                ⏳ Invito inviato a <strong>${escapeHtml(oppName)}</strong>. Il Duello partirà non appena accetterà!
+                            </div>
+                        `;
+                    } else {
+                        // Render 3 rounds
+                        let roundsCards = '';
+                        for (let r = 1; r <= 3; r++) {
+                            const rData = rounds[r] || {};
+                            const myReps = rData[currentUser.uid];
+                            const oppReps = rData[oppUid];
+                            const roundDone = (myReps != null && oppReps != null);
+                            const isCurrent = (currentRound === r && !isCompleted);
+                            const isFuture = (r > currentRound && !roundDone);
+
+                            let rStatusText = '';
+                            if (roundDone) {
+                                let rWinnerLabel = '';
+                                if (myReps > oppReps) {
+                                    rWinnerLabel = `<span style="color:var(--unlocked); font-weight:700;">🏆 Vinto da Te (+1)</span>`;
+                                } else if (oppReps > myReps) {
+                                    rWinnerLabel = `<span style="color:#ef4444; font-weight:700;">Vinto da ${escapeHtml(oppName)} (+1)</span>`;
+                                } else {
+                                    rWinnerLabel = `<span style="color:#facc15; font-weight:700;">🤝 Pareggio</span>`;
+                                }
+                                rStatusText = `
+                                    <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.82rem; margin-top:4px;">
+                                        <span>Tu: <strong>${myReps} reps</strong> • ${escapeHtml(oppName)}: <strong>${oppReps} reps</strong></span>
+                                        ${rWinnerLabel}
+                                    </div>
+                                `;
+                            } else if (isCurrent) {
+                                if (myReps == null) {
+                                    rStatusText = `
+                                        <div style="margin-top:8px;">
+                                            <div style="font-size:0.75rem; color:#facc15; margin-bottom:4px; font-weight:600;">⚡ Tocca a te! Inserisci il tuo massimale per il Round ${r}:</div>
+                                            <div style="display:flex; gap:6px;">
+                                                <input type="number" id="duel-reps-${c.id}-${r}" placeholder="Massimale reps" min="1" max="500" style="flex:1; padding:7px 10px; background:var(--input-bg); border:1px solid var(--accent); border-radius:8px; color:var(--text); font-size:0.85rem;">
+                                                <button class="btn-confirm" onclick="submitDuelRoundScore('${c.id}', ${r})" style="padding:7px 12px; font-size:0.82rem; font-weight:700; background:#f59e0b; border-color:#f59e0b; white-space:nowrap;">Invia Reps</button>
+                                            </div>
+                                        </div>
+                                    `;
+                                } else {
+                                    rStatusText = `
+                                        <div style="margin-top:6px; font-size:0.8rem; color:var(--accent);">
+                                            ✅ Hai inserito: <strong>${myReps} reps</strong>.<br>
+                                            <span style="font-size:0.75rem; color:var(--subtext);">⏳ In attesa che <strong>${escapeHtml(oppName)}</strong> inserisca il suo massimale...</span>
+                                        </div>
+                                    `;
+                                }
+                            } else if (isFuture) {
+                                rStatusText = `
+                                    <div style="font-size:0.75rem; color:var(--subtext); margin-top:2px;">
+                                        🔒 In attesa del completamento dei round precedenti
+                                    </div>
+                                `;
+                            }
+
+                            roundsCards += `
+                                <div class="duel-round-card ${isCurrent ? 'current' : ''}" style="margin-bottom:6px;">
+                                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                                        <span style="font-weight:700; font-size:0.85rem; color:${isCurrent ? '#f59e0b' : 'var(--text)'};">Round ${r}</span>
+                                        <span style="font-size:0.72rem; color:var(--subtext);">${c.exercise || 'Reps'}</span>
+                                    </div>
+                                    ${rStatusText}
+                                </div>
+                            `;
+                        }
+                        roundsHtml = `<div class="duel-rounds-box">${roundsCards}</div>`;
+                    }
+
+                    // Winner & Claim Action
+                    let actionHtml = '';
+                    if (isCompleted) {
+                        if (isWinner) {
+                            if (!c.bonusClaimed) {
+                                actionHtml = `
+                                    <button class="btn-confirm" onclick="claimDuelReward('${c.id}')" style="width:100%; margin-top:10px; background:linear-gradient(90deg, #f59e0b, #eab308); color:#000; font-weight:800; padding:10px; font-size:0.92rem; border:none; border-radius:8px; cursor:pointer;">
+                                        🎁 RISCUOTI 5.000 XP!
+                                    </button>
+                                `;
+                            } else {
+                                actionHtml = `
+                                    <div style="margin-top:10px; padding:6px 10px; background:rgba(34,197,94,0.15); border:1px solid var(--unlocked); border-radius:8px; font-size:0.8rem; color:var(--unlocked); text-align:center; font-weight:700;">
+                                        ✨ Premio Vincitore di 5.000 XP già riscosso!
+                                    </div>
+                                `;
+                            }
+                        } else {
+                            actionHtml = `
+                                <div style="margin-top:10px; padding:6px 10px; background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.3); border-radius:8px; font-size:0.8rem; color:var(--subtext); text-align:center;">
+                                    🏆 Duello vinto da <strong>${escapeHtml(c.winnerName || oppName)}</strong>! Ottima sfida!
+                                </div>
+                            `;
+                        }
+                    }
+
+                    html += `
+                        <div class="challenge-card ${isCompleted ? 'challenge-completed' : ''}">
+                            <div class="challenge-header" style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
+                                <div style="display:flex; align-items:center; gap:6px;">
+                                    <span style="background:rgba(245, 158, 11, 0.15); color:#f59e0b; border:1px solid #f59e0b; padding:2px 8px; border-radius:999px; font-size:0.75rem; font-weight:700;">⚔️ (Duello) - ${escapeHtml(c.exercise || 'Esercizio')}</span>
+                                    ${statusBadgeHtml}
+                                </div>
+                                ${isCreator ? `<button onclick="confirmDeleteChallenge('${c.id}', 'Duello di ${escapeHtml(c.exercise || 'Esercizio')}')" title="Elimina duello" style="background:rgba(239, 68, 68, 0.15); border:1px solid #ef4444; color:#ef4444; font-size:0.8rem; border-radius:6px; padding:3px 7px; cursor:pointer; font-weight:700;">🗑️</button>` : ''}
+                            </div>
+                            <div class="challenge-meta" style="margin-bottom:6px;">
+                                Best of 3 • Vince chi vince almeno 2 su 3 round • 🏆 Premio: <strong style="color:var(--unlocked);">5.000 XP</strong>
+                            </div>
+                            ${scoreTallyHtml}
+                            ${roundsHtml}
+                            ${actionHtml}
+                        </div>
+                    `;
+                    return;
+                }
+
+                // ==========================================
+                // SCHEDA SFIDA MODALITÀ: Standard (Corsa XP)
+                // ==========================================
                 const isCreator = c.creatorUid === currentUser.uid;
                 const isWaiting = c.status === 'waiting';
                 const isCompleted = c.status === 'completed';
@@ -8745,6 +9211,12 @@ let currentUser = null;
         function openCreateChallengeModal() {
             if (!currentUser) return;
             challengeSelectedUsers = {};
+            currentChallengeModalMode = 'standard';
+            selectedSoloDifficulty = 'facile';
+            currentSoloExercisesPreview = generateSoloExercises('facile');
+            currentDuelExercise = getRandomDuelExercise();
+            duelSelectedOpponentUid = null;
+            duelSelectedOpponentName = '';
 
             const modal = document.getElementById('custom-modal');
             const titleEl = document.getElementById('modal-title');
@@ -8754,35 +9226,248 @@ let currentUser = null;
             titleEl.innerText = "🏹 Nuova Sfida tra Atleti";
             bodyContent.innerHTML = `
                 <div class="auth-error" id="new-challenge-error"></div>
-                <div class="auth-form-group">
-                    <label>Titolo della Sfida</label>
-                    <input type="text" id="new-challenge-title" placeholder="es. Sfida 2000 XP della settimana" maxlength="50">
+
+                <!-- Selettore modalità di sfida -->
+                <div class="challenge-mode-tabs">
+                    <button type="button" class="challenge-mode-tab active" id="tab-mode-standard" onclick="setChallengeModalMode('standard')">🏹 Standard</button>
+                    <button type="button" class="challenge-mode-tab" id="tab-mode-solo" onclick="setChallengeModalMode('solo')">🎯 (Solitaria)</button>
+                    <button type="button" class="challenge-mode-tab" id="tab-mode-duel" onclick="setChallengeModalMode('duel')">⚔️ (Duello)</button>
                 </div>
-                <div class="auth-form-group">
-                    <label>XP da raggiungere per vincere (500 - 25.000 XP)</label>
-                    <input type="number" id="new-challenge-target" min="500" max="25000" step="100" value="1000" placeholder="Min 500, Max 25000">
-                    <small style="color:var(--subtext); font-size:0.75rem;">Il primo atleta che accumula questi XP dalla partenza vincerà e girerà la Ruota della Fortuna!</small>
+
+                <!-- CONTENITORE: MODALITÀ STANDARD (CORSA XP) -->
+                <div id="challenge-mode-container-standard">
+                    <div class="auth-form-group">
+                        <label>Titolo della Sfida</label>
+                        <input type="text" id="new-challenge-title" placeholder="es. Sfida 2000 XP della settimana" maxlength="50">
+                    </div>
+                    <div class="auth-form-group">
+                        <label>XP da raggiungere per vincere (500 - 25.000 XP)</label>
+                        <input type="number" id="new-challenge-target" min="500" max="25000" step="100" value="1000" placeholder="Min 500, Max 25000">
+                        <small style="color:var(--subtext); font-size:0.75rem;">Il primo atleta che accumula questi XP dalla partenza vincerà e girerà la Ruota della Fortuna!</small>
+                    </div>
+                    <div class="auth-form-group">
+                        <label>Seleziona atleti da sfidare (minimo 1)</label>
+                        <div class="selected-chips" id="new-challenge-selected-chips"></div>
+                        <input type="text" id="new-challenge-search" placeholder="Cerca atleta per nickname...">
+                        <div class="user-picker-list" id="new-challenge-user-list">
+                            <p style="text-align:center; color:var(--subtext); font-size:0.8rem; padding:10px;">Caricamento atleti...</p>
+                        </div>
+                    </div>
                 </div>
-                <div class="auth-form-group">
-                    <label>Seleziona atleti da sfidare (minimo 1)</label>
-                    <div class="selected-chips" id="new-challenge-selected-chips"></div>
-                    <input type="text" id="new-challenge-search" placeholder="Cerca atleta per nickname...">
-                    <div class="user-picker-list" id="new-challenge-user-list">
-                        <p style="text-align:center; color:var(--subtext); font-size:0.8rem; padding:10px;">Caricamento atleti...</p>
+
+                <!-- CONTENITORE: MODALITÀ (SOLITARIA) -->
+                <div id="challenge-mode-container-solo" style="display:none;">
+                    <div style="padding:10px 12px; background:rgba(56, 189, 248, 0.1); border:1px solid rgba(56, 189, 248, 0.3); border-radius:10px; font-size:0.8rem; color:var(--accent); margin-bottom:14px; line-height:1.45;">
+                        💡 <strong>Consiglio Rank:</strong> per i rank più bassi è consigliabile una difficoltà facile/normale.
+                    </div>
+                    <div class="diff-grid">
+                        <div class="diff-card selected" id="diff-card-facile" onclick="selectSoloDifficulty('facile')" style="border-color:#10b981;">
+                            <div style="font-weight:700; color:#10b981; font-size:0.95rem;">🟢 Facile</div>
+                            <div style="font-size:0.75rem; color:var(--subtext); margin-top:2px;">Basse ripetizioni</div>
+                            <div style="font-weight:800; color:var(--unlocked); font-size:0.85rem; margin-top:4px;">1.000 XP</div>
+                        </div>
+                        <div class="diff-card" id="diff-card-normale" onclick="selectSoloDifficulty('normale')" style="border-color:#38bdf8;">
+                            <div style="font-weight:700; color:#38bdf8; font-size:0.95rem;">🔵 Normale</div>
+                            <div style="font-size:0.75rem; color:var(--subtext); margin-top:2px;">Medie ripetizioni</div>
+                            <div style="font-weight:800; color:var(--unlocked); font-size:0.85rem; margin-top:4px;">2.500 XP</div>
+                        </div>
+                        <div class="diff-card" id="diff-card-difficile" onclick="selectSoloDifficulty('difficile')" style="border-color:#f59e0b;">
+                            <div style="font-weight:700; color:#f59e0b; font-size:0.95rem;">🟠 Difficile</div>
+                            <div style="font-size:0.75rem; color:var(--subtext); margin-top:2px;">Medio-alte reps</div>
+                            <div style="font-weight:800; color:var(--unlocked); font-size:0.85rem; margin-top:4px;">5.000 XP</div>
+                        </div>
+                        <div class="diff-card" id="diff-card-estremo" onclick="selectSoloDifficulty('estremo')" style="border-color:#ef4444;">
+                            <div style="font-weight:700; color:#ef4444; font-size:0.95rem;">🔴 Estremo</div>
+                            <div style="font-size:0.75rem; color:var(--subtext); margin-top:2px;">Skill d'élite</div>
+                            <div style="font-weight:800; color:var(--unlocked); font-size:0.85rem; margin-top:4px;">10.000 XP</div>
+                        </div>
+                    </div>
+                    <div style="margin-top:10px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                            <span style="font-size:0.8rem; font-weight:700; color:var(--text);">5 Esercizi Estratti Casualmente:</span>
+                            <button type="button" onclick="rerollSoloExercises()" style="background:transparent; border:none; color:var(--accent); font-size:0.75rem; cursor:pointer; font-weight:600;">🔄 Rimescola</button>
+                        </div>
+                        <div id="solo-preview-list" style="display:flex; flex-direction:column; gap:4px; max-height:160px; overflow-y:auto;"></div>
+                    </div>
+                </div>
+
+                <!-- CONTENITORE: MODALITÀ (DUELLO) -->
+                <div id="challenge-mode-container-duel" style="display:none;">
+                    <div style="padding:10px 12px; background:rgba(245, 158, 11, 0.1); border:1px solid rgba(245, 158, 11, 0.3); border-radius:10px; font-size:0.8rem; color:#facc15; margin-bottom:14px; line-height:1.45;">
+                        ⚔️ <strong>Reps Battle 1vs1 (3 Round):</strong><br>
+                        Esercizio estratto a sorte dall'algoritmo tra Push-ups, Crunch, Pull-ups e Squats. In ogni round vince l'atleta con il massimale più alto.<br>
+                        Vince la sfida chi vince almeno <strong>2/3 round</strong>!<br>
+                        <strong>🏆 Premio in palio: 5.000 XP</strong>
+                    </div>
+
+                    <div style="padding:14px; background:var(--input-bg); border:2px solid #f59e0b; border-radius:12px; text-align:center; margin-bottom:14px;">
+                        <div style="font-size:0.75rem; text-transform:uppercase; letter-spacing:1px; color:var(--subtext); font-weight:700;">🎯 Esercizio Estratto dall'Algoritmo</div>
+                        <div id="duel-exercise-display" style="font-size:1.35rem; font-weight:800; color:#f59e0b; margin:6px 0;">
+                            ${currentDuelExercise.icon} ${currentDuelExercise.name}
+                        </div>
+                        <button type="button" onclick="rerollDuelExercise()" style="background:rgba(245,158,11,0.15); border:1px solid #f59e0b; color:#facc15; font-size:0.75rem; border-radius:6px; padding:4px 10px; cursor:pointer; font-weight:700;">🎲 Estrai Altro Esercizio</button>
+                    </div>
+
+                    <div class="auth-form-group">
+                        <label>Seleziona l'avversario da sfidare (1 atleta)</label>
+                        <div class="selected-chips" id="duel-selected-chips"></div>
+                        <input type="text" id="duel-opponent-search" placeholder="Cerca atleta per nickname...">
+                        <div class="user-picker-list" id="duel-opponent-user-list">
+                            <p style="text-align:center; color:var(--subtext); font-size:0.8rem; padding:10px;">Caricamento atleti...</p>
+                        </div>
                     </div>
                 </div>
             `;
+
             actionsBox.innerHTML = `
                 <button class="btn-cancel" id="modal-btn-cancel">Annulla</button>
-                <button class="btn-confirm" id="new-challenge-confirm-btn">Lancia Sfida</button>
+                <button class="btn-confirm" id="modal-btn-confirm-action">Lancia Sfida</button>
             `;
 
             modal.classList.add('active');
             document.getElementById('modal-btn-cancel').onclick = () => modal.classList.remove('active');
             document.getElementById('new-challenge-search').oninput = (e) => renderChallengeUserList(e.target.value);
-            document.getElementById('new-challenge-confirm-btn').onclick = confirmCreateChallenge;
+            document.getElementById('duel-opponent-search').oninput = (e) => renderDuelOpponentList(e.target.value);
+            document.getElementById('modal-btn-confirm-action').onclick = confirmCreateChallenge;
 
+            renderSoloExercisesPreview();
             loadUsersForChallenge();
+        }
+
+        function setChallengeModalMode(mode) {
+            currentChallengeModalMode = mode;
+            const titleEl = document.getElementById('modal-title');
+            const confirmBtn = document.getElementById('modal-btn-confirm-action');
+
+            ['standard', 'solo', 'duel'].forEach(m => {
+                const tab = document.getElementById('tab-mode-' + m);
+                const container = document.getElementById('challenge-mode-container-' + m);
+                if (tab) {
+                    if (m === mode) tab.classList.add('active');
+                    else tab.classList.remove('active');
+                }
+                if (container) {
+                    container.style.display = (m === mode) ? 'block' : 'none';
+                }
+            });
+
+            const errEl = document.getElementById('new-challenge-error');
+            if (errEl) errEl.innerText = '';
+
+            if (mode === 'standard') {
+                if (titleEl) titleEl.innerText = "🏹 Nuova Sfida tra Atleti";
+                if (confirmBtn) {
+                    confirmBtn.innerText = "Lancia Sfida";
+                    confirmBtn.style.background = "";
+                    confirmBtn.style.color = "";
+                    confirmBtn.onclick = confirmCreateChallenge;
+                }
+            } else if (mode === 'solo') {
+                if (titleEl) titleEl.innerText = "🎯 Nuova Sfida (Solitaria)";
+                if (confirmBtn) {
+                    confirmBtn.innerText = "🎯 Inizia Sfida (Solitaria)";
+                    confirmBtn.style.background = "#10b981";
+                    confirmBtn.style.color = "#ffffff";
+                    confirmBtn.onclick = confirmCreateSoloChallenge;
+                }
+                renderSoloExercisesPreview();
+            } else if (mode === 'duel') {
+                if (titleEl) titleEl.innerText = "⚔️ Nuovo (Duello) Reps Battle";
+                if (confirmBtn) {
+                    confirmBtn.innerText = "⚔️ Lancia Duello";
+                    confirmBtn.style.background = "#f59e0b";
+                    confirmBtn.style.color = "#000000";
+                    confirmBtn.onclick = confirmCreateDuelChallenge;
+                }
+                renderDuelOpponentList('');
+            }
+        }
+
+        function selectSoloDifficulty(diffKey) {
+            selectedSoloDifficulty = diffKey;
+            ['facile', 'normale', 'difficile', 'estremo'].forEach(dk => {
+                const el = document.getElementById('diff-card-' + dk);
+                if (el) {
+                    if (dk === diffKey) el.classList.add('selected');
+                    else el.classList.remove('selected');
+                }
+            });
+            currentSoloExercisesPreview = generateSoloExercises(diffKey);
+            renderSoloExercisesPreview();
+        }
+
+        function rerollSoloExercises() {
+            currentSoloExercisesPreview = generateSoloExercises(selectedSoloDifficulty || 'facile');
+            renderSoloExercisesPreview();
+        }
+
+        function renderSoloExercisesPreview() {
+            const listEl = document.getElementById('solo-preview-list');
+            if (!listEl) return;
+            const diff = SOLO_DIFFICULTIES[selectedSoloDifficulty || 'facile'] || SOLO_DIFFICULTIES.facile;
+            listEl.innerHTML = currentSoloExercisesPreview.map((ex, idx) => `
+                <div style="display:flex; justify-content:space-between; align-items:center; background:var(--input-bg); border:1px solid var(--line-color); border-radius:6px; padding:6px 10px; font-size:0.8rem;">
+                    <span><strong>#${idx + 1}</strong> ${escapeHtml(ex.name)}</span>
+                    <strong style="color:${diff.color};">${ex.target} ${ex.unit || 'reps'}</strong>
+                </div>
+            `).join('');
+        }
+
+        function rerollDuelExercise() {
+            currentDuelExercise = getRandomDuelExercise();
+            const disp = document.getElementById('duel-exercise-display');
+            if (disp && currentDuelExercise) {
+                disp.innerHTML = `${currentDuelExercise.icon} ${escapeHtml(currentDuelExercise.name)}`;
+            }
+        }
+
+        function renderDuelOpponentList(filterText) {
+            const listEl = document.getElementById('duel-opponent-user-list');
+            if (!listEl) return;
+
+            const filter = (filterText || '').trim().toLowerCase();
+            const filtered = challengeAllUsers.filter(u => (u.nickname || '').toLowerCase().includes(filter));
+
+            if (filtered.length === 0) {
+                listEl.innerHTML = `<p style="text-align:center; color:var(--subtext); font-size:0.8rem; padding:10px;">Nessun atleta trovato.</p>`;
+                return;
+            }
+
+            listEl.innerHTML = filtered.map(u => {
+                const isSelected = (duelSelectedOpponentUid === u.uid);
+                return `
+                    <div class="user-picker-item ${isSelected ? 'selected' : ''}" onclick="toggleDuelOpponentPick('${u.uid}', '${escapeHtml(u.nickname)}')" style="display: flex !important; flex-direction: row !important; align-items: center !important; justify-content: flex-start !important; width: 100% !important; padding: 10px 14px !important; box-sizing: border-box !important; gap: 12px !important; border-bottom: 1px solid var(--line-color) !important; cursor: pointer !important; text-align: left !important; background: ${isSelected ? 'rgba(245, 158, 11, 0.15)' : 'transparent'} !important;">
+                        <input type="radio" name="duel_opponent_radio" ${isSelected ? 'checked' : ''} onclick="event.stopPropagation(); toggleDuelOpponentPick('${u.uid}', '${escapeHtml(u.nickname)}')" style="flex: 0 0 18px !important; width: 18px !important; height: 18px !important; margin: 0 !important; cursor: pointer !important; accent-color: #f59e0b !important;">
+                        <span style="flex: 1 1 auto !important; min-width: 0 !important; text-align: left !important; color: #ffffff !important; font-size: 0.95rem !important; font-weight: 600 !important; display: block !important; white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important;">${escapeHtml(u.nickname)}</span>
+                    </div>
+                `;
+            }).join('');
+
+            const chipsEl = document.getElementById('duel-selected-chips');
+            if (chipsEl) {
+                if (duelSelectedOpponentUid) {
+                    chipsEl.innerHTML = `
+                        <div class="chip" style="background:#f59e0b; color:#000; font-weight:700;">
+                            <span>${escapeHtml(duelSelectedOpponentName)}</span>
+                            <span class="chip-remove" onclick="toggleDuelOpponentPick('${duelSelectedOpponentUid}', '')">✕</span>
+                        </div>
+                    `;
+                } else {
+                    chipsEl.innerHTML = '';
+                }
+            }
+        }
+
+        function toggleDuelOpponentPick(uid, nickname) {
+            if (duelSelectedOpponentUid === uid) {
+                duelSelectedOpponentUid = null;
+                duelSelectedOpponentName = '';
+            } else {
+                duelSelectedOpponentUid = uid;
+                duelSelectedOpponentName = nickname;
+            }
+            const searchInput = document.getElementById('duel-opponent-search');
+            renderDuelOpponentList(searchInput ? searchInput.value : '');
         }
 
         function loadUsersForChallenge() {
@@ -8797,6 +9482,7 @@ let currentUser = null;
                 });
                 challengeAllUsers.sort((a, b) => a.nickname.localeCompare(b.nickname));
                 renderChallengeUserList('');
+                renderDuelOpponentList('');
             }).catch((err) => {
                 console.error("Errore caricamento utenti per sfida:", err);
                 const listEl = document.getElementById('new-challenge-user-list');
@@ -8847,7 +9533,7 @@ let currentUser = null;
             const errEl = document.getElementById('new-challenge-error');
             const titleInput = document.getElementById('new-challenge-title');
             const targetInput = document.getElementById('new-challenge-target');
-            const confirmBtn = document.getElementById('new-challenge-confirm-btn');
+            const confirmBtn = document.getElementById('modal-btn-confirm-action');
 
             const title = (titleInput ? titleInput.value : '').trim() || 'Sfida Calisthenics';
             const targetXp = targetInput ? parseInt(targetInput.value, 10) : NaN;
@@ -8881,6 +9567,7 @@ let currentUser = null;
 
                 // Creazione della sfida in stato 'waiting' (in attesa di accettazione da parte di almeno 1 invitato)
                 const challengeDoc = await db.collection("challenges").add({
+                    mode: 'standard',
                     title: title,
                     targetXp: targetXp,
                     creatorUid: currentUser.uid,
@@ -8912,6 +9599,7 @@ let currentUser = null;
                     const invRef = db.collection("challengeInvitations").doc();
                     batch.set(invRef, {
                         challengeId: challengeDoc.id,
+                        challengeMode: 'standard',
                         challengeTitle: title,
                         targetXp: targetXp,
                         fromUid: currentUser.uid,
@@ -8923,6 +9611,14 @@ let currentUser = null;
                     });
                 }
                 await batch.commit();
+
+                // Notifica push a tutti gli atleti invitati
+                dispatchBackgroundPush({
+                    targetUids: selectedUids,
+                    title: "🏹 Nuova sfida ricevuta!",
+                    body: `${creatorName} ti ha invitato alla sfida "${title}" da ${targetXp} XP! Accetta e dimostra la tua forza!`,
+                    data: { type: 'challenge', id: challengeDoc.id }
+                });
 
                 document.getElementById('custom-modal').classList.remove('active');
                 openCustomModal(
@@ -8945,6 +9641,417 @@ let currentUser = null;
             }
         }
 
+        // ==========================================
+        // CREAZIONE & GESTIONE SFIDA (SOLITARIA)
+        // ==========================================
+        async function confirmCreateSoloChallenge() {
+            if (!currentUser) return;
+            const errEl = document.getElementById('new-challenge-error');
+            const confirmBtn = document.getElementById('modal-btn-confirm-action');
+
+            if (confirmBtn) { confirmBtn.disabled = true; confirmBtn.innerText = 'Creazione in corso...'; }
+
+            try {
+                const diffKey = selectedSoloDifficulty || 'facile';
+                const diff = SOLO_DIFFICULTIES[diffKey] || SOLO_DIFFICULTIES.facile;
+                const creatorName = userNickname || (currentUser.displayName || 'Atleta');
+                const exercises = (currentSoloExercisesPreview && currentSoloExercisesPreview.length === 5)
+                    ? currentSoloExercisesPreview
+                    : generateSoloExercises(diffKey);
+
+                await db.collection("challenges").add({
+                    mode: 'solo',
+                    title: `Sfida (Solitaria) - ${diff.label}`,
+                    difficulty: diffKey,
+                    rewardXp: diff.rewardXp,
+                    creatorUid: currentUser.uid,
+                    creatorName: creatorName,
+                    participants: [currentUser.uid],
+                    exercises: exercises,
+                    completedCount: 0,
+                    status: 'active',
+                    bonusClaimed: false,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                document.getElementById('custom-modal').classList.remove('active');
+                openCustomModal(
+                    "🎯 Sfida (Solitaria) Creata!",
+                    `La tua sfida da 5 esercizi in difficoltà <strong>${diff.label}</strong> (+${diff.rewardXp.toLocaleString()} XP) è attiva!<br><br>Trovi la lista degli esercizi direttamente nella sezione sfide. Spuntali man mano che li completi per riscuotere il tuo premio! 💪`,
+                    "Inizia Ora!",
+                    false,
+                    () => {}
+                );
+            } catch (err) {
+                console.error("Errore creazione sfida solitaria:", err);
+                if (errEl) errEl.innerText = "Errore durante la creazione della sfida: " + (err.message || err);
+                if (confirmBtn) { confirmBtn.disabled = false; confirmBtn.innerText = '🎯 Inizia Sfida (Solitaria)'; }
+            }
+        }
+
+        async function toggleSoloExercise(challengeId, exId, isChecked) {
+            if (!currentUser) return;
+            const c = activeChallengesList.find(x => x.id === challengeId);
+            if (!c || c.bonusClaimed) return;
+
+            const exercises = c.exercises || [];
+            const targetEx = exercises.find(e => e.id === exId);
+            if (!targetEx) return;
+
+            targetEx.completed = !!isChecked;
+            const newCompletedCount = exercises.filter(e => e.completed).length;
+            c.completedCount = newCompletedCount;
+
+            const updateData = {
+                exercises: exercises,
+                completedCount: newCompletedCount
+            };
+            if (newCompletedCount >= 5) {
+                updateData.status = 'completed';
+                updateData.winnerUid = currentUser.uid;
+                updateData.winnerName = userNickname || (currentUser.displayName || 'Atleta');
+                updateData.completedAt = firebase.firestore.FieldValue.serverTimestamp();
+                c.status = 'completed';
+                c.winnerUid = currentUser.uid;
+            } else {
+                updateData.status = 'active';
+                c.status = 'active';
+            }
+
+            renderChallengesList();
+
+            try {
+                await db.collection("challenges").doc(challengeId).update(updateData);
+            } catch (err) {
+                console.error("Errore aggiornamento esercizio sfida:", err);
+            }
+        }
+
+        async function claimSoloChallengeReward(challengeId) {
+            if (!currentUser) return;
+            const c = activeChallengesList.find(x => x.id === challengeId);
+            if (!c || c.bonusClaimed) return;
+
+            const exercises = c.exercises || [];
+            const completedCount = exercises.filter(e => e.completed).length;
+            if (completedCount < 5) {
+                alert("Devi completare tutti e 5 gli esercizi per riscuotere la ricompensa!");
+                return;
+            }
+
+            const rewardXp = c.rewardXp || 1000;
+            try {
+                userWorkoutXp = (userWorkoutXp || 0) + rewardXp;
+                saveState();
+
+                await db.collection("challenges").doc(challengeId).update({
+                    bonusClaimed: true,
+                    bonusClaimedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                c.bonusClaimed = true;
+                renderChallengesList();
+
+                openCustomModal(
+                    "🎯 Sfida (Solitaria) Completata!",
+                    `Fantastico lavoro! Hai completato tutti i 5 esercizi della sfida <strong>${escapeHtml(c.title || 'Sfida')}</strong>!<br><br><span style="color:var(--unlocked); font-size:1.3rem; font-weight:800;">+${rewardXp.toLocaleString()} XP</span> aggiunti al tuo profilo!`,
+                    "Evvai! 🔥",
+                    false,
+                    () => {}
+                );
+            } catch (err) {
+                console.error("Errore riscatto ricompensa sfida solitaria:", err);
+                alert("Errore durante il riscatto della ricompensa: " + (err.message || err));
+            }
+        }
+
+        // ==========================================
+        // CREAZIONE & GESTIONE SFIDA (DUELLO)
+        // ==========================================
+        async function confirmCreateDuelChallenge() {
+            if (!currentUser) return;
+            const errEl = document.getElementById('new-challenge-error');
+            const confirmBtn = document.getElementById('modal-btn-confirm-action');
+
+            if (!duelSelectedOpponentUid) {
+                if (errEl) errEl.innerText = "Seleziona l'atleta che vuoi sfidare a Duello.";
+                return;
+            }
+
+            if (confirmBtn) { confirmBtn.disabled = true; confirmBtn.innerText = 'Verifica in corso...'; }
+
+            try {
+                const cd = await checkCooldown(currentUser.uid, duelSelectedOpponentUid, 'challenge');
+                if (cd.active) {
+                    if (errEl) errEl.innerText = `Non puoi invitare ${duelSelectedOpponentName}: ha rifiutato una tua precedente sfida (${cd.daysLeft} giorni rimanenti di blocco).`;
+                    if (confirmBtn) { confirmBtn.disabled = false; confirmBtn.innerText = '⚔️ Lancia Duello'; }
+                    return;
+                }
+
+                const creatorName = userNickname || (currentUser.displayName || 'Atleta');
+                const ex = currentDuelExercise || getRandomDuelExercise();
+
+                const duelDoc = await db.collection("challenges").add({
+                    mode: 'duel',
+                    title: `Duello: ${ex.name} (3 Round)`,
+                    exercise: ex.name,
+                    creatorUid: currentUser.uid,
+                    creatorName: creatorName,
+                    opponentUid: duelSelectedOpponentUid,
+                    opponentName: duelSelectedOpponentName,
+                    participants: [currentUser.uid],
+                    invitedUids: [duelSelectedOpponentUid],
+                    participantNames: {
+                        [currentUser.uid]: creatorName,
+                        [duelSelectedOpponentUid]: duelSelectedOpponentName
+                    },
+                    status: 'waiting',
+                    currentRound: 1,
+                    rounds: {
+                        '1': { [currentUser.uid]: null, [duelSelectedOpponentUid]: null, winnerUid: null },
+                        '2': { [currentUser.uid]: null, [duelSelectedOpponentUid]: null, winnerUid: null },
+                        '3': { [currentUser.uid]: null, [duelSelectedOpponentUid]: null, winnerUid: null }
+                    },
+                    scores: {
+                        [currentUser.uid]: 0,
+                        [duelSelectedOpponentUid]: 0
+                    },
+                    winnerUid: null,
+                    winnerName: null,
+                    rewardXp: 5000,
+                    bonusClaimed: false,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                await db.collection("challengeInvitations").add({
+                    challengeId: duelDoc.id,
+                    challengeMode: 'duel',
+                    challengeTitle: `Duello: ${ex.name} (3 Round)`,
+                    exercise: ex.name,
+                    fromUid: currentUser.uid,
+                    fromNickname: creatorName,
+                    toUid: duelSelectedOpponentUid,
+                    toNickname: duelSelectedOpponentName,
+                    rewardXp: 5000,
+                    status: 'pending',
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                // Notifica push all'avversario
+                dispatchBackgroundPush({
+                    targetUids: [duelSelectedOpponentUid],
+                    title: "⚔️ Nuovo Duello Ricevuto!",
+                    body: `${creatorName} ti ha sfidato a un Duello (3 Round) di ${ex.name}! Accetta per combattere!`,
+                    data: { type: 'challengeDuel', id: duelDoc.id }
+                });
+
+                document.getElementById('custom-modal').classList.remove('active');
+                openCustomModal(
+                    "⚔️ Duello Lanciato!",
+                    `Hai sfidato <strong>${escapeHtml(duelSelectedOpponentName)}</strong> a un Duello di <strong>${ex.name}</strong> su 3 Round!<br><br>⏳ <em>La sfida partirà non appena l'atleta accetterà l'invito.</em>`,
+                    "Perfetto!",
+                    false,
+                    () => {}
+                );
+            } catch (err) {
+                console.error("Errore creazione duello:", err);
+                if (errEl) errEl.innerText = "Errore durante la creazione del duello: " + (err.message || err);
+                if (confirmBtn) { confirmBtn.disabled = false; confirmBtn.innerText = '⚔️ Lancia Duello'; }
+            }
+        }
+
+        async function submitDuelRoundScore(challengeId, roundNum) {
+            if (!currentUser) return;
+            const inputEl = document.getElementById(`duel-reps-${challengeId}-${roundNum}`);
+            if (!inputEl) return;
+
+            const inputReps = parseInt(inputEl.value, 10);
+            if (isNaN(inputReps) || inputReps < 0 || inputReps > 1000) {
+                alert("Inserisci un numero valido di ripetizioni (da 0 a 1000).");
+                return;
+            }
+
+            try {
+                const docRef = db.collection("challenges").doc(challengeId);
+                const snap = await docRef.get();
+                if (!snap.exists) {
+                    alert("Questo duello non è più disponibile.");
+                    return;
+                }
+
+                const c = snap.data();
+                if (c.status !== 'active') {
+                    alert("Questo duello non è attualmente attivo.");
+                    return;
+                }
+
+                if (c.currentRound !== roundNum) {
+                    alert(`Il round attuale è il Round ${c.currentRound}.`);
+                    return;
+                }
+
+                const currentRData = (c.rounds && c.rounds[roundNum]) ? c.rounds[roundNum] : {};
+                if (currentRData[currentUser.uid] != null) {
+                    alert("Hai già inviato il tuo massimale per questo round!");
+                    return;
+                }
+
+                const oppUid = (currentUser.uid === c.creatorUid) ? c.opponentUid : c.creatorUid;
+                const oppReps = currentRData[oppUid];
+                const myName = userNickname || (currentUser.displayName || 'Atleta');
+
+                // Se l'avversario non ha ancora inserito il punteggio per questo round
+                if (oppReps == null) {
+                    await docRef.update({
+                        [`rounds.${roundNum}.${currentUser.uid}`]: inputReps
+                    });
+
+                    // Invia push all'avversario
+                    dispatchBackgroundPush({
+                        targetUids: [oppUid],
+                        title: `⚔️ Round ${roundNum} Duello!`,
+                        body: `${myName} ha registrato il suo massimale in ${c.exercise} (${inputReps} reps). Tocca a te superarlo!`,
+                        data: { type: 'challengeDuel', id: challengeId }
+                    });
+                    return;
+                }
+
+                // Entrambi hanno inserito le ripetizioni: valuta il vincitore del round
+                let roundWinnerUid = null;
+                if (inputReps > oppReps) {
+                    roundWinnerUid = currentUser.uid;
+                } else if (oppReps > inputReps) {
+                    roundWinnerUid = oppUid;
+                } else {
+                    roundWinnerUid = 'tie';
+                }
+
+                const newScores = Object.assign({ [currentUser.uid]: 0, [oppUid]: 0 }, c.scores || {});
+                if (roundWinnerUid && roundWinnerUid !== 'tie') {
+                    newScores[roundWinnerUid] = (newScores[roundWinnerUid] || 0) + 1;
+                }
+
+                // Verifica vittoria (Best of 3: vince chi vince almeno 2 round o chi ha più round dopo 3 round)
+                let isMatchCompleted = false;
+                let finalWinnerUid = null;
+                let finalWinnerName = null;
+
+                if (newScores[currentUser.uid] >= 2) {
+                    isMatchCompleted = true;
+                    finalWinnerUid = currentUser.uid;
+                    finalWinnerName = (c.participantNames && c.participantNames[currentUser.uid]) || myName;
+                } else if (newScores[oppUid] >= 2) {
+                    isMatchCompleted = true;
+                    finalWinnerUid = oppUid;
+                    finalWinnerName = (c.participantNames && c.participantNames[oppUid]) || 'Avversario';
+                } else if (roundNum >= 3) {
+                    isMatchCompleted = true;
+                    if (newScores[currentUser.uid] > newScores[oppUid]) {
+                        finalWinnerUid = currentUser.uid;
+                        finalWinnerName = (c.participantNames && c.participantNames[currentUser.uid]) || myName;
+                    } else if (newScores[oppUid] > newScores[currentUser.uid]) {
+                        finalWinnerUid = oppUid;
+                        finalWinnerName = (c.participantNames && c.participantNames[oppUid]) || 'Avversario';
+                    } else {
+                        // In caso di parità perfetta nei round, vince il totale complessivo di reps
+                        let totalMyReps = inputReps;
+                        let totalOppReps = oppReps;
+                        for (let r = 1; r < 3; r++) {
+                            totalMyReps += (c.rounds && c.rounds[r] && c.rounds[r][currentUser.uid]) || 0;
+                            totalOppReps += (c.rounds && c.rounds[r] && c.rounds[r][oppUid]) || 0;
+                        }
+                        if (totalMyReps >= totalOppReps) {
+                            finalWinnerUid = currentUser.uid;
+                            finalWinnerName = (c.participantNames && c.participantNames[currentUser.uid]) || myName;
+                        } else {
+                            finalWinnerUid = oppUid;
+                            finalWinnerName = (c.participantNames && c.participantNames[oppUid]) || 'Avversario';
+                        }
+                    }
+                }
+
+                const updateData = {
+                    [`rounds.${roundNum}.${currentUser.uid}`]: inputReps,
+                    [`rounds.${roundNum}.winnerUid`]: roundWinnerUid,
+                    scores: newScores
+                };
+
+                if (isMatchCompleted) {
+                    updateData.status = 'completed';
+                    updateData.winnerUid = finalWinnerUid;
+                    updateData.winnerName = finalWinnerName;
+                    updateData.completedAt = firebase.firestore.FieldValue.serverTimestamp();
+                } else {
+                    updateData.currentRound = roundNum + 1;
+                }
+
+                await docRef.update(updateData);
+
+                // Invia notifiche push di esito round / vittoria
+                if (isMatchCompleted) {
+                    const loserUid = (finalWinnerUid === currentUser.uid) ? oppUid : currentUser.uid;
+                    dispatchBackgroundPush({
+                        targetUids: [finalWinnerUid],
+                        title: "🏆 Vittoria nel Duello!",
+                        body: `Hai vinto il Duello di ${c.exercise} (${newScores[finalWinnerUid]} round a ${newScores[loserUid]})! Riscuoti i tuoi 5.000 XP!`,
+                        data: { type: 'challengeDuel', id: challengeId }
+                    });
+                    dispatchBackgroundPush({
+                        targetUids: [loserUid],
+                        title: "⚔️ Duello Concluso",
+                        body: `${finalWinnerName} ha vinto il Duello di ${c.exercise} (${newScores[finalWinnerUid]} round a ${newScores[loserUid]}). Bella battaglia!`,
+                        data: { type: 'challengeDuel', id: challengeId }
+                    });
+                } else {
+                    dispatchBackgroundPush({
+                        targetUids: [currentUser.uid, oppUid],
+                        title: `⚔️ Inizia il Round ${roundNum + 1}!`,
+                        body: `Round ${roundNum} terminato! Preparati per il Round ${roundNum + 1} di ${c.exercise}!`,
+                        data: { type: 'challengeDuel', id: challengeId }
+                    });
+                }
+            } catch (err) {
+                console.error("Errore invio punteggio round duello:", err);
+                alert("Errore durante l'invio del punteggio: " + (err.message || err));
+            }
+        }
+
+        async function claimDuelReward(challengeId) {
+            if (!currentUser) return;
+            const c = activeChallengesList.find(x => x.id === challengeId);
+            if (!c || c.bonusClaimed) return;
+
+            if (c.winnerUid !== currentUser.uid) {
+                alert("Solo il vincitore del duello può riscuotere il premio!");
+                return;
+            }
+
+            const rewardXp = 5000;
+            try {
+                userWorkoutXp = (userWorkoutXp || 0) + rewardXp;
+                saveState();
+
+                await db.collection("challenges").doc(challengeId).update({
+                    bonusClaimed: true,
+                    bonusClaimedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                c.bonusClaimed = true;
+                renderChallengesList();
+
+                openCustomModal(
+                    "🏆 Vittoria nel Duello!",
+                    `Congratulazioni Campione! Hai vinto il <strong>Duello di ${escapeHtml(c.exercise || 'Calisthenics')}</strong> (Best of 3)!<br><br><span style="color:var(--unlocked); font-size:1.4rem; font-weight:800;">+5.000 XP</span> aggiunti al tuo profilo!`,
+                    "Trionfo! ⚔️",
+                    false,
+                    () => {}
+                );
+            } catch (err) {
+                console.error("Errore riscatto premio duello:", err);
+                alert("Errore durante il riscatto del premio: " + (err.message || err));
+            }
+        }
+
         async function acceptChallengeInvitation(invId) {
             const inv = pendingChallengeInvites.find(i => i.id === invId);
             if (!inv || !currentUser) return;
@@ -8960,6 +10067,34 @@ let currentUser = null;
                 }
 
                 const cData = challengeSnap.data() || {};
+                const isDuel = inv.challengeMode === 'duel' || cData.mode === 'duel';
+
+                if (isDuel) {
+                    if (cData.status !== 'waiting') {
+                        alert("Questo duello non è più in attesa o è già iniziato/terminato.");
+                        await db.collection("challengeInvitations").doc(invId).delete();
+                        return;
+                    }
+                    const myName = userNickname || (currentUser.displayName || 'Anonimo');
+                    await challengeRef.update({
+                        status: 'active',
+                        participants: firebase.firestore.FieldValue.arrayUnion(currentUser.uid),
+                        opponentAcceptedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                        [`participantNames.${currentUser.uid}`]: myName
+                    });
+                    await db.collection("challengeInvitations").doc(invId).delete();
+
+                    // Notifica push al creatore del duello
+                    dispatchBackgroundPush({
+                        targetUids: [cData.creatorUid],
+                        title: "⚔️ Duello Accettato!",
+                        body: `${myName} ha accettato il tuo Duello di ${cData.exercise || 'Reps Battle'}! Inizia il Round 1!`,
+                        data: { type: 'challengeDuel', id: inv.challengeId }
+                    });
+                    return;
+                }
+
+                // Modalità Standard
                 if (cData.status !== 'waiting') {
                     alert("La sfida è già stata avviata dall'autore o è già terminata! Gli inviti sono stati chiusi e non è più possibile entrare.");
                     await db.collection("challengeInvitations").doc(invId).delete();
@@ -9000,35 +10135,28 @@ let currentUser = null;
 
             const participants = c.participants || [];
             if (participants.length < 2) {
-                alert("Non puoi avviare la sfida da solo! Almeno un membro invitato deve accettare prima di poter partire.");
+                alert("Almeno un altro atleta deve accettare la sfida prima di poterla avviare.");
                 return;
             }
 
             try {
-                // Aggiorna lo startXp di tutti i partecipanti attuali al valore corrente per partire alla pari
-                const pDataMap = c.participantData || {};
-                const updatePayload = {
+                // Sincronizza lo startXp di tutti i partecipanti al momento esatto del via
+                const updateObj = {
                     status: 'active',
                     startedAt: firebase.firestore.FieldValue.serverTimestamp()
                 };
 
-                const myTotalXp = getTotalXp();
-                if (pDataMap[currentUser.uid]) {
-                    updatePayload[`participantData.${currentUser.uid}.startXp`] = myTotalXp;
-                    updatePayload[`participantData.${currentUser.uid}.currentXp`] = myTotalXp;
-                }
-
-                await db.collection("challenges").doc(challengeId).update(updatePayload);
-
-                // Blocco e cancellazione immediata di tutti gli inviti pendenti per questa sfida (nessun altro potrà più entrare)
+                // Elimina a cascata eventuali inviti rimasti pendenti per questa sfida
                 const invitesSnap = await db.collection("challengeInvitations").where("challengeId", "==", challengeId).get();
                 const batch = db.batch();
                 invitesSnap.forEach(d => batch.delete(d.ref));
                 await batch.commit();
 
+                await db.collection("challenges").doc(challengeId).update(updateObj);
+
                 openCustomModal(
                     "🚀 Sfida Avviata!",
-                    `La sfida "<strong>${escapeHtml(c.title || 'Sfida')}</strong>" è ufficialmente iniziata! Gli accessi sono stati chiusi e la gara ha inizio. Buon allenamento! 🔥`,
+                    `La sfida "<strong>${escapeHtml(c.title || 'Sfida')}</strong>" è ufficialmente iniziata!<br><br>Ogni XP guadagnato da adesso conterà per la vittoria. Chi raggiungerà per primo <strong>${c.targetXp} XP</strong> girerà la Ruota della Fortuna!`,
                     "Inizia la Sfida!",
                     false,
                     () => {}
@@ -9180,6 +10308,13 @@ let currentUser = null;
                 if (fromUid) {
                     await setCooldown(fromUid, currentUser.uid, 'challenge');
                 }
+                const inv = pendingChallengeInvites.find(i => i.id === invId);
+                if (inv && inv.challengeId && inv.challengeMode === 'duel') {
+                    await db.collection("challenges").doc(inv.challengeId).update({
+                        status: 'declined',
+                        declinedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    }).catch(() => {});
+                }
                 await db.collection("challengeInvitations").doc(invId).delete();
                 pendingChallengeInvites = pendingChallengeInvites.filter(i => i.id !== invId);
                 renderChallengesList();
@@ -9201,6 +10336,7 @@ let currentUser = null;
                 .then((snapshot) => {
                     snapshot.forEach((doc) => {
                         const data = doc.data();
+                        if (data.mode === 'solo' || data.mode === 'duel') return; // Modalità non a corsa XP
                         const pData = data.participantData && data.participantData[currentUser.uid];
                         if (!pData) return;
                         const startXp = pData.startXp || currentXp;
@@ -9239,6 +10375,7 @@ let currentUser = null;
                 })
                 .catch((e) => console.warn("Errore recupero sfide attive:", e));
         }
+
 
         // ==========================================
         // RUOTA DELLA FORTUNA 🎡
