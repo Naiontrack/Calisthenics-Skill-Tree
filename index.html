@@ -2847,7 +2847,8 @@ let currentUser = null;
 
         // ---- Notifica pallino rosso (nuovi sondaggi) ----
         let eventsBadgeUnsubscribe = null;
-        let eventsBadgeCache = []; // ultimi sondaggi (per ricalcolare il pallino)
+        let eventsBadgeCache = [];
+        let latestPollsCache = []; // cache completa sondaggi per controllo periodico promemoria // ultimi sondaggi (per ricalcolare il pallino)
         let lastSeenEventsAtMillis = 0; // persistito in localStorage, per utente
 
         // ---- Notifiche non lette (badge sull'icona chat) ----
@@ -3964,26 +3965,125 @@ let currentUser = null;
             }
         }
 
-        // Controllo promemoria scadenza sondaggio (entro 24h)
+        // Helper per ricavare il timestamp esatto della scadenza per chi vota "Forse"
+        function getMaybeDeadlineMillis(ev) {
+            if (!ev) return null;
+            if (ev.maybeDeadlineTs && typeof ev.maybeDeadlineTs === 'number') {
+                return ev.maybeDeadlineTs;
+            }
+            if (!ev.allowMaybe || !ev.maybeDeadlineDate || !ev.maybeDeadlineTime) return null;
+            const parts = String(ev.maybeDeadlineDate).trim().split(/\s+/);
+            if (parts.length >= 2) {
+                const day = parseInt(parts[0], 10);
+                const monthName = parts[1].toLowerCase();
+                const monthIdx = (typeof italianMonths !== 'undefined') 
+                    ? italianMonths.findIndex(m => m.toLowerCase() === monthName)
+                    : ['gennaio','febbraio','marzo','aprile','maggio','giugno','luglio','agosto','settembre','ottobre','novembre','dicembre'].indexOf(monthName);
+                if (!isNaN(day) && monthIdx !== -1) {
+                    const now = new Date();
+                    let year = now.getFullYear();
+                    if (monthIdx < now.getMonth()) {
+                        year++;
+                    }
+                    const timeParts = String(ev.maybeDeadlineTime).split(':').map(n => parseInt(n, 10));
+                    const d = new Date(year, monthIdx, day, timeParts[0] || 0, timeParts[1] || 0, 0);
+                    return d.getTime();
+                }
+            }
+            return null;
+        }
+
+        // Helper per ricavare il timestamp reale dell'allenamento
+        function getEventDateTimeMillis(ev) {
+            if (!ev) return null;
+            if (ev.eventTimestamp && typeof ev.eventTimestamp === 'number') return ev.eventTimestamp;
+            const now = new Date();
+            let year = now.getFullYear();
+            const monthList = (typeof italianMonths !== 'undefined')
+                ? italianMonths
+                : ['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
+            const monthIdx = (ev.monthNum ? ev.monthNum - 1 : (ev.day ? monthList.findIndex(m => ev.day.toLowerCase().includes(m.toLowerCase())) : -1));
+            const day = ev.dayNum || (ev.day ? parseInt(ev.day, 10) : NaN);
+            if (monthIdx !== -1 && !isNaN(day)) {
+                if (monthIdx < now.getMonth()) {
+                    year++;
+                }
+                const timeParts = (ev.time || '00:00').split(':').map(n => parseInt(n, 10));
+                return new Date(year, monthIdx, day, timeParts[0] || 0, timeParts[1] || 0, 0).getTime();
+            }
+            return null;
+        }
+
+        // Controllo promemoria scadenza sondaggio e notifica specifica per chi ha votato "Forse"
         function checkPollDeadlineReminder(events) {
-            if (!currentUser || !notificationsEnabled || !events) return;
+            if (!currentUser || !notificationsEnabled || !events || !events.length) return;
             const now = Date.now();
+
             events.forEach(ev => {
                 const responses = ev.responses || {};
-                const hasVoted = !!responses[currentUser.uid];
-                if (!hasVoted && ev.sortKey) {
-                    const eventDateMillis = new Date(ev.sortKey).getTime();
-                    const hoursLeft = (eventDateMillis - now) / (60 * 60 * 1000);
-                    if (hoursLeft > 0 && hoursLeft <= 24) {
-                        const alertKey = `poll_reminder_${ev.id}`;
-                        const lastAlert = parseInt(localStorage.getItem(alertKey) || '0', 10);
-                        if (now - lastAlert > 12 * 60 * 60 * 1000) {
-                            localStorage.setItem(alertKey, String(now));
-                            showAppNotification(
-                                "⏰ Sondaggio Allenamento in scadenza!",
-                                `Fai sapere se ci sarai all'allenamento "${ev.title || 'in programma'}"! Mancano meno di ${Math.ceil(hoursLeft)} ore.`,
-                                { type: 'event', id: ev.id }
-                            );
+                const myVote = responses[currentUser.uid];
+
+                // 1. Promemoria per chi ha votato "Forse": scatta all'ora esatta impostata dal creator
+                if (ev.allowMaybe && myVote === 'maybe') {
+                    const maybeDeadlineMillis = getMaybeDeadlineMillis(ev);
+                    if (maybeDeadlineMillis) {
+                        const diffMs = now - maybeDeadlineMillis;
+                        // Finestra: a partire dall'ora stabilita dal creator fino a 24h dopo
+                        if (diffMs >= 0 && diffMs <= 24 * 60 * 60 * 1000) {
+                            const alertKey = `poll_maybe_expired_${ev.id}`;
+                            const lastAlert = parseInt(localStorage.getItem(alertKey) || '0', 10);
+                            if (now - lastAlert > 12 * 60 * 60 * 1000) {
+                                localStorage.setItem(alertKey, String(now));
+                                showAppNotification(
+                                    "⏰ Termine sondaggio: conferma la presenza!",
+                                    `Hai votato "Forse" per l'allenamento di ${ev.day || ''}. Il termine delle ore ${ev.maybeDeadlineTime || ''} è arrivato: fai sapere se ci sarai (Sì o No)!`,
+                                    { type: 'event', id: ev.id }
+                                );
+                            }
+                        }
+                    }
+                }
+
+                // 2. Controllo push background per tutti coloro che hanno votato "Forse"
+                if (ev.allowMaybe && !ev.maybeReminderSent) {
+                    const maybeDeadlineMillis = getMaybeDeadlineMillis(ev);
+                    if (maybeDeadlineMillis && (now >= maybeDeadlineMillis) && (now - maybeDeadlineMillis <= 24 * 60 * 60 * 1000)) {
+                        const maybeUids = Object.keys(responses).filter(uid => responses[uid] === 'maybe');
+                        if (maybeUids.length > 0) {
+                            // Aggiorna Firestore per non inviare notifiche doppie
+                            db.collection("events").doc(ev.id).update({
+                                maybeReminderSent: true,
+                                maybeReminderSentAt: firebase.firestore.FieldValue.serverTimestamp()
+                            }).catch(() => {});
+
+                            // Spedisce la notifica push in background
+                            dispatchBackgroundPush({
+                                targetUids: maybeUids,
+                                title: "⏰ Termine sondaggio: conferma la presenza!",
+                                body: `Hai votato "Forse" per l'allenamento di ${ev.day} (${ev.place}). Il termine fissato dal creator (${ev.maybeDeadlineTime}) è arrivato: entra e fai sapere se ci sarai!`,
+                                data: { type: 'event', id: ev.id }
+                            });
+                        }
+                    }
+                }
+
+                // 3. Promemoria per chi non ha ancora votato (entro 24h dall'evento)
+                const hasVoted = !!myVote;
+                if (!hasVoted) {
+                    const eventDateMillis = getEventDateTimeMillis(ev);
+                    if (eventDateMillis) {
+                        const hoursLeft = (eventDateMillis - now) / (60 * 60 * 1000);
+                        if (hoursLeft > 0 && hoursLeft <= 24) {
+                            const alertKey = `poll_reminder_${ev.id}`;
+                            const lastAlert = parseInt(localStorage.getItem(alertKey) || '0', 10);
+                            if (now - lastAlert > 12 * 60 * 60 * 1000) {
+                                localStorage.setItem(alertKey, String(now));
+                                showAppNotification(
+                                    "⏰ Sondaggio Allenamento in scadenza!",
+                                    `Fai sapere se ci sarai all'allenamento "${ev.day || 'in programma'}"! Mancano meno di ${Math.ceil(hoursLeft)} ore.`,
+                                    { type: 'event', id: ev.id }
+                                );
+                            }
                         }
                     }
                 }
@@ -5613,6 +5713,7 @@ let currentUser = null;
                         eventsBadgeCache.push({ creatorUid: data.creatorUid, createdAt: data.createdAt });
                         allEvents.push(Object.assign({ id: doc.id }, data));
                     });
+                    latestPollsCache = allEvents;
                     renderEventsBadge();
 
                     // TRIGGER 7: Nuovo sondaggio pubblicato da un altro atleta
@@ -6892,7 +6993,12 @@ let currentUser = null;
                             <button class="event-vote-btn ${myResponse === 'no' ? 'selected-no' : ''}" ${canVote ? `onclick="voteEvent('${ev.id}', 'no')"` : 'disabled'}>❌ No, non sarò presente</button>
                             ${ev.allowMaybe ? `<button class="event-vote-btn ${myResponse === 'maybe' ? 'selected-maybe' : ''}" ${canVote ? `onclick="voteEvent('${ev.id}', 'maybe')"` : 'disabled'}>🤔 Forse</button>` : ''}
                         </div>
-                        ${ev.allowMaybe && ev.maybeDeadlineDate && ev.maybeDeadlineTime ? `<div class="event-maybe-note">Chi ha scelto "forse" deve far sapere entro il ${escapeHtml(ev.maybeDeadlineDate)} alle ${escapeHtml(ev.maybeDeadlineTime)}</div>` : ''}
+                        ${ev.allowMaybe && ev.maybeDeadlineDate && ev.maybeDeadlineTime ? `
+                            <div class="event-maybe-note" style="${(getMaybeDeadlineMillis(ev) && Date.now() >= getMaybeDeadlineMillis(ev)) ? 'color: #ef4444; font-weight: 700;' : ''}">
+                                ${(getMaybeDeadlineMillis(ev) && Date.now() >= getMaybeDeadlineMillis(ev)) 
+                                    ? `⚠️ Termine per chi ha votato "Forse" SCADUTO alle ${escapeHtml(ev.maybeDeadlineTime)} del ${escapeHtml(ev.maybeDeadlineDate)}` 
+                                    : `Chi ha scelto "forse" deve far sapere entro il ${escapeHtml(ev.maybeDeadlineDate)} alle ${escapeHtml(ev.maybeDeadlineTime)}`}
+                            </div>` : ''}
                         <div class="event-vote-counts">
                             <span>✅ ${yesCount}</span>
                             <span>❌ ${noCount}</span>
@@ -6909,6 +7015,23 @@ let currentUser = null;
             if (!currentUser) return;
             db.collection("events").doc(eventId).update({
                 [`responses.${currentUser.uid}`]: value
+            }).then(() => {
+                if (value === 'maybe') {
+                    db.collection("events").doc(eventId).get().then(doc => {
+                        if (doc.exists) {
+                            const ev = doc.data();
+                            ev.id = doc.id;
+                            const deadlineMillis = getMaybeDeadlineMillis(ev);
+                            if (deadlineMillis && deadlineMillis > Date.now()) {
+                                showAppNotification(
+                                    "🤔 Risposta registrata: Forse",
+                                    `Ricordati di confermare la tua presenza entro il ${ev.maybeDeadlineDate} alle ore ${ev.maybeDeadlineTime}. Ti invieremo un promemoria!`,
+                                    { type: 'event', id: eventId }
+                                );
+                            }
+                        }
+                    }).catch(()=>{});
+                }
             }).catch((error) => {
                 console.error("Errore durante la votazione:", error);
             });
@@ -7086,11 +7209,23 @@ let currentUser = null;
 
             let maybeDeadlineDate = '';
             let maybeDeadlineTime = '';
+            let maybeDeadlineTs = null;
             if (allowMaybe) {
-                const mDay = maybeDaySelect ? maybeDaySelect.value : '';
+                const mDay = maybeDaySelect ? parseInt(maybeDaySelect.value, 10) : NaN;
                 const mMonthIdx = maybeMonthSelect ? parseInt(maybeMonthSelect.value, 10) : NaN;
                 maybeDeadlineDate = (mDay && mMonthIdx) ? `${mDay} ${italianMonths[mMonthIdx - 1]}` : '';
                 maybeDeadlineTime = maybeTimeInput ? maybeTimeInput.value : '';
+
+                if (mDay && mMonthIdx && maybeDeadlineTime) {
+                    const now = new Date();
+                    let year = now.getFullYear();
+                    if (mMonthIdx < (now.getMonth() + 1)) {
+                        year++;
+                    }
+                    const [h, m] = maybeDeadlineTime.split(':').map(n => parseInt(n, 10));
+                    const d = new Date(year, mMonthIdx - 1, mDay, h || 0, m || 0, 0);
+                    maybeDeadlineTs = d.getTime();
+                }
             }
 
             if (!dayLabel || !time || !place) {
@@ -7117,6 +7252,8 @@ let currentUser = null;
                 allowMaybe: allowMaybe,
                 maybeDeadlineDate: allowMaybe ? maybeDeadlineDate : '',
                 maybeDeadlineTime: allowMaybe ? maybeDeadlineTime : '',
+                maybeDeadlineTs: maybeDeadlineTs,
+                maybeReminderSent: false,
                 responses: {},
                 createdAt: firebase.firestore.FieldValue.serverTimestamp()
             }).then(() => {
@@ -8439,6 +8576,13 @@ let currentUser = null;
       setInterval(() => {
         if (typeof checkInactivityReminder === 'function') checkInactivityReminder();
       }, 2 * 60 * 60 * 1000);
+
+      // Controllo periodico ogni 60s per i promemoria dei sondaggi (incluso chi ha votato "Forse")
+      setInterval(() => {
+        if (typeof checkPollDeadlineReminder === 'function' && typeof latestPollsCache !== 'undefined' && latestPollsCache.length > 0) {
+          checkPollDeadlineReminder(latestPollsCache);
+        }
+      }, 60 * 1000);
     </script>
 </body>
 </html>
