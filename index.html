@@ -2780,6 +2780,15 @@
                 });
                 console.log("[OneSignal] Inizializzato con successo con percorso service worker dedicato!");
 
+                // Evita la comparsa di notifiche OneSignal quando l'utente è attivamente dentro l'app
+                if (OneSignal.Notifications && typeof OneSignal.Notifications.addEventListener === 'function') {
+                    OneSignal.Notifications.addEventListener('foregroundWillDisplay', function(event) {
+                        if (event && typeof event.preventDefault === 'function') {
+                            event.preventDefault();
+                        }
+                    });
+                }
+
                 // Ascolta cambi di stato iscrizione push per associare automaticamente l'utente
                 if (OneSignal.User && OneSignal.User.PushSubscription) {
                     OneSignal.User.PushSubscription.addEventListener('change', async function(change) {
@@ -3988,15 +3997,28 @@ let currentUser = null;
             }
         }
 
-        // DISPATCHER PRINCIPALE DELLE NOTIFICHE (CON PROTEZIONE ANTI-DOPPIONI)
+        // DISPATCHER PRINCIPALE DELLE NOTIFICHE (CON PROTEZIONE ANTI-DOPPIONI E GESTIONE FOREGROUND/BACKGROUND)
         function showAppNotification(title, body, options = {}) {
             if (!notificationsEnabled) return;
 
-            // Mostra sempre il toast grafico elegante all'interno dell'app
-            showInAppToast(title, body, options);
+            // 1. REQUISITO: "non voglio che mi arrivino le notifiche quando sono dentro l'app"
+            // Se l'app è in primo piano / visibile, non mostrare notifiche né toast
+            if (!document.hidden) {
+                return;
+            }
 
-            // Mostra la notifica nativa di sistema quando la finestra è in background o a schermo spento
-            if (document.hidden && 'Notification' in window && Notification.permission === 'granted') {
+            // 2. REQUISITO: "arrivano le notifiche doppie"
+            // Le notifiche remote (messaggi chat, inviti, sfide, sondaggi) vengono già inviate e mostrate
+            // dal Service Worker di OneSignal (dispatchBackgroundPush).
+            // Mostriamo notifiche locali con reg.showNotification ESCLUSIVAMENTE per eventi generati localmente
+            // dal dispositivo (come l'avviso di inattività di 7 giorni) che non passano da OneSignal.
+            const isLocalOnly = options && (options.type === 'inactivity' || options.isLocal);
+            if (!isLocalOnly) {
+                return;
+            }
+
+            // Notifica di sistema per promemoria locali a schermo spento / background
+            if ('Notification' in window && Notification.permission === 'granted') {
                 const iconUrl = 'https://naiontrack.github.io/Calisthenics-Skill-Tree/icon-512.png';
                 const tag = options.id ? `calisthenics-${options.type}-${options.id}` : `calisthenics-${options.type || 'gen'}-${Date.now()}`;
                 const displayNative = (reg) => {
@@ -4006,7 +4028,7 @@ let currentUser = null;
                             icon: iconUrl,
                             badge: iconUrl,
                             tag: tag,
-                            renotify: true,
+                            renotify: false,
                             vibrate: [200, 100, 200],
                             data: Object.assign({ url: 'https://naiontrack.github.io/Calisthenics-Skill-Tree/' }, options)
                         }).catch(e => console.warn('[showAppNotification sw err]', e));
