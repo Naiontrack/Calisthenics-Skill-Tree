@@ -2979,8 +2979,10 @@
                 <option value="pullup">🏋️ Pull-up (Trazioni)</option>
                 <option value="dip">⚡ Dip alle Parallele</option>
                 <option value="squat">🦵 Squat</option>
-                <option value="hold">🧱 Planche / Plank Hold (Tenuta)</option>
-                <option value="lsit">📐 L-Sit Hold (Tenuta)</option>
+                <option value="planche">🧱 Planche / Plank Hold (Tenuta)</option>
+                <option value="lsit">📐 L-Sit / V-Sit Hold (Tenuta)</option>
+                <option value="handstand">🤸 Handstand / Verticale</option>
+                <option value="hold">⏱️ Tenuta Isometrica Generica</option>
             </select>
             <button id="pose-voice-toggle-btn" onclick="togglePoseVoiceFeedback()" style="background:rgba(255,255,255,0.06); border:1px solid var(--line-color); color:var(--text); border-radius:8px; padding:6px 10px; font-size:0.85rem; cursor:pointer; white-space:nowrap;">🔊 Voce: ON</button>
             <button onclick="flipPoseCameraDirection()" style="background:rgba(255,255,255,0.06); border:1px solid var(--line-color); color:var(--text); border-radius:8px; padding:6px 10px; font-size:0.85rem; cursor:pointer;" title="Inverti fotocamera">🔄</button>
@@ -6744,13 +6746,15 @@ let currentUser = null;
             // 1. Verifica se è configurata una chiave Gemini personale
             const userGeminiKey = localStorage.getItem("calisthenics_gemini_api_key");
             let aiResponse = "";
+            let apiErrorMessage = "";
 
             if (userGeminiKey && userGeminiKey.trim()) {
+                const cleanKey = userGeminiKey.trim().replace(/^["']|["']$/g, '');
                 const promptText = "Sei il Coach Esperto di Calisthenics dell'app Calisthenics Skill Tree. Rispondi in italiano con precisione tecnica, tono motivante da atleta, consigli pratici, serie/ripetizioni e prevenzione articolare:\n\n" + query;
                 const modelsToTry = ["gemini-2.0-flash", "gemini-1.5-flash", "gemini-2.5-flash"];
                 for (const m of modelsToTry) {
                     try {
-                        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${userGeminiKey.trim()}`, {
+                        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${encodeURIComponent(cleanKey)}`, {
                             method: "POST",
                             headers: { "Content-Type": "application/json" },
                             body: JSON.stringify({ contents: [{ parts: [{ text: promptText }] }] })
@@ -6759,17 +6763,25 @@ let currentUser = null;
                             const resData = await res.json();
                             aiResponse = resData.candidates?.[0]?.content?.parts?.[0]?.text;
                             if (aiResponse) break;
+                        } else {
+                            const errData = await res.json().catch(() => ({}));
+                            apiErrorMessage = (errData.error && errData.error.message) || `Errore HTTP ${res.status}`;
+                            console.warn(`Errore Gemini API [${m}]:`, errData);
                         }
                     } catch(err) {
-                        console.warn('Errore con modello ' + m + ':', err);
+                        apiErrorMessage = err.message;
+                        console.warn('Errore rete Gemini con ' + m + ':', err);
                     }
                 }
             }
 
-            // Fallback su Calisthenics Knowledge Engine se non c'è chiave o errore di rete
+            // Fallback su Calisthenics Knowledge Engine
             if (!aiResponse) {
                 await new Promise(r => setTimeout(r, 450));
                 aiResponse = getCalisthenicsExpertResponse(query);
+                if (userGeminiKey && apiErrorMessage) {
+                    aiResponse = `⚠️ *[Nota sulla tua chiave API Gemini: ${apiErrorMessage}. Sto usando il Coach Offline Integrato]*\n\n` + aiResponse;
+                }
             }
 
             const typingToRemove = document.getElementById("ai-typing-indicator");
@@ -7273,6 +7285,21 @@ let currentUser = null;
             }
         }
 
+        // ==========================================
+        // VARIABILI GLOBALI POSE SCANNER & AI REFEREE
+        // ==========================================
+        let poseScannerActiveMode = 'analysis';
+        let poseRefereeTargetReps = 0;
+        let poseRefereeCallback = null;
+        let poseTrackedExercise = 'pushup';
+        let poseRepCounter = null;
+        let poseVoiceFeedbackEnabled = true;
+        let poseCurrentFacingMode = 'user';
+        let poseCameraStream = null;
+        let poseInstance = null;
+        let poseAnimationReqId = null;
+        let poseIsProcessingFrame = false;
+
         // Apertura dello Scanner Videocamera
         
         function getSkillBiomechanicsProfile(skillId, fallbackName = "") {
@@ -7313,11 +7340,20 @@ let currentUser = null;
             poseRepCounter = new PoseRepCounterEngine(skillProfile);
 
             const selectEl = document.getElementById('pose-exercise-select');
-            if (selectEl) selectEl.value = skillProfile.category;
+            if (selectEl) {
+                selectEl.value = skillProfile.category;
+                if (!selectEl.value) {
+                    selectEl.value = (skillProfile.category === 'planche') ? 'planche' : 'pushup';
+                }
+            }
 
             const titleEl = document.getElementById('pose-scanner-title');
             const badgeEl = document.getElementById('pose-scanner-badge');
             const finishBtn = document.getElementById('pose-scanner-finish-btn');
+            const voiceBtn = document.getElementById('pose-voice-toggle-btn');
+            if (voiceBtn) {
+                voiceBtn.innerText = poseVoiceFeedbackEnabled ? "🔊 Voce: ON" : "🔇 Voce: OFF";
+            }
 
             if (poseScannerActiveMode === 'referee') {
                 if (titleEl) titleEl.innerText = "⚖️ AI Referee — Arbitro Anti-Cheat";
@@ -7342,7 +7378,6 @@ let currentUser = null;
             const modal = document.getElementById('pose-scanner-modal');
             if (modal) modal.classList.add('active');
 
-            poseRepCounter = new PoseRepCounterEngine(poseTrackedExercise);
             await startPoseCamera();
         }
 
@@ -7354,13 +7389,19 @@ let currentUser = null;
 
         function changePoseTrackedExercise(val) {
             poseTrackedExercise = val;
-            poseRepCounter = new PoseRepCounterEngine(val);
+            const profile = getSkillBiomechanicsProfile(val);
+            poseRepCounter = new PoseRepCounterEngine(profile);
+            const banner = document.getElementById('pose-hud-banner');
+            if (banner) banner.innerText = "Esercizio impostato su: " + profile.name + ". Inquadrati per iniziare!";
         }
 
         function togglePoseVoiceFeedback() {
             poseVoiceFeedbackEnabled = !poseVoiceFeedbackEnabled;
             const btn = document.getElementById('pose-voice-toggle-btn');
             if (btn) btn.innerText = poseVoiceFeedbackEnabled ? "🔊 Voce: ON" : "🔇 Voce: OFF";
+            if (poseVoiceFeedbackEnabled) {
+                speakPoseFeedback("Feedback vocale attivato");
+            }
         }
 
         function flipPoseCameraDirection() {
@@ -7372,19 +7413,43 @@ let currentUser = null;
             stopPoseCamera();
             const video = document.getElementById('pose-camera-video');
             const canvas = document.getElementById('pose-overlay-canvas');
+            const banner = document.getElementById('pose-hud-banner');
             if (!video || !canvas) return;
 
+            if (banner) banner.innerText = "Avvio videocamera in corso...";
+
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                if (banner) {
+                    banner.innerHTML = "⚠️ Fotocamera non disponibile.<br><small>Se utilizzi file://, apri la pagina tramite un server web locale o consenti la videocamera nel browser.</small>";
+                }
+                return;
+            }
+
             try {
-                const stream = await navigator.mediaDevices.getUserMedia({
-                    video: {
-                        facingMode: poseCurrentFacingMode,
-                        width: { ideal: 640 },
-                        height: { ideal: 480 }
-                    },
-                    audio: false
-                });
+                let stream;
+                try {
+                    stream = await navigator.mediaDevices.getUserMedia({
+                        video: {
+                            facingMode: poseCurrentFacingMode,
+                            width: { ideal: 640 },
+                            height: { ideal: 480 }
+                        },
+                        audio: false
+                    });
+                } catch(camErr1) {
+                    // Fallback senza facingMode per webcam desktop
+                    stream = await navigator.mediaDevices.getUserMedia({
+                        video: true,
+                        audio: false
+                    });
+                }
+
                 poseCameraStream = stream;
                 video.srcObject = stream;
+                video.muted = true;
+                video.playsInline = true;
+                video.setAttribute('playsinline', '');
+                video.setAttribute('webkit-playsinline', '');
                 await video.play();
 
                 canvas.width = video.videoWidth || 640;
@@ -7392,7 +7457,7 @@ let currentUser = null;
 
                 // Inizializza MediaPipe Pose se non già presente
                 if (typeof Pose === 'undefined') {
-                    document.getElementById('pose-hud-banner').innerText = "Caricamento librerie AI MediaPipe...";
+                    if (banner) banner.innerText = "Caricamento librerie AI MediaPipe in corso... Inquadrati!";
                     return;
                 }
 
@@ -7411,20 +7476,30 @@ let currentUser = null;
 
                 poseInstance.onResults((results) => onPoseResults(results, canvas, video));
 
-                // Loop frame fotocamera
+                // Loop frame fotocamera con semaforo anti-congestione
                 async function processFrame() {
                     if (!poseCameraStream) return;
-                    if (video.readyState >= 2) {
-                        await poseInstance.send({ image: video });
+                    if (video.readyState >= 2 && poseInstance && !poseIsProcessingFrame) {
+                        poseIsProcessingFrame = true;
+                        try {
+                            await poseInstance.send({ image: video });
+                        } catch(e) {
+                            console.warn("MediaPipe frame send error:", e);
+                        } finally {
+                            poseIsProcessingFrame = false;
+                        }
                     }
-                    poseAnimationReqId = requestAnimationFrame(processFrame);
+                    if (poseCameraStream) {
+                        poseAnimationReqId = requestAnimationFrame(processFrame);
+                    }
                 }
                 processFrame();
 
             } catch(err) {
                 console.error("Errore avvio fotocamera MediaPipe:", err);
-                alert("Impossibile accedere alla fotocamera. Verifica i permessi nel browser: " + err.message);
-                closePoseScannerModal();
+                if (banner) {
+                    banner.innerHTML = `⚠️ Videocamera non consentita: ${err.message || err.name}.`;
+                }
             }
         }
 
@@ -7434,9 +7509,12 @@ let currentUser = null;
                 poseAnimationReqId = null;
             }
             if (poseCameraStream) {
-                poseCameraStream.getTracks().forEach(t => t.stop());
+                try {
+                    poseCameraStream.getTracks().forEach(t => t.stop());
+                } catch(e) {}
                 poseCameraStream = null;
             }
+            poseIsProcessingFrame = false;
         }
 
         function speakPoseFeedback(text) {
@@ -7445,7 +7523,7 @@ let currentUser = null;
                 window.speechSynthesis.cancel();
                 const u = new SpeechSynthesisUtterance(text);
                 u.lang = 'it-IT';
-                u.rate = 1.1;
+                u.rate = 1.05;
                 window.speechSynthesis.speak(u);
             } catch(e) {}
         }
