@@ -1828,6 +1828,14 @@
             margin-bottom: 25px;
         }
 
+        .share-header-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            flex: 1;
+        }
+
         .share-bonus-badge {
             background: linear-gradient(135deg, #10b981, #059669);
             color: white;
@@ -1835,10 +1843,12 @@
             font-weight: 700;
             padding: 3px 9px;
             border-radius: 12px;
-            margin-left: 8px;
+            margin-left: 6px;
+            margin-right: 18px;
             vertical-align: middle;
             display: inline-block;
             box-shadow: 0 2px 6px rgba(16, 185, 129, 0.3);
+            white-space: nowrap;
         }
 
         .share-card-banner {
@@ -1874,6 +1884,20 @@
         }
 
         @media (max-width: 600px) {
+            .section-collapsible-header {
+                gap: 12px;
+            }
+            .share-header-left {
+                gap: 6px;
+            }
+            .share-bonus-badge {
+                margin-left: 2px;
+                margin-right: 22px;
+            }
+            #share-toggle-icon {
+                margin-left: auto;
+                flex-shrink: 0;
+            }
             .share-link-container {
                 flex-direction: column;
             }
@@ -2727,9 +2751,10 @@
     <!-- SEZIONE CONDIVIDI & INVITA AMICI (+3000 XP) -->
     <div class="share-section" id="share-section">
         <div class="section-collapsible-header" onclick="toggleShareSection()">
-            <h3 class="leaderboard-title" style="margin:0; border-bottom:none; padding-bottom:0;">
-                🎁 Condividi l'App <span class="share-bonus-badge">+3.000 XP</span>
-            </h3>
+            <div class="share-header-left">
+                <h3 class="leaderboard-title" style="margin:0; border-bottom:none; padding-bottom:0;">🎁 Condividi l'App</h3>
+                <span class="share-bonus-badge">+3.000 XP</span>
+            </div>
             <span class="collapsible-icon" id="share-toggle-icon">▼ Espandi</span>
         </div>
         <div id="share-collapsible-content" style="display: none; margin-top: 12px; border-top: 1px solid var(--line-color); padding-top: 14px;">
@@ -4273,6 +4298,58 @@ let currentUser = null;
             } catch(e) {}
         }
 
+
+        // Rilevamento presenza attiva nell'app per non disturbare con notifiche quando si è nell'app
+        function updateAppPresence(isActive) {
+            if (!currentUser) return;
+            try {
+                const val = (isActive && !document.hidden) ? Date.now() : 0;
+                db.collection("system").doc("appPresence").set({
+                    [currentUser.uid]: val
+                }, { merge: true }).catch(() => {});
+            } catch(e) {}
+        }
+
+        // Invia notifica push per i turni del duello ESCLUSIVAMENTE a chi è FUORI dall'app
+        async function dispatchDuelRoundPush({ targetUids = [], title, body, challengeId }) {
+            if (!targetUids || targetUids.length === 0) return;
+            try {
+                let presenceData = {};
+                try {
+                    const snap = await db.collection("system").doc("appPresence").get();
+                    if (snap.exists) presenceData = snap.data() || {};
+                } catch(e) {}
+
+                const now = Date.now();
+                const outsideUids = targetUids.filter(uid => {
+                    // Se è l'utente corrente ed è dentro l'app visibile -> non inviare push!
+                    if (currentUser && uid === currentUser.uid && !document.hidden) {
+                        return false;
+                    }
+                    // Se l'altro atleta è attivo nell'app negli ultimi 35 secondi -> non inviare push!
+                    const lastSeen = presenceData[uid] || 0;
+                    if ((now - lastSeen) < 35000) {
+                        return false;
+                    }
+                    // È fuori dall'app -> invia notifica push!
+                    return true;
+                });
+
+                if (outsideUids.length > 0) {
+                    dispatchBackgroundPush({
+                        targetUids: outsideUids,
+                        title: title,
+                        body: body,
+                        data: { type: 'challengeDuel', id: challengeId }
+                    });
+                } else {
+                    console.log("[Duel Push] Destinatari attualmente attivi sull'app: push soppresso per evitare disturbi.");
+                }
+            } catch(err) {
+                console.warn("[Duel Push] Errore dispatchDuelRoundPush:", err);
+            }
+        }
+
         function updateGeneralChatPresence(isActive) {
             if (!currentUser) return;
             try {
@@ -4595,6 +4672,7 @@ let currentUser = null;
                         syncOneSignalUser(user.uid);
                         registerCurrentDevice(user.uid);
                         processPendingReferral(user.uid);
+                        updateAppPresence(true);
                     }
                     if (typeof isShareSectionOpen !== 'undefined' && isShareSectionOpen) {
                         renderShareSection();
@@ -9608,8 +9686,28 @@ let currentUser = null;
                     // Winner & Claim Action
                     let actionHtml = '';
                     if (isCompleted) {
-                        if (isWinner) {
-                            if (!c.bonusClaimed) {
+                        const isTie = (c.winnerUid === 'tie');
+                        if (isTie) {
+                            const myTieClaimed = (c.claimedUids && c.claimedUids.includes(currentUser.uid)) || (c.claimedBy && c.claimedBy[currentUser.uid]);
+                            if (!myTieClaimed) {
+                                actionHtml = `
+                                    <div style="margin-top:10px; padding:6px 10px; background:rgba(245,158,11,0.12); border:1px solid #f59e0b; border-radius:8px; font-size:0.8rem; color:#facc15; text-align:center; font-weight:700;">
+                                        🤝 Duello concluso in Pareggio! Ciascuno vince 1/4 del premio (1.250 XP).
+                                    </div>
+                                    <button class="btn-confirm" onclick="claimDuelReward('${c.id}')" style="width:100%; margin-top:8px; background:linear-gradient(90deg, #f59e0b, #eab308); color:#000; font-weight:800; padding:10px; font-size:0.92rem; border:none; border-radius:8px; cursor:pointer;">
+                                        🎁 RISCUOTI 1.250 XP (Premio Pareggio)!
+                                    </button>
+                                `;
+                            } else {
+                                actionHtml = `
+                                    <div style="margin-top:10px; padding:6px 10px; background:rgba(34,197,94,0.15); border:1px solid var(--unlocked); border-radius:8px; font-size:0.8rem; color:var(--unlocked); text-align:center; font-weight:700;">
+                                        ✨ Premio Pareggio di 1.250 XP già riscosso!
+                                    </div>
+                                `;
+                            }
+                        } else if (isWinner) {
+                            const myWinClaimed = c.bonusClaimed || (c.claimedUids && c.claimedUids.includes(currentUser.uid));
+                            if (!myWinClaimed) {
                                 actionHtml = `
                                     <button class="btn-confirm" onclick="claimDuelReward('${c.id}')" style="width:100%; margin-top:10px; background:linear-gradient(90deg, #f59e0b, #eab308); color:#000; font-weight:800; padding:10px; font-size:0.92rem; border:none; border-radius:8px; cursor:pointer;">
                                         🎁 RISCUOTI 5.000 XP!
@@ -9641,7 +9739,7 @@ let currentUser = null;
                                 ${isCreator ? `<button onclick="confirmDeleteChallenge('${c.id}', 'Duello')" title="Elimina duello" style="background:rgba(239, 68, 68, 0.15); border:1px solid #ef4444; color:#ef4444; font-size:0.8rem; border-radius:6px; padding:3px 7px; cursor:pointer; font-weight:700;">🗑️</button>` : ''}
                             </div>
                             <div class="challenge-meta" style="margin-bottom:6px;">
-                                Best of 3 (Esercizio diverso ogni round) • 🏆 Premio: <strong style="color:var(--unlocked);">5.000 XP</strong>
+                                Best of 3 (Esercizio diverso ogni round) • 🏆 Premio: <strong style="color:var(--unlocked);">5.000 XP</strong> <span style="font-size:0.75rem; color:var(--subtext);">(o 1.250 XP a testa se pareggio)</span>
                             </div>
                             ${scoreTallyHtml}
                             ${roundsHtml}
@@ -9856,7 +9954,7 @@ let currentUser = null;
                         ⚔️ <strong>Reps Battle 1vs1 (3 Round):</strong><br>
                         Un esercizio diverso estratto per ogni round tra Push-ups, Crunch, Pull-ups e Squats! In ogni round vince l'atleta con il massimale più alto.<br>
                         Vince la sfida chi vince almeno <strong>2/3 round</strong>!<br>
-                        <strong>🏆 Premio in palio: 5.000 XP</strong>
+                        <strong>🏆 Premio in palio: 5.000 XP (o 1.250 XP a testa se pareggio)</strong>
                     </div>
 
                     <div style="padding:14px; background:var(--input-bg); border:2px solid #f59e0b; border-radius:12px; margin-bottom:14px;">
@@ -10496,12 +10594,12 @@ let currentUser = null;
                         [`rounds.${roundNum}.${currentUser.uid}`]: inputReps
                     });
 
-                    // Invia push all'avversario
-                    dispatchBackgroundPush({
+                    // Invia notifica push all'avversario SOLO se è FUORI dall'app
+                    dispatchDuelRoundPush({
                         targetUids: [oppUid],
                         title: `⚔️ Round ${roundNum} Duello (${currentRoundEx})!`,
                         body: `${myName} ha registrato il suo massimale in ${currentRoundEx} (${inputReps} reps). Tocca a te superarlo!`,
-                        data: { type: 'challengeDuel', id: challengeId }
+                        challengeId: challengeId
                     });
                     return;
                 }
@@ -10521,7 +10619,7 @@ let currentUser = null;
                     newScores[roundWinnerUid] = (newScores[roundWinnerUid] || 0) + 1;
                 }
 
-                // Verifica vittoria (Best of 3: vince chi vince almeno 2 round o chi ha più round dopo 3 round)
+                // Verifica completamento match (Best of 3: vince chi vince 2 round o chi ha più round dopo 3 round; altrimenti PAREGGIO)
                 let isMatchCompleted = false;
                 let finalWinnerUid = null;
                 let finalWinnerName = null;
@@ -10543,24 +10641,9 @@ let currentUser = null;
                         finalWinnerUid = oppUid;
                         finalWinnerName = (c.participantNames && c.participantNames[oppUid]) || 'Avversario';
                     } else {
-                        // In caso di parità di round vinti (es. 1-1 e 1 pareggio, oppure tutti pareggi)
-                        let totalMyReps = inputReps;
-                        let totalOppReps = oppReps;
-                        for (let r = 1; r < 3; r++) {
-                            totalMyReps += (c.rounds && c.rounds[r] && c.rounds[r][currentUser.uid]) || 0;
-                            totalOppReps += (c.rounds && c.rounds[r] && c.rounds[r][oppUid]) || 0;
-                        }
-                        if (totalMyReps > totalOppReps) {
-                            finalWinnerUid = currentUser.uid;
-                            finalWinnerName = (c.participantNames && c.participantNames[currentUser.uid]) || myName;
-                        } else if (totalOppReps > totalMyReps) {
-                            finalWinnerUid = oppUid;
-                            finalWinnerName = (c.participantNames && c.participantNames[oppUid]) || 'Avversario';
-                        } else {
-                            // Pareggio assoluto sia di round che di reps
-                            finalWinnerUid = 'tie';
-                            finalWinnerName = 'Pareggio';
-                        }
+                        // Parità di round vinti dopo 3 round -> PAREGGIO!
+                        finalWinnerUid = 'tie';
+                        finalWinnerName = 'Pareggio';
                     }
                 }
 
@@ -10581,7 +10664,7 @@ let currentUser = null;
 
                 await docRef.update(updateData);
 
-                // Aggiornamento statistiche duelli e notifiche push
+                // Aggiornamento statistiche duelli e notifiche push (SOLO per chi è FUORI dall'app)
                 if (isMatchCompleted) {
                     try {
                         if (finalWinnerUid === 'tie') {
@@ -10617,34 +10700,34 @@ let currentUser = null;
                     }
 
                     if (finalWinnerUid === 'tie') {
-                        dispatchBackgroundPush({
+                        dispatchDuelRoundPush({
                             targetUids: [currentUser.uid, oppUid],
                             title: "⚔️ Duello Pareggiato!",
-                            body: `Il duello tra te e l'avversario si è concluso con un incredibile pareggio! Bella battaglia!`,
-                            data: { type: 'challengeDuel', id: challengeId }
+                            body: `Il duello si è concluso in parità! Riscuotete entrambi 1.250 XP (1/4 del premio)!`,
+                            challengeId: challengeId
                         });
                     } else {
                         const loserUid = (finalWinnerUid === currentUser.uid) ? oppUid : currentUser.uid;
-                        dispatchBackgroundPush({
+                        dispatchDuelRoundPush({
                             targetUids: [finalWinnerUid],
                             title: "🏆 Vittoria nel Duello!",
                             body: `Hai vinto il Duello su 3 Round (${newScores[finalWinnerUid]} a ${newScores[loserUid]})! Riscuoti i tuoi 5.000 XP!`,
-                            data: { type: 'challengeDuel', id: challengeId }
+                            challengeId: challengeId
                         });
-                        dispatchBackgroundPush({
+                        dispatchDuelRoundPush({
                             targetUids: [loserUid],
                             title: "⚔️ Duello Concluso",
                             body: `${finalWinnerName} ha vinto il Duello (${newScores[finalWinnerUid]} a ${newScores[loserUid]}). Bella battaglia!`,
-                            data: { type: 'challengeDuel', id: challengeId }
+                            challengeId: challengeId
                         });
                     }
                 } else {
                     const nextRoundEx = getDuelRoundExercise(c, roundNum + 1);
-                    dispatchBackgroundPush({
+                    dispatchDuelRoundPush({
                         targetUids: [currentUser.uid, oppUid],
                         title: `⚔️ Inizia il Round ${roundNum + 1} (${nextRoundEx})!`,
                         body: `Round ${roundNum} terminato! Preparati per il Round ${roundNum + 1} di ${nextRoundEx}!`,
-                        data: { type: 'challengeDuel', id: challengeId }
+                        challengeId: challengeId
                     });
                 }
             } catch (err) {
@@ -10656,33 +10739,69 @@ let currentUser = null;
         async function claimDuelReward(challengeId) {
             if (!currentUser) return;
             const c = activeChallengesList.find(x => x.id === challengeId);
-            if (!c || c.bonusClaimed) return;
+            if (!c) return;
 
-            if (c.winnerUid !== currentUser.uid) {
-                alert("Solo il vincitore del duello può riscuotere il premio!");
+            const isTie = (c.winnerUid === 'tie');
+            const isWinner = (c.winnerUid === currentUser.uid);
+
+            if (!isWinner && !isTie) {
+                alert("Solo chi ha vinto o pareggiato il duello può riscuotere il premio!");
                 return;
             }
 
-            const rewardXp = 5000;
+            const myClaimed = isTie
+                ? ((c.claimedUids && c.claimedUids.includes(currentUser.uid)) || (c.claimedBy && c.claimedBy[currentUser.uid]))
+                : (c.bonusClaimed || (c.claimedUids && c.claimedUids.includes(currentUser.uid)));
+
+            if (myClaimed) {
+                alert("Hai già riscosso il tuo premio per questo duello!");
+                return;
+            }
+
+            // 1/4 del premio ciascuno se pareggio (1.250 XP), altrimenti 5.000 XP per chi vince
+            const rewardXp = isTie ? 1250 : 5000;
+
             try {
                 userWorkoutXp = (userWorkoutXp || 0) + rewardXp;
                 saveState();
 
-                await db.collection("challenges").doc(challengeId).update({
-                    bonusClaimed: true,
+                const updatePayload = {
+                    claimedUids: firebase.firestore.FieldValue.arrayUnion(currentUser.uid),
+                    [`claimedBy.${currentUser.uid}`]: true,
                     bonusClaimedAt: firebase.firestore.FieldValue.serverTimestamp()
-                });
+                };
 
-                c.bonusClaimed = true;
+                if (!isTie) {
+                    updatePayload.bonusClaimed = true;
+                }
+
+                await db.collection("challenges").doc(challengeId).update(updatePayload);
+
+                c.claimedUids = c.claimedUids || [];
+                c.claimedUids.push(currentUser.uid);
+                c.claimedBy = c.claimedBy || {};
+                c.claimedBy[currentUser.uid] = true;
+                if (!isTie) c.bonusClaimed = true;
+
                 renderChallengesList();
 
-                openCustomModal(
-                    "🏆 Vittoria nel Duello!",
-                    `Congratulazioni Campione! Hai vinto il <strong>Duello Reps Battle</strong> su 3 Round (Best of 3)!<br><br><span style="color:var(--unlocked); font-size:1.4rem; font-weight:800;">+5.000 XP</span> aggiunti al tuo profilo!`,
-                    "Trionfo! ⚔️",
-                    false,
-                    () => {}
-                );
+                if (isTie) {
+                    openCustomModal(
+                        "🤝 Premio Pareggio Duello!",
+                        `Ottimo scontro sul filo del rasoio! Il duello si è concluso con un perfetto pareggio.<br><br>Ciascun atleta riceve 1/4 del premio:<br><span style="color:var(--unlocked); font-size:1.4rem; font-weight:800;">+1.250 XP</span> aggiunti al tuo profilo!`,
+                        "Grande Battaglia! ⚔️",
+                        false,
+                        () => {}
+                    );
+                } else {
+                    openCustomModal(
+                        "🏆 Vittoria nel Duello!",
+                        `Congratulazioni Campione! Hai vinto il <strong>Duello Reps Battle</strong> su 3 Round (Best of 3)!<br><br><span style="color:var(--unlocked); font-size:1.4rem; font-weight:800;">+5.000 XP</span> aggiunti al tuo profilo!`,
+                        "Trionfo! ⚔️",
+                        false,
+                        () => {}
+                    );
+                }
             } catch (err) {
                 console.error("Errore riscatto premio duello:", err);
                 alert("Errore durante il riscatto del premio: " + (err.message || err));
@@ -11260,7 +11379,17 @@ let currentUser = null;
             updateGeneralChatPresence(true);
           }
         }
+        if (typeof updateAppPresence === 'function' && currentUser && !document.hidden) {
+          updateAppPresence(true);
+        }
       }, 20000);
+
+      window.addEventListener('beforeunload', () => {
+        if (typeof updateAppPresence === 'function') updateAppPresence(false);
+      });
+      window.addEventListener('pagehide', () => {
+        if (typeof updateAppPresence === 'function') updateAppPresence(false);
+      });
 
       // Gestione cambio visibilità scheda (quando minimizzi o chiudi l'app)
       document.addEventListener('visibilitychange', () => {
@@ -11271,8 +11400,14 @@ let currentUser = null;
           if (typeof updateGeneralChatPresence === 'function') {
             updateGeneralChatPresence(false);
           }
+          if (typeof updateAppPresence === 'function') {
+            updateAppPresence(false);
+          }
         } else {
           // App ritornata in primo piano: pulisci subito le notifiche
+          if (typeof updateAppPresence === 'function') {
+            updateAppPresence(true);
+          }
           if (typeof dismissAppNotification === 'function') {
             if (typeof activeConversationId !== 'undefined' && activeConversationId) {
               dismissAppNotification(activeConversationId);
