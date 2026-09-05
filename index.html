@@ -21,6 +21,9 @@
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-messaging-compat.js"></script>
     <!-- OneSignal Web Push SDK (per notifiche a schermo spento / app chiusa) -->
     <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+    <!-- Google MediaPipe Pose & Camera Utils per AI Helper & AI Referee -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js" crossorigin="anonymous"></script>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1813,6 +1816,157 @@
         }
 
         /* ========================================== */
+        /* AI HELPER & POSE SCANNER VIDEOCAMERA      */
+        /* ========================================== */
+        .ai-helper-header-bar {
+            display: flex;
+            gap: 6px;
+            padding: 8px 10px;
+            background: rgba(255, 255, 255, 0.03);
+            border-bottom: 1px solid var(--line-color);
+            overflow-x: auto;
+            white-space: nowrap;
+            scrollbar-width: none;
+        }
+        .ai-helper-chip-btn {
+            background: rgba(56, 189, 248, 0.12);
+            border: 1px solid rgba(56, 189, 248, 0.25);
+            color: var(--accent);
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: 999px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            transition: all 0.2s ease;
+        }
+        .ai-helper-chip-btn:hover {
+            background: rgba(56, 189, 248, 0.25);
+        }
+        .ai-suggested-prompts {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin: 10px 0;
+        }
+        .ai-suggested-prompt-btn {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--line-color);
+            border-radius: 8px;
+            padding: 7px 10px;
+            font-size: 0.78rem;
+            color: var(--text);
+            text-align: left;
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+        .ai-suggested-prompt-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        .pose-scanner-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 10000;
+            display: none;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+        .pose-scanner-modal-overlay.active {
+            display: flex;
+        }
+        .pose-viewport-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto;
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            border-radius: 12px;
+            background: #111;
+            border: 2px solid var(--accent);
+        }
+        .pose-viewport-container video {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transform: scaleX(-1);
+        }
+        .pose-viewport-container canvas {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transform: scaleX(-1);
+            pointer-events: none;
+        }
+        .pose-hud-top {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            right: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 6px;
+            z-index: 10;
+            pointer-events: none;
+        }
+        .pose-stat-pill {
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            border-radius: 8px;
+            padding: 5px 8px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .pose-hud-banner {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            border-radius: 10px;
+            padding: 8px 12px;
+            text-align: center;
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: #fff;
+            z-index: 10;
+            pointer-events: none;
+            transition: all 0.2s ease;
+        }
+        .referee-verified-badge {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            font-size: 0.7rem;
+            font-weight: 800;
+            padding: 2px 6px;
+            border-radius: 6px;
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+        }
+
+        /* ========================================== */
         /* SEZIONE CONDIVIDI E INVITA AMICI (+3.000 XP) */
         /* ========================================== */
         .share-section {
@@ -2790,6 +2944,55 @@
 
     <div class="tree-container" id="tree"></div>
 
+
+    <!-- MODALE POSE SCANNER VIDEOCAMERA & AI REFEREE -->
+    <div class="pose-scanner-modal-overlay" id="pose-scanner-modal">
+        <div style="display:flex; justify-content:space-between; align-items:center; max-width:600px; margin:0 auto; width:100%; padding:0 4px 8px 4px;">
+            <div style="display:flex; align-items:center; gap:8px;">
+                <span id="pose-scanner-title" style="font-weight:bold; font-size:1rem; color:var(--accent);">📷 Scanner Articolare AI</span>
+                <span id="pose-scanner-badge" style="font-size:0.75rem; background:rgba(56,189,248,0.15); border:1px solid var(--accent); color:var(--accent); padding:2px 8px; border-radius:12px;">Analisi Forma</span>
+            </div>
+            <button onclick="closePoseScannerModal()" style="background:none; border:none; color:var(--text); font-size:1.4rem; cursor:pointer; padding:4px;">✕</button>
+        </div>
+
+        <div style="display:flex; justify-content:space-between; align-items:center; max-width:600px; margin:0 auto 8px auto; width:100%; gap:8px;">
+            <select id="pose-exercise-select" onchange="changePoseTrackedExercise(this.value)" style="flex:1; background:var(--card-bg); border:1px solid var(--line-color); border-radius:8px; padding:6px 10px; color:var(--text); font-size:0.85rem;">
+                <option value="pushup">🤸 Push-up (Piegamenti)</option>
+                <option value="pullup">🏋️ Pull-up (Trazioni)</option>
+                <option value="dip">⚡ Dip alle Parallele</option>
+                <option value="squat">🦵 Squat</option>
+                <option value="hold">🧱 Planche / Plank Hold (Tenuta)</option>
+                <option value="lsit">📐 L-Sit Hold (Tenuta)</option>
+            </select>
+            <button id="pose-voice-toggle-btn" onclick="togglePoseVoiceFeedback()" style="background:rgba(255,255,255,0.06); border:1px solid var(--line-color); color:var(--text); border-radius:8px; padding:6px 10px; font-size:0.85rem; cursor:pointer; white-space:nowrap;">🔊 Voce: ON</button>
+            <button onclick="flipPoseCameraDirection()" style="background:rgba(255,255,255,0.06); border:1px solid var(--line-color); color:var(--text); border-radius:8px; padding:6px 10px; font-size:0.85rem; cursor:pointer;" title="Inverti fotocamera">🔄</button>
+        </div>
+
+        <div class="pose-viewport-container" id="pose-viewport-container">
+            <video id="pose-camera-video" playsinline autoplay muted></video>
+            <canvas id="pose-overlay-canvas"></canvas>
+
+            <div class="pose-hud-top">
+                <div class="pose-stat-pill" id="pose-stat-angle">📐 Gomito: --°</div>
+                <div class="pose-stat-pill" id="pose-stat-trunk">📏 Busto: --°</div>
+                <div class="pose-stat-pill" id="pose-stat-reps" style="color:#10b981; font-size:0.88rem;">🔢 Reps: 0</div>
+            </div>
+
+            <div class="pose-hud-banner" id="pose-hud-banner">
+                Inquadra il corpo intero per iniziare l'analisi...
+            </div>
+        </div>
+
+        <div style="max-width:600px; margin:8px auto 0 auto; width:100%; display:flex; gap:10px;">
+            <button class="btn-confirm" id="pose-scanner-finish-btn" onclick="finishPoseScannerSession()" style="flex:1; padding:10px; font-weight:bold; font-size:0.95rem; background:linear-gradient(135deg, #10b981, #059669);">
+                ⏹️ Termina & Valuta
+            </button>
+            <button class="btn-cancel" onclick="closePoseScannerModal()" style="padding:10px 18px;">
+                Chiudi
+            </button>
+        </div>
+    </div>
+
     <div class="modal-overlay" id="custom-modal">
         <div class="modal-box">
             <h3 id="modal-title">Titolo</h3>
@@ -2870,6 +3073,7 @@
         <div class="chat-tabs" id="chat-tabs">
             <button class="chat-tab-btn active" id="chat-tab-general" onclick="switchChatTab('general')">💬 Generale <span id="chat-general-dot" class="tab-badge-dot" style="display:none;"></span></button>
             <button class="chat-tab-btn" id="chat-tab-private" onclick="switchChatTab('private')">👤 Private <span id="chat-private-dot" class="tab-badge-dot" style="display:none;"></span></button>
+            <button class="chat-tab-btn" id="chat-tab-ai" onclick="switchChatTab('ai')">🤖 AI Helper</button>
         </div>
         <div class="chat-thread-header" id="chat-thread-header" style="display:none;">
             <button class="chat-back-btn" onclick="backToPrivateList()">←</button>
@@ -4965,7 +5169,7 @@ let currentUser = null;
                                 ${stickmanSvg}
                             </div>
                             <div class="skill-info">
-                                <h4>${skill.name} ${isUnlocked ? '' : '🔒'}</h4>
+                                <h4>${skill.name} ${isUnlocked ? '' : '🔒'} ${skillData && skillData.verifiedByAi ? '<span title="Certificata dall\'AI Referee anti-cheat" style="font-size:0.65rem; background:rgba(16,185,129,0.18); border:1px solid #10b981; color:#10b981; padding:2px 6px; border-radius:10px; font-weight:normal; vertical-align:middle; margin-left:4px;">🛡️ AI</span>' : ''}</h4>
                                 ${isUnlocked ? `
                                     <p>Prossimo Obiettivo: <strong>${dynamicTarget} ${unit}</strong> (+${skill.goalBonusXp} XP Bonus)</p>
                                     <p style="color: var(--unlocked); font-weight: bold;">
@@ -4983,6 +5187,7 @@ let currentUser = null;
                             ${isUnlocked ? `
                                 <input type="number" id="input-${skill.id}" value="${val}" min="0" onclick="event.stopPropagation()">
                                 <button onclick="event.stopPropagation(); updateSkill('${skill.id}')">Salva</button>
+                                <button class="ai-verify-btn" title="Verifica record con AI Referee (anti-cheat)" onclick="event.stopPropagation(); startSkillRecordAiReferee('${skill.id}')" style="background:rgba(56,189,248,0.15); border:1px solid var(--accent); color:var(--accent); padding:4px 8px; border-radius:6px; font-size:0.75rem; font-weight:bold; cursor:pointer;">📹 AI</button>
                                 <button class="relock-btn" title="Blocca di nuovo la skill" onclick="event.stopPropagation(); askRelock('${skill.id}')">🔒</button>
                             ` : `
                                 <button class="unlock-btn" onclick="event.stopPropagation(); askUnlock('${skill.id}')">🔓 Sblocca</button>
@@ -5264,22 +5469,184 @@ let currentUser = null;
             }
         }
 
+        
+        // ===============================================================
+        // AI REFEREE & ANTI-CHEAT MAPPING
+        // ===============================================================
+        function mapExerciseNameToPoseType(name) {
+            if (!name) return 'pushup';
+            const s = name.toLowerCase();
+            if (s.includes('pull') || s.includes('trazion') || s.includes('muscle') || s.includes('chin') || s.includes('australian')) return 'pullup';
+            if (s.includes('dip')) return 'dip';
+            if (s.includes('squat') || s.includes('pistol')) return 'squat';
+            if (s.includes('l-sit') || s.includes('lsit') || s.includes('v-sit') || s.includes('leg raise') || s.includes('manna')) return 'lsit';
+            if (s.includes('planche') || s.includes('lever') || s.includes('handstand') || s.includes('verticale') || s.includes('frog') || s.includes('hold') || s.includes('plank')) return 'hold';
+            return 'pushup';
+        }
+
+        function mapSkillToExerciseType(skill) {
+            if (!skill) return 'pushup';
+            if (skill.type === 'sec') {
+                const n = (skill.name || '').toLowerCase();
+                if (n.includes('l-sit') || n.includes('v-sit')) return 'lsit';
+                return 'hold';
+            }
+            return mapExerciseNameToPoseType(skill.name || skill.id);
+        }
+
+        function startSkillUnlockAiReferee(id) {
+            const skill = findSkillById(id);
+            if (!skill) return;
+            const mappedEx = mapSkillToExerciseType(skill);
+            const target = skill.type === 'sec' ? 3 : 1;
+
+            openPoseScannerModal({
+                mode: 'referee',
+                targetReps: target,
+                exercise: mappedEx,
+                onComplete: (verifiedCount) => {
+                    if (verifiedCount >= target) {
+                        if (!userState[id]) {
+                            userState[id] = { unlocked: true, val: verifiedCount, verifiedByAi: true };
+                        } else {
+                            userState[id].unlocked = true;
+                            if ((userState[id].val || 0) < verifiedCount) userState[id].val = verifiedCount;
+                            userState[id].verifiedByAi = true;
+                        }
+                        saveState();
+                        openCustomModal(
+                            "🏆 Skill Sbloccata dall'AI Referee!",
+                            "L'AI Referee ha convalidato la tua esecuzione di <strong>" + escapeHtml(skill.name) + "</strong> a ROM completo!<br><br>Hai guadagnato <strong>+" + skill.unlockXp + " XP</strong> e il certificato ufficiale anti-cheat 🛡️!",
+                            "Fantastico!",
+                            false,
+                            () => {}
+                        );
+                    } else {
+                        openCustomModal(
+                            "⚠️ Verifica Incompleta",
+                            "L'AI Referee ha contato <strong>" + verifiedCount + "</strong> " + (skill.type === 'sec' ? 'secondi' : 'ripetizioni') + " valide a ROM completo.<br>Per sbloccare la skill è richiesta almeno 1 ripetizione valida a 90° o 3s di tenuta. Riprova quando sei pronto!",
+                            "Ho capito",
+                            false,
+                            () => {}
+                        );
+                    }
+                }
+            });
+        }
+
+        function startSkillRecordAiReferee(id) {
+            const skill = findSkillById(id);
+            if (!skill) return;
+            const mappedEx = mapSkillToExerciseType(skill);
+
+            openPoseScannerModal({
+                mode: 'referee',
+                targetReps: 0,
+                exercise: mappedEx,
+                onComplete: (verifiedCount) => {
+                    if (verifiedCount > 0) {
+                        const prev = (userState[id] && userState[id].val) || 0;
+                        const finalVal = Math.max(prev, verifiedCount);
+                        if (!userState[id]) {
+                            userState[id] = { unlocked: true, val: finalVal, verifiedByAi: true };
+                        } else {
+                            userState[id].val = finalVal;
+                            userState[id].verifiedByAi = true;
+                        }
+                        saveState();
+                        const inputEl = document.getElementById('input-' + id);
+                        if (inputEl) inputEl.value = finalVal;
+                        showAppToast('🛡️ AI Referee: ' + verifiedCount + ' ' + (skill.type === 'sec' ? 's' : 'rip') + ' certificate e salvate!', 'success');
+                    }
+                }
+            });
+        }
+
+        function startSoloExerciseAiReferee(challengeId, exId, exName, target, unit) {
+            const mappedEx = mapExerciseNameToPoseType(exName);
+            openPoseScannerModal({
+                mode: 'referee',
+                targetReps: target,
+                exercise: mappedEx,
+                onComplete: (verifiedCount) => {
+                    if (verifiedCount >= target) {
+                        completeSoloExerciseWithAi(challengeId, exId, verifiedCount);
+                    } else {
+                        openCustomModal(
+                            "⚠️ Ripetizioni Insufficienti",
+                            "L'AI Referee ha convalidato <strong>" + verifiedCount + " / " + target + "</strong> ripetizioni a ROM completo.<br><br>Per convalidare questo esercizio devi raggiungere il target di <strong>" + target + " " + (unit || 'rip') + "</strong>. Riprova quando hai recuperato!",
+                            "Ho capito",
+                            false,
+                            () => {}
+                        );
+                    }
+                }
+            });
+        }
+
+        async function completeSoloExerciseWithAi(challengeId, exId, verifiedCount) {
+            if (!currentUser) return;
+            const c = activeChallengesList.find(x => x.id === challengeId);
+            if (!c || c.bonusClaimed) return;
+
+            const exercises = c.exercises || [];
+            const targetEx = exercises.find(e => e.id === exId);
+            if (!targetEx) return;
+
+            targetEx.completed = true;
+            targetEx.verifiedByAi = true;
+            targetEx.verifiedCount = verifiedCount;
+
+            const newCompletedCount = exercises.filter(e => e.completed).length;
+            c.completedCount = newCompletedCount;
+
+            const updateData = {
+                exercises: exercises,
+                completedCount: newCompletedCount
+            };
+            if (newCompletedCount >= 5) {
+                updateData.status = 'completed';
+                updateData.winnerUid = currentUser.uid;
+                updateData.winnerName = userNickname || (currentUser.displayName || 'Atleta');
+                updateData.completedAt = firebase.firestore.FieldValue.serverTimestamp();
+                c.status = 'completed';
+                c.winnerUid = currentUser.uid;
+            } else {
+                updateData.status = 'active';
+                c.status = 'active';
+            }
+
+            renderChallengesList();
+
+            try {
+                await db.collection("challenges").doc(challengeId).update(updateData);
+                showAppToast("🛡️ Esercizio certificato dall'AI Referee!", "success");
+                if (newCompletedCount >= 5) {
+                    openCustomModal(
+                        "🏆 Sfida (Solitaria) Completata!",
+                        "Tutti e 5 gli esercizi sono stati verificati e certificati dall'AI Referee!<br><br>Puoi ora riscuotere la tua ricompensa di <strong style=\"color:var(--accent);\">+" + c.rewardXp.toLocaleString() + " XP</strong>! 💪",
+                        "Riscuoti Ora",
+                        false,
+                        () => { claimSoloChallengeReward(challengeId); }
+                    );
+                }
+            } catch (err) {
+                console.error("Errore salvataggio esercizio sfida AI:", err);
+            }
+        }
+
         function askUnlock(id) {
             const skill = findSkillById(id);
             if (!skill) return;
 
             openCustomModal(
-                "🎉 Sblocca Skill",
-                `Vuoi sbloccare <strong>"${skill.name}"</strong>?<br><br>Ottieni subito un bonus unico di <strong style="color: var(--accent);">+${skill.unlockXp} XP</strong>!`,
-                "Sblocca Ora",
+                "🎉 Sblocca Skill con AI Referee",
+                `Vuoi sbloccare <strong>"${escapeHtml(skill.name)}"</strong> per <strong style="color: var(--accent);">+${skill.unlockXp} XP</strong>?<br><br>` +
+                `🛡️ <strong>Anti-Cheat AI Referee</strong>: per garantire la lealtà e prevenire il cheating, posizionati davanti alla videocamera.<br>L'AI analizzerà le tue articolazioni in tempo reale e convaliderà la ripetizione a ROM completo per sbloccare la skill!`,
+                "📹 Verifica con AI Referee",
                 false,
                 () => {
-                    if (!userState[id]) {
-                        userState[id] = { unlocked: true, val: 0 };
-                    } else {
-                        userState[id].unlocked = true;
-                    }
-                    saveState();
+                    startSkillUnlockAiReferee(id);
                 }
             );
         }
@@ -5570,7 +5937,7 @@ let currentUser = null;
                     <div class="workout-card">
                         <div class="workout-card-header">
                             <span class="workout-card-title">${escapeHtml(w.name || 'Allenamento')} <span class="workout-card-date">— ${escapeHtml(w.date || '')}</span></span>
-                            <button class="event-delete-btn" title="Elimina allenamento" onclick="askDeleteWorkout('${w.id}', ${w.xpEarned || 0})">🗑️</button>
+                            <button class="event-delete-btn" title="Elimina allenamento" onclick="askDeleteWorkout('${w.id}')">🗑️</button>
                         </div>
                         <div class="workout-card-meta">
                             ⏱️ ${w.durationMin || 0} min &nbsp;|&nbsp; 🔥 Intensità ${w.intensity || 5}/10
@@ -5579,7 +5946,7 @@ let currentUser = null;
                             ${exercisesHtml || '<span style="color:var(--subtext);">Nessun esercizio dettagliato.</span>'}
                         </div>
                         ${w.notes ? `<div class="workout-card-notes">📝 ${escapeHtml(w.notes)}</div>` : ''}
-                        <div class="workout-xp-badge">+${w.xpEarned || 0} XP</div>
+                        <div class="workout-xp-badge" style="background:rgba(56,189,248,0.12); color:var(--accent); border:1px solid rgba(56,189,248,0.25);">📓 Sessione Registrata</div>
                     </div>
                 `;
             });
@@ -5625,7 +5992,7 @@ let currentUser = null;
                     <label>Note (facoltative)</label>
                     <input type="text" id="new-workout-notes" placeholder="Come ti sei sentito, sensazioni..." maxlength="200">
                 </div>
-                <div class="workout-xp-preview" id="workout-xp-preview">Stima XP: +0</div>
+                <div style="padding:8px 12px; background:rgba(56,189,248,0.08); border:1px solid rgba(56,189,248,0.2); border-radius:8px; font-size:0.8rem; color:var(--accent); text-align:center; margin-top:8px;">📓 Questa sessione verrà archiviata nel tuo diario personale per monitorare i tuoi progressi.</div>
             `;
             actionsBox.innerHTML = `
                 <button class="btn-cancel" id="modal-btn-cancel">Annulla</button>
@@ -5692,18 +6059,7 @@ let currentUser = null;
         }
 
         function updateWorkoutXpPreview() {
-            const previewEl = document.getElementById('workout-xp-preview');
-            if (!previewEl) return;
-
-            const durationInput = document.getElementById('new-workout-duration');
-            const intensityInput = document.getElementById('new-workout-intensity');
-            const duration = durationInput ? (parseFloat(durationInput.value) || 0) : 0;
-            const intensity = intensityInput ? (parseInt(intensityInput.value, 10) || 5) : 5;
-            const exercises = readWorkoutExercisesFromForm();
-
-            const effort = calculateWorkoutEffort(exercises, duration, intensity);
-            const xp = calculateWorkoutXp(effort, getTotalXp());
-            previewEl.innerText = `Stima XP: +${xp} XP (${intensity * 2} XP a rip)`;
+            // Nessuna stima XP: il registro allenamenti funge da diario tecnico personale senza XP per prevenire spam
         }
 
         function confirmCreateWorkout() {
@@ -5727,8 +6083,7 @@ let currentUser = null;
             }
 
             const effort = calculateWorkoutEffort(exercises, duration, intensity);
-            const currentTotalXp = getTotalXp();
-            const xpEarned = calculateWorkoutXp(effort, currentTotalXp);
+            const xpEarned = 0; // Diario tecnico personale senza XP per prevenire spam
 
             const workoutData = {
                 name: name || 'Allenamento',
@@ -5738,7 +6093,7 @@ let currentUser = null;
                 exercises: exercises,
                 notes: notes,
                 effortScore: effort,
-                xpEarned: xpEarned
+                xpEarned: 0
             };
 
             const confirmBtn = document.getElementById('new-workout-confirm-btn');
@@ -5751,12 +6106,6 @@ let currentUser = null;
                 userRef.collection("workouts").add(Object.assign({}, workoutData, {
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 })).then(() => {
-                    return userRef.set({
-                        workoutXp: firebase.firestore.FieldValue.increment(xpEarned)
-                    }, { merge: true });
-                }).then(() => {
-                    userWorkoutXp += xpEarned;
-                    // Salva anche una copia locale per ridondanza
                     const local = getLocalWorkouts();
                     workoutData.id = 'cloud_' + Date.now();
                     workoutData.createdAt = Date.now();
@@ -5765,25 +6114,20 @@ let currentUser = null;
 
                     document.getElementById('custom-modal').classList.remove('active');
                     openWorkoutsSection();
-                    saveState();
-                    showWorkoutSavedModal(xpEarned);
+                    renderLocalWorkoutsList();
+                    showWorkoutSavedModal();
                 }).catch((error) => {
                     console.warn("Salvataggio su cloud non riuscito, fallback istantaneo su locale:", error);
-                    // Se Firestore rifiuta la scrittura per le regole, salva in locale per non perdere i dati
                     const list = getLocalWorkouts();
                     workoutData.id = 'local_' + Date.now();
                     workoutData.createdAt = Date.now();
                     list.unshift(workoutData);
                     saveLocalWorkouts(list);
 
-                    userWorkoutXp += xpEarned;
-                    localStorage.setItem('naiontrackWorkoutXp', String(userWorkoutXp));
-
                     document.getElementById('custom-modal').classList.remove('active');
                     openWorkoutsSection();
                     renderLocalWorkoutsList();
-                    updateUI();
-                    showWorkoutSavedModal(xpEarned);
+                    showWorkoutSavedModal();
                 });
             } else {
                 const list = getLocalWorkouts();
@@ -5792,69 +6136,54 @@ let currentUser = null;
                 list.unshift(workoutData);
                 saveLocalWorkouts(list);
 
-                userWorkoutXp += xpEarned;
-                localStorage.setItem('naiontrackWorkoutXp', String(userWorkoutXp));
-
                 document.getElementById('custom-modal').classList.remove('active');
                 openWorkoutsSection();
                 renderLocalWorkoutsList();
-                updateUI();
-                showWorkoutSavedModal(xpEarned);
+                showWorkoutSavedModal();
             }
         }
 
-        function showWorkoutSavedModal(xp) {
+        function showWorkoutSavedModal() {
             const modal = document.getElementById('custom-modal');
             const titleEl = document.getElementById('modal-title');
             const bodyContent = document.getElementById('modal-body-content');
             const actionsBox = document.getElementById('modal-actions-box');
-            const rank = getCurrentRank(getTotalXp());
 
             titleEl.innerText = "🎉 Allenamento salvato!";
-            bodyContent.innerHTML = `<p style="text-align:center;">Hai guadagnato <strong style="color:var(--accent);">+${xp} XP</strong>!<br>Grado attuale: <strong>${escapeHtml(rank.name)}</strong></p>`;
-            actionsBox.innerHTML = `<button class="btn-confirm" id="modal-btn-cancel" style="flex:1;">Fantastico!</button>`;
+            bodyContent.innerHTML = `<p style="text-align:center; line-height:1.5;">La sessione è stata registrata con successo nel tuo <strong>Diario Personale</strong>!<br><span style="color:var(--subtext); font-size:0.85rem;">Ottimo lavoro! Continua ad annotare le tue sessioni per monitorare i progressi.</span></p>`;
+            actionsBox.innerHTML = `<button class="btn-confirm" id="modal-btn-cancel" style="flex:1;">Ottimo! 💪</button>`;
 
             modal.classList.add('active');
             document.getElementById('modal-btn-cancel').onclick = () => modal.classList.remove('active');
         }
 
-        function askDeleteWorkout(workoutId, xpToRemove) {
+        function askDeleteWorkout(workoutId) {
             openCustomModal(
                 "🗑️ Elimina Allenamento",
-                "Sei sicuro di voler eliminare questo allenamento? Gli XP guadagnati verranno rimossi.",
+                "Sei sicuro di voler eliminare questa sessione dal tuo diario personale?",
                 "Elimina",
                 true,
-                () => deleteWorkout(workoutId, xpToRemove)
+                () => deleteWorkout(workoutId)
             );
         }
 
-        function deleteWorkout(workoutId, xpToRemove) {
-            // Rimuove sempre dalla copia locale
+        function deleteWorkout(workoutId) {
             const list = getLocalWorkouts().filter(w => w.id !== workoutId);
             saveLocalWorkouts(list);
 
             if (currentUser) {
                 const userRef = db.collection("users").doc(currentUser.uid);
-                return userRef.collection("workouts").doc(workoutId).delete().then(() => {
-                    return userRef.set({
-                        workoutXp: firebase.firestore.FieldValue.increment(-(xpToRemove || 0))
-                    }, { merge: true });
-                }).catch(err => {
+                return userRef.collection("workouts").doc(workoutId).delete().catch(err => {
                     console.warn("Eliminazione da Firestore non riuscita, rimosso localmente:", err);
                 }).then(() => {
-                    userWorkoutXp = Math.max(0, userWorkoutXp - (xpToRemove || 0));
-                    saveState();
                     const countBadge = document.getElementById('workouts-count-badge');
                     if (countBadge) countBadge.innerText = `(${list.length})`;
                     renderWorkoutsList(list);
                 });
             } else {
-                userWorkoutXp = Math.max(0, userWorkoutXp - (xpToRemove || 0));
-                localStorage.setItem('naiontrackWorkoutXp', String(userWorkoutXp));
                 const countBadge = document.getElementById('workouts-count-badge');
                 if (countBadge) countBadge.innerText = `(${list.length})`;
                 renderLocalWorkoutsList();
-                updateUI();
                 return Promise.resolve();
             }
         }
@@ -6000,6 +6329,705 @@ let currentUser = null;
             });
         }
 
+
+
+        // ===============================================================
+        // SEZIONE AI HELPER & SCANNER MOVIMENTI ARTICOLARI (MEDIAPIPE POSE)
+        // ===============================================================
+        let aiChatMessages = [];
+        let poseCameraStream = null;
+        let poseInstance = null;
+        let poseVoiceFeedbackEnabled = true;
+        let poseCurrentFacingMode = 'user'; // 'user' | 'environment'
+        let poseScannerActiveMode = 'analysis'; // 'analysis' | 'referee'
+        let poseTrackedExercise = 'pushup'; // 'pushup' | 'pullup' | 'dip' | 'squat' | 'hold' | 'lsit'
+        let poseRefereeTargetReps = 0;
+        let poseRefereeCallback = null;
+        let poseRepCounter = null;
+        let poseAnimationReqId = null;
+
+        // Inizializza o carica la cronologia della chat con l'AI Coach per l'utente corrente
+        function getAiChatStorageKey() {
+            return currentUser ? 'calisthenics_ai_chat_' + currentUser.uid : 'calisthenics_ai_chat_guest';
+        }
+
+        function loadAiChatHistory() {
+            try {
+                const stored = localStorage.getItem(getAiChatStorageKey());
+                if (stored) {
+                    aiChatMessages = JSON.parse(stored);
+                } else {
+                    aiChatMessages = [{
+                        id: 'msg_welcome',
+                        sender: 'ai',
+                        text: "Ciao atleta! 👋 Sono il tuo **Coach AI di Calisthenics**.\n\nChiedimi qualsiasi dubbio su progressioni (*Planche, Front Lever, Muscle-up, Handstand*), correzione di dolori articolari (*polsi, gomiti, spalle*) o programmazione.\n\nPuoi anche premere **📷 Scanner Videocamera** per analizzare dal vivo i tuoi movimenti articolari e il ROM con la fotocamera!",
+                        timestamp: Date.now()
+                    }];
+                }
+            } catch(e) {
+                aiChatMessages = [];
+            }
+        }
+
+        function saveAiChatHistory() {
+            try {
+                localStorage.setItem(getAiChatStorageKey(), JSON.stringify(aiChatMessages.slice(-50)));
+            } catch(e) {}
+        }
+
+        function renderAiHelperView() {
+            const container = document.getElementById('chat-messages');
+            if (!container) return;
+            loadAiChatHistory();
+
+            let messagesHtml = '';
+            aiChatMessages.forEach(m => {
+                const isAi = m.sender === 'ai';
+                const formatted = (m.text || '')
+                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                    .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                    .replace(/\n/g, '<br>');
+
+                messagesHtml += `
+                    <div class="chat-msg ${isAi ? 'chat-msg-other' : 'chat-msg-me'}" style="margin-bottom:10px;">
+                        <div class="chat-bubble ${isAi ? 'chat-bubble-other' : 'chat-bubble-me'}" style="line-height:1.45; font-size:0.85rem; max-width:85%;">
+                            <div class="chat-sender" style="font-size:0.75rem; margin-bottom:3px; opacity:0.85;">
+                                ${isAi ? '🤖 Coach AI Calisthenics' : 'Tu'}
+                            </div>
+                            ${formatted}
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = `
+                <div class="ai-helper-header-bar">
+                    <button class="ai-helper-chip-btn" onclick="openPoseScannerModal({ mode: 'analysis' })">
+                        📷 Scanner Movimenti
+                    </button>
+                    <button class="ai-helper-chip-btn" onclick="openGeminiApiKeyModal()">
+                        ⚙️ Chiave API Gemini
+                    </button>
+                    <button class="ai-helper-chip-btn" onclick="clearAiChatHistory()" style="color:#ef4444; border-color:rgba(239,68,68,0.3);">
+                        🗑️ Pulisci Chat
+                    </button>
+                </div>
+
+                <div style="padding:10px;">
+                    ${messagesHtml}
+                    
+                    <div class="ai-suggested-prompts">
+                        <div style="font-size:0.75rem; color:var(--subtext); font-weight:bold; margin-bottom:2px;">💡 Domande rapide suggerite:</div>
+                        <button class="ai-suggested-prompt-btn" onclick="sendSuggestedAiPrompt('Come posso sbloccare la Planche? Quali sono le progressioni?')">
+                            🤸 Come sbloccare la Planche e progressioni?
+                        </button>
+                        <button class="ai-suggested-prompt-btn" onclick="sendSuggestedAiPrompt('Mi fanno male i polsi quando faccio push-up e verticale, cosa posso fare?')">
+                            ⚠️ Dolore ai polsi nei push-up: rimedi e mobilità
+                        </button>
+                        <button class="ai-suggested-prompt-btn" onclick="sendSuggestedAiPrompt('Come migliorare la transizione nel Muscle-up?')">
+                            💪 Progressione e transizione Muscle-Up
+                        </button>
+                        <button class="ai-suggested-prompt-btn" onclick="sendSuggestedAiPrompt('Qual è la routine migliore di riscaldamento articolare prima di allenarsi?')">
+                            🔥 Riscaldamento articolare per spalle e gomiti
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function clearAiChatHistory() {
+            if (confirm("Vuoi cancellare la cronologia della conversazione con l'AI Coach?")) {
+                localStorage.removeItem(getAiChatStorageKey());
+                loadAiChatHistory();
+                renderAiHelperView();
+            }
+        }
+
+        function sendSuggestedAiPrompt(text) {
+            const input = document.getElementById('ai-chat-input');
+            if (input) input.value = text;
+            sendAiHelperMessage();
+        }
+
+        // Risposta da Knowledge Base Calisthenica
+        function getCalisthenicsExpertResponse(query) {
+            const q = (query || '').toLowerCase().trim();
+
+            if (q.includes('planche') || q.includes('planche lean')) {
+                return "🤸 **Guida Tecnica alla Planche**:\n\n" +
+                    "1. **Progressione Consigliata**:\n" +
+                    "• *Tuck Planche* (ginocchia al petto, braccia tese)\n" +
+                    "• *Advanced Tuck* (bacino aperto a 90° con il busto)\n" +
+                    "• *Straddle Planche* (gambe divaricate per ridurre la leva)\n" +
+                    "• *Full Planche* (corpo orizzontale e allineato)\n\n" +
+                    "2. **Punti Chiave di Forma**:\n" +
+                    "• **Protrazione scapolare massima**: allontana le scapole per attivare il gran dentato.\n" +
+                    "• **Depressione scapolare**: allontana le spalle dalle orecchie.\n" +
+                    "• **Gomiti con lockout completo**: i tendini del bicipite vanno condizionati con *planche lean*.\n" +
+                    "• **Retroversione del bacino (Hollow Body)**: contrai glutei e addome per non inarcare la zona lombare.\n\n" +
+                    "💡 *Usa lo Scanner Videocamera qui in alto per verificare l'angolo del tuo bacino dal vivo!*";
+            }
+
+            if (q.includes('front lever')) {
+                return "🔥 **Guida al Front Lever**:\n\n" +
+                    "1. **Progressione**: Tuck -> Advanced Tuck -> Straddle / One Leg -> Full Front Lever.\n" +
+                    "2. **Attivazione Scapolare & Dorsale**:\n" +
+                    "• Depressione e retrazione scapolare (petto fiero, spalle basse).\n" +
+                    "• Trazione a braccia tese verso i fianchi (*Straight Arm Scapular Pull*).\n" +
+                    "• Tensione costante dell'addome in hollow body.\n\n" +
+                    "💡 *Esercizi ausiliari chiave*: Dragon Flag alla sbarra, Ice Cream Makers e Tuck Front Lever Pull-ups.";
+            }
+
+            if (q.includes('muscle up') || q.includes('muscle-up')) {
+                return "💪 **Tecnica & Transizione Muscle-Up**:\n\n" +
+                    "1. **Requisiti Minimi di Forza**:\n" +
+                    "• Almeno 10-12 trazioni esplosive al petto (*Chest-to-Bar*)\n" +
+                    "• Almeno 10-12 dip alla sbarra singola (*Straight Bar Dips*)\n\n" +
+                    "2. **Traiettoria a C**:\n" +
+                    "• Non salire in verticale sotto la sbarra: allontanati leggermente e disegna un arco di cerchio.\n" +
+                    "3. **Transizione Veloce**:\n" +
+                    "• Nel punto più alto, porta il petto in avanti sopra la sbarra e ruota i polsi simultaneamente.\n" +
+                    "• *Importante*: Non salire prima con un braccio per non danneggiare la cuffia dei rotatori!";
+            }
+
+            if (q.includes('polso') || q.includes('polsi') || q.includes('dolore') || q.includes('gomito') || q.includes('tendin') || q.includes('male')) {
+                return "⚠️ **Prevenzione & Cura dei Dolori Articolari**:\n\n" +
+                    "1. **Dolore ai Polsi (Push-up / Planche / Verticale)**:\n" +
+                    "• I polsi subiscono una forte estensione dorsale. Usa le *parallèttes* per mantenerli neutri.\n" +
+                    "• Esegui 5-10 minuti di mobilità in quadrupedia prima dell'allenamento con dita in varie direzioni.\n\n" +
+                    "2. **Dolore ai Gomiti (Epitrocleite / Epicondilite)**:\n" +
+                    "• Riduci subito il volume a braccia tese se avverti fastidio all'interno del gomito.\n" +
+                    "• Fai stretching ed esercizi eccentrici per i flessori del polso con carichi leggeri.\n" +
+                    "• Il tessuto tendineo guarisce più lentamente di quello muscolare: dagli 48-72 ore di recupero.";
+            }
+
+            if (q.includes('verticale') || q.includes('handstand')) {
+                return "🤸 **Allineamento Perfetto in Handstand (Verticale)**:\n\n" +
+                    "1. **Spinta delle Spalle**: Spingi attivamente verso l'alto (elevazione scapolare).\n" +
+                    "2. **Mani e Dita**: Dita leggermente flesse che 'artigliano' il pavimento (*cambré*) per frenare le oscillazioni.\n" +
+                    "3. **Allineamento Lineare**: Polsi, spalle, bacino e caviglie devono trovarsi su una linea retta senza piegare la schiena a banana.\n" +
+                    "💡 *Esercizio fondamentale*: Verticale petto al muro (*Chest-to-Wall*) per 30-45 secondi.";
+            }
+
+            return "🤖 **Consiglio Tecnico del Coach**:\n\n" +
+                "Per eccellere nel calisthenics:\n" +
+                "• **Range di Movimento (ROM) Completo**: Scendi sempre a 90° o sotto e fai lockout articolare controllato.\n" +
+                "• **Costanza & Recupero**: La forza neurale e i tendini richiedono tempo. 3-4 allenamenti settimanali ben distribuiti sono ideali.\n" +
+                "• **Vuoi un controllo tecnico sul tuo movimento?** Apri la videocamera con il pulsante in alto **📷 Scanner Movimenti** per verificare i tuoi angoli dal vivo!";
+        }
+
+        async function sendAiHelperMessage() {
+            const input = document.getElementById('ai-chat-input');
+            if (!input) return;
+            const query = input.value.trim();
+            if (!query) return;
+
+            input.value = '';
+            aiChatMessages.push({
+                id: 'msg_' + Date.now(),
+                sender: 'user',
+                text: query,
+                timestamp: Date.now()
+            });
+            renderAiHelperView();
+
+            // Mostra indicatore di digitazione
+            const container = document.getElementById('chat-messages');
+            const typingEl = document.createElement('div');
+            typingEl.id = 'ai-typing-indicator';
+            typingEl.style.cssText = "padding:8px 12px; font-size:0.8rem; color:var(--subtext); font-style:italic;";
+            typingEl.innerText = "🤖 Il Coach AI sta analizzando...";
+            if (container) container.appendChild(typingEl);
+            if (container) container.scrollTop = container.scrollHeight;
+
+            // 1. Verifica se è configurata una chiave Gemini personale
+            const userGeminiKey = localStorage.getItem('calisthenics_gemini_api_key');
+            let aiResponse = "";
+
+            if (userGeminiKey && userGeminiKey.trim()) {
+                try {
+                    const promptText = "Sei il Coach Esperto di Calisthenics dell'app Calisthenics Skill Tree. Rispondi con grande competenza tecnica, consigli sicuri per le articolazioni, progressioni corrette e tono motivante da atleta:\n\n" + query;
+                    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${userGeminiKey.trim()}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            contents: [{ parts: [{ text: promptText }] }]
+                        })
+                    });
+                    if (res.ok) {
+                        const resData = await res.json();
+                        aiResponse = resData.candidates?.[0]?.content?.parts?.[0]?.text;
+                    }
+                } catch(e) {
+                    console.warn("Errore chiamata Gemini API:", e);
+                }
+            }
+
+            // Fallback su Calisthenics Knowledge Engine se non c'è chiave o errore di rete
+            if (!aiResponse) {
+                await new Promise(r => setTimeout(r, 600));
+                aiResponse = getCalisthenicsExpertResponse(query);
+            }
+
+            const typingToRemove = document.getElementById('ai-typing-indicator');
+            if (typingToRemove) typingToRemove.remove();
+
+            aiChatMessages.push({
+                id: 'msg_' + Date.now(),
+                sender: 'ai',
+                text: aiResponse,
+                timestamp: Date.now()
+            });
+            saveAiChatHistory();
+            renderAiHelperView();
+        }
+
+        function openGeminiApiKeyModal() {
+            const current = localStorage.getItem('calisthenics_gemini_api_key') || '';
+            const key = prompt("Inserisci la tua chiave API Google Gemini gratuita (da aistudio.google.com) per sbloccare risposte AI personalizzate illimitate:\n(Lascia vuoto per usare il motore integrato)", current);
+            if (key !== null) {
+                if (key.trim()) {
+                    localStorage.setItem('calisthenics_gemini_api_key', key.trim());
+                    alert("✅ Chiave API Gemini salvata con successo!");
+                } else {
+                    localStorage.removeItem('calisthenics_gemini_api_key');
+                    alert("Modalità motore di conoscenza integrato ripristinata.");
+                }
+            }
+        }
+
+        // ==========================================
+        // COMPUTER VISION: MEDIAPIPE POSE & ARBITRAGGIO
+        // ==========================================
+        function calculateJointAngle(a, b, c) {
+            if (!a || !b || !c) return 180;
+            const radians = Math.atan2(c.y - b.y, c.x - b.x) - Math.atan2(a.y - b.y, a.x - b.x);
+            let angle = Math.abs((radians * 180.0) / Math.PI);
+            if (angle > 180.0) {
+                angle = 360.0 - angle;
+            }
+            return Math.round(angle);
+        }
+
+        class PoseRepCounterEngine {
+            constructor(exerciseType = 'pushup') {
+                this.type = exerciseType;
+                this.reps = 0;
+                this.state = 'up'; // 'up' | 'down'
+                this.holdSeconds = 0;
+                this.holdStartTs = null;
+                this.minElbowAngle = 180;
+                this.warnings = [];
+                this.validHistory = [];
+                this.lastVocalRep = 0;
+            }
+
+            update(landmarks) {
+                // Landmarks chiave
+                const lShoulder = landmarks[11], rShoulder = landmarks[12];
+                const lElbow = landmarks[13], rElbow = landmarks[14];
+                const lWrist = landmarks[15], rWrist = landmarks[16];
+                const lHip = landmarks[23], rHip = landmarks[24];
+                const lKnee = landmarks[25], rKnee = landmarks[26];
+                const lAnkle = landmarks[27], rAnkle = landmarks[28];
+
+                // Seleziona il lato visibile con confidenza maggiore
+                const leftVis = (lShoulder?.visibility || 0) + (lElbow?.visibility || 0) + (lWrist?.visibility || 0);
+                const rightVis = (rShoulder?.visibility || 0) + (rElbow?.visibility || 0) + (rWrist?.visibility || 0);
+                const isLeft = leftVis >= rightVis;
+
+                const shoulder = isLeft ? lShoulder : rShoulder;
+                const elbow = isLeft ? lElbow : rElbow;
+                const wrist = isLeft ? lWrist : rWrist;
+                const hip = isLeft ? lHip : rHip;
+                const knee = isLeft ? lKnee : rKnee;
+                const ankle = isLeft ? lAnkle : rAnkle;
+
+                const elbowAngle = calculateJointAngle(shoulder, elbow, wrist);
+                const trunkAngle = calculateJointAngle(shoulder, hip, knee);
+                const kneeAngle = calculateJointAngle(hip, knee, ankle);
+
+                let feedback = '';
+                let isValidRep = false;
+
+                // Gestione specifica per tipologia di esercizio
+                if (this.type === 'pushup' || this.type === 'dip') {
+                    if (trunkAngle < 155) {
+                        feedback = '⚠️ Bacino cadente! Contrai addome e glutei!';
+                        if (!this.warnings.includes('Bacino ceduto')) this.warnings.push('Bacino ceduto');
+                    }
+
+                    if (this.state === 'up') {
+                        if (elbowAngle <= 92) {
+                            this.state = 'down';
+                            this.minElbowAngle = elbowAngle;
+                            feedback = '✅ 90° Raggiunti! Ora risali!';
+                        } else if (elbowAngle < 145) {
+                            feedback = 'Scendi fino a 90°...';
+                        } else {
+                            feedback = 'Pronto: inizia la discesa';
+                        }
+                    } else if (this.state === 'down') {
+                        if (elbowAngle < this.minElbowAngle) this.minElbowAngle = elbowAngle;
+                        if (elbowAngle >= 162) {
+                            this.state = 'up';
+                            this.reps++;
+                            isValidRep = true;
+                            feedback = `🎉 Rep ${this.reps} Valida! (${this.minElbowAngle}°)`;
+                            this.validHistory.push({ rep: this.reps, angle: this.minElbowAngle });
+                        } else if (elbowAngle > 115) {
+                            feedback = 'Spingi fino alla distensione completa!';
+                        }
+                    }
+                } else if (this.type === 'pullup') {
+                    if (this.state === 'up') {
+                        // Trazione verso l'alto (chiusura a 80° o meno)
+                        if (elbowAngle <= 80 && wrist.y <= shoulder.y + 0.05) {
+                            this.state = 'down';
+                            this.minElbowAngle = elbowAngle;
+                            feedback = '✅ Mento sopra la sbarra! Ora scendi controllato!';
+                        } else {
+                            feedback = 'Tira fino al petto!';
+                        }
+                    } else if (this.state === 'down') {
+                        // Ritorno in dead hang (braccia distese)
+                        if (elbowAngle >= 160) {
+                            this.state = 'up';
+                            this.reps++;
+                            isValidRep = true;
+                            feedback = `🎉 Rep ${this.reps} Valida!`;
+                            this.validHistory.push({ rep: this.reps, angle: this.minElbowAngle });
+                        } else {
+                            feedback = 'Distendi completamente le braccia in basso!';
+                        }
+                    }
+                } else if (this.type === 'squat') {
+                    if (this.state === 'up') {
+                        if (kneeAngle <= 95) {
+                            this.state = 'down';
+                            feedback = '✅ Parallelo raggiunto! Risali!';
+                        } else {
+                            feedback = 'Scendi fino al parallelo (90°)...';
+                        }
+                    } else if (this.state === 'down') {
+                        if (kneeAngle >= 165) {
+                            this.state = 'up';
+                            this.reps++;
+                            isValidRep = true;
+                            feedback = `🎉 Rep ${this.reps} Valida!`;
+                        }
+                    }
+                } else if (this.type === 'hold' || this.type === 'lsit') {
+                    // Tenute isometriche
+                    const isGoodHold = this.type === 'lsit' ? (kneeAngle >= 140 && trunkAngle <= 115) : (trunkAngle >= 160);
+                    if (isGoodHold) {
+                        if (!this.holdStartTs) this.holdStartTs = Date.now();
+                        const elapsed = Math.floor((Date.now() - this.holdStartTs) / 1000);
+                        if (elapsed > this.holdSeconds) {
+                            this.holdSeconds = elapsed;
+                            this.reps = this.holdSeconds; // Reps = Secondi di tenuta
+                            feedback = `🔥 Tenuta valida: ${this.holdSeconds}s`;
+                        }
+                    } else {
+                        this.holdStartTs = null;
+                        feedback = '⚠️ Posizione non allineata! Allinea il corpo!';
+                    }
+                }
+
+                return {
+                    reps: this.reps,
+                    elbowAngle: elbowAngle,
+                    trunkAngle: trunkAngle,
+                    feedback: feedback,
+                    isValidRep: isValidRep
+                };
+            }
+        }
+
+        // Apertura dello Scanner Videocamera
+        async function openPoseScannerModal(options = {}) {
+            poseScannerActiveMode = options.mode || 'analysis';
+            poseRefereeTargetReps = options.targetReps || 0;
+            poseRefereeCallback = options.onComplete || null;
+
+            if (options.exercise) {
+                poseTrackedExercise = options.exercise;
+                const selectEl = document.getElementById('pose-exercise-select');
+                if (selectEl) selectEl.value = options.exercise;
+            }
+
+            const titleEl = document.getElementById('pose-scanner-title');
+            const badgeEl = document.getElementById('pose-scanner-badge');
+            const finishBtn = document.getElementById('pose-scanner-finish-btn');
+
+            if (poseScannerActiveMode === 'referee') {
+                if (titleEl) titleEl.innerText = "⚖️ AI Referee — Arbitro Anti-Cheat";
+                if (badgeEl) {
+                    badgeEl.innerText = "Verifica Ufficiale";
+                    badgeEl.style.background = "rgba(16,185,129,0.15)";
+                    badgeEl.style.color = "#10b981";
+                    badgeEl.style.borderColor = "#10b981";
+                }
+                if (finishBtn) finishBtn.innerText = "✅ Valida e Conferma Punteggio";
+            } else {
+                if (titleEl) titleEl.innerText = "📷 Scanner Articolare AI";
+                if (badgeEl) {
+                    badgeEl.innerText = "Analisi Postura";
+                    badgeEl.style.background = "rgba(56,189,248,0.15)";
+                    badgeEl.style.color = "var(--accent)";
+                    badgeEl.style.borderColor = "var(--accent)";
+                }
+                if (finishBtn) finishBtn.innerText = "⏹️ Termina & Analizza nel Coach";
+            }
+
+            const modal = document.getElementById('pose-scanner-modal');
+            if (modal) modal.classList.add('active');
+
+            poseRepCounter = new PoseRepCounterEngine(poseTrackedExercise);
+            await startPoseCamera();
+        }
+
+        function closePoseScannerModal() {
+            stopPoseCamera();
+            const modal = document.getElementById('pose-scanner-modal');
+            if (modal) modal.classList.remove('active');
+        }
+
+        function changePoseTrackedExercise(val) {
+            poseTrackedExercise = val;
+            poseRepCounter = new PoseRepCounterEngine(val);
+        }
+
+        function togglePoseVoiceFeedback() {
+            poseVoiceFeedbackEnabled = !poseVoiceFeedbackEnabled;
+            const btn = document.getElementById('pose-voice-toggle-btn');
+            if (btn) btn.innerText = poseVoiceFeedbackEnabled ? "🔊 Voce: ON" : "🔇 Voce: OFF";
+        }
+
+        function flipPoseCameraDirection() {
+            poseCurrentFacingMode = (poseCurrentFacingMode === 'user') ? 'environment' : 'user';
+            startPoseCamera();
+        }
+
+        async function startPoseCamera() {
+            stopPoseCamera();
+            const video = document.getElementById('pose-camera-video');
+            const canvas = document.getElementById('pose-overlay-canvas');
+            if (!video || !canvas) return;
+
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: {
+                        facingMode: poseCurrentFacingMode,
+                        width: { ideal: 640 },
+                        height: { ideal: 480 }
+                    },
+                    audio: false
+                });
+                poseCameraStream = stream;
+                video.srcObject = stream;
+                await video.play();
+
+                canvas.width = video.videoWidth || 640;
+                canvas.height = video.videoHeight || 480;
+
+                // Inizializza MediaPipe Pose se non già presente
+                if (typeof Pose === 'undefined') {
+                    document.getElementById('pose-hud-banner').innerText = "Caricamento librerie AI MediaPipe...";
+                    return;
+                }
+
+                if (!poseInstance) {
+                    poseInstance = new Pose({
+                        locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`
+                    });
+                    poseInstance.setOptions({
+                        modelComplexity: 1,
+                        smoothLandmarks: true,
+                        enableSegmentation: false,
+                        minDetectionConfidence: 0.5,
+                        minTrackingConfidence: 0.5
+                    });
+                }
+
+                poseInstance.onResults((results) => onPoseResults(results, canvas, video));
+
+                // Loop frame fotocamera
+                async function processFrame() {
+                    if (!poseCameraStream) return;
+                    if (video.readyState >= 2) {
+                        await poseInstance.send({ image: video });
+                    }
+                    poseAnimationReqId = requestAnimationFrame(processFrame);
+                }
+                processFrame();
+
+            } catch(err) {
+                console.error("Errore avvio fotocamera MediaPipe:", err);
+                alert("Impossibile accedere alla fotocamera. Verifica i permessi nel browser: " + err.message);
+                closePoseScannerModal();
+            }
+        }
+
+        function stopPoseCamera() {
+            if (poseAnimationReqId) {
+                cancelAnimationFrame(poseAnimationReqId);
+                poseAnimationReqId = null;
+            }
+            if (poseCameraStream) {
+                poseCameraStream.getTracks().forEach(t => t.stop());
+                poseCameraStream = null;
+            }
+        }
+
+        function speakPoseFeedback(text) {
+            if (!poseVoiceFeedbackEnabled || !('speechSynthesis' in window)) return;
+            try {
+                window.speechSynthesis.cancel();
+                const u = new SpeechSynthesisUtterance(text);
+                u.lang = 'it-IT';
+                u.rate = 1.1;
+                window.speechSynthesis.speak(u);
+            } catch(e) {}
+        }
+
+        // Elaborazione landmark e rendering overlay su Canvas
+        function onPoseResults(results, canvas, video) {
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            if (!results.poseLandmarks) {
+                document.getElementById('pose-hud-banner').innerText = "Inquadra il corpo intero per rilevare le articolazioni...";
+                return;
+            }
+
+            const lm = results.poseLandmarks;
+            const res = poseRepCounter.update(lm);
+
+            // Aggiorna HUD
+            const statAngle = document.getElementById('pose-stat-angle');
+            const statTrunk = document.getElementById('pose-stat-trunk');
+            const statReps = document.getElementById('pose-stat-reps');
+            const banner = document.getElementById('pose-hud-banner');
+
+            if (statAngle) statAngle.innerText = `📐 Gomito: ${res.elbowAngle}°`;
+            if (statTrunk) statTrunk.innerText = `📏 Busto: ${res.trunkAngle}°`;
+            if (statReps) {
+                const unit = (poseTrackedExercise === 'hold' || poseTrackedExercise === 'lsit') ? 's' : '';
+                statReps.innerText = `🔢 ${res.reps} ${unit}`;
+            }
+            if (banner && res.feedback) {
+                banner.innerText = res.feedback;
+            }
+
+            if (res.isValidRep) {
+                speakPoseFeedback(`Ripetizione ${res.reps}`);
+            }
+
+            // Disegna scheletro articolare sul Canvas
+            const connections = [
+                [11, 12], [11, 13], [13, 15], // Braccio sinistro
+                [12, 14], [14, 16], // Braccio destro
+                [11, 23], [12, 24], [23, 24], // Busto / Fianchi
+                [23, 25], [25, 27], // Gamba sinistra
+                [24, 26], [26, 28]  // Gamba destra
+            ];
+
+            ctx.lineWidth = 4;
+            connections.forEach(([i1, i2]) => {
+                const p1 = lm[i1], p2 = lm[i2];
+                if (p1 && p2 && p1.visibility > 0.4 && p2.visibility > 0.4) {
+                    ctx.beginPath();
+                    ctx.moveTo(p1.x * canvas.width, p1.y * canvas.height);
+                    ctx.lineTo(p2.x * canvas.width, p2.y * canvas.height);
+                    ctx.strokeStyle = res.elbowAngle <= 92 ? '#10b981' : '#38bdf8';
+                    ctx.stroke();
+                }
+            });
+
+            // Disegna punti articolari
+            [11, 12, 13, 14, 15, 16, 23, 24, 25, 26, 27, 28].forEach(idx => {
+                const p = lm[idx];
+                if (p && p.visibility > 0.4) {
+                    ctx.beginPath();
+                    ctx.arc(p.x * canvas.width, p.y * canvas.height, 6, 0, 2 * Math.PI);
+                    ctx.fillStyle = '#f59e0b';
+                    ctx.fill();
+                    ctx.strokeStyle = '#ffffff';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                }
+            });
+        }
+
+        // Conclusione sessione Pose Scanner
+        function finishPoseScannerSession() {
+            const finalReps = poseRepCounter ? poseRepCounter.reps : 0;
+            const warnings = poseRepCounter ? poseRepCounter.warnings : [];
+            const minAngle = poseRepCounter ? poseRepCounter.minElbowAngle : 180;
+            const exType = poseTrackedExercise;
+
+            closePoseScannerModal();
+
+            if (poseScannerActiveMode === 'referee') {
+                // Modalità AI Referee Anti-Cheat
+                if (typeof poseRefereeCallback === 'function') {
+                    poseRefereeCallback(finalReps);
+                }
+            } else {
+                // Modalità Analisi Tecnica: genera responso nel Coach AI Helper
+                const reportText = `📊 **Report Analisi Visiva Articolare (${exType.toUpperCase()})**:\n\n` +
+                    `• **Ripetizioni/Secondi con ROM Valido**: ${finalReps}\n` +
+                    `• **Profondità Minima Raggiunta**: ${minAngle}° ${minAngle <= 90 ? '✅ (Ottima)' : '⚠️ (Superiore a 90°)'}\n` +
+                    `• **Compensazioni Rilevate**: ${warnings.length > 0 ? warnings.join(', ') : 'Nessun compenso rilevato, postura corretta!'}\n\n` +
+                    `💡 *Consiglio del Coach*: Continua a mantenere la distensione completa a fine movimento per stimolare la piena crescita muscolare e proteggere i tendini.`;
+
+                aiChatMessages.push({
+                    id: 'msg_' + Date.now(),
+                    sender: 'ai',
+                    text: reportText,
+                    timestamp: Date.now()
+                });
+                saveAiChatHistory();
+
+                if (typeof switchChatTab === 'function') {
+                    switchChatTab('ai');
+                    if (!chatPanelOpen && typeof toggleChatPanel === 'function') {
+                        toggleChatPanel();
+                    }
+                }
+            }
+        }
+
+        // Integrazione AI Referee nei Duelli
+        function startDuelRoundAiReferee(challengeId, roundNum) {
+            const c = activeChallengesList.find(x => x.id === challengeId);
+            if (!c) return;
+            const exName = getDuelRoundExercise(c, roundNum).toLowerCase();
+            let mappedEx = 'pushup';
+            if (exName.includes('pull') || exName.includes('trazion')) mappedEx = 'pullup';
+            else if (exName.includes('squat')) mappedEx = 'squat';
+            else if (exName.includes('dip')) mappedEx = 'dip';
+            else if (exName.includes('crunch')) mappedEx = 'hold';
+
+            openPoseScannerModal({
+                mode: 'referee',
+                exercise: mappedEx,
+                onComplete: (verifiedReps) => {
+                    const inputEl = document.getElementById(`duel-reps-${challengeId}-${roundNum}`);
+                    if (inputEl) inputEl.value = verifiedReps;
+                    openCustomModal(
+                        "⚖️ Conteggio Verificato dall'AI Referee!",
+                        `L'Arbitro Virtuale ha certificato **${verifiedReps} ripetizioni** a ROM completo senza possibilità di contestazioni! Vuoi confermare il tuo risultato?`,
+                        "Invia Risultato Verificato ⚔️",
+                        true,
+                        () => submitDuelRoundScore(challengeId, roundNum)
+                    );
+                }
+            });
+        }
 
         // ===============================================================
         // SEZIONE CONDIVIDI & SISTEMA REFERRAL ANTI-CHEAT (+3.000 XP)
@@ -6423,6 +7451,7 @@ let currentUser = null;
             const pollBtn = document.getElementById('chat-thread-poll-btn');
             if (pollBtn) pollBtn.style.display = 'none';
 
+            const tabAi = document.getElementById('chat-tab-ai');
             if (tab === 'general') {
                 activeChatView = 'general';
                 activeConversationId = null;
@@ -6431,6 +7460,19 @@ let currentUser = null;
                 titleEl.innerText = '💬 Chat Generale';
                 tabGeneral.classList.add('active');
                 tabPrivate.classList.remove('active');
+                if (tabAi) tabAi.classList.remove('active');
+            } else if (tab === 'ai') {
+                activeChatView = 'ai';
+                activeConversationId = null;
+                activeConversationData = null;
+                threadHeader.style.display = 'none';
+                titleEl.innerText = '🤖 AI Helper Coach';
+                tabGeneral.classList.remove('active');
+                tabPrivate.classList.remove('active');
+                if (tabAi) tabAi.classList.add('active');
+                renderAiHelperView();
+                renderChatInputState();
+                return;
             } else {
                 activeChatView = 'private-list';
                 activeConversationId = null;
@@ -6439,6 +7481,7 @@ let currentUser = null;
                 titleEl.innerText = '👤 Chat Private';
                 tabGeneral.classList.remove('active');
                 tabPrivate.classList.add('active');
+                if (tabAi) tabAi.classList.remove('active');
             }
 
             document.getElementById('chat-messages').innerHTML = `<p style="color: var(--subtext); text-align:center; font-size:0.85rem;">Caricamento...</p>`;
@@ -6463,6 +7506,25 @@ let currentUser = null;
                         <button class="chat-new-btn" onclick="openNewChatModal()">✉️ Nuova chat privata o gruppo</button>
                     </div>
                 `;
+                return;
+            }
+
+            if (activeChatView === 'ai') {
+                box.innerHTML = `
+                    <div class="chat-input-row">
+                        <button type="button" class="chat-poll-circle-btn" onclick="openPoseScannerModal({ mode: 'analysis' })" title="Scanner Videocamera Postura & Movimento" style="background:rgba(56,189,248,0.15); color:var(--accent);">
+                            📷
+                        </button>
+                        <input type="text" id="ai-chat-input" placeholder="Chiedi al Coach (es. come imparare la Planche?)..." maxlength="350">
+                        <button class="chat-send-btn" onclick="sendAiHelperMessage()" id="ai-chat-send-btn">➤</button>
+                    </div>
+                `;
+                const aiInput = document.getElementById('ai-chat-input');
+                if (aiInput) {
+                    aiInput.addEventListener('keydown', (e) => {
+                        if (e.key === 'Enter') sendAiHelperMessage();
+                    });
+                }
                 return;
             }
 
@@ -6963,6 +8025,10 @@ let currentUser = null;
         }
 
         function sendChatMessage() {
+            if (activeChatView === 'ai') {
+                sendAiHelperMessage();
+                return;
+            }
             if (!currentUser) return;
             const input = document.getElementById('chat-input');
             if (!input) return;
@@ -9501,14 +10567,31 @@ let currentUser = null;
                     const completedCount = exercises.filter(e => e.completed).length;
                     const pct = Math.min(100, Math.floor((completedCount / 5) * 100));
 
-                    const exercisesHtml = exercises.map(ex => `
-                        <div class="solo-exercise-item ${ex.completed ? 'completed' : ''}" style="cursor: ${c.bonusClaimed ? 'default' : 'pointer'};" onclick="if (!${c.bonusClaimed}) toggleSoloExercise('${c.id}', '${ex.id}', !${ex.completed})">
-                            <input type="checkbox" ${ex.completed ? 'checked' : ''} ${c.bonusClaimed ? 'disabled' : ''} onclick="event.stopPropagation(); toggleSoloExercise('${c.id}', '${ex.id}', this.checked)" style="width:18px; height:18px; accent-color:${diff.color}; cursor:pointer;">
-                            <span style="flex:1; font-size:0.85rem; ${ex.completed ? 'text-decoration:line-through; color:var(--subtext);' : 'color:var(--text); font-weight:600;'}">
-                                ${escapeHtml(ex.name)}: <strong style="color:${diff.color};">${ex.target} ${ex.unit || 'reps'}</strong>
-                            </span>
-                        </div>
-                    `).join('');
+                    const exercisesHtml = exercises.map(ex => {
+                        const isDone = !!ex.completed;
+                        const isAi = !!ex.verifiedByAi;
+                        return `
+                            <div class="solo-exercise-item ${isDone ? 'completed' : ''}" style="display:flex; align-items:center; justify-content:space-between; gap:10px; padding:7px 10px; background:rgba(255,255,255,0.02); border:1px solid ${isDone ? 'rgba(16,185,129,0.25)' : 'rgba(255,255,255,0.06)'}; border-radius:8px; margin-bottom:5px;">
+                                <div style="display:flex; align-items:center; gap:8px; flex:1;">
+                                    <span style="font-size:0.95rem;">${isDone ? '✅' : '⏳'}</span>
+                                    <span style="font-size:0.85rem; ${isDone ? 'text-decoration:line-through; color:var(--subtext);' : 'color:var(--text); font-weight:600;'}">
+                                        ${escapeHtml(ex.name)}: <strong style="color:${diff.color};">${ex.target} ${ex.unit || 'reps'}</strong>
+                                    </span>
+                                </div>
+                                <div>
+                                    ${isDone ? `
+                                        <span style="font-size:0.7rem; background:rgba(16,185,129,0.15); color:#10b981; border:1px solid rgba(16,185,129,0.3); padding:2px 7px; border-radius:10px; font-weight:bold;">
+                                            🛡️ ${isAi ? 'Verificato AI' : 'Completato'}
+                                        </span>
+                                    ` : `
+                                        <button type="button" class="solo-ai-ref-btn" onclick="event.stopPropagation(); startSoloExerciseAiReferee('${c.id}', '${ex.id}', '${escapeHtml(ex.name)}', ${ex.target}, '${ex.unit || 'reps'}')" style="background:rgba(56,189,248,0.15); border:1px solid var(--accent); color:var(--accent); padding:3px 8px; border-radius:6px; font-size:0.75rem; font-weight:bold; cursor:pointer; display:flex; align-items:center; gap:4px;">
+                                            📹 Verifica AI
+                                        </button>
+                                    `}
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
 
                     let actionHtml = '';
                     if (completedCount >= 5) {
@@ -9650,7 +10733,8 @@ let currentUser = null;
                                             <div style="font-size:0.75rem; color:#facc15; margin-bottom:4px; font-weight:600;">⚡ Tocca a te! Inserisci il massimale di <strong>${escapeHtml(rExName)}</strong> per il Round ${r}:</div>
                                             <div style="display:flex; gap:6px;">
                                                 <input type="number" id="duel-reps-${c.id}-${r}" placeholder="Massimale ${escapeHtml(rExName)}" min="1" max="500" style="flex:1; padding:7px 10px; background:var(--input-bg); border:1px solid var(--accent); border-radius:8px; color:var(--text); font-size:0.85rem;">
-                                                <button class="btn-confirm" onclick="submitDuelRoundScore('${c.id}', ${r})" style="padding:7px 12px; font-size:0.82rem; font-weight:700; background:#f59e0b; border-color:#f59e0b; white-space:nowrap;">Invia Reps</button>
+                                                <button class="btn-confirm" onclick="submitDuelRoundScore('${c.id}', ${r})" style="padding:7px 10px; font-size:0.82rem; font-weight:700; background:#f59e0b; border-color:#f59e0b; white-space:nowrap;">Invia</button>
+<button class="btn-confirm" onclick="startDuelRoundAiReferee('${c.id}', ${r})" style="padding:7px 10px; font-size:0.82rem; font-weight:700; background:#10b981; border-color:#10b981; white-space:nowrap;" title="Verifica reps con videocamera anti-cheat">📷 AI Referee</button>
                                             </div>
                                         </div>
                                     `;
@@ -10376,6 +11460,19 @@ let currentUser = null;
             const exercises = c.exercises || [];
             const targetEx = exercises.find(e => e.id === exId);
             if (!targetEx) return;
+
+            if (isChecked && !targetEx.verifiedByAi) {
+                openCustomModal(
+                    "🛡️ Verifica AI Richiesta",
+                    `Per convalidare <strong>"${escapeHtml(targetEx.name)}"</strong> ed evitare trucchi sul punteggio, verifica la tua esecuzione davanti alla fotocamera con l'AI Referee!`,
+                    "📹 Avvia Verifica AI",
+                    false,
+                    () => {
+                        startSoloExerciseAiReferee(challengeId, exId, targetEx.name, targetEx.target, targetEx.unit || 'reps');
+                    }
+                );
+                return;
+            }
 
             targetEx.completed = !!isChecked;
             const newCompletedCount = exercises.filter(e => e.completed).length;
