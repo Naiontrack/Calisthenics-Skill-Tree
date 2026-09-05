@@ -2741,8 +2741,10 @@
                     headings: { en: title, it: title },
                     contents: { en: body, it: body },
                     collapse_id: String(collapseId),
+                    url: "https://naiontrack.github.io/Calisthenics-Skill-Tree/",
                     chrome_web_icon: "https://naiontrack.github.io/Calisthenics-Skill-Tree/icon-512.png",
                     chrome_web_badge: "https://naiontrack.github.io/Calisthenics-Skill-Tree/icon-512.png",
+                    priority: 10,
                     data: data
                 };
 
@@ -8582,11 +8584,9 @@ let currentUser = null;
           const swScope = isGhPages ? '/Calisthenics-Skill-Tree/' : './';
           navigator.serviceWorker.register(swFile, { scope: swScope })
             .then((registration) => {
-              console.log('OneSignal & Firebase Service Worker unificato attivo:', registration.scope);
+              console.log('OneSignal Service Worker attivo:', registration.scope);
               swRegistration = registration;
-              if (messaging && typeof messaging.useServiceWorker === 'function') {
-                messaging.useServiceWorker(registration);
-              }
+              try { registration.update(); } catch(e) {}
               initPushNotificationsAuto();
             })
             .catch((err) => {
