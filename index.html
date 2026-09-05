@@ -2586,6 +2586,7 @@
         <div class="chat-thread-header" id="chat-thread-header" style="display:none;">
             <button class="chat-back-btn" onclick="backToPrivateList()">←</button>
             <span id="chat-thread-title"></span>
+            <button class="chat-thread-poll-btn" id="chat-thread-poll-btn" onclick="openGroupPollsModal()" title="Sondaggi del gruppo" style="display:none; background:none; border:none; color:var(--text); font-size:1.15rem; cursor:pointer; padding:4px 8px; border-radius:8px; margin-right:4px;">📊</button>
             <button class="chat-thread-menu-btn" id="chat-thread-menu-btn" onclick="openConversationOptionsModal()" title="Opzioni chat">⋮</button>
         </div>
         <div class="chat-messages" id="chat-messages">
@@ -5497,6 +5498,8 @@ let currentUser = null;
             const threadHeader = document.getElementById('chat-thread-header');
             const tabGeneral = document.getElementById('chat-tab-general');
             const tabPrivate = document.getElementById('chat-tab-private');
+            const pollBtn = document.getElementById('chat-thread-poll-btn');
+            if (pollBtn) pollBtn.style.display = 'none';
 
             if (tab === 'general') {
                 activeChatView = 'general';
@@ -6042,10 +6045,14 @@ let currentUser = null;
             const container = document.getElementById('chat-messages');
             conversationsUnsubscribe = db.collection("conversations")
                 .where("participants", "array-contains", currentUser.uid)
-                .orderBy("lastMessageAt", "desc")
                 .onSnapshot((snapshot) => {
                     let convs = [];
                     snapshot.forEach(doc => convs.push(Object.assign({ id: doc.id }, doc.data())));
+                    convs.sort((a, b) => {
+                        const ta = a.lastMessageAt && a.lastMessageAt.toMillis ? a.lastMessageAt.toMillis() : (a.createdAt && a.createdAt.toMillis ? a.createdAt.toMillis() : 0);
+                        const tb = b.lastMessageAt && b.lastMessageAt.toMillis ? b.lastMessageAt.toMillis() : (b.createdAt && b.createdAt.toMillis ? b.createdAt.toMillis() : 0);
+                        return tb - ta;
+                    });
 
                     let invitesHtml = '';
                     if (typeof pendingChatInvites !== 'undefined' && pendingChatInvites.length > 0) {
@@ -6189,6 +6196,10 @@ let currentUser = null;
                 if (!doc.exists) return;
                 activeConversationData = Object.assign({ id: doc.id }, doc.data());
                 document.getElementById('chat-thread-title').innerText = conversationDisplayName(activeConversationData);
+                const pollBtn = document.getElementById('chat-thread-poll-btn');
+                if (pollBtn) {
+                    pollBtn.style.display = activeConversationData.type === 'group' ? 'inline-block' : 'none';
+                }
             }).catch((error) => console.error("Errore nel recupero della conversazione:", error));
 
             // Segna la conversazione come letta
@@ -6207,6 +6218,8 @@ let currentUser = null;
             activeConversationId = null;
             activeConversationData = null;
             document.getElementById('chat-thread-header').style.display = 'none';
+            const pollBtn = document.getElementById('chat-thread-poll-btn');
+            if (pollBtn) pollBtn.style.display = 'none';
             renderChatInputState();
             initConversationsListener();
         }
@@ -6466,11 +6479,14 @@ let currentUser = null;
                 }
 
                 const creatorName = userNickname || (currentUser.displayName || 'Anonimo');
-                // Il gruppo viene creato con il solo creatore finché gli invitati non approvano
+                const cleanGroupName = groupName.slice(0, 40);
+
+                // Il gruppo viene creato con il creatore e tracciamento degli invitati
                 const docRef = await db.collection("conversations").add({
                     type: 'group',
-                    name: groupName.slice(0, 40),
+                    name: cleanGroupName,
                     participants: [currentUser.uid],
+                    invitedUids: selectedUids,
                     participantNames: {
                         [currentUser.uid]: creatorName
                     },
@@ -6487,7 +6503,7 @@ let currentUser = null;
                     batch.set(invRef, {
                         type: 'group',
                         convId: docRef.id,
-                        groupName: groupName.slice(0, 40),
+                        groupName: cleanGroupName,
                         fromUid: currentUser.uid,
                         fromNickname: creatorName,
                         toUid: uid,
@@ -6498,16 +6514,18 @@ let currentUser = null;
                 }
                 await batch.commit();
 
-                // TRIGGER 3b PUSH BACKGROUND: notifica di invito a una sfida a tutti gli atleti selezionati
+                // Notifica push in background a tutti gli atleti invitati al gruppo
                 dispatchBackgroundPush({
                     targetUids: selectedUids,
-                    title: "🏹 Nuova sfida ricevuta!",
-                    body: `${creatorName} ti ha sfidato: "${title}". Accetta la sfida e dimostra la tua forza!`,
-                    data: { type: 'challengeInvite', id: challengeDoc.id }
+                    title: "👥 Nuovo invito al gruppo!",
+                    body: `${creatorName} ti ha invitato al gruppo "${cleanGroupName}". Tocca per entrare!`,
+                    data: { type: 'chatInvite', id: docRef.id }
                 });
 
-                document.getElementById('custom-modal').classList.remove('active');
-                activeChatView = 'private-list';
+                const modal = document.getElementById('custom-modal');
+                if (modal) modal.classList.remove('active');
+                if (!chatPanelOpen) toggleChatPanel();
+                switchChatTab('private');
                 openConversation(docRef.id);
             } catch (error) {
                 console.error("Errore nella creazione del gruppo:", error);
@@ -6554,6 +6572,14 @@ let currentUser = null;
             if (isGroup) {
                 const participants = conv.participants || [];
                 membersHtml = `
+                    <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:14px;">
+                        <button class="chat-new-btn" style="background: linear-gradient(135deg, #f59e0b, #d97706); color: #fff; font-weight: 700; display:flex; align-items:center; justify-content:center; gap:8px;" onclick="openGroupLeaderboardModal()">
+                            <span style="font-size:1.15rem;">🏆</span> Visualizza classifica del gruppo
+                        </button>
+                        <button class="chat-new-btn" style="background: linear-gradient(135deg, #0284c7, #0369a1); color: #fff; font-weight: 700; display:flex; align-items:center; justify-content:center; gap:8px;" onclick="openGroupPollsModal()">
+                            <span style="font-size:1.15rem;">📊</span> Sondaggi privati del gruppo
+                        </button>
+                    </div>
                     <div class="auth-form-group">
                         <label>Membri (${participants.length})</label>
                         <div class="user-picker-list" id="conv-members-list">
@@ -6585,6 +6611,98 @@ let currentUser = null;
             actionsBox.innerHTML = `<button class="btn-cancel" id="modal-btn-cancel" style="flex:1;">Chiudi</button>`;
             modal.classList.add('active');
             document.getElementById('modal-btn-cancel').onclick = () => modal.classList.remove('active');
+        }
+
+        // ==========================================
+        // CLASSIFICA LOCALE DEL GRUPPO (TROFEO 🏆)
+        // ==========================================
+        async function openGroupLeaderboardModal() {
+            if (!currentUser || !activeConversationData) return;
+            const conv = activeConversationData;
+            const participants = conv.participants || [];
+
+            const modal = document.getElementById('custom-modal');
+            const titleEl = document.getElementById('modal-title');
+            const bodyContent = document.getElementById('modal-body-content');
+            const actionsBox = document.getElementById('modal-actions-box');
+
+            titleEl.innerText = `🏆 Classifica: ${conv.name || 'Gruppo'}`;
+            bodyContent.innerHTML = `<p style="text-align:center; color:var(--subtext); font-size:0.85rem; padding:15px;">Caricamento classifica del gruppo...</p>`;
+            actionsBox.innerHTML = `<button class="btn-cancel" id="modal-btn-cancel" style="flex:1;">Chiudi</button>`;
+            modal.classList.add('active');
+            document.getElementById('modal-btn-cancel').onclick = () => modal.classList.remove('active');
+
+            try {
+                const memberProfiles = [];
+                await Promise.all(participants.map(async (uid) => {
+                    const fallbackName = (conv.participantNames && conv.participantNames[uid]) || 'Atleta';
+                    try {
+                        const userDoc = await db.collection("users").doc(uid).get();
+                        if (userDoc.exists) {
+                            const data = userDoc.data();
+                            memberProfiles.push({
+                                uid: uid,
+                                nickname: data.nickname || fallbackName,
+                                totalXp: typeof data.totalXp === 'number' ? data.totalXp : 0,
+                                isMe: uid === currentUser.uid
+                            });
+                        } else {
+                            memberProfiles.push({
+                                uid: uid,
+                                nickname: fallbackName,
+                                totalXp: 0,
+                                isMe: uid === currentUser.uid
+                            });
+                        }
+                    } catch (e) {
+                        memberProfiles.push({
+                            uid: uid,
+                            nickname: fallbackName,
+                            totalXp: 0,
+                            isMe: uid === currentUser.uid
+                        });
+                    }
+                }));
+
+                memberProfiles.sort((a, b) => b.totalXp - a.totalXp);
+
+                if (memberProfiles.length === 0) {
+                    bodyContent.innerHTML = `<p style="text-align:center; color:var(--subtext); font-size:0.85rem;">Nessun membro trovato nel gruppo.</p>`;
+                    return;
+                }
+
+                let html = `
+                    <div style="font-size:0.8rem; color:var(--subtext); margin-bottom:12px; text-align:center;">
+                        Classifica locale dei ${memberProfiles.length} partecipanti a questo gruppo.
+                    </div>
+                    <div class="leaderboard-container" style="max-height: 380px; overflow-y: auto; padding-right: 2px;">
+                `;
+
+                memberProfiles.forEach((m, idx) => {
+                    const pos = idx + 1;
+                    const rankMedal = pos === 1 ? '🥇' : (pos === 2 ? '🥈' : (pos === 3 ? '🥉' : `#${pos}`));
+                    const rankObj = getCurrentRank(m.totalXp);
+                    html += `
+                        <div class="leaderboard-item ${m.isMe ? 'current-user-item' : ''}" onclick="openUserProfileModal('${m.uid}')" style="cursor:pointer;">
+                            <div class="leaderboard-left">
+                                <span class="leaderboard-rank-pos" style="min-width:28px; font-weight:700;">${rankMedal}</span>
+                                <div class="leaderboard-avatar" style="width:28px; height:28px;">${rankObj.iconSvg}</div>
+                                <span class="leaderboard-name">${escapeHtml(m.nickname)} ${m.isMe ? '<strong style="color:var(--primary);">(Tu)</strong>' : ''}</span>
+                            </div>
+                            <div style="text-align:right;">
+                                <span class="leaderboard-xp">${m.totalXp} XP</span>
+                                <div style="font-size:0.65rem; color:var(--subtext);">${rankObj.name}</div>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                html += `</div>`;
+                bodyContent.innerHTML = html;
+            } catch (err) {
+                console.error("Errore caricamento classifica del gruppo:", err);
+                bodyContent.innerHTML = `<p style="text-align:center; color:var(--danger); font-size:0.85rem;">Errore nel caricamento della classifica locale.</p>`;
+            }
         }
 
         // ---- Aggiunta membri (solo creatore, solo gruppi) ----
@@ -6717,6 +6835,14 @@ let currentUser = null;
                     });
                 }
                 await batch.commit();
+
+                // Notifica push agli utenti aggiunti
+                dispatchBackgroundPush({
+                    targetUids: selectedUids,
+                    title: "👥 Nuovo invito al gruppo!",
+                    body: `${creatorName} ti ha invitato al gruppo "${groupTitle}". Tocca per entrare!`,
+                    data: { type: 'chatInvite', id: convId }
+                });
 
                 document.getElementById('custom-modal').classList.remove('active');
                 openCustomModal(
@@ -7015,15 +7141,18 @@ let currentUser = null;
         function renderEventsList(events) {
             const listEl = document.getElementById('events-list');
             if (!listEl) return;
-            checkPollDeadlineReminder(events);
 
-            if (events.length === 0) {
-                listEl.innerHTML = `<p style="color: var(--subtext); text-align:center; font-size:0.85rem;">Ancora nessun sondaggio! ${currentUser ? 'Tocca "Nuovo sondaggio" per crearne uno 🤸' : ''}</p>`;
+            // Filtra solo gli eventi pubblici/generali nel pannello eventi globale
+            const publicEvents = events.filter(ev => !ev.convId);
+            checkPollDeadlineReminder(publicEvents);
+
+            if (publicEvents.length === 0) {
+                listEl.innerHTML = `<p style="color: var(--subtext); text-align:center; font-size:0.85rem;">Ancora nessun sondaggio pubblico! ${currentUser ? 'Tocca "Nuovo sondaggio" per crearne uno 🤸' : ''}</p>`;
                 return;
             }
 
             let html = '';
-            events.forEach(ev => {
+            publicEvents.forEach(ev => {
                 const responses = ev.responses || {};
                 const myResponse = currentUser ? responses[currentUser.uid] : null;
                 let yesCount = 0, noCount = 0, maybeCount = 0;
@@ -7165,8 +7294,11 @@ let currentUser = null;
             );
         }
 
-        function openCreateEventModal() {
+        let currentEventConvId = null;
+
+        function openCreateEventModal(convId = null) {
             if (!currentUser) return;
+            currentEventConvId = convId;
             eventsAllowMaybeDraft = false;
 
             const modal = document.getElementById('custom-modal');
@@ -7174,7 +7306,8 @@ let currentUser = null;
             const bodyContent = document.getElementById('modal-body-content');
             const actionsBox = document.getElementById('modal-actions-box');
 
-            titleEl.innerText = "📅 Nuovo sondaggio allenamento";
+            const isGroup = !!convId;
+            titleEl.innerText = isGroup ? "📊 Nuovo sondaggio del gruppo" : "📅 Nuovo sondaggio allenamento";
             bodyContent.innerHTML = `
                 <div class="auth-error" id="new-event-error"></div>
                 <div class="auth-form-group">
@@ -7303,13 +7436,13 @@ let currentUser = null;
             const confirmBtn = document.getElementById('new-event-confirm-btn');
             if (confirmBtn) { confirmBtn.disabled = true; confirmBtn.innerText = '...'; }
 
-            db.collection("events").add({
+            const eventData = {
                 creatorUid: currentUser.uid,
                 creatorName: userNickname || (currentUser.email ? currentUser.email.split('@')[0] : 'Anonimo'),
                 day: dayLabel,
                 dayNum: dayNum,
                 monthNum: monthNum,
-                sortKey: monthNum * 100 + dayNum, // per ordinare cronologicamente senza usare l'anno
+                sortKey: monthNum * 100 + dayNum,
                 time: time,
                 place: place.slice(0, 80),
                 allowMaybe: allowMaybe,
@@ -7319,18 +7452,60 @@ let currentUser = null;
                 maybeReminderSent: false,
                 responses: {},
                 createdAt: firebase.firestore.FieldValue.serverTimestamp()
-            }).then(() => {
-                document.getElementById('custom-modal').classList.remove('active');
+            };
 
-                // TRIGGER 7 PUSH BACKGROUND: notifica a tutti per il nuovo sondaggio
+            const isGroupPoll = !!currentEventConvId;
+            const targetConvId = currentEventConvId;
+            if (isGroupPoll && activeConversationData && activeConversationData.id === targetConvId) {
+                eventData.convId = targetConvId;
+                eventData.groupName = activeConversationData.name || 'Gruppo';
+                eventData.participants = activeConversationData.participants || [];
+            }
+
+            db.collection("events").add(eventData).then(() => {
+                const modal = document.getElementById('custom-modal');
+                if (modal) modal.classList.remove('active');
                 const creator = userNickname || (currentUser.displayName || 'Un atleta');
-                dispatchBackgroundPush({
-                    sendToAll: true,
-                    excludeUids: [currentUser.uid],
-                    title: "📅 Nuovo Sondaggio Allenamento!",
-                    body: `${creator} ha proposto un allenamento per ${dayLabel} ore ${time} presso ${place.slice(0, 50)}. Fai sapere se ci sarai!`,
-                    data: { type: 'event' }
-                });
+
+                if (isGroupPoll && targetConvId) {
+                    // Notifica in chat di gruppo
+                    const sysMsg = `📊 Nuovo sondaggio per il gruppo: ${dayLabel} ore ${time} presso ${place.slice(0, 40)}`;
+                    db.collection("conversations").doc(targetConvId).collection("messages").add({
+                        isSystem: true,
+                        text: sysMsg,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    }).catch(e => console.warn(e));
+
+                    db.collection("conversations").doc(targetConvId).set({
+                        lastMessageText: sysMsg,
+                        lastMessageSenderUid: currentUser.uid,
+                        lastMessageAt: firebase.firestore.FieldValue.serverTimestamp()
+                    }, { merge: true }).catch(e => console.warn(e));
+
+                    // Push SOLO ai partecipanti del gruppo
+                    const targetUids = (activeConversationData && activeConversationData.participants ? activeConversationData.participants : []).filter(u => u !== currentUser.uid);
+                    if (targetUids.length > 0) {
+                        const gName = (activeConversationData && activeConversationData.name) || 'Gruppo';
+                        dispatchBackgroundPush({
+                            targetUids: targetUids,
+                            title: `📊 Nuovo sondaggio in "${gName}"!`,
+                            body: `${creator} ha proposto un allenamento: ${dayLabel} ore ${time}. Vota adesso!`,
+                            data: { type: 'chat', id: targetConvId }
+                        });
+                    }
+                    showAppToast("Sondaggio di gruppo creato!", "success");
+                    openGroupPollsModal(targetConvId);
+                } else {
+                    // TRIGGER 7 PUSH BACKGROUND: notifica a tutti per il nuovo sondaggio pubblico
+                    dispatchBackgroundPush({
+                        sendToAll: true,
+                        excludeUids: [currentUser.uid],
+                        title: "📅 Nuovo Sondaggio Allenamento!",
+                        body: `${creator} ha proposto un allenamento per ${dayLabel} ore ${time} presso ${place.slice(0, 50)}. Fai sapere se ci sarai!`,
+                        data: { type: 'event' }
+                    });
+                    showAppToast("Sondaggio pubblico creato!", "success");
+                }
             }).catch((error) => {
                 console.error("Errore nella creazione del sondaggio:", error);
                 if (errEl) {
@@ -7340,6 +7515,139 @@ let currentUser = null;
                 }
                 if (confirmBtn) { confirmBtn.disabled = false; confirmBtn.innerText = 'Crea sondaggio'; }
             });
+        }
+
+
+        // ==========================================
+        // GESTIONE SONDAGGI PRIVATI DI GRUPPO 📊
+        // ==========================================
+        function openGroupPollsModal(targetConvId) {
+            if (!currentUser) return;
+            const convId = targetConvId || (activeConversationData && activeConversationData.id);
+            if (!convId) return;
+
+            const modal = document.getElementById('custom-modal');
+            const titleEl = document.getElementById('modal-title');
+            const bodyContent = document.getElementById('modal-body-content');
+            const actionsBox = document.getElementById('modal-actions-box');
+
+            const groupName = (activeConversationData && activeConversationData.name) || 'Gruppo';
+            titleEl.innerText = `📊 Sondaggi: ${groupName}`;
+            bodyContent.innerHTML = `<p style="text-align:center; color:var(--subtext); font-size:0.85rem; padding:15px;">Caricamento sondaggi...</p>`;
+            actionsBox.innerHTML = `
+                <button class="btn-cancel" id="modal-btn-cancel">Chiudi</button>
+                <button class="btn-confirm" id="group-poll-create-btn">➕ Crea sondaggio</button>
+            `;
+            modal.classList.add('active');
+            document.getElementById('modal-btn-cancel').onclick = () => modal.classList.remove('active');
+            document.getElementById('group-poll-create-btn').onclick = () => openCreateEventModal(convId);
+
+            db.collection("events")
+                .where("convId", "==", convId)
+                .get()
+                .then((snapshot) => {
+                    let groupEvents = [];
+                    snapshot.forEach(doc => groupEvents.push(Object.assign({ id: doc.id }, doc.data())));
+                    groupEvents.sort((a, b) => (a.sortKey || 0) - (b.sortKey || 0));
+
+                    if (groupEvents.length === 0) {
+                        bodyContent.innerHTML = `
+                            <div style="text-align:center; padding: 25px 15px;">
+                                <div style="font-size:2.2rem; margin-bottom:8px;">📊</div>
+                                <p style="color:var(--text); font-weight:600; margin:0 0 6px 0;">Nessun sondaggio per questo gruppo</p>
+                                <p style="color:var(--subtext); font-size:0.85rem; margin:0 0 15px 0;">Crea un sondaggio privato per organizzare un allenamento solo con i membri di questo gruppo!</p>
+                                <button class="chat-new-btn" onclick="openCreateEventModal('${convId}')">➕ Crea il primo sondaggio</button>
+                            </div>
+                        `;
+                        return;
+                    }
+
+                    let html = `
+                        <div style="font-size:0.8rem; color:var(--subtext); margin-bottom:10px; text-align:center;">
+                            Sondaggi privati visibili solo ai membri di questo gruppo.
+                        </div>
+                        <div style="max-height: 400px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; padding-right: 2px;">
+                    `;
+
+                    groupEvents.forEach(ev => {
+                        const responses = ev.responses || {};
+                        const myResponse = currentUser ? responses[currentUser.uid] : null;
+                        let yesCount = 0, noCount = 0, maybeCount = 0;
+                        Object.values(responses).forEach(r => {
+                            if (r === 'yes') yesCount++;
+                            else if (r === 'no') noCount++;
+                            else if (r === 'maybe') maybeCount++;
+                        });
+
+                        const isCreator = currentUser && ev.creatorUid === currentUser.uid;
+
+                        html += `
+                            <div class="event-card" style="margin:0;">
+                                <div class="event-card-header">
+                                    <span class="event-card-title">🤸 Allenamento di Gruppo</span>
+                                    <div class="event-header-actions">
+                                        <button class="event-info-btn" title="Chi ha votato" onclick="openEventVotersModal('${ev.id}')">ℹ️</button>
+                                        ${isCreator ? `<button class="event-delete-btn" title="Elimina sondaggio" onclick="askDeleteGroupEvent('${ev.id}', '${convId}')">🗑️</button>` : ''}
+                                    </div>
+                                </div>
+                                <div class="event-card-meta">
+                                    📆 ${escapeHtml(ev.day || '')}<br>
+                                    🕒 ${escapeHtml(ev.time || '')}<br>
+                                    📍 ${escapeHtml(ev.place || '')}
+                                </div>
+                                <div class="event-card-creator">Proposto da ${escapeHtml(ev.creatorName || 'Anonimo')}</div>
+                                <div class="event-vote-row">
+                                    <button class="event-vote-btn ${myResponse === 'yes' ? 'selected-yes' : ''}" onclick="voteGroupEvent('${ev.id}', 'yes', '${convId}')">✅ Sì</button>
+                                    <button class="event-vote-btn ${myResponse === 'no' ? 'selected-no' : ''}" onclick="voteGroupEvent('${ev.id}', 'no', '${convId}')">❌ No</button>
+                                    ${ev.allowMaybe ? `<button class="event-vote-btn ${myResponse === 'maybe' ? 'selected-maybe' : ''}" onclick="voteGroupEvent('${ev.id}', 'maybe', '${convId}')">🤔 Forse</button>` : ''}
+                                </div>
+                                ${ev.allowMaybe && ev.maybeDeadlineDate && ev.maybeDeadlineTime ? `
+                                    <div class="event-maybe-note">
+                                        Chi sceglie "forse" deve confermare entro il ${escapeHtml(ev.maybeDeadlineDate)} alle ${escapeHtml(ev.maybeDeadlineTime)}
+                                    </div>` : ''}
+                                <div class="event-vote-counts">
+                                    <span>✅ ${yesCount}</span>
+                                    <span>❌ ${noCount}</span>
+                                    ${ev.allowMaybe ? `<span>🤔 ${maybeCount}</span>` : ''}
+                                </div>
+                            </div>
+                        `;
+                    });
+
+                    html += `</div>`;
+                    bodyContent.innerHTML = html;
+                })
+                .catch((err) => {
+                    console.error("Errore caricamento sondaggi di gruppo:", err);
+                    bodyContent.innerHTML = `<p style="text-align:center; color:var(--danger); font-size:0.85rem;">Errore nel caricamento dei sondaggi del gruppo.</p>`;
+                });
+        }
+
+        function voteGroupEvent(eventId, value, convId) {
+            if (!currentUser) return;
+            db.collection("events").doc(eventId).update({
+                [`responses.${currentUser.uid}`]: value
+            }).then(() => {
+                openGroupPollsModal(convId);
+            }).catch(e => {
+                console.error("Errore voto sondaggio gruppo:", e);
+                showAppToast("Errore durante il salvataggio del voto.", "error");
+            });
+        }
+
+        function askDeleteGroupEvent(eventId, convId) {
+            openCustomModal(
+                "🗑️ Elimina Sondaggio",
+                "Sei sicuro di voler eliminare questo sondaggio dal gruppo?",
+                "Elimina",
+                true,
+                () => {
+                    db.collection("events").doc(eventId).delete().then(() => {
+                        openGroupPollsModal(convId);
+                    }).catch(e => console.error(e));
+                },
+                () => openGroupPollsModal(convId)
+            );
         }
 
         // ==========================================
@@ -7495,8 +7803,22 @@ let currentUser = null;
         }
 
         async function acceptChatInvitation(invId) {
-            const inv = pendingChatInvites.find(i => i.id === invId);
-            if (!inv || !currentUser) return;
+            if (!currentUser) return;
+            let inv = pendingChatInvites.find(i => i.id === invId);
+            if (!inv && db) {
+                try {
+                    const snap = await db.collection("chatInvitations").doc(invId).get();
+                    if (snap.exists) {
+                        inv = Object.assign({ id: snap.id }, snap.data());
+                    }
+                } catch(e) {
+                    console.warn("Recupero invito fallito:", e);
+                }
+            }
+            if (!inv) {
+                showAppToast("Invito non trovato o già gestito.", "warning");
+                return;
+            }
 
             try {
                 const myName = userNickname || (currentUser.displayName || 'Anonimo');
@@ -7521,40 +7843,60 @@ let currentUser = null;
                         lastMessageAt: firebase.firestore.FieldValue.serverTimestamp()
                     }, { merge: true });
 
-                    await convRef.collection("messages").add({
-                        isSystem: true,
-                        text: sysMsg,
-                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                    });
+                    try {
+                        await convRef.collection("messages").add({
+                            isSystem: true,
+                            text: sysMsg,
+                            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                    } catch(e) {}
 
-                    await db.collection("chatInvitations").doc(invId).delete();
-                    activeChatView = 'private-list';
+                    try {
+                        await db.collection("chatInvitations").doc(invId).delete();
+                    } catch(e) {}
+
+                    pendingChatInvites = pendingChatInvites.filter(i => i.id !== invId);
+                    renderChatBadge();
+                    if (!chatPanelOpen) toggleChatPanel();
+                    switchChatTab('private');
                     openConversation(convId);
                 } else if (inv.type === 'group' && inv.convId) {
                     const convRef = db.collection("conversations").doc(inv.convId);
-                    const sysMsg = `${creatorName} ha aggiunto ${myName}`;
+                    const sysMsg = `${myName} è entrato nel gruppo`;
 
-                    await convRef.update({
+                    await convRef.set({
                         participants: firebase.firestore.FieldValue.arrayUnion(currentUser.uid),
-                        [`participantNames.${currentUser.uid}`]: myName,
+                        invitedUids: firebase.firestore.FieldValue.arrayRemove(currentUser.uid),
+                        participantNames: {
+                            [currentUser.uid]: myName
+                        },
                         lastMessageText: sysMsg,
                         lastMessageSenderUid: currentUser.uid,
                         lastMessageAt: firebase.firestore.FieldValue.serverTimestamp()
-                    });
+                    }, { merge: true });
 
-                    await convRef.collection("messages").add({
-                        isSystem: true,
-                        text: sysMsg,
-                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                    });
+                    try {
+                        await convRef.collection("messages").add({
+                            isSystem: true,
+                            text: sysMsg,
+                            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                    } catch(e) {}
 
-                    await db.collection("chatInvitations").doc(invId).delete();
-                    activeChatView = 'private-list';
+                    try {
+                        await db.collection("chatInvitations").doc(invId).delete();
+                    } catch(e) {}
+
+                    pendingChatInvites = pendingChatInvites.filter(i => i.id !== invId);
+                    renderChatBadge();
+                    showAppToast("Sei entrato nel gruppo!", "success");
+                    if (!chatPanelOpen) toggleChatPanel();
+                    switchChatTab('private');
                     openConversation(inv.convId);
                 }
             } catch (err) {
                 console.error("Errore accettazione invito chat:", err);
-                alert("Si è verificato un errore durante l'accettazione dell'invito.");
+                showAppToast("Si è verificato un errore durante l'accettazione dell'invito.", "error");
             }
         }
 
