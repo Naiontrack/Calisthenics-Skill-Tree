@@ -2728,6 +2728,34 @@
         const notifiedEvents = new Set();
         let lastChallengeScoresCache = {};
 
+        // Rilevamento accurato versione iOS e modalità Standalone (PWA)
+        function getIOSInfo() {
+            const ua = (typeof navigator !== 'undefined' && navigator.userAgent) ? navigator.userAgent : '';
+            const isIOS = (/iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)) && !window.MSStream;
+            if (!isIOS) return { isIOS: false, isSupported: true, major: null, minor: null, patch: 0, raw: null };
+
+            const match = ua.match(/OS (\d+)_(\d+)(?:_(\d+))?/i);
+            if (match) {
+                const major = parseInt(match[1], 10);
+                const minor = parseInt(match[2], 10);
+                const patch = match[3] ? parseInt(match[3], 10) : 0;
+                const raw = `${major}.${minor}${match[3] ? '.' + patch : ''}`;
+                const isSupported = (major > 16 || (major === 16 && minor >= 4));
+                return { isIOS: true, isSupported: isSupported, major: major, minor: minor, patch: patch, raw: raw };
+            }
+            return { isIOS: true, isSupported: true, major: null, minor: null, patch: 0, raw: 'iOS' };
+        }
+
+        function getIOSVersion() {
+            return getIOSInfo().raw;
+        }
+
+        function isIOSBrowserTab() {
+            const ios = getIOSInfo();
+            const isStandalone = (typeof window !== 'undefined') && (window.navigator.standalone === true || (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches));
+            return ios.isIOS && !isStandalone;
+        }
+
         // ===============================================================
         // ===============================================================
         // ONESIGNAL & PUSH CONFIGURAZIONE (GUARANTEED ONESIGNALDEFERRED)
@@ -2738,6 +2766,23 @@
         // Associa in background il dispositivo all'UID dell'utente
         function autoRegisterDevice(uid) {
             if (!uid) return;
+            // SU iOS: le notifiche push Web Push funzionano e devono essere registrate
+            // ESCLUSIVAMENTE quando l'app è aperta come PWA dalla Schermata Home (standalone).
+            // Se aperta da Safari normale nel browser, disattiviamo la sottoscrizione del browser
+            // per evitare di generare token duplicati sullo stesso iPhone!
+            if (typeof isIOSBrowserTab === 'function' && isIOSBrowserTab()) {
+                window.OneSignalDeferred = window.OneSignalDeferred || [];
+                window.OneSignalDeferred.push(async function(OneSignal) {
+                    try {
+                        if (OneSignal.User && OneSignal.User.PushSubscription && OneSignal.User.PushSubscription.optedIn) {
+                            console.log("[OneSignal] Safari browser su iOS: optOut eseguito per evitare notifiche doppie.");
+                            await OneSignal.User.PushSubscription.optOut();
+                        }
+                    } catch(e) {}
+                });
+                return;
+            }
+
             window.OneSignalDeferred = window.OneSignalDeferred || [];
             window.OneSignalDeferred.push(async function(OneSignal) {
                 try {
@@ -2789,6 +2834,15 @@
                     });
                 }
 
+                // Su iOS: se aperto da Safari normale nel browser, NON registrare push
+                if (typeof isIOSBrowserTab === 'function' && isIOSBrowserTab()) {
+                    if (OneSignal.User && OneSignal.User.PushSubscription && OneSignal.User.PushSubscription.optedIn) {
+                        try { await OneSignal.User.PushSubscription.optOut(); } catch(e) {}
+                    }
+                    console.log("[OneSignal] Safari browser su iOS: notifiche push gestite solo da Schermata Home.");
+                    return;
+                }
+
                 // Ascolta cambi di stato iscrizione push per associare automaticamente l'utente
                 if (OneSignal.User && OneSignal.User.PushSubscription) {
                     OneSignal.User.PushSubscription.addEventListener('change', async function(change) {
@@ -2834,11 +2888,14 @@
                 }
 
                 const collapseId = data.id || (data.type ? (data.type + '-' + Date.now()) : String(Date.now()));
+                const threadTopic = data.id ? `calisthenics-${data.id}` : (data.type ? `calisthenics-${data.type}` : "calisthenics-tree");
                 const payload = {
                     app_id: ONESIGNAL_APP_ID,
                     headings: { en: title, it: title },
                     contents: { en: body, it: body },
                     collapse_id: String(collapseId),
+                    thread_id: threadTopic,
+                    web_push_topic: threadTopic,
                     url: "https://naiontrack.github.io/Calisthenics-Skill-Tree/",
                     chrome_web_icon: "https://naiontrack.github.io/Calisthenics-Skill-Tree/icon-512.png",
                     chrome_web_badge: "https://naiontrack.github.io/Calisthenics-Skill-Tree/icon-512.png",
@@ -3994,6 +4051,40 @@ let currentUser = null;
         function initPushNotificationsAuto() {
             if ('Notification' in window && Notification.permission === 'granted' && notificationsEnabled) {
                 setupFCMToken();
+            }
+        }
+
+        // CHIUSURA / RIMOZIONE NOTIFICHE (Es. quando un messaggio viene eliminato o la chat viene aperta)
+        function dismissAppNotification(identifier) {
+            try {
+                if ('serviceWorker' in navigator) {
+                    navigator.serviceWorker.ready.then(reg => {
+                        if (reg && typeof reg.getNotifications === 'function') {
+                            reg.getNotifications().then(notifications => {
+                                notifications.forEach(n => {
+                                    const d = n.data || {};
+                                    if (!identifier) {
+                                        n.close();
+                                    } else if (
+                                        n.tag === identifier ||
+                                        d.msgId === identifier ||
+                                        d.id === identifier ||
+                                        (d.type === 'chat' && d.id === identifier) ||
+                                        (identifier === 'general' && d.type === 'general')
+                                    ) {
+                                        n.close();
+                                    }
+                                });
+                            }).catch(() => {});
+                        }
+                    }).catch(() => {});
+
+                    if (navigator.serviceWorker.controller && typeof navigator.serviceWorker.controller.postMessage === 'function') {
+                        navigator.serviceWorker.controller.postMessage({ action: 'dismiss_notification', id: identifier });
+                    }
+                }
+            } catch(e) {
+                console.warn("[dismissAppNotification err]", e);
             }
         }
 
@@ -5720,6 +5811,7 @@ let currentUser = null;
         // Da chiamare quando l'utente vede effettivamente la chat generale
         function markGeneralChatAsRead() {
             if (!currentUser) return;
+            dismissAppNotification('general');
             lastSeenGeneralAtMillis = Date.now();
             const key = getLastSeenGeneralStorageKey();
             if (key) localStorage.setItem(key, String(lastSeenGeneralAtMillis));
@@ -5777,6 +5869,10 @@ let currentUser = null;
                         return;
                     }
                     snapshot.docChanges().forEach(change => {
+                        if (change.type === 'removed') {
+                            dismissAppNotification(change.doc.id);
+                            dismissAppNotification('general');
+                        }
                         if (change.type === 'added') {
                             const data = change.doc.data();
                             const msgTs = data.createdAt?.toMillis ? data.createdAt.toMillis() : (data.createdAt?.seconds ? data.createdAt.seconds * 1000 : 0);
@@ -6207,10 +6303,11 @@ let currentUser = null;
                 } else {
                     markGeneralChatAsRead();
 
-                    // TRIGGER 2 PUSH BACKGROUND: invio notifica a tutti per la chat pubblica
+                    // TRIGGER 2 PUSH BACKGROUND: invio notifica a tutti per la chat pubblica (escludendo chi invia)
                     const senderName = userNickname || (currentUser.displayName || 'Un atleta');
                     dispatchBackgroundPush({
                         sendToAll: true,
+                        excludeUids: [currentUser.uid],
                         title: `🌐 Chat Generale - ${senderName}`,
                         body: msgText,
                         data: { type: 'general' }
@@ -6417,6 +6514,12 @@ let currentUser = null;
                         });
                     }
 
+                    snapshot.docChanges().forEach(change => {
+                        if (change.type === 'removed') {
+                            dismissAppNotification(change.doc.id);
+                            dismissAppNotification(convId);
+                        }
+                    });
                     lastRenderedConversationMsgs = msgs;
                     renderMessagesIntoContainer(msgs, container);
                 }, (error) => {
@@ -6491,6 +6594,7 @@ let currentUser = null;
         function openConversation(convId) {
             if (!currentUser) return;
 
+            dismissAppNotification(convId);
             activeChatView = 'private-thread';
             activeConversationId = convId;
             activeConversationData = null;
@@ -7371,8 +7475,12 @@ let currentUser = null;
                 true,
                 () => currentMessagesRef().doc(msgId).delete()
                     .then(() => {
+                        dismissAppNotification(msgId);
                         if (isPrivateThread) {
+                            dismissAppNotification(convId);
                             return refreshConversationPreview(convId);
+                        } else {
+                            dismissAppNotification('general');
                         }
                     })
             );
@@ -7393,14 +7501,40 @@ let currentUser = null;
                         return convRef.update({
                             lastMessageText: '',
                             lastMessageSenderUid: null
-                            // lastMessageAt volutamente invariato: serve solo per l'ordinamento della lista chat
+                        }).then(() => {
+                            if (activeConversationData && activeConversationData.participants) {
+                                const targetUids = activeConversationData.participants.filter(uid => uid !== currentUser.uid);
+                                const chatTitle = activeConversationData.type === 'group'
+                                    ? (activeConversationData.name || 'Gruppo')
+                                    : (userNickname || (currentUser.displayName || 'Un atleta'));
+                                dispatchBackgroundPush({
+                                    targetUids: targetUids,
+                                    title: `💬 ${chatTitle}`,
+                                    body: "Un messaggio è stato eliminato",
+                                    data: { type: 'chat', id: convId }
+                                });
+                            }
                         });
                     }
                     const lastMsg = snapshot.docs[0].data();
+                    const senderName = (activeConversationData && activeConversationData.participantNames && activeConversationData.participantNames[lastMsg.uid]) || 'Un atleta';
                     return convRef.update({
                         lastMessageText: lastMsg.text || '',
                         lastMessageAt: lastMsg.createdAt || firebase.firestore.FieldValue.serverTimestamp(),
                         lastMessageSenderUid: lastMsg.uid || null
+                    }).then(() => {
+                        if (activeConversationData && activeConversationData.participants) {
+                            const targetUids = activeConversationData.participants.filter(uid => uid !== currentUser.uid);
+                            const chatTitle = activeConversationData.type === 'group'
+                                ? (activeConversationData.name || 'Gruppo')
+                                : senderName;
+                            dispatchBackgroundPush({
+                                targetUids: targetUids,
+                                title: `💬 ${chatTitle}`,
+                                body: `${senderName}: ${lastMsg.text || 'Messaggio'}`,
+                                data: { type: 'chat', id: convId }
+                            });
+                        }
                     });
                 })
                 .catch((error) => {
