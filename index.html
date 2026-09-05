@@ -2620,6 +2620,11 @@
         // Configurazione Firebase Cloud Messaging (Web Push)
         let messaging = null;
         let swRegistration = null;
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.ready.then(reg => {
+                swRegistration = reg;
+            }).catch(() => {});
+        }
         let fcmToken = null;
         let notificationsEnabled = localStorage.getItem('naiontrackNotificationsEnabled') === 'true' && (typeof Notification === 'undefined' || Notification.permission === 'granted');
         const FIREBASE_VAPID_KEY = "BNv-YOUR-KEY-HERE"; // Incolla qui la chiave VAPID da Firebase Console -> Impostazioni progetto -> Cloud Messaging -> Web Push certificates
@@ -2735,7 +2740,7 @@
                     }
                 }
 
-                const collapseId = data.id || data.type || 'calisthenics-update';
+                const collapseId = data.id || (data.type ? (data.type + '-' + Date.now()) : String(Date.now()));
                 const payload = {
                     app_id: ONESIGNAL_APP_ID,
                     headings: { en: title, it: title },
@@ -3884,21 +3889,28 @@ let currentUser = null;
             // Mostra sempre il toast grafico elegante all'interno dell'app
             showInAppToast(title, body, options);
 
-            // Mostra la notifica di sistema solo se la finestra è nascosta / in background
-            // ed evita duplicati grazie al tag univoco e renotify: false
+            // Mostra la notifica nativa di sistema quando la finestra è in background o a schermo spento
             if (document.hidden && 'Notification' in window && Notification.permission === 'granted') {
                 const iconUrl = 'https://naiontrack.github.io/Calisthenics-Skill-Tree/icon-512.png';
-                const tag = options.id ? `calisthenics-${options.type}-${options.id}` : `calisthenics-${options.type || 'gen'}`;
+                const tag = options.id ? `calisthenics-${options.type}-${options.id}` : `calisthenics-${options.type || 'gen'}-${Date.now()}`;
+                const displayNative = (reg) => {
+                    if (reg && typeof reg.showNotification === 'function') {
+                        reg.showNotification(title, {
+                            body: body,
+                            icon: iconUrl,
+                            badge: iconUrl,
+                            tag: tag,
+                            renotify: true,
+                            vibrate: [200, 100, 200],
+                            data: Object.assign({ url: 'https://naiontrack.github.io/Calisthenics-Skill-Tree/' }, options)
+                        }).catch(e => console.warn('[showAppNotification sw err]', e));
+                    }
+                };
+
                 if (swRegistration && typeof swRegistration.showNotification === 'function') {
-                    swRegistration.showNotification(title, {
-                        body: body,
-                        icon: iconUrl,
-                        badge: iconUrl,
-                        tag: tag,
-                        renotify: false,
-                        vibrate: [150, 75, 150],
-                        data: Object.assign({ url: './index.html' }, options)
-                    }).catch(e => {});
+                    displayNative(swRegistration);
+                } else if ('serviceWorker' in navigator) {
+                    navigator.serviceWorker.ready.then(displayNative).catch(() => {});
                 }
             }
         }
