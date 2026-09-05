@@ -1220,6 +1220,89 @@
             border-top: 1px solid var(--line-color);
         }
 
+        .chat-poll-circle-btn {
+            width: 36px;
+            height: 36px;
+            min-width: 36px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid var(--line-color);
+            color: var(--text);
+            font-size: 1.15rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            padding: 0;
+            flex-shrink: 0;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .chat-poll-circle-btn:hover {
+            background: var(--primary);
+            border-color: var(--primary);
+            transform: scale(1.08);
+        }
+
+        .chat-poll-card {
+            background: linear-gradient(145deg, rgba(30, 41, 59, 0.95), rgba(15, 23, 42, 0.95));
+            border: 1px solid rgba(56, 189, 248, 0.28);
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+            border-radius: 14px;
+            padding: 12px 14px;
+            margin: 10px 0;
+            max-width: 92%;
+            width: 100%;
+            align-self: center;
+            box-sizing: border-box;
+        }
+
+        .chat-poll-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+
+        .chat-poll-badge {
+            font-size: 0.7rem;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+            color: #38bdf8;
+            background: rgba(56, 189, 248, 0.12);
+            padding: 2px 8px;
+            border-radius: 6px;
+        }
+
+        .chat-poll-title {
+            font-weight: 700;
+            font-size: 0.95rem;
+            color: var(--text);
+            margin-bottom: 6px;
+        }
+
+        .chat-poll-meta {
+            font-size: 0.82rem;
+            color: var(--subtext);
+            line-height: 1.45;
+            margin-bottom: 6px;
+        }
+
+        .chat-poll-creator {
+            font-size: 0.72rem;
+            color: var(--subtext);
+            opacity: 0.8;
+            margin-bottom: 10px;
+        }
+
+        .chat-poll-vote-row {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 8px;
+            flex-wrap: wrap;
+        }
+
         .chat-input-row {
             display: flex;
             gap: 6px;
@@ -5544,16 +5627,25 @@ let currentUser = null;
                 return;
             }
 
+            const isGroup = activeChatView === 'private-thread' && activeConversationData && activeConversationData.type === 'group';
+
             box.innerHTML = `
                 <div class="chat-input-row">
+                    ${isGroup ? `
+                        <button type="button" class="chat-poll-circle-btn" onclick="openCreateEventModal('${activeConversationId}')" title="Crea sondaggio per il gruppo" aria-label="Crea sondaggio">
+                            📊
+                        </button>
+                    ` : ''}
                     <input type="text" id="chat-input" placeholder="Scrivi un messaggio..." maxlength="300">
                     <button onclick="sendChatMessage()">Invia</button>
                 </div>
             `;
             const input = document.getElementById('chat-input');
-            input.onkeypress = (e) => {
-                if (e.key === 'Enter') sendChatMessage();
-            };
+            if (input) {
+                input.onkeypress = (e) => {
+                    if (e.key === 'Enter') sendChatMessage();
+                };
+            }
         }
 
         // ==========================================
@@ -5879,6 +5971,66 @@ let currentUser = null;
                     return;
                 }
 
+                // Rendering sondaggi privati di gruppo direttamente nel flusso della chat
+                if (m.type === 'poll' || m.pollId) {
+                    const pollId = m.pollId || m.id;
+                    const poll = (typeof activeGroupPollsCache !== 'undefined' && activeGroupPollsCache[pollId])
+                        ? activeGroupPollsCache[pollId]
+                        : m;
+                    const responses = poll.responses || {};
+                    const myResponse = currentUser ? responses[currentUser.uid] : null;
+                    let yesCount = 0, noCount = 0, maybeCount = 0;
+                    Object.values(responses).forEach(r => {
+                        if (r === 'yes') yesCount++;
+                        else if (r === 'no') noCount++;
+                        else if (r === 'maybe') maybeCount++;
+                    });
+                    const isCreator = currentUser && (poll.creatorUid === currentUser.uid || m.pollCreatorUid === currentUser.uid || m.uid === currentUser.uid);
+                    const deadlineMillis = getMaybeDeadlineMillis(poll);
+                    const isDeadlinePassed = deadlineMillis && Date.now() >= deadlineMillis;
+                    const pollDay = poll.day || m.pollDay || '';
+                    const pollTime = poll.time || m.pollTime || '';
+                    const pollPlace = poll.place || m.pollPlace || '';
+                    const pollCreator = poll.creatorName || m.pollCreatorName || 'Un atleta';
+
+                    html += `
+                        <div class="chat-poll-card" id="chat-poll-${escapeHtml(pollId)}">
+                            <div class="chat-poll-header">
+                                <span class="chat-poll-badge">📊 SONDAGGIO DI GRUPPO</span>
+                                <div style="display:flex; align-items:center; gap:6px;">
+                                    <button class="event-info-btn" title="Chi ha votato" onclick="openEventVotersModal('${escapeHtml(pollId)}')">ℹ️</button>
+                                    ${isCreator ? `<button class="event-delete-btn" title="Elimina sondaggio" onclick="askDeleteGroupEventFromChat('${escapeHtml(pollId)}', '${activeConversationId || ''}')">🗑️</button>` : ''}
+                                </div>
+                            </div>
+                            <div class="chat-poll-title">🤸 Allenamento</div>
+                            <div class="chat-poll-meta">
+                                📆 ${escapeHtml(pollDay)}<br>
+                                🕒 ${escapeHtml(pollTime)}<br>
+                                📍 ${escapeHtml(pollPlace)}
+                            </div>
+                            <div class="chat-poll-creator">Proposto da ${escapeHtml(pollCreator)}</div>
+                            <div class="chat-poll-vote-row">
+                                <button class="event-vote-btn ${myResponse === 'yes' ? 'selected-yes' : ''}" onclick="voteGroupEventFromChat('${escapeHtml(pollId)}', 'yes')">✅ Sì</button>
+                                <button class="event-vote-btn ${myResponse === 'no' ? 'selected-no' : ''}" onclick="voteGroupEventFromChat('${escapeHtml(pollId)}', 'no')">❌ No</button>
+                                ${poll.allowMaybe ? `<button class="event-vote-btn ${myResponse === 'maybe' ? 'selected-maybe' : ''}" onclick="voteGroupEventFromChat('${escapeHtml(pollId)}', 'maybe')">🤔 Forse</button>` : ''}
+                            </div>
+                            ${poll.allowMaybe && poll.maybeDeadlineDate && poll.maybeDeadlineTime ? `
+                                <div class="event-maybe-note" style="${isDeadlinePassed ? 'color:#ef4444; font-weight:700;' : ''}">
+                                    ${isDeadlinePassed
+                                        ? `⚠️ Termine per "Forse" SCADUTO alle ${escapeHtml(poll.maybeDeadlineTime)} del ${escapeHtml(poll.maybeDeadlineDate)}`
+                                        : `Chi ha scelto "forse" deve confermare entro il ${escapeHtml(poll.maybeDeadlineDate)} alle ${escapeHtml(poll.maybeDeadlineTime)}`}
+                                </div>
+                            ` : ''}
+                            <div class="event-vote-counts">
+                                <span>✅ ${yesCount}</span>
+                                <span>❌ ${noCount}</span>
+                                ${poll.allowMaybe ? `<span>🤔 ${maybeCount}</span>` : ''}
+                            </div>
+                        </div>
+                    `;
+                    return;
+                }
+
                 const isMe = currentUser && m.uid === currentUser.uid;
 
                 let rankLabel = m.rank || userRankCache[m.uid];
@@ -6132,24 +6284,50 @@ let currentUser = null;
             }
         }
 
+        let activeGroupPollsCache = {};
+        let activeGroupPollsUnsubscribe = null;
+        let lastRenderedConversationMsgs = [];
+
         function initConversationMessagesListener(convId) {
             stopConversationMessagesListener();
             const container = document.getElementById('chat-messages');
 
-            // Ascolta lo stato del documento della chat per rilevare se viene eliminata dall'altro partecipante
+            // Ascolta lo stato del documento della chat: se viene eliminata o l'utente viene rimosso dai membri
             conversationDocUnsubscribe = db.collection("conversations").doc(convId)
                 .onSnapshot((doc) => {
                     if (!doc.exists) {
-                        // Se la conversazione non esiste più (es. l'altro utente l'ha abbandonata/eliminata), torna alla lista
                         if (activeChatView === 'private-thread' && activeConversationId === convId) {
                             backToPrivateList();
                         }
                     } else {
-                        activeConversationData = Object.assign({ id: doc.id }, doc.data());
+                        const data = doc.data();
+                        // Se l'utente è stato rimosso dai partecipanti dal creatore del gruppo
+                        if (currentUser && data.participants && !data.participants.includes(currentUser.uid)) {
+                            if (activeChatView === 'private-thread' && activeConversationId === convId) {
+                                showAppToast("Sei stato rimosso da questo gruppo. La chat è stata rimossa.", "warning");
+                                backToPrivateList();
+                                return;
+                            }
+                        }
+                        activeConversationData = Object.assign({ id: doc.id }, data);
                         const titleEl = document.getElementById('chat-thread-title');
                         if (titleEl) titleEl.innerText = conversationDisplayName(activeConversationData);
+                        renderChatInputState();
                     }
                 }, (error) => console.error("Errore listener documento conversazione:", error));
+
+            // Ascolta i sondaggi privati del gruppo per aggiornare in tempo reale i voti sul messaggio
+            activeGroupPollsUnsubscribe = db.collection("events")
+                .where("convId", "==", convId)
+                .onSnapshot((evSnap) => {
+                    activeGroupPollsCache = {};
+                    evSnap.forEach(doc => {
+                        activeGroupPollsCache[doc.id] = Object.assign({ id: doc.id }, doc.data());
+                    });
+                    if (lastRenderedConversationMsgs.length > 0 && container && activeChatView === 'private-thread') {
+                        renderMessagesIntoContainer(lastRenderedConversationMsgs, container);
+                    }
+                }, err => console.warn("Errore listener sondaggi gruppo chat:", err));
 
             conversationMessagesUnsubscribe = db.collection("conversations").doc(convId).collection("messages")
                 .orderBy("createdAt", "desc")
@@ -6163,6 +6341,34 @@ let currentUser = null;
                         msgs.push(Object.assign({ id: doc.id }, data));
                     });
                     msgs.reverse();
+
+                    // Se è un gruppo, integra nella lista dei messaggi eventuali sondaggi attivi del gruppo
+                    // che non abbiano ancora un messaggio esplicito nel thread
+                    if (activeConversationData && activeConversationData.type === 'group') {
+                        Object.values(activeGroupPollsCache).forEach(poll => {
+                            const alreadyInMsgs = msgs.some(m => (m.type === 'poll' && (m.pollId === poll.id || m.id === poll.id)) || (m.pollId === poll.id));
+                            if (!alreadyInMsgs) {
+                                msgs.push({
+                                    id: 'poll_' + poll.id,
+                                    type: 'poll',
+                                    pollId: poll.id,
+                                    pollDay: poll.day,
+                                    pollTime: poll.time,
+                                    pollPlace: poll.place,
+                                    pollCreatorUid: poll.creatorUid,
+                                    pollCreatorName: poll.creatorName,
+                                    createdAt: poll.createdAt
+                                });
+                            }
+                        });
+                        msgs.sort((a, b) => {
+                            const ta = a.createdAt && a.createdAt.toMillis ? a.createdAt.toMillis() : (a.createdAt && a.createdAt.seconds ? a.createdAt.seconds * 1000 : 0);
+                            const tb = b.createdAt && b.createdAt.toMillis ? b.createdAt.toMillis() : (b.createdAt && b.createdAt.seconds ? b.createdAt.seconds * 1000 : 0);
+                            return ta - tb;
+                        });
+                    }
+
+                    lastRenderedConversationMsgs = msgs;
                     renderMessagesIntoContainer(msgs, container);
                 }, (error) => {
                     console.error("Errore nel caricamento dei messaggi:", error);
@@ -6179,6 +6385,58 @@ let currentUser = null;
                 conversationDocUnsubscribe();
                 conversationDocUnsubscribe = null;
             }
+            if (activeGroupPollsUnsubscribe) {
+                activeGroupPollsUnsubscribe();
+                activeGroupPollsUnsubscribe = null;
+            }
+            activeGroupPollsCache = {};
+            lastRenderedConversationMsgs = [];
+        }
+
+        function voteGroupEventFromChat(pollId, value) {
+            if (!currentUser) return;
+            db.collection("events").doc(pollId).update({
+                [`responses.${currentUser.uid}`]: value
+            }).then(() => {
+                if (value === 'maybe') {
+                    db.collection("events").doc(pollId).get().then(doc => {
+                        if (doc.exists) {
+                            const ev = doc.data();
+                            ev.id = doc.id;
+                            const deadlineMillis = getMaybeDeadlineMillis(ev);
+                            if (deadlineMillis && deadlineMillis > Date.now()) {
+                                showAppNotification(
+                                    "🤔 Risposta registrata: Forse",
+                                    `Ricordati di confermare la tua presenza entro il ${ev.maybeDeadlineDate} alle ore ${ev.maybeDeadlineTime}.`,
+                                    { type: 'chat', id: activeConversationId }
+                                );
+                            }
+                        }
+                    }).catch(()=>{});
+                }
+            }).catch((error) => {
+                console.error("Errore voto sondaggio chat:", error);
+                showAppToast("Errore durante la votazione.", "error");
+            });
+        }
+
+        function askDeleteGroupEventFromChat(pollId, convId) {
+            openCustomModal(
+                "🗑️ Elimina Sondaggio",
+                "Sei sicuro di voler eliminare questo sondaggio dalla chat del gruppo?",
+                "Elimina",
+                true,
+                () => {
+                    db.collection("events").doc(pollId).delete().catch(e => console.error(e));
+                    if (convId) {
+                        db.collection("conversations").doc(convId).collection("messages")
+                            .where("pollId", "==", pollId).get().then(snap => {
+                                snap.forEach(d => d.ref.delete());
+                            }).catch(e => console.error(e));
+                    }
+                    showAppToast("Sondaggio eliminato.", "info");
+                }
+            );
         }
 
         function openConversation(convId) {
@@ -6889,6 +7147,14 @@ let currentUser = null;
                 createdAt: firebase.firestore.FieldValue.serverTimestamp()
             }).catch(e => console.error("Errore invio messaggio sistema:", e));
 
+            // Invia notifica push alla persona rimossa
+            dispatchBackgroundPush({
+                targetUids: [uid],
+                title: "👥 Aggiornamento Gruppo",
+                body: `Sei stato rimosso dal gruppo "${activeConversationData.name || 'Gruppo'}".`,
+                data: { type: 'chat' }
+            });
+
             return db.collection("conversations").doc(convId).update({
                 participants: firebase.firestore.FieldValue.arrayRemove(uid),
                 participantNames: newParticipantNames,
@@ -6898,6 +7164,8 @@ let currentUser = null;
             }).then(() => {
                 activeConversationData.participants = (activeConversationData.participants || []).filter(p => p !== uid);
                 activeConversationData.participantNames = newParticipantNames;
+                showAppToast(`${removedName} è stato rimosso dal gruppo.`, "info");
+                openConversationOptionsModal();
             });
         }
 
@@ -7462,17 +7730,23 @@ let currentUser = null;
                 eventData.participants = activeConversationData.participants || [];
             }
 
-            db.collection("events").add(eventData).then(() => {
+            db.collection("events").add(eventData).then((docRef) => {
                 const modal = document.getElementById('custom-modal');
                 if (modal) modal.classList.remove('active');
                 const creator = userNickname || (currentUser.displayName || 'Un atleta');
 
                 if (isGroupPoll && targetConvId) {
-                    // Notifica in chat di gruppo
                     const sysMsg = `📊 Nuovo sondaggio per il gruppo: ${dayLabel} ore ${time} presso ${place.slice(0, 40)}`;
+                    
+                    // Invia il messaggio con type 'poll' per renderizzare la card interattiva direttamente nella chat
                     db.collection("conversations").doc(targetConvId).collection("messages").add({
-                        isSystem: true,
-                        text: sysMsg,
+                        type: 'poll',
+                        pollId: docRef ? docRef.id : null,
+                        pollDay: dayLabel,
+                        pollTime: time,
+                        pollPlace: place,
+                        pollCreatorUid: currentUser.uid,
+                        pollCreatorName: creator,
                         createdAt: firebase.firestore.FieldValue.serverTimestamp()
                     }).catch(e => console.warn(e));
 
