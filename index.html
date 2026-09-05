@@ -1813,6 +1813,79 @@
         }
 
         /* ========================================== */
+        /* SEZIONE CONDIVIDI E INVITA AMICI (+3.000 XP) */
+        /* ========================================== */
+        .share-section {
+            width: 100%;
+            max-width: 900px;
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 15px;
+            box-sizing: border-box;
+            border: 1px solid var(--line-color);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+            text-align: left;
+            margin-bottom: 25px;
+        }
+
+        .share-bonus-badge {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 3px 9px;
+            border-radius: 12px;
+            margin-left: 8px;
+            vertical-align: middle;
+            display: inline-block;
+            box-shadow: 0 2px 6px rgba(16, 185, 129, 0.3);
+        }
+
+        .share-card-banner {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--line-color);
+            border-radius: 12px;
+            padding: 14px;
+            margin-bottom: 14px;
+        }
+
+        .share-link-container {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .share-link-input {
+            flex: 1;
+            background: var(--bg-color);
+            border: 1px solid var(--line-color);
+            border-radius: 8px;
+            padding: 10px 12px;
+            color: var(--text-color);
+            font-size: 0.85rem;
+            font-family: monospace;
+            outline: none;
+            user-select: all;
+        }
+
+        .share-link-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        @media (max-width: 600px) {
+            .share-link-container {
+                flex-direction: column;
+            }
+            .share-link-actions {
+                width: 100%;
+            }
+            .share-link-actions button {
+                flex: 1;
+            }
+        }
+
+        /* ========================================== */
         /* SEZIONE ALLENAMENTI PERSONALI */
         /* ========================================== */
         .workouts-section {
@@ -2648,6 +2721,21 @@
         </div>
         <div id="profile-collapsible-content" style="display: none; margin-top: 12px; border-top: 1px solid var(--line-color); padding-top: 12px;">
             <div id="profile-settings-body"></div>
+        </div>
+    </div>
+
+    <!-- SEZIONE CONDIVIDI & INVITA AMICI (+3000 XP) -->
+    <div class="share-section" id="share-section">
+        <div class="section-collapsible-header" onclick="toggleShareSection()">
+            <h3 class="leaderboard-title" style="margin:0; border-bottom:none; padding-bottom:0;">
+                🎁 Condividi l'App <span class="share-bonus-badge">+3.000 XP</span>
+            </h3>
+            <span class="collapsible-icon" id="share-toggle-icon">▼ Espandi</span>
+        </div>
+        <div id="share-collapsible-content" style="display: none; margin-top: 12px; border-top: 1px solid var(--line-color); padding-top: 14px;">
+            <div id="share-section-body">
+                <!-- Popolato dinamicamente da renderShareSection() -->
+            </div>
         </div>
     </div>
 
@@ -4505,9 +4593,11 @@ let currentUser = null;
                     checkInactivityReminder();
                     if (user) {
                         syncOneSignalUser(user.uid);
-                    
-                    // Mostra il prompt OneSignal all'utente se non ha ancora risposto
-                    // Pop-up slidedown rimosso (gestione diretta da impostazioni / accesso)
+                        registerCurrentDevice(user.uid);
+                        processPendingReferral(user.uid);
+                    }
+                    if (typeof isShareSectionOpen !== 'undefined' && isShareSectionOpen) {
+                        renderShareSection();
                     }
                     if (chatPanelOpen) {
                         renderChatInputState();
@@ -4541,6 +4631,9 @@ let currentUser = null;
                 renderProfileSettings();
                 initRealtimeLeaderboard();
                 initWorkoutsSection();
+                if (typeof isShareSectionOpen !== 'undefined' && isShareSectionOpen) {
+                    renderShareSection();
+                }
                 if (chatPanelOpen) {
                     renderChatInputState();
                 }
@@ -5703,7 +5796,7 @@ let currentUser = null;
             modal.classList.add('active');
             document.getElementById('modal-btn-cancel').onclick = () => modal.classList.remove('active');
 
-            db.collection("users").doc(uid).get().then((doc) => {
+            db.collection("users").doc(uid).get().then(async (doc) => {
                 if (!doc.exists) {
                     bodyContent.innerHTML = `<p>Utente non trovato.</p>`;
                     return;
@@ -5721,6 +5814,60 @@ let currentUser = null;
                     `;
                     return;
                 }
+
+                // Statistiche Duelli 1vs1 (visibili solo per account pubblici o per il proprietario)
+                let duelWins = (data.duelStats && data.duelStats.wins) || data.duelWins || 0;
+                let duelLosses = (data.duelStats && data.duelStats.losses) || data.duelLosses || 0;
+                let duelTies = (data.duelStats && data.duelStats.ties) || data.duelTies || 0;
+
+                try {
+                    const duelSnap = await db.collection("challenges").where("participants", "array-contains", uid).get();
+                    if (!duelSnap.empty) {
+                        let qWins = 0, qLosses = 0, qTies = 0;
+                        duelSnap.forEach(dDoc => {
+                            const c = dDoc.data();
+                            if (c.mode === 'duel' && c.status === 'completed') {
+                                if (c.winnerUid === uid) {
+                                    qWins++;
+                                } else if (c.winnerUid === 'tie') {
+                                    qTies++;
+                                } else if (c.winnerUid && c.winnerUid !== uid) {
+                                    qLosses++;
+                                }
+                            }
+                        });
+                        duelWins = Math.max(duelWins, qWins);
+                        duelLosses = Math.max(duelLosses, qLosses);
+                        duelTies = Math.max(duelTies, qTies);
+                    }
+                } catch (eDuel) {
+                    console.warn("Errore calcolo duelli storici:", eDuel);
+                }
+
+                const duelStatsHtml = `
+                    <div style="margin: 12px 0; padding: 10px 14px; background: rgba(255,255,255,0.03); border: 1px solid var(--line-color); border-radius: 12px;">
+                        <div style="font-weight: bold; font-size: 0.85rem; margin-bottom: 8px; text-align: center; color: var(--text-color); display: flex; align-items: center; justify-content: center; gap: 6px;">
+                            <span>⚔️ Sfide Duello 1vs1</span>
+                            <span style="font-size: 0.72rem; color: var(--subtext); font-weight: normal;">(Best of 3)</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-around; align-items: center; text-align: center;">
+                            <div style="flex: 1;">
+                                <div style="font-size: 1.25rem; font-weight: bold; color: #10b981;">${duelWins}</div>
+                                <div style="font-size: 0.72rem; color: var(--subtext);">🥇 Vinte</div>
+                            </div>
+                            <div style="width: 1px; height: 26px; background: var(--line-color);"></div>
+                            <div style="flex: 1;">
+                                <div style="font-size: 1.25rem; font-weight: bold; color: #ef4444;">${duelLosses}</div>
+                                <div style="font-size: 0.72rem; color: var(--subtext);">❌ Perse</div>
+                            </div>
+                            <div style="width: 1px; height: 26px; background: var(--line-color);"></div>
+                            <div style="flex: 1;">
+                                <div style="font-size: 1.25rem; font-weight: bold; color: #f59e0b;">${duelTies}</div>
+                                <div style="font-size: 0.72rem; color: var(--subtext);">🤝 Pareggiate</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
 
                 const xp = data.totalXp || 0;
                 const rank = getCurrentRank(xp);
@@ -5763,6 +5910,7 @@ let currentUser = null;
                             <p style="margin:0; color: var(--subtext); font-size:0.85rem;">${escapeHtml(rank.name)} — ${xp} XP</p>
                         </div>
                     </div>
+                    ${duelStatsHtml}
                     <div id="bmi-display-box" style="text-align:left;">${bmiHtml}</div>
                     <div style="text-align:left; max-height: 240px; overflow-y: auto; margin-top: 10px; border-top: 1px solid var(--line-color); padding-top: 8px;">
                         ${unlockedHtml}
@@ -5772,6 +5920,391 @@ let currentUser = null;
                 console.error("Errore caricamento profilo utente:", error);
                 bodyContent.innerHTML = `<p>Errore nel caricamento del profilo.</p>`;
             });
+        }
+
+
+        // ===============================================================
+        // SEZIONE CONDIVIDI & SISTEMA REFERRAL ANTI-CHEAT (+3.000 XP)
+        // ===============================================================
+        let isShareSectionOpen = false;
+
+        // Rilevamento univoco del dispositivo (Fingerprint Hardware + Cookie + LocalStorage)
+        function getDeviceFingerprint() {
+            let persistentId = '';
+            try {
+                persistentId = localStorage.getItem('calisthenics_device_id') || '';
+                if (!persistentId) {
+                    const match = document.cookie.match(/(?:^|; )calisthenics_device_id=([^;]*)/);
+                    if (match && match[1]) persistentId = decodeURIComponent(match[1]);
+                }
+                if (!persistentId) {
+                    persistentId = 'dev_' + Math.random().toString(36).substring(2, 11) + '_' + Date.now().toString(36);
+                    localStorage.setItem('calisthenics_device_id', persistentId);
+                    document.cookie = 'calisthenics_device_id=' + encodeURIComponent(persistentId) + '; max-age=315360000; path=/; SameSite=Lax';
+                }
+            } catch(e) {
+                persistentId = 'dev_mem_' + Math.random().toString(36).substring(2, 11);
+            }
+
+            let hwString = '';
+            try {
+                const s = window.screen || {};
+                const nav = window.navigator || {};
+                const tz = (Intl && Intl.DateTimeFormat) ? Intl.DateTimeFormat().resolvedOptions().timeZone : '';
+                const hwParts = [
+                    s.width || 0,
+                    s.height || 0,
+                    s.colorDepth || 0,
+                    nav.hardwareConcurrency || 1,
+                    nav.deviceMemory || 1,
+                    nav.platform || '',
+                    tz,
+                    nav.language || ''
+                ];
+
+                try {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = 160;
+                    canvas.height = 40;
+                    const ctx = canvas.getContext('2d');
+                    if (ctx) {
+                        ctx.textBaseline = "top";
+                        ctx.font = "14px 'Arial'";
+                        ctx.fillStyle = "#f60";
+                        ctx.fillRect(12, 1, 62, 20);
+                        ctx.fillStyle = "#069";
+                        ctx.fillText("CalisthenicsTree#AntiCheat", 2, 15);
+                        ctx.fillStyle = "rgba(102, 204, 0, 0.7)";
+                        ctx.fillText("CalisthenicsTree#AntiCheat", 4, 17);
+                        hwParts.push(canvas.toDataURL().slice(-40));
+                    }
+                } catch(ce) {}
+
+                hwString = hwParts.join(':::');
+            } catch(e) {
+                hwString = 'default_hw';
+            }
+
+            let hash = 0;
+            for (let i = 0; i < hwString.length; i++) {
+                const char = hwString.charCodeAt(i);
+                hash = ((hash << 5) - hash) + char;
+                hash |= 0;
+            }
+            const hwHash = 'hw_' + Math.abs(hash).toString(36);
+
+            return {
+                deviceId: persistentId,
+                hwHash: hwHash
+            };
+        }
+
+        // Intercetta ?ref=... all'avvio dell'app e lo memorizza
+        function checkReferralQueryParam() {
+            try {
+                const urlParams = new URLSearchParams(window.location.search);
+                const ref = urlParams.get('ref');
+                if (ref && ref.trim()) {
+                    localStorage.setItem('calisthenics_pending_ref', ref.trim());
+                    const cleanUrl = window.location.origin + window.location.pathname + window.location.hash;
+                    window.history.replaceState({}, document.title, cleanUrl);
+                }
+            } catch(e) {
+                console.warn("Errore controllo referral query param:", e);
+            }
+        }
+        checkReferralQueryParam();
+
+        // Registra il dispositivo corrente su Firestore per l'account autenticato
+        async function registerCurrentDevice(uid) {
+            if (!uid) return;
+            try {
+                const fp = getDeviceFingerprint();
+                const batch = db.batch();
+
+                const hwRef = db.collection("deviceRegistrations").doc(fp.hwHash);
+                batch.set(hwRef, {
+                    associatedUids: firebase.firestore.FieldValue.arrayUnion(uid),
+                    lastUid: uid,
+                    lastSeen: firebase.firestore.FieldValue.serverTimestamp(),
+                    deviceId: fp.deviceId
+                }, { merge: true });
+
+                const devRef = db.collection("deviceRegistrations").doc(fp.deviceId);
+                batch.set(devRef, {
+                    associatedUids: firebase.firestore.FieldValue.arrayUnion(uid),
+                    lastUid: uid,
+                    lastSeen: firebase.firestore.FieldValue.serverTimestamp(),
+                    hwHash: fp.hwHash
+                }, { merge: true });
+
+                const userRef = db.collection("users").doc(uid);
+                batch.set(userRef, {
+                    devices: firebase.firestore.FieldValue.arrayUnion(fp.hwHash, fp.deviceId),
+                    lastDeviceId: fp.deviceId,
+                    lastHwHash: fp.hwHash
+                }, { merge: true });
+
+                await batch.commit();
+            } catch(e) {
+                console.warn("Errore registrazione dispositivo:", e);
+            }
+        }
+
+        // Elabora l'eventuale referral pendente applicando tutti i vincoli Anti-Cheat
+        async function processPendingReferral(authUid) {
+            if (!authUid) return;
+            const pendingRef = localStorage.getItem('calisthenics_pending_ref');
+            if (!pendingRef) return;
+
+            const referrerUid = pendingRef.trim();
+
+            // 1. Anti-Cheat: Non puoi invitare te stesso!
+            if (referrerUid === authUid) {
+                console.log("[AntiCheat Referral] Tentativo di auto-invito con lo stesso account ignorato.");
+                localStorage.removeItem('calisthenics_pending_ref');
+                return;
+            }
+
+            try {
+                const fp = getDeviceFingerprint();
+
+                // 2. Anti-Cheat: L'account invitato ha già ricevuto un bonus?
+                const myUserDoc = await db.collection("users").doc(authUid).get();
+                if (myUserDoc.exists && myUserDoc.data().referredBonusProcessed) {
+                    console.log("[AntiCheat Referral] Questo account ha già usufruito di un invito.");
+                    localStorage.removeItem('calisthenics_pending_ref');
+                    return;
+                }
+
+                // 3. Anti-Cheat: Il dispositivo fisico corrente è già stato associato all'invitante?
+                const [hwDoc, devDoc, referrerDoc] = await Promise.all([
+                    db.collection("deviceRegistrations").doc(fp.hwHash).get(),
+                    db.collection("deviceRegistrations").doc(fp.deviceId).get(),
+                    db.collection("users").doc(referrerUid).get()
+                ]);
+
+                if (!referrerDoc.exists) {
+                    console.log("[AntiCheat Referral] Utente invitante inesistente.");
+                    localStorage.removeItem('calisthenics_pending_ref');
+                    return;
+                }
+
+                const hwUids = (hwDoc.exists && hwDoc.data().associatedUids) || [];
+                const devUids = (devDoc.exists && devDoc.data().associatedUids) || [];
+                const referrerDevices = (referrerDoc.exists && referrerDoc.data().devices) || [];
+
+                const isSameDeviceAsReferrer = hwUids.includes(referrerUid) || 
+                                               devUids.includes(referrerUid) || 
+                                               referrerDevices.includes(fp.hwHash) || 
+                                               referrerDevices.includes(fp.deviceId);
+
+                if (isSameDeviceAsReferrer) {
+                    console.warn("[AntiCheat Referral] Rilevato stesso dispositivo fisico dell'invitante. Bonus bloccato per prevenire cheat.");
+                    localStorage.removeItem('calisthenics_pending_ref');
+                    return;
+                }
+
+                // 4. Anti-Cheat: Questo dispositivo hardware ha già reclamato un bonus referral? (Max 1 per dispositivo)
+                const [claimHwDoc, claimDevDoc] = await Promise.all([
+                    db.collection("referralClaims").doc(fp.hwHash).get(),
+                    db.collection("referralClaims").doc(fp.deviceId).get()
+                ]);
+
+                if ((claimHwDoc.exists && claimHwDoc.data().claimed) || (claimDevDoc.exists && claimDevDoc.data().claimed)) {
+                    console.warn("[AntiCheat Referral] Questo dispositivo ha già riscattato un bonus invito in precedenza. 1 bonus per dispositivo.");
+                    localStorage.removeItem('calisthenics_pending_ref');
+                    return;
+                }
+
+                // Tutti i controlli Anti-Cheat sono superati con successo!
+                const batch = db.batch();
+
+                // Accredita +3.000 XP all'invitante
+                batch.set(db.collection("users").doc(referrerUid), {
+                    workoutXp: firebase.firestore.FieldValue.increment(3000),
+                    totalXp: firebase.firestore.FieldValue.increment(3000),
+                    referralsCount: firebase.firestore.FieldValue.increment(1)
+                }, { merge: true });
+
+                // Registra il dispositivo per bloccare ulteriori utilizzi
+                batch.set(db.collection("referralClaims").doc(fp.hwHash), {
+                    claimed: true,
+                    claimedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    referrerUid: referrerUid,
+                    invitedUid: authUid,
+                    deviceId: fp.deviceId
+                });
+                batch.set(db.collection("referralClaims").doc(fp.deviceId), {
+                    claimed: true,
+                    claimedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    referrerUid: referrerUid,
+                    invitedUid: authUid,
+                    hwHash: fp.hwHash
+                });
+
+                // Segna l'account come elaborato
+                batch.set(db.collection("users").doc(authUid), {
+                    referredBy: referrerUid,
+                    referredBonusProcessed: true,
+                    referredAt: firebase.firestore.FieldValue.serverTimestamp()
+                }, { merge: true });
+
+                await batch.commit();
+                localStorage.removeItem('calisthenics_pending_ref');
+
+                // Notifica Push all'invitante
+                const invitedNick = userNickname || (currentUser ? currentUser.displayName : 'Un nuovo atleta');
+                dispatchBackgroundPush({
+                    targetUids: [referrerUid],
+                    title: "🎁 Bonus Invito Amico! (+3.000 XP)",
+                    body: `${invitedNick} si è unito a Calisthenics Tree dal tuo link su un nuovo dispositivo! Hai guadagnato +3.000 XP!`,
+                    data: { type: 'referralBonus' }
+                });
+
+                // Benvenuto all'utente invitato
+                const referrerName = referrerDoc.data().nickname || "un amico";
+                setTimeout(() => {
+                    openCustomModal(
+                        "🎉 Benvenuto nella Community!",
+                        `Ti sei unito con successo a Calisthenics Skill Tree tramite l'invito di <strong>${escapeHtml(referrerName)}</strong>!<br><br>Il tuo amico ha ricevuto il bonus di <strong style="color:var(--unlocked);">+3.000 XP</strong> per averti invitato da un nuovo dispositivo. Buon allenamento!`,
+                        "Inizia ad Allenarti! 🔥",
+                        false,
+                        () => {}
+                    );
+                }, 1200);
+
+            } catch(err) {
+                console.error("Errore processPendingReferral:", err);
+            }
+        }
+
+        // Toggle visualizzazione Sezione Condividi
+        function toggleShareSection() {
+            isShareSectionOpen = !isShareSectionOpen;
+            const content = document.getElementById('share-collapsible-content');
+            const icon = document.getElementById('share-toggle-icon');
+            if (content) content.style.display = isShareSectionOpen ? 'block' : 'none';
+            if (icon) icon.innerText = isShareSectionOpen ? '▲ Riduci' : '▼ Espandi';
+            if (isShareSectionOpen) {
+                renderShareSection();
+            }
+        }
+
+        // Rendering contenuti Sezione Condividi
+        function renderShareSection() {
+            const container = document.getElementById('share-section-body');
+            if (!container) return;
+
+            if (!currentUser) {
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 15px;">
+                        <p style="color: var(--subtext); margin-bottom: 12px; font-size: 0.9rem;">
+                            Accedi o registrati per ottenere il tuo link personale di invito e guadagnare <strong>+3.000 XP</strong> per ogni amico invitato!
+                        </p>
+                        <button class="btn-auth" onclick="openAuthModal('login')" style="padding: 8px 18px;">🔑 Accedi Ora</button>
+                    </div>
+                `;
+                return;
+            }
+
+            const shareUrl = window.location.origin + window.location.pathname + '?ref=' + currentUser.uid;
+
+            db.collection("users").doc(currentUser.uid).get().then(doc => {
+                const data = (doc.exists ? doc.data() : {}) || {};
+                const referralsCount = data.referralsCount || 0;
+                const totalReferralXp = referralsCount * 3000;
+
+                container.innerHTML = `
+                    <div class="share-card-banner">
+                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                            <span style="font-size: 1.8rem;">🎁</span>
+                            <div>
+                                <div style="font-weight: bold; font-size: 1rem; color: var(--text-color);">Invita i tuoi amici e guadagna XP!</div>
+                                <div style="font-size: 0.8rem; color: var(--subtext);">Condividi il tuo link personale. Per ogni amico che accede da un nuovo dispositivo, ricevi subito un bonus di <strong>+3.000 XP</strong>!</div>
+                            </div>
+                        </div>
+
+                        <div style="margin-top: 14px;">
+                            <label style="font-size: 0.8rem; font-weight: 600; color: var(--subtext); display: block; margin-bottom: 4px;">Il tuo link di invito personale:</label>
+                            <div class="share-link-container">
+                                <input type="text" class="share-link-input" id="share-link-field" value="${shareUrl}" readonly onclick="this.select();">
+                                <div class="share-link-actions">
+                                    <button class="btn-confirm" onclick="copyShareInviteLink()" style="display: flex; align-items: center; gap: 5px; white-space: nowrap; padding: 8px 14px;">
+                                        <span>📋</span> Copia Link
+                                    </button>
+                                    <button class="btn-auth" onclick="triggerNativeShare()" style="display: flex; align-items: center; gap: 5px; white-space: nowrap; padding: 8px 14px;">
+                                        <span>📲</span> Condividi
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px;">
+                        <div style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--line-color); border-radius: 10px; padding: 10px; text-align: center;">
+                            <div style="font-size: 1.3rem; font-weight: bold; color: var(--accent);">${referralsCount}</div>
+                            <div style="font-size: 0.75rem; color: var(--subtext);">👥 Amici Invitati</div>
+                        </div>
+                        <div style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--line-color); border-radius: 10px; padding: 10px; text-align: center;">
+                            <div style="font-size: 1.3rem; font-weight: bold; color: #10b981;">+${totalReferralXp.toLocaleString()} XP</div>
+                            <div style="font-size: 0.75rem; color: var(--subtext);">⚡ XP Bonus Guadagnati</div>
+                        </div>
+                    </div>
+
+                    <div style="background: rgba(239, 68, 68, 0.06); border: 1px solid rgba(239, 68, 68, 0.2); border-radius: 8px; padding: 8px 12px; font-size: 0.75rem; color: var(--subtext); display: flex; align-items: flex-start; gap: 8px;">
+                        <span style="font-size: 1rem; line-height: 1;">🛡️</span>
+                        <span>
+                            <strong>Protezione Anti-Cheat:</strong> Il sistema riconosce l'impronta hardware univoca dei dispositivi. Il bonus viene erogato solo per accessi provenienti da dispositivi differenti mai associati al tuo profilo.
+                        </span>
+                    </div>
+                `;
+            }).catch(err => {
+                console.error("Errore caricamento share section:", err);
+            });
+        }
+
+        // Copia link di invito negli appunti
+        function copyShareInviteLink() {
+            if (!currentUser) {
+                alert("Accedi o registrati per condividere il tuo link di invito!");
+                return;
+            }
+            const shareUrl = window.location.origin + window.location.pathname + '?ref=' + currentUser.uid;
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(shareUrl).then(() => {
+                    alert("📋 Link di invito copiato negli appunti! Invialo ai tuoi amici.");
+                }).catch(() => {
+                    prompt("Copia il tuo link di invito:", shareUrl);
+                });
+            } else {
+                prompt("Copia il tuo link di invito:", shareUrl);
+            }
+        }
+
+        // Condivisione nativa tramite Web Share API (WhatsApp, Telegram, etc.)
+        async function triggerNativeShare() {
+            if (!currentUser) {
+                alert("Accedi o registrati per condividere il tuo link di invito!");
+                return;
+            }
+            const shareUrl = window.location.origin + window.location.pathname + '?ref=' + currentUser.uid;
+            const shareData = {
+                title: "Calisthenics Skill Tree",
+                text: "Unisciti a me su Calisthenics Skill Tree! Allena le tue skill, scala la classifica e sfidami nei duelli:",
+                url: shareUrl
+            };
+            if (navigator.share) {
+                try {
+                    await navigator.share(shareData);
+                } catch(e) {
+                    if (e.name !== 'AbortError') {
+                        copyShareInviteLink();
+                    }
+                }
+            } else {
+                copyShareInviteLink();
+            }
         }
 
         // ==========================================
@@ -10010,19 +10543,23 @@ let currentUser = null;
                         finalWinnerUid = oppUid;
                         finalWinnerName = (c.participantNames && c.participantNames[oppUid]) || 'Avversario';
                     } else {
-                        // In caso di parità perfetta nei round, vince il totale complessivo di reps
+                        // In caso di parità di round vinti (es. 1-1 e 1 pareggio, oppure tutti pareggi)
                         let totalMyReps = inputReps;
                         let totalOppReps = oppReps;
                         for (let r = 1; r < 3; r++) {
                             totalMyReps += (c.rounds && c.rounds[r] && c.rounds[r][currentUser.uid]) || 0;
                             totalOppReps += (c.rounds && c.rounds[r] && c.rounds[r][oppUid]) || 0;
                         }
-                        if (totalMyReps >= totalOppReps) {
+                        if (totalMyReps > totalOppReps) {
                             finalWinnerUid = currentUser.uid;
                             finalWinnerName = (c.participantNames && c.participantNames[currentUser.uid]) || myName;
-                        } else {
+                        } else if (totalOppReps > totalMyReps) {
                             finalWinnerUid = oppUid;
                             finalWinnerName = (c.participantNames && c.participantNames[oppUid]) || 'Avversario';
+                        } else {
+                            // Pareggio assoluto sia di round che di reps
+                            finalWinnerUid = 'tie';
+                            finalWinnerName = 'Pareggio';
                         }
                     }
                 }
@@ -10044,21 +10581,63 @@ let currentUser = null;
 
                 await docRef.update(updateData);
 
-                // Invia notifiche push di esito round / vittoria
+                // Aggiornamento statistiche duelli e notifiche push
                 if (isMatchCompleted) {
-                    const loserUid = (finalWinnerUid === currentUser.uid) ? oppUid : currentUser.uid;
-                    dispatchBackgroundPush({
-                        targetUids: [finalWinnerUid],
-                        title: "🏆 Vittoria nel Duello!",
-                        body: `Hai vinto il Duello su 3 Round (${newScores[finalWinnerUid]} a ${newScores[loserUid]})! Riscuoti i tuoi 5.000 XP!`,
-                        data: { type: 'challengeDuel', id: challengeId }
-                    });
-                    dispatchBackgroundPush({
-                        targetUids: [loserUid],
-                        title: "⚔️ Duello Concluso",
-                        body: `${finalWinnerName} ha vinto il Duello (${newScores[finalWinnerUid]} a ${newScores[loserUid]}). Bella battaglia!`,
-                        data: { type: 'challengeDuel', id: challengeId }
-                    });
+                    try {
+                        if (finalWinnerUid === 'tie') {
+                            db.collection("users").doc(currentUser.uid).set({
+                                "duelStats.ties": firebase.firestore.FieldValue.increment(1),
+                                duelTies: firebase.firestore.FieldValue.increment(1)
+                            }, { merge: true });
+                            db.collection("users").doc(oppUid).set({
+                                "duelStats.ties": firebase.firestore.FieldValue.increment(1),
+                                duelTies: firebase.firestore.FieldValue.increment(1)
+                            }, { merge: true });
+                        } else if (finalWinnerUid === currentUser.uid) {
+                            db.collection("users").doc(currentUser.uid).set({
+                                "duelStats.wins": firebase.firestore.FieldValue.increment(1),
+                                duelWins: firebase.firestore.FieldValue.increment(1)
+                            }, { merge: true });
+                            db.collection("users").doc(oppUid).set({
+                                "duelStats.losses": firebase.firestore.FieldValue.increment(1),
+                                duelLosses: firebase.firestore.FieldValue.increment(1)
+                            }, { merge: true });
+                        } else {
+                            db.collection("users").doc(oppUid).set({
+                                "duelStats.wins": firebase.firestore.FieldValue.increment(1),
+                                duelWins: firebase.firestore.FieldValue.increment(1)
+                            }, { merge: true });
+                            db.collection("users").doc(currentUser.uid).set({
+                                "duelStats.losses": firebase.firestore.FieldValue.increment(1),
+                                duelLosses: firebase.firestore.FieldValue.increment(1)
+                            }, { merge: true });
+                        }
+                    } catch (eStat) {
+                        console.warn("Errore aggiornamento duelStats utenti:", eStat);
+                    }
+
+                    if (finalWinnerUid === 'tie') {
+                        dispatchBackgroundPush({
+                            targetUids: [currentUser.uid, oppUid],
+                            title: "⚔️ Duello Pareggiato!",
+                            body: `Il duello tra te e l'avversario si è concluso con un incredibile pareggio! Bella battaglia!`,
+                            data: { type: 'challengeDuel', id: challengeId }
+                        });
+                    } else {
+                        const loserUid = (finalWinnerUid === currentUser.uid) ? oppUid : currentUser.uid;
+                        dispatchBackgroundPush({
+                            targetUids: [finalWinnerUid],
+                            title: "🏆 Vittoria nel Duello!",
+                            body: `Hai vinto il Duello su 3 Round (${newScores[finalWinnerUid]} a ${newScores[loserUid]})! Riscuoti i tuoi 5.000 XP!`,
+                            data: { type: 'challengeDuel', id: challengeId }
+                        });
+                        dispatchBackgroundPush({
+                            targetUids: [loserUid],
+                            title: "⚔️ Duello Concluso",
+                            body: `${finalWinnerName} ha vinto il Duello (${newScores[finalWinnerUid]} a ${newScores[loserUid]}). Bella battaglia!`,
+                            data: { type: 'challengeDuel', id: challengeId }
+                        });
+                    }
                 } else {
                     const nextRoundEx = getDuelRoundExercise(c, roundNum + 1);
                     dispatchBackgroundPush({
