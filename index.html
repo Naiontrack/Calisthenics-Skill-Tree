@@ -6506,43 +6506,149 @@ let currentUser = null;
         function getCalisthenicsExpertResponse(query) {
             const q = (query || "").toLowerCase().trim();
 
-            if (q.includes("planche") || q.includes("planche lean")) {
+            // 1. Saluti, convenevoli & presentazione
+            if (q.includes("ciao") || q.includes("salve") || q.includes("buongiorno") || q.includes("buonasera") || q.includes("ehi") || q.includes("chi sei") || q.includes("come ti chiami") || q.includes("cosa sai fare") || q.includes("aiuto") || q.includes("help") || q === "info") {
+                return "Ciao atleta! 👋 Sono il tuo **Coach AI di Calisthenics** dell'app!\n\n" +
+                    "Sono programmato per guidarti passo passo nel tuo percorso a corpo libero. Puoi chiedermi:\n" +
+                    "• **Progressioni per Skill**: *Planche, Front Lever, Muscle-Up, Handstand (Verticale), L-Sit, Back Lever*.\n" +
+                    "• **Basi & Fondamentali**: tecnica corretta di *Trazioni, Piegamenti, Dip e Squat*.\n" +
+                    "• **Schede di Allenamento**: routine Full Body per principianti o programmi avanzati.\n" +
+                    "• **Prevenzione Infortuni**: riscaldamento e cura dei dolori a *polsi, gomiti e spalle*.\n" +
+                    "• **Alimentazione & Recupero**: apporto proteico, creatina, frequenza settimanale e riposo.\n\n" +
+                    "💡 *Vuoi un controllo visivo del tuo movimento?* Premi **📷 Scanner Movimenti** in alto!\n" +
+                    "✨ *Vuoi risposte libere generate via AI su qualsiasi argomento?* Puoi incollare la tua chiave gratuita di Google Gemini premendo **⚙️ Chiave API Gemini**.";
+            }
+
+            // 2. Iniziare da zero / Principiante / Scheda per iniziare
+            if (q.includes("inizia") || q.includes("principiante") || q.includes("comincia") || q.includes("da zero") || q.includes("primi passi") || q.includes("base") || q.includes("basi") || q.includes("neofita") || q.includes("scheda per iniziare") || q.includes("primo giorno")) {
+                return "🚀 **Guida Completa per Iniziare Calisthenics da Zero**:\n\n" +
+                    "1. **Routine Fondamentale (3 giorni a settimana, Full Body)**:\n" +
+                    "• **Trazioni Orizzontali (Australian Pull-ups)**: 3-4 serie x 8-10 ripetizioni\n" +
+                    "• **Piegamenti Facilitati (alle ginocchia o inclinati)**: 3-4 serie x 8-12 ripetizioni\n" +
+                    "• **Dip su panca / sedia**: 3 serie x 10-12 ripetizioni\n" +
+                    "• **Squat a corpo libero**: 4 serie x 15 ripetizioni\n" +
+                    "• **Hollow Body Hold**: 4 serie x 20-30 secondi\n" +
+                    "• **Plank a terra**: 3 serie x 30-45 secondi\n\n" +
+                    "2. **Tempi di Recupero**: 90-120 secondi tra le serie.\n" +
+                    "3. **Regola d'Oro**: Concentrati sul **Range di Movimento (ROM) completo** (braccia completamente distese e petto a fondo). La fretta è nemica dei tendini; la costanza costruirà una base indistruttibile!";
+            }
+
+            // 3. Trazioni / Pull-up / Chin-up
+            if (q.includes("trazion") || q.includes("pull up") || q.includes("pull-up") || q.includes("chin up") || q.includes("chin-up") || q.includes("sbarra")) {
+                return "🏋️ **Guida Tecnica alle Trazioni alla Sbarra (Pull-up)**:\n\n" +
+                    "1. **Attivazione Scapolare (La Chiave di Tutto)**:\n" +
+                    "• Prima di piegare le braccia, tira le spalle verso il basso lontano dalle orecchie (*depressione scapolare*).\n" +
+                    "2. **Esecuzione Corretta**:\n" +
+                    "• Petto aperto che punta verso la sbarra e mento che supera la sbarra senza allungare il collo.\n" +
+                    "• Discesa controllata fino al *Deadhang* completo (braccia distese al 100%), evitando il dondolio con le gambe.\n\n" +
+                    "3. **Come Raggiungere la Prima Trazione**:\n" +
+                    "• *Deadhang passivo & attivo*: 3x30s alla sbarra.\n" +
+                    "• *Australian Pull-ups*: 4x10 con corpo a 45°.\n" +
+                    "• *Ripetizioni negative lente*: sali con un salto e impiega 4-5 secondi per scendere (4x3 reps).";
+            }
+
+            // 4. Piegamenti / Push-up
+            if (q.includes("push up") || q.includes("push-up") || q.includes("piegament") || q.includes("flession")) {
+                return "🤸 **Guida Tecnica ai Push-up (Piegamenti a terra)**:\n\n" +
+                    "1. **Assetto dei Gomiti**:\n" +
+                    "• Mantieni i gomiti a 45° rispetto al busto (forma 'a freccia'), mai aperti a 90° a T (danneggia la cuffia dei rotatori!).\n" +
+                    "2. **Allineamento Hollow Body**:\n" +
+                    "• Addome e glutei contratti, bacino retroverso per non inarcare la zona lombare.\n" +
+                    "3. **Profondità & Lockout**:\n" +
+                    "• Scendi fino a sfiorare il suolo col petto e risali bloccando i gomiti con protrazione scapolare (spingi via il pavimento in alto).\n\n" +
+                    "💡 *Progressioni*: Piegamenti al muro -> Inclinati su un rialzo -> A terra classici -> Archer Push-up -> Pseudo Planche Push-up.";
+            }
+
+            // 5. Dip alle parallele
+            if (q.includes("dip") || q.includes("parallele") || q.includes("tricipit")) {
+                return "⚡ **Guida Tecnica ai Dip alle Parallele**:\n\n" +
+                    "1. **Inclinazione del Busto**:\n" +
+                    "• Inclinati leggermente in avanti (15-20°) per caricare il petto e ridurre lo stress sui legamenti anteriori della spalla.\n" +
+                    "2. **Profondità di Sicurezza**:\n" +
+                    "• Scendi controllato fino a formare 90° tra braccio e avambraccio. Non andare oltre se non hai mobilità sufficiente.\n" +
+                    "3. **Spinta & Lockout Finale**:\n" +
+                    "• Spingi forte fino a distendere le braccia e mantieni le spalle basse e depresse in alto.\n\n" +
+                    "⚠️ *Dolore allo sterno?* Allarga leggermente la presa o sostituisci temporaneamente con dip su panca e diamond push-up.";
+            }
+
+            // 6. Squat & Allenamento Gambe
+            if (q.includes("squat") || q.includes("gamba") || q.includes("gambe") || q.includes("pistol") || q.includes("affondi") || q.includes("polpacci")) {
+                return "🦵 **Allenamento Gambe nel Calisthenics**:\n\n" +
+                    "1. **Progressione per il Pistol Squat (Squat a 1 gamba)**:\n" +
+                    "• *Deep Air Squat*: padroneggia 25 squat profondi a piedi uniti.\n" +
+                    "• *Box Pistol Squat*: scendi controllato su una panca o sedia su una sola gamba.\n" +
+                    "• *Pistol assistito*: usando un elastico o appoggio laterale.\n" +
+                    "• *Pistol libero completo*.\n\n" +
+                    "2. **Esercizi Esplosivi & Femorali**:\n" +
+                    "• *Nordic Hamstring Curl*: il re indiscusso per femorali e tendini del ginocchio a corpo libero.\n" +
+                    "• *Bulgarian Split Squat*: 3 serie x 12 reps per gamba.\n" +
+                    "• *Jump Squat*: per sviluppare potenza ed elevazione.";
+            }
+
+            // 7. Addominali / Core / Plank / Hollow
+            if (q.includes("addom") || q.includes("core") || q.includes("hollow") || q.includes("plank") || q.includes("pancia") || q.includes("crunch")) {
+                return "🧱 **Il Core nel Calisthenics: Hollow Body & Forza Pura**:\n\n" +
+                    "Nel calisthenics l'addome deve fungere da barra d'acciaio per trasmettere la forza:\n" +
+                    "1. **Hollow Body Hold**:\n" +
+                    "• Schiena lombare incollata al suolo (zero spazio vuoto), gambe tese a 30°, braccia oltre la testa. Tieni 4 serie da 25-35s.\n" +
+                    "2. **Toes to Bar & Leg Raises**:\n" +
+                    "• Appeso alla sbarra, porta i piedi a toccare il ferro senza oscillare con la schiena.\n" +
+                    "3. **Dragon Flag (Livello Avanzato)**:\n" +
+                    "• Eseguito su panca facendo perno solo sulle scapole: fortifica l'intero addome per il Front Lever!\n" +
+                    "4. **L-Sit Hold**: sollevati a terra o su parallele tenendo le gambe parallele al pavimento.";
+            }
+
+            // 8. Planche & Malteser
+            if (q.includes("planche") || q.includes("maltese") || q.includes("frog stand") || q.includes("lean")) {
                 return "🤸 **Guida Tecnica alla Planche**:\n\n" +
                     "1. **Progressione Consigliata**:\n" +
-                    "• *Tuck Planche* (ginocchia al petto, braccia tese)\n" +
-                    "• *Advanced Tuck Planche* (schiena piatta parallela a terra)\n" +
+                    "• *Planche Lean* (sbilanciamento in avanti a braccia tese a terra)\n" +
+                    "• *Tuck Planche* (ginocchia al petto, braccia tese, bacino all'altezza delle spalle)\n" +
+                    "• *Advanced Tuck Planche* (schiena piatta orizzontale a 90°)\n" +
                     "• *Straddle Planche* (gambe divaricate per ridurre la leva)\n" +
                     "• *Full Planche*\n\n" +
-                    "2. **Errori Comuni da Evitare**:\n" +
-                    "• Piegare i gomiti (il carico deve andare su bicipiti distesi e tendini, non sui tricipiti).\n" +
-                    "• Mancata protrazione scapolare (devi 'spingere via il pavimento' e incurvare la parte alta della schiena).\n" +
-                    "• Sbilanciamento insufficiente in avanti (*lean*): le spalle devono superare i polsi di almeno 10-15 cm.\n\n" +
-                    "💡 *Usa lo Scanner Videocamera qui in alto per verificare l'angolo del tuo bacino dal vivo!*";
+                    "2. **Punti Biomeccanici Chiave**:\n" +
+                    "• Braccia tese e bloccate (carico su bicipiti e tendini brachiali, mai piegare i gomiti!).\n" +
+                    "• Protrazione e depressione scapolare massimale (spingi il suolo verso il basso e curva la parte alta del dorso).\n" +
+                    "• Sbilanciamento (*lean*): le spalle devono avanzare di 10-15 cm oltre i polsi.\n\n" +
+                    "💡 *Usa lo Scanner Videocamera in alto per verificare l'inclinazione del tuo corpo dal vivo!*";
             }
 
-            if (q.includes("front lever")) {
-                return "🔥 **Guida al Front Lever**:\n\n" +
-                    "1. **Progressione**: Tuck -> Advanced Tuck -> Straddle / One Leg -> Full Front Lever.\n" +
-                    "2. **Attivazione Scapolare & Dorsale**:\n" +
-                    "• Depressione e retrazione scapolare (petto fiero, spalle basse).\n" +
-                    "• Trazione a braccia tese verso i fianchi (*Straight Arm Scapular Pull*).\n" +
-                    "• Tensione costante dell'addome in hollow body.\n\n" +
-                    "💡 *Esercizi ausiliari chiave*: Dragon Flag alla sbarra, Ice Cream Makers e Tuck Front Lever Pull-ups.";
+            // 9. Front Lever & Back Lever
+            if (q.includes("front lever") || q.includes("back lever") || q.includes("lever")) {
+                return "🔥 **Guida al Front Lever & Back Lever**:\n\n" +
+                    "1. **Front Lever (Trazione a Braccia Tese)**:\n" +
+                    "• *Progressione*: Tuck -> Adv. Tuck -> One Leg / Straddle -> Full Front Lever.\n" +
+                    "• *Attivazione*: Depressione scapolare forte (petto aperto verso la sbarra) e trazione a braccia tese (*Straight Arm Pull*).\n" +
+                    "• *Esercizi chiave*: Dragon Flag, Ice Cream Makers e Tuck Front Lever Pull-ups.\n\n" +
+                    "2. **Back Lever**:\n" +
+                    "• Richiede flessibilità e condizionamento del bicipite: costruisci prima un *German Hang* di almeno 30 secondi senza fastidio alle spalle prima di approcciare il Back Lever!";
             }
 
+            // 10. Muscle-Up
             if (q.includes("muscle up") || q.includes("muscle-up")) {
-                return "💪 **Tecnica & Transizione Muscle-Up**:\n\n" +
-                    "1. **Requisiti Minimi di Forza**:\n" +
-                    "• Almeno 10-12 trazioni esplosive al petto (*Chest-to-Bar*)\n" +
-                    "• Almeno 10-12 dip alla sbarra singola (*Straight Bar Dips*)\n\n" +
+                return "💪 **Tecnica & Transizione del Muscle-Up**:\n\n" +
+                    "1. **Prerequisiti Minimi di Forza**:\n" +
+                    "• Almeno 10-12 trazioni esplosive al petto (*Chest-to-Bar*).\n" +
+                    "• Almeno 10-12 dip alla sbarra singola (*Straight Bar Dips*).\n\n" +
                     "2. **Traiettoria a C**:\n" +
-                    "• Non salire in verticale sotto la sbarra: allontanati leggermente e disegna un arco di cerchio.\n" +
-                    "3. **Transizione Veloce**:\n" +
-                    "• Nel punto più alto, porta il petto in avanti sopra la sbarra e ruota i polsi simultaneamente.\n" +
-                    "• *Importante*: Non salire prima con un braccio per non danneggiare la cuffia dei rotatori!";
+                    "• Non salire dritto in verticale: allontanati leggermente dalla sbarra disegnando un arco per scavalcarla col petto.\n" +
+                    "3. **Transizione Rapida**:\n" +
+                    "• Nel punto di massimo apice, ruota simultaneamente entrambi i polsi in avanti sopra la sbarra (*False Grip* o grip attiva).\n" +
+                    "• ⚠️ *Attenzione*: Non salire mai prima con un braccio (muscle-up zoppo): logora la cuffia dei rotatori!";
             }
 
-            if (q.includes("polso") || q.includes("polsi") || q.includes("dolore") || q.includes("gomito") || q.includes("tendin") || q.includes("male")) {
+            // 11. Handstand / Verticale
+            if (q.includes("verticale") || q.includes("handstand") || q.includes("equilibrio") || q.includes("muro")) {
+                return "🤸 **Allineamento Perfetto in Handstand (Verticale)**:\n\n" +
+                    "1. **Spinta delle Spalle**: Spingi attivamente le spalle verso l'alto (*elevazione scapolare*), 'incassando' la testa tra le braccia.\n" +
+                    "2. **Mani e Dita (Cambré)**: Dita aperte e leggermente flesse che 'artigliano' il pavimento: le punte frenano la caduta in avanti, i palmi spingono indietro.\n" +
+                    "3. **Allineamento Lineare**: Polsi, spalle, bacino e caviglie devono trovarsi su una linea retta senza piegare la schiena a banana (retroversione del bacino).\n\n" +
+                    "💡 *Esercizio Fondamentale*: Verticale petto al muro (*Chest-to-Wall*) per 30-45 secondi.";
+            }
+
+            // 12. Dolori, Polsi, Gomiti, Tendini, Articolazioni
+            if (q.includes("polso") || q.includes("polsi") || q.includes("dolore") || q.includes("gomito") || q.includes("gomiti") || q.includes("tendin") || q.includes("male") || q.includes("spalla") || q.includes("spalle") || q.includes("infortuni")) {
                 return "⚠️ **Prevenzione & Cura dei Dolori Articolari**:\n\n" +
                     "1. **Dolore ai Polsi (Push-up / Planche / Verticale)**:\n" +
                     "• I polsi subiscono una forte estensione dorsale. Usa le *parallèttes* per mantenerli neutri.\n" +
@@ -6550,22 +6656,63 @@ let currentUser = null;
                     "2. **Dolore ai Gomiti (Epitrocleite / Epicondilite)**:\n" +
                     "• Riduci subito il volume a braccia tese se avverti fastidio all'interno del gomito.\n" +
                     "• Fai stretching ed esercizi eccentrici per i flessori del polso con carichi leggeri.\n" +
-                    "• Il tessuto tendineo guarisce più lentamente di quello muscolare: dagli 48-72 ore di recupero.";
+                    "• Il tessuto tendineo guarisce più lentamente di quello muscolare: dagli 48-72 ore di recupero.\n\n" +
+                    "3. **Salute delle Spalle**:\n" +
+                    "• Inserisci extra-rotatori con elastico (*face pull*) e dislocazioni col bastone ogni settimana.";
             }
 
-            if (q.includes("verticale") || q.includes("handstand")) {
-                return "🤸 **Allineamento Perfetto in Handstand (Verticale)**:\n\n" +
-                    "1. **Spinta delle Spalle**: Spingi attivamente verso l'alto (elevazione scapolare).\n" +
-                    "2. **Mani e Dita**: Dita leggermente flesse che 'artigliano' il pavimento (*cambré*) per frenare le oscillazioni.\n" +
-                    "3. **Allineamento Lineare**: Polsi, spalle, bacino e caviglie devono trovarsi su una linea retta senza piegare la schiena a banana.\n" +
-                    "💡 *Esercizio fondamentale*: Verticale petto al muro (*Chest-to-Wall*) per 30-45 secondi.";
+            // 13. Alimentazione, Dieta, Proteine, Creatina
+            if (q.includes("alimentaz") || q.includes("dieta") || q.includes("mangia") || q.includes("proteine") || q.includes("creatina") || q.includes("massa") || q.includes("definizion") || q.includes("calorie") || q.includes("peso")) {
+                return "🥗 **Nutrizione Ottimale per il Calisthenics**:\n\n" +
+                    "1. **Rapporto Forza/Peso**:\n" +
+                    "• Nel calisthenics il tuo corpo è il peso che sollevi: mantenere una composizione corporea atletica (10-14% di massa grassa per gli uomini, 18-22% per le donne) rende le leve delle skill infinitamente più leggere.\n" +
+                    "2. **Quota Proteica**:\n" +
+                    "• Assumi 1.6 - 2.0 grammi di proteine per kg di peso corporeo per supportare la sintesi muscolare.\n" +
+                    "3. **Creatina Monoidrato**:\n" +
+                    "• 3-5g al giorno: aumenta le riserve di fosfocreatina nei muscoli, migliorando la forza esplosiva e il recupero tra le serie.\n" +
+                    "4. **Idratazione**: Almeno 2.5 - 3 litri d'acqua al giorno per nutrire la cartilagine e l'elasticità tendinea.";
             }
 
+            // 14. Frequenza allenamento, Quanti giorni, Riposo, Recupero
+            if (q.includes("quanti giorni") || q.includes("frequenza") || q.includes("quando allenar") || q.includes("recupero") || q.includes("riposo") || q.includes("doms") || q.includes("sovrallenamento") || q.includes("giorni a settimana")) {
+                return "⏱️ **Frequenza di Allenamento & Recupero**:\n\n" +
+                    "1. **Quanti Giorni Allenarsi**:\n" +
+                    "• Principianti: **3 giorni a settimana** a giorni alterni (es. Lunedì, Mercoledì, Venerdì) in Full Body.\n" +
+                    "• Intermedi/Avanzati: **4-5 giorni** con split Push/Pull/Legs o Skill/Forza.\n" +
+                    "2. **Gestione del Recupero Tendineo**:\n" +
+                    "• I muscoli recuperano in 24-48 ore, ma i tendini impiegano 48-72 ore. Evita di allenare la stessa skill a braccia tese (es. Planche o Front Lever) due giorni consecutivi!\n" +
+                    "3. **Sonno**: 7-8 ore a notte sono fondamentali per la rigenerazione del sistema nervoso centrale (SNC).";
+            }
+
+            // 15. Riscaldamento & Mobilità
+            if (q.includes("riscaldament") || q.includes("warm up") || q.includes("warm-up") || q.includes("mobilit") || q.includes("stretching") || q.includes("allungament")) {
+                return "🔥 **Routine di Riscaldamento Pre-Workout (10 minuti)**:\n\n" +
+                    "1. **Polsi (Fondamentale)**: in quadrupedia, esegui cerchi col peso del corpo con dita avanti, dita indietro e sul dorso delle mani (3 min).\n" +
+                    "2. **Spalle**: dislocazioni con bastone/elastico (2x15 reps) e rotazioni delle braccia.\n" +
+                    "3. **Scapole**: 10 Scapular Push-up e 10 Scapular Pull-up alla sbarra per svegliare i dorsali.\n" +
+                    "4. **Core**: Hollow Body Hold (2x25s) e Plank (2x30s).\n" +
+                    "5. **Serie di Avvicinamento**: 1-2 serie facili dell'esercizio target prima del carico effettivo!";
+            }
+
+            // 16. Duelli, Sfide, XP & App
+            if (q.includes("duell") || q.includes("sfida") || q.includes("sfide") || q.includes("xp") || q.includes("arbitro") || q.includes("referee") || q.includes("anti-cheat") || q.includes("scanner") || q.includes("videocamera") || q.includes("cheat")) {
+                return "⚔️ **Funzionalità & Duelli dell'App**:\n\n" +
+                    "• **Duelli PvP a 3 Round**: Sfida un altro atleta! L'esercizio cambia ogni round (Push-up, Pull-up, Squat, Dip, Crunch) per testare chi è più completo.\n" +
+                    "• **AI Referee (Anti-Cheat)**: Con la videocamera, l'arbitro virtuale convalida in tempo reale ripetizioni e ROM a 90° senza possibilità di barare!\n" +
+                    "• **Condividi & Bonus +3000 XP**: Invita un amico dal pulsante Condividi: se accede da un altro dispositivo ricevi 3000 XP bonus!\n" +
+                    "• **Scanner Movimenti**: In alto nella chat puoi avviare l'analisi libera in qualsiasi momento per verificare i tuoi angoli articolari.";
+            }
+
+            // 17. Fallback intelligente con suggerimenti chiari
             return "🤖 **Consiglio Tecnico del Coach**:\n\n" +
-                "Per eccellere nel calisthenics:\n" +
-                "• **Range di Movimento (ROM) Completo**: Scendi sempre a 90° o sotto e fai lockout articolare controllato.\n" +
-                "• **Costanza & Recupero**: La forza neurale e i tendini richiedono tempo. 3-4 allenamenti settimanali ben distribuiti sono ideali.\n" +
-                "• **Vuoi un controllo tecnico sul tuo movimento?** Apri la videocamera con il pulsante in alto **📷 Scanner Movimenti** per verificare i tuoi angoli dal vivo!";
+                "Nel calisthenics la risposta dipende dal tuo livello attuale e dai tuoi obiettivi di forza!\n\n" +
+                "• **Vuoi approfondire un esercizio o una scheda?** Chiedimi pure di:\n" +
+                "  - *Planche, Front Lever, Muscle-Up, Verticale (Handstand), L-Sit*\n" +
+                "  - *Trazioni, Piegamenti (Push-up), Dip, Squat, Addominali (Hollow Body)*\n" +
+                "  - *Scheda per iniziare da zero, Quanti giorni allenarsi, Dolori articolari, Alimentazione*\n\n" +
+                "• **Vuoi verificare la tua tecnica dal vivo?** Clicca in alto su **📷 Scanner Movimenti**!\n\n" +
+                "✨ **Vuoi risposte generiche personalizzate illimitate su qualsiasi tema?**\n" +
+                "Premi in alto il pulsante **⚙️ Chiave API Gemini** e inserisci la tua chiave gratuita da Google AI Studio: sbloccherà l'intelligenza generativa completa!";
         }
 
         async function sendAiHelperMessage() {
@@ -6599,27 +6746,29 @@ let currentUser = null;
             let aiResponse = "";
 
             if (userGeminiKey && userGeminiKey.trim()) {
-                try {
-                    const promptText = "Sei il Coach Esperto di Calisthenics dell'app Calisthenics Skill Tree. Rispondi con grande competenza tecnica, consigli sicuri per le articolazioni, progressioni corrette e tono motivante da atleta:\n\n" + query;
-                    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${userGeminiKey.trim()}`, {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({
-                            contents: [{ parts: [{ text: promptText }] }]
-                        })
-                    });
-                    if (res.ok) {
-                        const resData = await res.json();
-                        aiResponse = resData.candidates?.[0]?.content?.parts?.[0]?.text;
+                const promptText = "Sei il Coach Esperto di Calisthenics dell'app Calisthenics Skill Tree. Rispondi in italiano con precisione tecnica, tono motivante da atleta, consigli pratici, serie/ripetizioni e prevenzione articolare:\n\n" + query;
+                const modelsToTry = ["gemini-2.0-flash", "gemini-1.5-flash", "gemini-2.5-flash"];
+                for (const m of modelsToTry) {
+                    try {
+                        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${userGeminiKey.trim()}`, {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ contents: [{ parts: [{ text: promptText }] }] })
+                        });
+                        if (res.ok) {
+                            const resData = await res.json();
+                            aiResponse = resData.candidates?.[0]?.content?.parts?.[0]?.text;
+                            if (aiResponse) break;
+                        }
+                    } catch(err) {
+                        console.warn('Errore con modello ' + m + ':', err);
                     }
-                } catch(e) {
-                    console.warn("Errore chiamata Gemini API:", e);
                 }
             }
 
             // Fallback su Calisthenics Knowledge Engine se non c'è chiave o errore di rete
             if (!aiResponse) {
-                await new Promise(r => setTimeout(r, 600));
+                await new Promise(r => setTimeout(r, 450));
                 aiResponse = getCalisthenicsExpertResponse(query);
             }
 
@@ -6638,14 +6787,20 @@ let currentUser = null;
 
         function openGeminiApiKeyModal() {
             const current = localStorage.getItem("calisthenics_gemini_api_key") || "";
-            const key = prompt("Inserisci la tua chiave API Google Gemini gratuita (da aistudio.google.com) per sbloccare risposte AI personalizzate illimitate:\n(Lascia vuoto per usare il motore integrato)", current);
+            const key = prompt("⚙️ Configurazione Chiave Google Gemini AI (Opzionale)\n\n" +
+                "1. Vai su https://aistudio.google.com/app/apikey (è 100% gratuita con il tuo account Google)\n" +
+                "2. Clicca 'Create API Key' e copiala\n" +
+                "3. Incollala qui sotto per sbloccare risposte AI generative su qualsiasi domanda:\n\n" +
+                "(Lascia vuoto per usare il Coach con Knowledge Base integrata gratuita)", current);
             if (key !== null) {
                 if (key.trim()) {
                     localStorage.setItem("calisthenics_gemini_api_key", key.trim());
-                    alert("✅ Chiave API Gemini salvata con successo!");
+                    alert("✅ Chiave Google Gemini salvata! Ora il Coach AI risponderà con intelligenza generativa avanzata.");
+                    renderAiHelperView(true);
                 } else {
                     localStorage.removeItem("calisthenics_gemini_api_key");
                     alert("Modalità motore di conoscenza integrato ripristinata.");
+                    renderAiHelperView(true);
                 }
             }
         }
