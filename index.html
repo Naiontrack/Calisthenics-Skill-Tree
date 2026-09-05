@@ -4062,15 +4062,23 @@ let currentUser = null;
                         if (reg && typeof reg.getNotifications === 'function') {
                             reg.getNotifications().then(notifications => {
                                 notifications.forEach(n => {
-                                    const d = n.data || {};
                                     if (!identifier) {
                                         n.close();
-                                    } else if (
-                                        n.tag === identifier ||
-                                        d.msgId === identifier ||
-                                        d.id === identifier ||
-                                        (d.type === 'chat' && d.id === identifier) ||
-                                        (identifier === 'general' && d.type === 'general')
+                                        return;
+                                    }
+                                    const d = n.data || {};
+                                    const custom = (d.custom && d.custom.a) ? d.custom.a : (d.custom || {});
+                                    const convId = d.id || custom.id || d.convId || custom.convId;
+                                    const msgId = d.msgId || custom.msgId;
+                                    const tag = n.tag || '';
+
+                                    if (
+                                        !convId ||
+                                        tag === identifier ||
+                                        tag.includes(identifier) ||
+                                        convId === identifier ||
+                                        msgId === identifier ||
+                                        (identifier === 'general' && (d.type === 'general' || tag.includes('general') || tag.includes('calisthenics-general')))
                                     ) {
                                         n.close();
                                     }
@@ -4086,6 +4094,27 @@ let currentUser = null;
             } catch(e) {
                 console.warn("[dismissAppNotification err]", e);
             }
+        }
+
+        // Gestione presenza in tempo reale nella chat per evitare push a chi sta già leggendo
+        function updateActiveChatPresence(convId, isActive) {
+            if (!currentUser || !convId) return;
+            try {
+                db.collection("conversations").doc(convId).set({
+                    activeViewers: {
+                        [currentUser.uid]: isActive ? Date.now() : 0
+                    }
+                }, { merge: true }).catch(() => {});
+            } catch(e) {}
+        }
+
+        function updateGeneralChatPresence(isActive) {
+            if (!currentUser) return;
+            try {
+                db.collection("system").doc("generalChatPresence").set({
+                    [currentUser.uid]: isActive ? Date.now() : 0
+                }, { merge: true }).catch(() => {});
+            } catch(e) {}
         }
 
         // DISPATCHER PRINCIPALE DELLE NOTIFICHE (CON PROTEZIONE ANTI-DOPPIONI E GESTIONE FOREGROUND/BACKGROUND)
@@ -5812,6 +5841,8 @@ let currentUser = null;
         function markGeneralChatAsRead() {
             if (!currentUser) return;
             dismissAppNotification('general');
+            dismissAppNotification();
+            updateGeneralChatPresence(true);
             lastSeenGeneralAtMillis = Date.now();
             const key = getLastSeenGeneralStorageKey();
             if (key) localStorage.setItem(key, String(lastSeenGeneralAtMillis));
@@ -6287,30 +6318,60 @@ let currentUser = null;
                     }).catch((error) => console.error("Errore aggiornamento anteprima chat:", error));
 
                     // TRIGGER 1 PUSH BACKGROUND: invio notifica ai partecipanti della chat privata / gruppo
+                    // ESCLUSIONE AUTOMATICA: non inviare la notifica a chi ha già la chat aperta a schermo!
                     if (activeConversationData && activeConversationData.participants) {
-                        const targetUids = activeConversationData.participants.filter(uid => uid !== currentUser.uid);
+                        const now = Date.now();
+                        const targetUids = activeConversationData.participants.filter(uid => {
+                            if (uid === currentUser.uid) return false;
+                            const lastSeenInChat = (activeConversationData.activeViewers && activeConversationData.activeViewers[uid]) || 0;
+                            const isCurrentlyInChat = (now - lastSeenInChat) < 35000;
+                            return !isCurrentlyInChat; // Invia solo se NON è attualmente nella chat
+                        });
                         const senderName = userNickname || (currentUser.displayName || 'Un atleta');
                         const chatTitle = activeConversationData.type === 'group'
                             ? (activeConversationData.name || 'Gruppo')
                             : senderName;
-                        dispatchBackgroundPush({
-                            targetUids: targetUids,
-                            title: `💬 ${chatTitle}`,
-                            body: `${senderName}: ${msgText}`,
-                            data: { type: 'chat', id: activeConversationId }
-                        });
+                        if (targetUids.length > 0) {
+                            dispatchBackgroundPush({
+                                targetUids: targetUids,
+                                title: `💬 ${chatTitle}`,
+                                body: `${senderName}: ${msgText}`,
+                                data: { type: 'chat', id: activeConversationId }
+                            });
+                        }
                     }
                 } else {
                     markGeneralChatAsRead();
 
-                    // TRIGGER 2 PUSH BACKGROUND: invio notifica a tutti per la chat pubblica (escludendo chi invia)
+                    // TRIGGER 2 PUSH BACKGROUND: invio notifica a tutti per la chat pubblica
+                    // Escludi sia chi scrive sia chi ha già la chat generale aperta
                     const senderName = userNickname || (currentUser.displayName || 'Un atleta');
-                    dispatchBackgroundPush({
-                        sendToAll: true,
-                        excludeUids: [currentUser.uid],
-                        title: `🌐 Chat Generale - ${senderName}`,
-                        body: msgText,
-                        data: { type: 'general' }
+                    db.collection("system").doc("generalChatPresence").get().then(doc => {
+                        const now = Date.now();
+                        const excludeList = [currentUser.uid];
+                        if (doc.exists) {
+                            const data = doc.data() || {};
+                            Object.keys(data).forEach(u => {
+                                if ((now - (data[u] || 0)) < 35000) {
+                                    excludeList.push(u);
+                                }
+                            });
+                        }
+                        dispatchBackgroundPush({
+                            sendToAll: true,
+                            excludeUids: excludeList,
+                            title: `🌐 Chat Generale - ${senderName}`,
+                            body: msgText,
+                            data: { type: 'general' }
+                        });
+                    }).catch(() => {
+                        dispatchBackgroundPush({
+                            sendToAll: true,
+                            excludeUids: [currentUser.uid],
+                            title: `🌐 Chat Generale - ${senderName}`,
+                            body: msgText,
+                            data: { type: 'general' }
+                        });
                     });
                 }
             }).catch((error) => {
@@ -6595,6 +6656,8 @@ let currentUser = null;
             if (!currentUser) return;
 
             dismissAppNotification(convId);
+            dismissAppNotification();
+            updateActiveChatPresence(convId, true);
             activeChatView = 'private-thread';
             activeConversationId = convId;
             activeConversationData = null;
@@ -6636,6 +6699,7 @@ let currentUser = null;
         }
 
         function backToPrivateList() {
+            if (activeConversationId) updateActiveChatPresence(activeConversationId, false);
             stopConversationMessagesListener();
             activeChatView = 'private-list';
             activeConversationId = null;
@@ -7475,9 +7539,11 @@ let currentUser = null;
                 true,
                 () => currentMessagesRef().doc(msgId).delete()
                     .then(() => {
+                        // Chiudi istantaneamente tutte le notifiche della chat corrente
                         dismissAppNotification(msgId);
+                        dismissAppNotification(convId);
+                        dismissAppNotification();
                         if (isPrivateThread) {
-                            dismissAppNotification(convId);
                             return refreshConversationPreview(convId);
                         } else {
                             dismissAppNotification('general');
@@ -9448,6 +9514,39 @@ let currentUser = null;
             });
         });
       }
+
+      // Heartbeat presenza chat attiva (per evitare push a chi sta già leggendo la conversazione)
+      setInterval(() => {
+        if (typeof activeChatView !== 'undefined' && currentUser && !document.hidden) {
+          if (activeChatView === 'private-thread' && activeConversationId) {
+            updateActiveChatPresence(activeConversationId, true);
+          } else if (chatPanelOpen && activeChatView === 'general') {
+            updateGeneralChatPresence(true);
+          }
+        }
+      }, 20000);
+
+      // Gestione cambio visibilità scheda (quando minimizzi o chiudi l'app)
+      document.addEventListener('visibilitychange', () => {
+        if (document.hidden) {
+          if (typeof activeConversationId !== 'undefined' && activeConversationId) {
+            updateActiveChatPresence(activeConversationId, false);
+          }
+          if (typeof updateGeneralChatPresence === 'function') {
+            updateGeneralChatPresence(false);
+          }
+        } else {
+          // App ritornata in primo piano: pulisci subito le notifiche
+          if (typeof dismissAppNotification === 'function') {
+            if (typeof activeConversationId !== 'undefined' && activeConversationId) {
+              dismissAppNotification(activeConversationId);
+              updateActiveChatPresence(activeConversationId, true);
+            } else {
+              dismissAppNotification();
+            }
+          }
+        }
+      });
 
       // Controllo periodico inattività ogni 2 ore
       setInterval(() => {
