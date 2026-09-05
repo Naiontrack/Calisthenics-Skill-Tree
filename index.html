@@ -7811,7 +7811,7 @@ let currentUser = null;
                         });
                     }
                     showAppToast("Sondaggio di gruppo creato!", "success");
-                    openGroupPollsModal(targetConvId);
+                    currentEventConvId = null;
                 } else {
                     // TRIGGER 7 PUSH BACKGROUND: notifica a tutti per il nuovo sondaggio pubblico
                     dispatchBackgroundPush({
