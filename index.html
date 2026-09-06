@@ -1179,6 +1179,175 @@
             font-style: italic;
         }
 
+        /* --- STILI LINK E ANTEPRIME CHAT --- */
+        .chat-msg-link {
+            color: #38bdf8;
+            text-decoration: underline;
+            text-underline-offset: 2px;
+            word-break: break-all;
+            font-weight: 500;
+            transition: color 0.15s ease;
+        }
+
+        .chat-msg-link:hover {
+            color: #7dd3fc;
+            text-decoration: underline;
+        }
+
+        .chat-link-previews-container {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 8px;
+            max-width: 100%;
+        }
+
+        .chat-link-preview-card {
+            display: flex;
+            flex-direction: column;
+            background: rgba(15, 23, 42, 0.55);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 10px;
+            overflow: hidden;
+            text-decoration: none;
+            color: var(--text);
+            transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+            cursor: pointer;
+            box-sizing: border-box;
+            max-width: 100%;
+            user-select: none;
+        }
+
+        [data-theme="light"] .chat-link-preview-card {
+            background: rgba(241, 245, 249, 0.95);
+            border: 1px solid rgba(0, 0, 0, 0.12);
+        }
+
+        .chat-link-preview-card:hover {
+            border-color: var(--accent);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+        }
+
+        .chat-preview-media-wrap {
+            position: relative;
+            width: 100%;
+            height: 160px;
+            overflow: hidden;
+            background: #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .chat-preview-media-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+            transition: transform 0.2s ease;
+        }
+
+        .chat-link-preview-card:hover .chat-preview-media-img {
+            transform: scale(1.02);
+        }
+
+        .chat-yt-play-overlay {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 44px;
+            height: 44px;
+            background: rgba(220, 38, 38, 0.92);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+            pointer-events: none;
+            transition: transform 0.15s ease, background 0.15s ease;
+        }
+
+        .chat-link-preview-card:hover .chat-yt-play-overlay {
+            transform: translate(-50%, -50%) scale(1.1);
+            background: #ef4444;
+        }
+
+        .chat-preview-badge-yt {
+            position: absolute;
+            bottom: 8px;
+            right: 8px;
+            background: rgba(0, 0, 0, 0.85);
+            color: #fff;
+            font-size: 0.65rem;
+            font-weight: 700;
+            padding: 2px 6px;
+            border-radius: 4px;
+            letter-spacing: 0.5px;
+        }
+
+        .chat-preview-content {
+            padding: 8px 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            text-align: left;
+        }
+
+        .chat-preview-domain-row {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.72rem;
+            color: var(--subtext);
+            font-weight: 600;
+        }
+
+        .chat-preview-domain-favicon {
+            width: 14px;
+            height: 14px;
+            border-radius: 3px;
+            flex-shrink: 0;
+        }
+
+        .chat-preview-card-title {
+            font-size: 0.82rem;
+            font-weight: 700;
+            color: var(--text);
+            line-height: 1.3;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            word-break: break-word;
+        }
+
+        .chat-preview-card-desc {
+            font-size: 0.74rem;
+            color: var(--subtext);
+            line-height: 1.35;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            word-break: break-word;
+        }
+
+        .chat-preview-img-only {
+            border-radius: 10px;
+            overflow: hidden;
+            max-height: 220px;
+        }
+
+        .chat-preview-img-only .chat-preview-media-img {
+            max-height: 220px;
+            width: auto;
+            max-width: 100%;
+            object-fit: contain;
+            background: rgba(0, 0, 0, 0.2);
+        }
+
         .chat-day-divider {
             display: flex;
             align-items: center;
@@ -3556,9 +3725,13 @@ let currentUser = null;
         let userNickname = "";
         let leaderboardUnsubscribe = null;
         let userProfileData = {}; // { heightCm, weightKg, isPublic }
+        let userProfileListenerUnsubscribe = null;
         let chatUnsubscribe = null;
         let chatPanelOpen = false;
         let chatMessagesCache = {}; // id -> dati messaggio (per modifica/eliminazione)
+        var CHAT_URL_REGEX = /((?:https?:\/\/|www\.)[^\s<]+[^\s<.,:;?!"')\]>])/gi;
+        var linkMetadataCache = {};
+        var ytTitleCache = {};
         let activeChatView = 'general'; // 'general' | 'private-list' | 'private-thread'
         let activeConversationId = null;
         let activeConversationData = null;
@@ -4331,6 +4504,7 @@ let currentUser = null;
                 syncUserChallengeProgress(currentXp);
             } else {
                 localStorage.setItem('naiontrackState', JSON.stringify(userState));
+                localStorage.setItem('naiontrackWorkoutXp', userWorkoutXp || 0);
             }
             updateUI();
         }
@@ -5096,6 +5270,27 @@ let currentUser = null;
                         registerCurrentDevice(user.uid);
                         processPendingReferral(user.uid);
                         updateAppPresence(true);
+
+                        // Listener Realtime per aggiornamenti XP e bonus in tempo reale
+                        if (userProfileListenerUnsubscribe) {
+                            userProfileListenerUnsubscribe();
+                            userProfileListenerUnsubscribe = null;
+                        }
+                        userProfileListenerUnsubscribe = db.collection("users").doc(user.uid).onSnapshot(liveDoc => {
+                            if (liveDoc && liveDoc.exists) {
+                                const liveData = liveDoc.data() || {};
+                                const liveWorkoutXp = liveData.workoutXp || 0;
+                                if (liveWorkoutXp > (userWorkoutXp || 0)) {
+                                    const diff = liveWorkoutXp - (userWorkoutXp || 0);
+                                    showAppToast("🎉 Ricevuti +" + diff.toLocaleString() + " XP bonus!", "success");
+                                }
+                                userWorkoutXp = liveWorkoutXp;
+                                updateUI();
+                                if (typeof isShareSectionOpen !== 'undefined' && isShareSectionOpen) {
+                                    renderShareSection();
+                                }
+                            }
+                        }, err => console.warn("Errore realtime user profile:", err));
                     }
                     if (typeof isShareSectionOpen !== 'undefined' && isShareSectionOpen) {
                         renderShareSection();
@@ -5120,6 +5315,10 @@ let currentUser = null;
                     renderEventsFooter();
                 }
                 stopChatInvitesListener();
+                if (userProfileListenerUnsubscribe) {
+                    userProfileListenerUnsubscribe();
+                    userProfileListenerUnsubscribe = null;
+                }
                 document.getElementById('user-status-text').innerHTML = `👤 Non autenticato (Salvataggio locale)`;
                 document.getElementById('auth-actions-container').innerHTML = `
                     <button class="btn-auth-secondary" onclick="openAuthModal('login')">Accedi</button>
@@ -6675,6 +6874,13 @@ let currentUser = null;
             formatted = formatted.replace(/\n\n+/g, '<div style="height:8px;"></div>');
             // Single newlines
             formatted = formatted.replace(/\n/g, '<br>');
+
+            // Clickable links
+            formatted = formatted.replace(/((?:https?:\/\/|www\.)[^\s<]+[^\s<.,:;?!"')\]>])/gi, (url) => {
+                let href = url.replace(/&amp;/g, '&');
+                if (!/^https?:\/\//i.test(href)) href = 'https://' + href;
+                return `<a href="${encodeURI(href)}" target="_blank" rel="noopener noreferrer" class="chat-msg-link" onclick="event.stopPropagation()">${url}</a>`;
+            });
 
             return formatted;
         }
@@ -9287,15 +9493,33 @@ function getCalisthenicsExpertResponse(query) {
             };
         }
 
+        // Restituisce l'URL di invito ufficiale e sicuro per la condivisione
+        function getShareInviteUrl() {
+            if (!currentUser) return '';
+            let baseUrl = window.location.origin + window.location.pathname;
+            if (!baseUrl || !baseUrl.startsWith('http') || baseUrl.includes('null') || (typeof window !== 'undefined' && window.location.protocol === 'file:')) {
+                baseUrl = 'https://calisthenics-tree-b9a06.web.app/';
+            }
+            const sep = baseUrl.includes('?') ? '&' : '?';
+            return baseUrl + sep + 'ref=' + encodeURIComponent(currentUser.uid);
+        }
+
         // Intercetta ?ref=... all'avvio dell'app e lo memorizza
         function checkReferralQueryParam() {
             try {
-                const urlParams = new URLSearchParams(window.location.search);
+                const search = window.location.search || (window.location.hash && window.location.hash.includes('?') ? window.location.hash.slice(window.location.hash.indexOf('?')) : '');
+                const urlParams = new URLSearchParams(search);
                 const ref = urlParams.get('ref');
                 if (ref && ref.trim()) {
                     localStorage.setItem('calisthenics_pending_ref', ref.trim());
-                    const cleanUrl = window.location.origin + window.location.pathname + window.location.hash;
-                    window.history.replaceState({}, document.title, cleanUrl);
+                    try {
+                        if (window.location.protocol !== 'file:' && window.location.origin && window.location.origin !== 'null') {
+                            const cleanUrl = window.location.origin + window.location.pathname + (window.location.hash ? window.location.hash.split('?')[0] : '');
+                            window.history.replaceState({}, document.title, cleanUrl);
+                        }
+                    } catch(he) {
+                        console.warn("ReplaceState ignorato in ambiente locale:", he);
+                    }
                 }
             } catch(e) {
                 console.warn("Errore controllo referral query param:", e);
@@ -9351,6 +9575,15 @@ function getCalisthenicsExpertResponse(query) {
             if (referrerUid === authUid) {
                 console.log("[AntiCheat Referral] Tentativo di auto-invito con lo stesso account ignorato.");
                 localStorage.removeItem('calisthenics_pending_ref');
+                setTimeout(() => {
+                    openCustomModal(
+                        "⚠️ Auto-Invito Rilevato",
+                        "Non puoi utilizzare il tuo stesso link di invito per accreditare XP al tuo account!<br><br>Invia il link a un amico su un altro telefono o computer per ricevere il bonus di <strong>+3.000 XP</strong>.",
+                        "Ho Capito",
+                        false,
+                        () => {}
+                    );
+                }, 800);
                 return;
             }
 
@@ -9390,6 +9623,15 @@ function getCalisthenicsExpertResponse(query) {
                 if (isSameDeviceAsReferrer) {
                     console.warn("[AntiCheat Referral] Rilevato stesso dispositivo fisico dell'invitante. Bonus bloccato per prevenire cheat.");
                     localStorage.removeItem('calisthenics_pending_ref');
+                    setTimeout(() => {
+                        openCustomModal(
+                            "🛡️ Anti-Cheat: Stesso Dispositivo",
+                            "Hai effettuato l'accesso dallo <strong>stesso dispositivo fisico (computer o smartphone)</strong> dell'account che ha inviato il link.<br><br>Per garantire l'onestà della classifica ed evitare profili duplicati, il bonus di <strong>+3.000 XP</strong> viene accreditato solo quando un amico accede per la prima volta da un <strong>dispositivo reale differente</strong> mai associato al tuo profilo.",
+                            "Ho Capito",
+                            false,
+                            () => {}
+                        );
+                    }, 800);
                     return;
                 }
 
@@ -9402,6 +9644,15 @@ function getCalisthenicsExpertResponse(query) {
                 if ((claimHwDoc.exists && claimHwDoc.data().claimed) || (claimDevDoc.exists && claimDevDoc.data().claimed)) {
                     console.warn("[AntiCheat Referral] Questo dispositivo ha già riscattato un bonus invito in precedenza. 1 bonus per dispositivo.");
                     localStorage.removeItem('calisthenics_pending_ref');
+                    setTimeout(() => {
+                        openCustomModal(
+                            "🛡️ Dispositivo Già Registrato",
+                            "Questo dispositivo fisico ha già riscattato un bonus di invito in precedenza (è consentito massimo 1 bonus invito per dispositivo reale).",
+                            "Ho Capito",
+                            false,
+                            () => {}
+                        );
+                    }, 800);
                     return;
                 }
 
@@ -9496,7 +9747,7 @@ function getCalisthenicsExpertResponse(query) {
                 return;
             }
 
-            const shareUrl = window.location.origin + window.location.pathname + '?ref=' + currentUser.uid;
+            const shareUrl = getShareInviteUrl();
 
             db.collection("users").doc(currentUser.uid).get().then(doc => {
                 const data = (doc.exists ? doc.data() : {}) || {};
@@ -9558,7 +9809,7 @@ function getCalisthenicsExpertResponse(query) {
                 alert("Accedi o registrati per condividere il tuo link di invito!");
                 return;
             }
-            const shareUrl = window.location.origin + window.location.pathname + '?ref=' + currentUser.uid;
+            const shareUrl = getShareInviteUrl();
             if (navigator.clipboard && navigator.clipboard.writeText) {
                 navigator.clipboard.writeText(shareUrl).then(() => {
                     alert("📋 Link di invito copiato negli appunti! Invialo ai tuoi amici.");
@@ -9576,7 +9827,7 @@ function getCalisthenicsExpertResponse(query) {
                 alert("Accedi o registrati per condividere il tuo link di invito!");
                 return;
             }
-            const shareUrl = window.location.origin + window.location.pathname + '?ref=' + currentUser.uid;
+            const shareUrl = getShareInviteUrl();
             const shareData = {
                 title: "Calisthenics Skill Tree",
                 text: "Unisciti a me su Calisthenics Skill Tree! Allena le tue skill, scala la classifica e sfidami nei duelli:",
@@ -9728,7 +9979,7 @@ function getCalisthenicsExpertResponse(query) {
                             📊
                         </button>
                     ` : ''}
-                    <input type="text" id="chat-input" placeholder="Scrivi un messaggio..." maxlength="300">
+                    <input type="text" id="chat-input" placeholder="Scrivi un messaggio o incolla un link..." maxlength="500">
                     <button onclick="sendChatMessage()">Invia</button>
                 </div>
             `;
@@ -10034,6 +10285,227 @@ function getCalisthenicsExpertResponse(query) {
         }
 
         // ==========================================
+        // GESTIONE LINK E ANTEPRIME CHAT (RICH PREVIEWS)
+        // ==========================================
+        function escapeAttr(str) {
+            if (!str) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;');
+        }
+
+        // CHAT_URL_REGEX, linkMetadataCache e ytTitleCache sono inizializzati a livello globale
+
+        function formatChatTextWithLinks(rawText) {
+            if (!rawText) return '';
+            let result = '';
+            let lastIndex = 0;
+            let match;
+            const regex = /((?:https?:\/\/|www\.)[^\s<]+[^\s<.,:;?!"')\]>])/gi;
+
+            while ((match = regex.exec(rawText)) !== null) {
+                result += escapeHtml(rawText.substring(lastIndex, match.index));
+                const rawUrl = match[0];
+                let href = rawUrl;
+                if (!/^https?:\/\//i.test(href)) {
+                    href = 'https://' + href;
+                }
+                result += `<a href="${escapeAttr(href)}" target="_blank" rel="noopener noreferrer" class="chat-msg-link" onclick="event.stopPropagation()">${escapeHtml(rawUrl)}</a>`;
+                lastIndex = regex.lastIndex;
+            }
+            result += escapeHtml(rawText.substring(lastIndex));
+            return result;
+        }
+
+        function extractChatUrls(rawText) {
+            if (!rawText) return [];
+            const regex = /((?:https?:\/\/|www\.)[^\s<]+[^\s<.,:;?!"')\]>])/gi;
+            const matches = rawText.match(regex);
+            if (!matches) return [];
+            const unique = [];
+            matches.forEach(m => {
+                let clean = m.trim();
+                let href = clean;
+                if (!/^https?:\/\//i.test(href)) {
+                    href = 'https://' + href;
+                }
+                if (!unique.includes(href)) unique.push(href);
+            });
+            return unique;
+        }
+
+        function getChatMessagePreviewsHtml(rawText) {
+            const urls = extractChatUrls(rawText).slice(0, 2);
+            if (!urls.length) return '';
+
+            const ytCache = (typeof ytTitleCache !== 'undefined' && ytTitleCache) ? ytTitleCache : {};
+            const metaCache = (typeof linkMetadataCache !== 'undefined' && linkMetadataCache) ? linkMetadataCache : {};
+
+            let cardsHtml = '';
+            urls.forEach(url => {
+                // 1. Immagine diretta
+                const isImage = /\.(jpeg|jpg|gif|png|webp|svg)(\?.*)?$/i.test(url);
+                if (isImage) {
+                    cardsHtml += `
+                        <div class="chat-link-preview-card chat-preview-img-only" data-url="${escapeAttr(url)}" onclick="handleChatCardClick(this)">
+                            <img src="${escapeAttr(url)}" alt="Anteprima immagine" class="chat-preview-media-img" loading="lazy" onerror="this.closest('.chat-link-preview-card').style.display='none'">
+                        </div>
+                    `;
+                    return;
+                }
+
+                // 2. Video YouTube
+                const ytMatch = url.match(/(?:youtube\.com\/(?:watch\?.*v=|shorts\/|embed\/|v\/|live\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/i);
+                if (ytMatch) {
+                    const videoId = ytMatch[1];
+                    const cachedTitle = ytCache[videoId] || 'Video YouTube';
+                    cardsHtml += `
+                        <div class="chat-link-preview-card chat-preview-yt-card" data-preview-type="youtube" data-yt-id="${escapeAttr(videoId)}" data-url="${escapeAttr(url)}" onclick="handleChatCardClick(this)">
+                            <div class="chat-preview-media-wrap">
+                                <img src="https://img.youtube.com/vi/${escapeAttr(videoId)}/hqdefault.jpg" alt="YouTube thumbnail" class="chat-preview-media-img" loading="lazy">
+                                <div class="chat-yt-play-overlay">
+                                    <svg width="22" height="22" viewBox="0 0 24 24" fill="white" style="margin-left:2px;"><path d="M8 5v14l11-7z"/></svg>
+                                </div>
+                                <span class="chat-preview-badge-yt">YouTube</span>
+                            </div>
+                            <div class="chat-preview-content">
+                                <div class="chat-preview-domain-row">
+                                    <img src="https://www.google.com/s2/favicons?domain=youtube.com&sz=32" class="chat-preview-domain-favicon" alt="">
+                                    <span>youtube.com</span>
+                                </div>
+                                <div class="chat-preview-card-title yt-dyn-title" data-yt-title-id="${escapeAttr(videoId)}">${escapeHtml(cachedTitle)}</div>
+                                <div class="chat-preview-card-desc">Tocca per aprire e guardare il video</div>
+                            </div>
+                        </div>
+                    `;
+                    return;
+                }
+
+                // 3. Pagina web generica
+                let hostname = '';
+                try {
+                    hostname = new URL(url).hostname.replace(/^www\./i, '');
+                } catch(e) {
+                    hostname = url.replace(/^https?:\/\//i, '').split('/')[0];
+                }
+
+                const cached = metaCache[url];
+                const cardUid = 'crd-' + Math.random().toString(36).slice(2, 9);
+                const title = cached?.title || hostname;
+                const desc = cached?.description || '';
+                const img = cached?.image || '';
+
+                cardsHtml += `
+                    <div class="chat-link-preview-card chat-preview-web-card" id="${cardUid}" data-preview-type="web" data-url="${escapeAttr(url)}" onclick="handleChatCardClick(this)">
+                        <div class="chat-preview-media-wrap" style="${img ? '' : 'display:none;'}">
+                            <img src="${escapeAttr(img)}" alt="Anteprima web" class="chat-preview-media-img" loading="lazy" onerror="this.closest('.chat-preview-media-wrap').style.display='none'">
+                        </div>
+                        <div class="chat-preview-content">
+                            <div class="chat-preview-domain-row">
+                                <img src="https://www.google.com/s2/favicons?domain=${escapeAttr(hostname)}&sz=32" class="chat-preview-domain-favicon" alt="" onerror="this.style.display='none'">
+                                <span>${escapeHtml(hostname)}</span>
+                            </div>
+                            <div class="chat-preview-card-title">${escapeHtml(title)}</div>
+                            <div class="chat-preview-card-desc" style="${desc ? '' : 'display:none;'}">${escapeHtml(desc)}</div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            return `<div class="chat-link-previews-container">${cardsHtml}</div>`;
+        }
+
+        function handleChatCardClick(cardEl) {
+            if (!cardEl) return;
+            const url = cardEl.getAttribute('data-url');
+            if (url) {
+                window.open(url, '_blank', 'noopener,noreferrer');
+            }
+        }
+
+        function triggerPendingLinkMetadataFetch(container) {
+            if (!container) return;
+
+            const ytCacheRef = (typeof ytTitleCache !== 'undefined' && ytTitleCache) ? ytTitleCache : (window.ytTitleCache = {});
+            const metaCacheRef = (typeof linkMetadataCache !== 'undefined' && linkMetadataCache) ? linkMetadataCache : (window.linkMetadataCache = {});
+
+            // Arricchimento titoli YouTube tramite oEmbed
+            const ytCards = container.querySelectorAll('.chat-preview-yt-card[data-yt-id]');
+            ytCards.forEach(card => {
+                const videoId = card.getAttribute('data-yt-id');
+                if (!videoId || ytCacheRef[videoId]) return;
+
+                fetch(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`)
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data && data.title) {
+                            ytCacheRef[videoId] = data.title;
+                            container.querySelectorAll(`.yt-dyn-title[data-yt-title-id="${videoId}"]`).forEach(el => {
+                                el.textContent = data.title;
+                            });
+                        }
+                    })
+                    .catch(() => {});
+            });
+
+            // Arricchimento schede web tramite Microlink
+            const webCards = container.querySelectorAll('.chat-preview-web-card[data-url]');
+            webCards.forEach(card => {
+                const url = card.getAttribute('data-url');
+                if (!url) return;
+
+                if (metaCacheRef[url]) {
+                    applyCardMetadata(card, metaCacheRef[url]);
+                    return;
+                }
+
+                const ctrl = new AbortController();
+                const timeout = setTimeout(() => ctrl.abort(), 4000);
+                fetch('https://api.microlink.io?url=' + encodeURIComponent(url), { signal: ctrl.signal })
+                    .then(r => r.json())
+                    .then(res => {
+                        clearTimeout(timeout);
+                        if (res && res.status === 'success' && res.data) {
+                            const meta = {
+                                title: res.data.title || '',
+                                description: res.data.description || '',
+                                image: (res.data.image && res.data.image.url) ? res.data.image.url : null
+                            };
+                            metaCacheRef[url] = meta;
+                            applyCardMetadata(card, meta);
+                        }
+                    })
+                    .catch(() => {});
+            });
+        }
+
+        function applyCardMetadata(card, meta) {
+            if (!card || !meta) return;
+            if (meta.title) {
+                const t = card.querySelector('.chat-preview-card-title');
+                if (t) t.textContent = meta.title;
+            }
+            if (meta.description) {
+                const d = card.querySelector('.chat-preview-card-desc');
+                if (d) {
+                    d.textContent = meta.description;
+                    d.style.display = '-webkit-box';
+                }
+            }
+            if (meta.image) {
+                const wrap = card.querySelector('.chat-preview-media-wrap');
+                const img = card.querySelector('.chat-preview-media-img');
+                if (wrap && img) {
+                    img.src = meta.image;
+                    wrap.style.display = 'block';
+                }
+            }
+        }
+
+        // ==========================================
         // RENDERING CONDIVISO DEI MESSAGGI
         // ==========================================
         function renderMessagesIntoContainer(msgs, container) {
@@ -10151,7 +10623,8 @@ function getCalisthenicsExpertResponse(query) {
                     }).catch(err => console.error("Errore recupero rank utente:", err));
                 }
 
-                const textHtml = m.text ? `<span class="chat-msg-text">${escapeHtml(m.text)}</span>` : '';
+                const textHtml = m.text ? `<span class="chat-msg-text">${formatChatTextWithLinks(m.text)}</span>` : '';
+                const previewsHtml = m.text ? getChatMessagePreviewsHtml(m.text) : '';
                 const sentTime = formatChatTime(m.createdAt);
                 const editedTime = m.edited ? formatChatTime(m.editedAt) : '';
                 const editedHtml = m.edited
@@ -10173,6 +10646,7 @@ function getCalisthenicsExpertResponse(query) {
                             <span class="chat-rank-tag" data-uid="${m.uid || ''}" style="${rankLabel ? '' : 'display:none;'}">${escapeHtml(rankLabel || '')}</span>
                         </div>
                         ${textHtml}${editedHtml}
+                        ${previewsHtml}
                         <div class="chat-msg-footer">
                             ${timeHtml}
                             ${actionsHtml}
@@ -10182,6 +10656,7 @@ function getCalisthenicsExpertResponse(query) {
             });
             container.innerHTML = html;
             container.scrollTop = container.scrollHeight;
+            triggerPendingLinkMetadataFetch(container);
         }
 
         // Restituisce il riferimento Firestore alla collezione di messaggi attualmente visualizzata
@@ -10238,7 +10713,7 @@ function getCalisthenicsExpertResponse(query) {
             }
 
             const messagesRef = currentMessagesRef();
-            const msgText = text.slice(0, 300);
+            const msgText = text.slice(0, 500);
 
             const myRank = getCurrentRank(getTotalXp());
             const myRankName = myRank ? myRank.name : 'Bronzo (Novizio)';
@@ -11448,7 +11923,7 @@ function getCalisthenicsExpertResponse(query) {
                 <div class="auth-error" id="edit-msg-error"></div>
                 <div class="auth-form-group">
                     <label>Testo del messaggio</label>
-                    <textarea id="edit-msg-textarea" maxlength="300" rows="3" style="width:100%; box-sizing:border-box; padding:10px; border-radius:6px; border:1px solid var(--locked); background:var(--input-bg); color:var(--text); font-family:inherit; resize:vertical;">${escapeHtml(data.text || '')}</textarea>
+                    <textarea id="edit-msg-textarea" maxlength="500" rows="3" style="width:100%; box-sizing:border-box; padding:10px; border-radius:6px; border:1px solid var(--locked); background:var(--input-bg); color:var(--text); font-family:inherit; resize:vertical;">${escapeHtml(data.text || '')}</textarea>
                 </div>
             `;
             actionsBox.innerHTML = `
@@ -11469,7 +11944,7 @@ function getCalisthenicsExpertResponse(query) {
                 }
 
                 currentMessagesRef().doc(msgId).update({
-                    text: newText.slice(0, 300),
+                    text: newText.slice(0, 500),
                     edited: true,
                     editedAt: firebase.firestore.FieldValue.serverTimestamp()
                 }).then(() => {
@@ -13243,12 +13718,12 @@ function getCalisthenicsExpertResponse(query) {
                             <div style="font-weight:800; color:var(--unlocked); font-size:0.85rem; margin-top:4px;">10.000 XP</div>
                         </div>
                     </div>
-                    <div style="margin-top:10px;">
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-                            <span style="font-size:0.8rem; font-weight:700; color:var(--text);">5 Esercizi Estratti Casualmente:</span>
-                            <button type="button" onclick="rerollSoloExercises()" style="background:transparent; border:none; color:var(--accent); font-size:0.75rem; cursor:pointer; font-weight:600;">🔄 Rimescola</button>
+                    <div style="margin-top:14px; margin-bottom:28px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                            <span style="font-size:0.82rem; font-weight:700; color:var(--text);">5 Esercizi Estratti Casualmente:</span>
+                            <button type="button" onclick="rerollSoloExercises()" style="background:rgba(56,189,248,0.1); border:1px solid rgba(56,189,248,0.3); border-radius:6px; padding:3px 8px; color:var(--accent); font-size:0.75rem; cursor:pointer; font-weight:600;">🔄 Rimescola</button>
                         </div>
-                        <div id="solo-preview-list" style="display:flex; flex-direction:column; gap:4px; max-height:160px; overflow-y:auto;"></div>
+                        <div id="solo-preview-list" style="display:flex; flex-direction:column; gap:6px;"></div>
                     </div>
                 </div>
 
@@ -13369,7 +13844,7 @@ function getCalisthenicsExpertResponse(query) {
             if (!listEl) return;
             const diff = SOLO_DIFFICULTIES[selectedSoloDifficulty || 'facile'] || SOLO_DIFFICULTIES.facile;
             listEl.innerHTML = currentSoloExercisesPreview.map((ex, idx) => `
-                <div style="display:flex; justify-content:space-between; align-items:center; background:var(--input-bg); border:1px solid var(--line-color); border-radius:6px; padding:6px 10px; font-size:0.8rem;">
+                <div style="display:flex; justify-content:space-between; align-items:center; background:var(--input-bg); border:1px solid var(--line-color); border-radius:8px; padding:7px 12px; font-size:0.82rem;">
                     <span><strong>#${idx + 1}</strong> ${escapeHtml(ex.name)}</span>
                     <strong style="color:${diff.color};">${ex.target} ${ex.unit || 'reps'}</strong>
                 </div>
