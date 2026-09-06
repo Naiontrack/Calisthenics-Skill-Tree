@@ -7167,144 +7167,546 @@ function getCalisthenicsExpertResponse(query) {
 
         // REGISTRO BIOMECCANICO PER OGNI SINGOLO ESERCIZIO
         const SKILL_BIOMECHANICS_REGISTRY = {
-            // PUSH / SPINTA
-            "pushups": { name: "Regular Push Ups", mode: "rep", subType: "pushup_two_arms", minRom: 88, maxLockout: 156 },
-            "pushups_knee": { name: "Knee Push Ups", mode: "rep", subType: "pushup_knee", minRom: 90, maxLockout: 155 },
-            "diamond_pushups": { name: "Diamond Push Ups", mode: "rep", subType: "pushup_diamond", minRom: 88, maxLockout: 156 },
-            "clap_pushups": { name: "Clap Push Ups", mode: "rep", subType: "pushup_clap", minRom: 90, maxLockout: 155 },
-            "double_clap_pushups": { name: "Double Clap Push Ups", mode: "rep", subType: "pushup_clap", minRom: 90, maxLockout: 155 },
-            "behind_back_clap": { name: "Behind-the-Back Clap Push Ups", mode: "rep", subType: "pushup_clap", minRom: 90, maxLockout: 155 },
-            "pseudo_pushups": { name: "PPPU (Pseudo Push Ups)", mode: "rep", subType: "pushup_pseudo", minRom: 88, maxLockout: 155 },
-            "one_arm_pushup": { name: "One Arm Push Up", mode: "rep", subType: "pushup_one_arm", minRom: 90, maxLockout: 154 },
-            "one_arm_russian": { name: "One Arm Russian Push Up", mode: "rep", subType: "pushup_one_arm", minRom: 90, maxLockout: 154 },
-            "planche_lean": { name: "Planche Lean", mode: "hold", subType: "planche_lean" },
-            "frog_stand": { name: "Frog Stand Hold", mode: "hold", subType: "frog_stand" },
-            "elbow_lever": { name: "Elbow Lever Hold", mode: "hold", subType: "elbow_lever" },
-            "tuck_planche": { name: "Tuck Planche Hold", mode: "hold", subType: "planche_tuck" },
-            "adv_tuck_planche": { name: "Advanced Tuck Planche", mode: "hold", subType: "planche_adv_tuck" },
-            "straddle_planche": { name: "Straddle Planche", mode: "hold", subType: "planche_straddle" },
-            "full_planche": { name: "Full Planche Hold", mode: "hold", subType: "planche_full" },
-            "maltese": { name: "Maltese Hold", mode: "hold", subType: "maltese" },
-
-            // PULL / TRAZIONE
-            "pullups": { name: "Pull Ups", mode: "rep", subType: "pullup_two_arms", minRom: 80, maxLockout: 150 },
-            "australian": { name: "Australian Pull Ups", mode: "rep", subType: "pullup_australian", minRom: 82, maxLockout: 155 },
-            "chest_to_bar": { name: "Chest to Bar Pull Ups", mode: "rep", subType: "pullup_chest_to_bar", minRom: 72, maxLockout: 150 },
-            "one_arm_pullup": { name: "One Arm Pull Up", mode: "rep", subType: "pullup_one_arm", minRom: 82, maxLockout: 145 },
-            "tuck_fl": { name: "Tuck Front Lever", mode: "hold", subType: "fl_tuck" },
-            "adv_tuck_fl": { name: "Adv. Tuck Front Lever", mode: "hold", subType: "fl_adv_tuck" },
-            "straddle_fl": { name: "Straddle Front Lever", mode: "hold", subType: "fl_straddle" },
-            "full_fl": { name: "Full Front Lever", mode: "hold", subType: "fl_full" },
-            "muscle_up": { name: "Bar Muscle Up", mode: "rep", subType: "muscle_up" },
-            "explosive_pullup": { name: "Kipping Pull Ups", mode: "rep", subType: "pullup_two_arms", minRom: 85, maxLockout: 145 },
-            "towel_pullup": { name: "Towel Pull Ups", mode: "rep", subType: "pullup_two_arms", minRom: 82, maxLockout: 145 },
-
-            // DIPS & VERTICALI
-            "classic_dip": { name: "Classic Dip (Parallel Bars)", mode: "rep", subType: "dip_parallel", minRom: 90, maxLockout: 155 },
-            "bar_dips": { name: "Parallel Bar Dips", mode: "rep", subType: "dip_parallel", minRom: 90, maxLockout: 155 },
-            "bench_dips": { name: "Bench Dips", mode: "rep", subType: "dip_bench", minRom: 90, maxLockout: 155 },
-            "l_sit_dip": { name: "L-Sit Dip", mode: "rep", subType: "dip_lsit", minRom: 90, maxLockout: 155 },
-            "korean_dip": { name: "Korean Dips", mode: "rep", subType: "dip_korean", minRom: 90, maxLockout: 155 },
-            "russian_dip": { name: "Russian Dips", mode: "rep", subType: "dip_russian", minRom: 90, maxLockout: 155 },
-            "impossible_dip": { name: "Impossible Dip", mode: "rep", subType: "dip_russian", minRom: 90, maxLockout: 155 },
-            "wall_handstand": { name: "Wall Handstand", mode: "hold", subType: "handstand_hold" },
-            "freestanding_hs": { name: "Freestanding Handstand", mode: "hold", subType: "handstand_hold" },
-            "hspu_wall": { name: "Wall HSPU", mode: "rep", subType: "hspu", minRom: 92, maxLockout: 155 },
-            "freestanding_hspu": { name: "Freestanding HSPU", mode: "rep", subType: "hspu", minRom: 92, maxLockout: 155 },
-            "l_sit": { name: "L-Sit Hold", mode: "hold", subType: "lsit" },
-            "v_sit": { name: "V-Sit Hold", mode: "hold", subType: "vsit" },
-
-            // RINGS / ANELLI
-            "ring_support": { name: "Ring Support Hold", mode: "hold", subType: "ring_support" },
-            "ring_dips": { name: "Ring Dips", mode: "rep", subType: "dip_parallel", minRom: 90, maxLockout: 155 },
-            "ring_muscle_up": { name: "Ring Muscle Up", mode: "rep", subType: "muscle_up" },
-            "iron_cross": { name: "Iron Cross Hold", mode: "hold", subType: "iron_cross" },
-            "victorian": { name: "Victorian Cross on Rings", mode: "hold", subType: "victorian" },
-
-            // CORE / ADDOMINALI
-            "plank": { name: "Plank Hold", mode: "hold", subType: "plank" },
-            "side_plank": { name: "Side Plank Hold", mode: "hold", subType: "side_plank" },
-            "crunch": { name: "Ab Crunches", mode: "rep", subType: "crunch" },
-            "hollow_body": { name: "Hollow Body Hold", mode: "hold", subType: "hollow_body" },
-            "dragon_flag": { name: "Dragon Flag Hold", mode: "hold", subType: "dragon_flag" },
-            "human_flag_tuck": { name: "Tuck Human Flag", mode: "hold", subType: "human_flag" },
-            "human_flag_straddle": { name: "Straddle Human Flag", mode: "hold", subType: "human_flag" },
-            "human_flag": { name: "Full Human Flag", mode: "hold", subType: "human_flag" },
-            "leg_raises": { name: "Hanging Leg Raises", mode: "rep", subType: "leg_raises" },
-            "ab_wheel": { name: "Ab Wheel Rollout", mode: "rep", subType: "ab_wheel" },
-            "windshield_wipers": { name: "Windshield Wipers", mode: "rep", subType: "windshield_wipers" },
-            "russian_twist": { name: "Russian Twist", mode: "rep", subType: "russian_twist" },
-            "superman_hold": { name: "Superman Hold", mode: "hold", subType: "superman_hold" },
-
-            // GAMBE / LEGS
-            "squat": { name: "Air Squats", mode: "rep", subType: "squat_two_legs", minRom: 90, maxLockout: 158 },
-            "pistol_squat": { name: "Pistol Squats", mode: "rep", subType: "squat_single_leg", minRom: 85, maxLockout: 155 },
-            "shrimp_squat": { name: "Shrimp Squat", mode: "rep", subType: "squat_single_leg", minRom: 88, maxLockout: 155 },
-            "lunges": { name: "Lunges", mode: "rep", subType: "lunges", minRom: 90, maxLockout: 155 },
-            "bulgarian_split_squat": { name: "Bulgarian Split Squat", mode: "rep", subType: "squat_single_leg", minRom: 90, maxLockout: 155 },
-            "cossack_squat": { name: "Cossack Squat", mode: "rep", subType: "squat_single_leg", minRom: 90, maxLockout: 155 },
-            "jump_squat": { name: "Jump Squat", mode: "rep", subType: "squat_two_legs", minRom: 90, maxLockout: 158 },
-            "box_jump": { name: "Box Jump", mode: "rep", subType: "box_jump" },
-            "wall_sit": { name: "Wall Sit", mode: "hold", subType: "wall_sit" },
-            "calf_raises": { name: "Calf Raises", mode: "rep", subType: "calf_raises" },
-            "glute_bridge": { name: "Glute Bridge", mode: "rep", subType: "glute_bridge" },
-            "nordic_curl": { name: "Nordic Hamstring Curl", mode: "rep", subType: "nordic_curl" },
-
-            // GRIP / PRESA
-            "dead_hang": { name: "Dead Hang (Passive Hang)", mode: "hold", subType: "hang_two_arms" },
-            "one_arm_hang": { name: "One Arm Hang", mode: "hold", subType: "hang_one_arm" },
-            "towel_hang": { name: "Towel Hang", mode: "hold", subType: "hang_two_arms" },
-            "fingertip_hang": { name: "Fingertip Hang", mode: "hold", subType: "hang_two_arms" },
-
-            // FREESTYLE & ESPLOSIVI
-            "pullover": { name: "Bar Pull Over", mode: "rep", subType: "pullover" },
-            "spin_360": { name: "360 Spin / Bar Hop", mode: "rep", subType: "spin_360" },
-            "freestyle_combo": { name: "Freestyle Flow Combo", mode: "hold", subType: "freestyle_combo" },
-            "burpees": { name: "Burpees", mode: "rep", subType: "burpees" },
-            "mountain_climbers": { name: "Mountain Climbers", mode: "rep", subType: "mountain_climbers" },
-            "broad_jump": { name: "Standing Broad Jump", mode: "rep", subType: "broad_jump" }
-        };
+          "planche_lean": {
+                    "name": "Planche Lean",
+                    "mode": "hold",
+                    "subType": "planche_lean"
+          },
+          "pushups_knee": {
+                    "name": "Knee Push Ups",
+                    "mode": "rep",
+                    "subType": "pushup_knee",
+                    "minRom": 90,
+                    "maxLockout": 154
+          },
+          "pushups": {
+                    "name": "Regular Push Ups",
+                    "mode": "rep",
+                    "subType": "pushup_two_arms",
+                    "minRom": 88,
+                    "maxLockout": 156
+          },
+          "diamond_pushups": {
+                    "name": "Diamond Push Ups",
+                    "mode": "rep",
+                    "subType": "pushup_diamond",
+                    "minRom": 88,
+                    "maxLockout": 156
+          },
+          "clap_pushups": {
+                    "name": "Clap Push Ups",
+                    "mode": "rep",
+                    "subType": "pushup_clap",
+                    "minRom": 90,
+                    "maxLockout": 154
+          },
+          "pseudo_pushups": {
+                    "name": "PPPU (Pseudo Push Ups)",
+                    "mode": "rep",
+                    "subType": "pushup_pseudo",
+                    "minRom": 88,
+                    "maxLockout": 155
+          },
+          "frog_stand": {
+                    "name": "Frog Stand Hold",
+                    "mode": "hold",
+                    "subType": "frog_stand"
+          },
+          "elbow_lever": {
+                    "name": "Elbow Lever Hold",
+                    "mode": "hold",
+                    "subType": "elbow_lever"
+          },
+          "double_clap_pushups": {
+                    "name": "Double Clap Push Ups",
+                    "mode": "rep",
+                    "subType": "pushup_clap",
+                    "minRom": 90,
+                    "maxLockout": 154
+          },
+          "behind_back_clap": {
+                    "name": "Behind-the-Back Clap Push Ups",
+                    "mode": "rep",
+                    "subType": "pushup_clap",
+                    "minRom": 90,
+                    "maxLockout": 154
+          },
+          "one_arm_pushup": {
+                    "name": "One Arm Push Up",
+                    "mode": "rep",
+                    "subType": "pushup_one_arm",
+                    "minRom": 90,
+                    "maxLockout": 154
+          },
+          "one_arm_russian": {
+                    "name": "One Arm Russian Push Up",
+                    "mode": "rep",
+                    "subType": "pushup_one_arm",
+                    "minRom": 90,
+                    "maxLockout": 154
+          },
+          "tuck_planche": {
+                    "name": "Tuck Planche Hold",
+                    "mode": "hold",
+                    "subType": "planche_tuck"
+          },
+          "adv_tuck_planche": {
+                    "name": "Advanced Tuck Planche",
+                    "mode": "hold",
+                    "subType": "planche_adv_tuck"
+          },
+          "straddle_planche": {
+                    "name": "Straddle Planche",
+                    "mode": "hold",
+                    "subType": "planche_straddle"
+          },
+          "full_planche": {
+                    "name": "Full Planche Hold",
+                    "mode": "hold",
+                    "subType": "planche_full"
+          },
+          "maltese": {
+                    "name": "Maltese Hold",
+                    "mode": "hold",
+                    "subType": "maltese"
+          },
+          "australian": {
+                    "name": "Australian Pull Ups",
+                    "mode": "rep",
+                    "subType": "pullup_australian",
+                    "minRom": 82,
+                    "maxLockout": 155
+          },
+          "pullups": {
+                    "name": "Pull Ups",
+                    "mode": "rep",
+                    "subType": "pullup_two_arms",
+                    "minRom": 80,
+                    "maxLockout": 150
+          },
+          "chest_to_bar": {
+                    "name": "Chest to Bar Pull Ups",
+                    "mode": "rep",
+                    "subType": "pullup_chest_to_bar",
+                    "minRom": 72,
+                    "maxLockout": 150
+          },
+          "muscle_up": {
+                    "name": "Bar Muscle Up",
+                    "mode": "rep",
+                    "subType": "muscle_up"
+          },
+          "tuck_fl": {
+                    "name": "Tuck Front Lever",
+                    "mode": "hold",
+                    "subType": "fl_tuck"
+          },
+          "adv_tuck_fl": {
+                    "name": "Adv. Tuck Front Lever",
+                    "mode": "hold",
+                    "subType": "fl_adv_tuck"
+          },
+          "straddle_fl": {
+                    "name": "Straddle Front Lever",
+                    "mode": "hold",
+                    "subType": "fl_straddle"
+          },
+          "full_fl": {
+                    "name": "Full Front Lever",
+                    "mode": "hold",
+                    "subType": "fl_full"
+          },
+          "one_arm_pullup": {
+                    "name": "One Arm Pull Up",
+                    "mode": "rep",
+                    "subType": "pullup_one_arm",
+                    "minRom": 82,
+                    "maxLockout": 145
+          },
+          "ring_support": {
+                    "name": "Ring Support Hold",
+                    "mode": "hold",
+                    "subType": "ring_support"
+          },
+          "ring_dips": {
+                    "name": "Ring Dips",
+                    "mode": "rep",
+                    "subType": "dip_parallel",
+                    "minRom": 90,
+                    "maxLockout": 155
+          },
+          "ring_muscle_up": {
+                    "name": "Ring Muscle Up",
+                    "mode": "rep",
+                    "subType": "muscle_up"
+          },
+          "iron_cross": {
+                    "name": "Iron Cross Hold",
+                    "mode": "hold",
+                    "subType": "iron_cross"
+          },
+          "victorian": {
+                    "name": "Victorian Cross on Rings",
+                    "mode": "hold",
+                    "subType": "victorian"
+          },
+          "pullover": {
+                    "name": "Bar Pull Over",
+                    "mode": "rep",
+                    "subType": "pullover",
+                    "minRom": 85,
+                    "maxLockout": 150
+          },
+          "spin_360": {
+                    "name": "360 Spin / Bar Hop",
+                    "mode": "rep",
+                    "subType": "spin_360",
+                    "minRom": 85,
+                    "maxLockout": 150
+          },
+          "freestyle_combo": {
+                    "name": "Freestyle Flow Combo",
+                    "mode": "hold",
+                    "subType": "freestyle_combo"
+          },
+          "bench_dips": {
+                    "name": "Bench Dips",
+                    "mode": "rep",
+                    "subType": "dip_bench",
+                    "minRom": 90,
+                    "maxLockout": 155
+          },
+          "classic_dip": {
+                    "name": "Classic Dip (Parallel Bars)",
+                    "mode": "rep",
+                    "subType": "dip_parallel",
+                    "minRom": 90,
+                    "maxLockout": 155
+          },
+          "bar_dips": {
+                    "name": "Parallel Bar Dips",
+                    "mode": "rep",
+                    "subType": "dip_parallel",
+                    "minRom": 90,
+                    "maxLockout": 155
+          },
+          "l_sit_dip": {
+                    "name": "L-Sit Dip",
+                    "mode": "rep",
+                    "subType": "dip_lsit",
+                    "minRom": 90,
+                    "maxLockout": 155
+          },
+          "korean_dip": {
+                    "name": "Korean Dips",
+                    "mode": "rep",
+                    "subType": "dip_korean",
+                    "minRom": 90,
+                    "maxLockout": 155
+          },
+          "russian_dip": {
+                    "name": "Russian Dips",
+                    "mode": "rep",
+                    "subType": "dip_russian",
+                    "minRom": 90,
+                    "maxLockout": 155
+          },
+          "l_sit": {
+                    "name": "L-Sit Hold",
+                    "mode": "hold",
+                    "subType": "lsit"
+          },
+          "v_sit": {
+                    "name": "V-Sit Hold",
+                    "mode": "hold",
+                    "subType": "vsit"
+          },
+          "wall_handstand": {
+                    "name": "Wall Handstand",
+                    "mode": "hold",
+                    "subType": "handstand_hold"
+          },
+          "freestanding_hs": {
+                    "name": "Freestanding Handstand",
+                    "mode": "hold",
+                    "subType": "handstand_hold"
+          },
+          "hspu_wall": {
+                    "name": "Wall HSPU",
+                    "mode": "rep",
+                    "subType": "hspu",
+                    "minRom": 92,
+                    "maxLockout": 155
+          },
+          "freestanding_hspu": {
+                    "name": "Freestanding HSPU",
+                    "mode": "rep",
+                    "subType": "hspu",
+                    "minRom": 92,
+                    "maxLockout": 155
+          },
+          "impossible_dip": {
+                    "name": "Impossible Dip",
+                    "mode": "rep",
+                    "subType": "dip_russian",
+                    "minRom": 90,
+                    "maxLockout": 155
+          },
+          "plank": {
+                    "name": "Plank Hold",
+                    "mode": "hold",
+                    "subType": "plank"
+          },
+          "crunch": {
+                    "name": "Ab Crunches",
+                    "mode": "rep",
+                    "subType": "crunch",
+                    "minRom": 85,
+                    "maxLockout": 150
+          },
+          "hollow_body": {
+                    "name": "Hollow Body Hold",
+                    "mode": "hold",
+                    "subType": "hollow_body"
+          },
+          "side_plank": {
+                    "name": "Side Plank Hold",
+                    "mode": "hold",
+                    "subType": "side_plank"
+          },
+          "dragon_flag": {
+                    "name": "Dragon Flag Hold",
+                    "mode": "hold",
+                    "subType": "dragon_flag"
+          },
+          "human_flag_tuck": {
+                    "name": "Tuck Human Flag",
+                    "mode": "hold",
+                    "subType": "human_flag"
+          },
+          "human_flag_straddle": {
+                    "name": "Straddle Human Flag",
+                    "mode": "hold",
+                    "subType": "human_flag"
+          },
+          "human_flag": {
+                    "name": "Full Human Flag",
+                    "mode": "hold",
+                    "subType": "human_flag"
+          },
+          "squat": {
+                    "name": "Air Squats",
+                    "mode": "rep",
+                    "subType": "squat_two_legs",
+                    "minRom": 90,
+                    "maxLockout": 158
+          },
+          "lunges": {
+                    "name": "Lunges",
+                    "mode": "rep",
+                    "subType": "lunges",
+                    "minRom": 90,
+                    "maxLockout": 155
+          },
+          "calf_raises": {
+                    "name": "Calf Raises",
+                    "mode": "rep",
+                    "subType": "calf_raises",
+                    "minRom": 80,
+                    "maxLockout": 150
+          },
+          "glute_bridge": {
+                    "name": "Glute Bridge",
+                    "mode": "rep",
+                    "subType": "glute_bridge",
+                    "minRom": 90,
+                    "maxLockout": 160
+          },
+          "wall_sit": {
+                    "name": "Wall Sit",
+                    "mode": "hold",
+                    "subType": "wall_sit"
+          },
+          "bulgarian_split_squat": {
+                    "name": "Bulgarian Split Squat",
+                    "mode": "rep",
+                    "subType": "squat_single_leg",
+                    "minRom": 88,
+                    "maxLockout": 155
+          },
+          "box_jump": {
+                    "name": "Box Jump",
+                    "mode": "rep",
+                    "subType": "box_jump",
+                    "minRom": 88,
+                    "maxLockout": 155
+          },
+          "pistol_squat": {
+                    "name": "Pistol Squats",
+                    "mode": "rep",
+                    "subType": "squat_single_leg",
+                    "minRom": 85,
+                    "maxLockout": 155
+          },
+          "cossack_squat": {
+                    "name": "Cossack Squat",
+                    "mode": "rep",
+                    "subType": "squat_single_leg",
+                    "minRom": 88,
+                    "maxLockout": 155
+          },
+          "nordic_curl": {
+                    "name": "Nordic Hamstring Curl",
+                    "mode": "rep",
+                    "subType": "nordic_curl",
+                    "minRom": 95,
+                    "maxLockout": 155
+          },
+          "shrimp_squat": {
+                    "name": "Shrimp Squat",
+                    "mode": "rep",
+                    "subType": "squat_single_leg",
+                    "minRom": 88,
+                    "maxLockout": 155
+          },
+          "dead_hang": {
+                    "name": "Dead Hang (Passive Hang)",
+                    "mode": "hold",
+                    "subType": "hang_two_arms"
+          },
+          "towel_hang": {
+                    "name": "Towel Hang",
+                    "mode": "hold",
+                    "subType": "hang_two_arms"
+          },
+          "fingertip_hang": {
+                    "name": "Fingertip Hang",
+                    "mode": "hold",
+                    "subType": "hang_two_arms"
+          },
+          "towel_pullup": {
+                    "name": "Towel Pull Ups",
+                    "mode": "rep",
+                    "subType": "pullup_two_arms",
+                    "minRom": 82,
+                    "maxLockout": 145
+          },
+          "one_arm_hang": {
+                    "name": "One Arm Hang",
+                    "mode": "hold",
+                    "subType": "hang_one_arm"
+          },
+          "russian_twist": {
+                    "name": "Russian Twist",
+                    "mode": "rep",
+                    "subType": "russian_twist",
+                    "minRom": 85,
+                    "maxLockout": 140
+          },
+          "superman_hold": {
+                    "name": "Superman Hold",
+                    "mode": "hold",
+                    "subType": "superman_hold"
+          },
+          "leg_raises": {
+                    "name": "Hanging Leg Raises",
+                    "mode": "rep",
+                    "subType": "leg_raises",
+                    "minRom": 95,
+                    "maxLockout": 155
+          },
+          "ab_wheel": {
+                    "name": "Ab Wheel Rollout",
+                    "mode": "rep",
+                    "subType": "ab_wheel",
+                    "minRom": 90,
+                    "maxLockout": 155
+          },
+          "windshield_wipers": {
+                    "name": "Windshield Wipers",
+                    "mode": "rep",
+                    "subType": "windshield_wipers",
+                    "minRom": 90,
+                    "maxLockout": 150
+          },
+          "jump_squat": {
+                    "name": "Jump Squat",
+                    "mode": "rep",
+                    "subType": "squat_two_legs",
+                    "minRom": 90,
+                    "maxLockout": 155
+          },
+          "mountain_climbers": {
+                    "name": "Mountain Climbers",
+                    "mode": "rep",
+                    "subType": "mountain_climbers",
+                    "minRom": 80,
+                    "maxLockout": 145
+          },
+          "burpees": {
+                    "name": "Burpees",
+                    "mode": "rep",
+                    "subType": "burpees",
+                    "minRom": 88,
+                    "maxLockout": 155
+          },
+          "broad_jump": {
+                    "name": "Standing Broad Jump",
+                    "mode": "rep",
+                    "subType": "broad_jump",
+                    "minRom": 90,
+                    "maxLockout": 155
+          },
+          "explosive_pullup": {
+                    "name": "Kipping Pull Ups",
+                    "mode": "rep",
+                    "subType": "pullup_two_arms",
+                    "minRom": 85,
+                    "maxLockout": 145
+          }
+};
 
         function getSkillBiomechanicsProfile(skillId, fallbackName = "") {
             const sid = (skillId || "").toLowerCase().trim();
             const name = (fallbackName || "").toLowerCase().trim();
 
-            // 1. Corrispondenza diretta per ID nel registro
+            // 1. Corrispondenza diretta per ID nel registro (copre tutte le 81 skill ufficiali)
             if (SKILL_BIOMECHANICS_REGISTRY[sid]) {
                 const reg = SKILL_BIOMECHANICS_REGISTRY[sid];
                 return { id: sid, ...reg };
             }
 
-            // 2. Corrispondenza intelligente per nome/keyword
-            if (sid.includes("one_arm_pull") || sid.includes("one arm pull") || name.includes("one arm pull") || name.includes("trazione a un braccio") || name.includes("trazione monobraccio")) {
-                return { id: "one_arm_pullup", ...SKILL_BIOMECHANICS_REGISTRY["one_arm_pullup"] };
+            // 2. Corrispondenza intelligente per keyword / nome in italiano o inglese
+            if (sid.includes("knee_push") || sid.includes("pushups_knee") || name.includes("knee push") || name.includes("ginocchia")) {
+                return { id: "pushups_knee", ...SKILL_BIOMECHANICS_REGISTRY["pushups_knee"] };
             }
-            if (sid.includes("one_arm_push") || sid.includes("one arm push") || name.includes("one arm push") || name.includes("piegamento a un braccio") || name.includes("pushup a una mano")) {
-                return { id: "one_arm_pushup", ...SKILL_BIOMECHANICS_REGISTRY["one_arm_pushup"] };
-            }
-            if (sid.includes("diamond") || name.includes("diamond")) {
+            if (sid.includes("diamond") || name.includes("diamond") || name.includes("diamante")) {
                 return { id: "diamond_pushups", ...SKILL_BIOMECHANICS_REGISTRY["diamond_pushups"] };
             }
             if (sid.includes("pseudo") || sid.includes("pppu") || name.includes("pseudo")) {
                 return { id: "pseudo_pushups", ...SKILL_BIOMECHANICS_REGISTRY["pseudo_pushups"] };
             }
-            if (sid.includes("pistol") || name.includes("pistol")) {
-                return { id: "pistol_squat", ...SKILL_BIOMECHANICS_REGISTRY["pistol_squat"] };
+            if (sid.includes("clap") || name.includes("clap") || name.includes("battito")) {
+                return { id: "clap_pushups", ...SKILL_BIOMECHANICS_REGISTRY["clap_pushups"] };
             }
-            if (sid.includes("muscle_up") || sid.includes("muscle up") || name.includes("muscle up") || name.includes("muscle-up")) {
-                return { id: "muscle_up", ...SKILL_BIOMECHANICS_REGISTRY["muscle_up"] };
+            if (sid.includes("one_arm_push") || name.includes("one arm push") || name.includes("un braccio") && name.includes("push")) {
+                return { id: "one_arm_pushup", ...SKILL_BIOMECHANICS_REGISTRY["one_arm_pushup"] };
             }
-            if (sid.includes("chest_to_bar") || name.includes("chest to bar")) {
-                return { id: "chest_to_bar", ...SKILL_BIOMECHANICS_REGISTRY["chest_to_bar"] };
+            if (sid.includes("pushup") || sid.includes("push_up") || name.includes("push up") || name.includes("piegament")) {
+                return { id: "pushups", ...SKILL_BIOMECHANICS_REGISTRY["pushups"] };
             }
-            if (sid.includes("hspu") || name.includes("hspu") || name.includes("handstand push")) {
-                return { id: "freestanding_hspu", ...SKILL_BIOMECHANICS_REGISTRY["freestanding_hspu"] };
+
+            if (sid.includes("elbow_lever") || name.includes("elbow lever") || name.includes("gomiti")) {
+                return { id: "elbow_lever", ...SKILL_BIOMECHANICS_REGISTRY["elbow_lever"] };
             }
-            if (sid.includes("handstand") || sid.includes("verticale") || name.includes("handstand") || name.includes("verticale")) {
-                return { id: "freestanding_hs", ...SKILL_BIOMECHANICS_REGISTRY["freestanding_hs"] };
+            if (sid.includes("frog_stand") || name.includes("frog stand") || name.includes("rana")) {
+                return { id: "frog_stand", ...SKILL_BIOMECHANICS_REGISTRY["frog_stand"] };
             }
             if (sid.includes("tuck_planche") || name.includes("tuck planche")) {
                 return { id: "tuck_planche", ...SKILL_BIOMECHANICS_REGISTRY["tuck_planche"] };
+            }
+            if (sid.includes("adv_tuck_planche") || name.includes("adv")) {
+                return { id: "adv_tuck_planche", ...SKILL_BIOMECHANICS_REGISTRY["adv_tuck_planche"] };
             }
             if (sid.includes("straddle_planche") || name.includes("straddle planche")) {
                 return { id: "straddle_planche", ...SKILL_BIOMECHANICS_REGISTRY["straddle_planche"] };
@@ -7312,39 +7714,77 @@ function getCalisthenicsExpertResponse(query) {
             if (sid.includes("full_planche") || sid.includes("planche") || name.includes("planche")) {
                 return { id: "full_planche", ...SKILL_BIOMECHANICS_REGISTRY["full_planche"] };
             }
-            if (sid.includes("tuck_fl") || name.includes("tuck front lever")) {
-                return { id: "tuck_fl", ...SKILL_BIOMECHANICS_REGISTRY["tuck_fl"] };
+            if (sid.includes("maltese") || name.includes("maltese")) {
+                return { id: "maltese", ...SKILL_BIOMECHANICS_REGISTRY["maltese"] };
             }
-            if (sid.includes("straddle_fl") || name.includes("straddle front lever")) {
-                return { id: "straddle_fl", ...SKILL_BIOMECHANICS_REGISTRY["straddle_fl"] };
+
+            if (sid.includes("one_arm_pull") || name.includes("one arm pull") || name.includes("monobraccio")) {
+                return { id: "one_arm_pullup", ...SKILL_BIOMECHANICS_REGISTRY["one_arm_pullup"] };
             }
-            if (sid.includes("fl") || sid.includes("front_lever") || name.includes("front lever")) {
-                return { id: "full_fl", ...SKILL_BIOMECHANICS_REGISTRY["full_fl"] };
+            if (sid.includes("chest_to_bar") || name.includes("chest to bar")) {
+                return { id: "chest_to_bar", ...SKILL_BIOMECHANICS_REGISTRY["chest_to_bar"] };
             }
-            if (sid.includes("lsit") || sid.includes("l_sit") || name.includes("l-sit") || name.includes("lsit")) {
-                return { id: "l_sit", ...SKILL_BIOMECHANICS_REGISTRY["l_sit"] };
+            if (sid.includes("muscle_up") || name.includes("muscle up") || name.includes("muscle-up")) {
+                return { id: "muscle_up", ...SKILL_BIOMECHANICS_REGISTRY["muscle_up"] };
             }
-            if (sid.includes("vsit") || sid.includes("v_sit") || name.includes("v-sit") || name.includes("vsit")) {
-                return { id: "v_sit", ...SKILL_BIOMECHANICS_REGISTRY["v_sit"] };
+            if (sid.includes("australian") || name.includes("australian") || name.includes("orizzontali")) {
+                return { id: "australian", ...SKILL_BIOMECHANICS_REGISTRY["australian"] };
             }
-            if (sid.includes("dragon_flag") || name.includes("dragon flag")) {
-                return { id: "dragon_flag", ...SKILL_BIOMECHANICS_REGISTRY["dragon_flag"] };
-            }
-            if (sid.includes("human_flag") || name.includes("human flag") || name.includes("bandiera")) {
-                return { id: "human_flag", ...SKILL_BIOMECHANICS_REGISTRY["human_flag"] };
-            }
-            if (sid.includes("dip") || name.includes("dip")) {
-                return { id: "classic_dip", ...SKILL_BIOMECHANICS_REGISTRY["classic_dip"] };
-            }
-            if (sid.includes("squat") || name.includes("squat")) {
-                return { id: "squat", ...SKILL_BIOMECHANICS_REGISTRY["squat"] };
-            }
-            if (sid.includes("pull") || sid.includes("trazion") || name.includes("pull") || name.includes("trazion")) {
+            if (sid.includes("pullup") || sid.includes("pull_up") || name.includes("pull up") || name.includes("trazion")) {
                 return { id: "pullups", ...SKILL_BIOMECHANICS_REGISTRY["pullups"] };
             }
 
-            // Fallback predefinito: Push-up regolari
-            return { id: sid || "pushups", ...SKILL_BIOMECHANICS_REGISTRY["pushups"] };
+            if (sid.includes("tuck_fl") || name.includes("tuck front")) {
+                return { id: "tuck_fl", ...SKILL_BIOMECHANICS_REGISTRY["tuck_fl"] };
+            }
+            if (sid.includes("adv_tuck_fl") || name.includes("adv tuck front")) {
+                return { id: "adv_tuck_fl", ...SKILL_BIOMECHANICS_REGISTRY["adv_tuck_fl"] };
+            }
+            if (sid.includes("straddle_fl") || name.includes("straddle front")) {
+                return { id: "straddle_fl", ...SKILL_BIOMECHANICS_REGISTRY["straddle_fl"] };
+            }
+            if (sid.includes("full_fl") || sid.includes("front_lever") || name.includes("front lever")) {
+                return { id: "full_fl", ...SKILL_BIOMECHANICS_REGISTRY["full_fl"] };
+            }
+
+            if (sid.includes("hspu") || name.includes("hspu") || name.includes("handstand push")) {
+                return { id: "freestanding_hspu", ...SKILL_BIOMECHANICS_REGISTRY["freestanding_hspu"] };
+            }
+            if (sid.includes("handstand") || sid.includes("verticale") || name.includes("handstand") || name.includes("verticale")) {
+                return { id: "freestanding_hs", ...SKILL_BIOMECHANICS_REGISTRY["freestanding_hs"] };
+            }
+
+            if (sid.includes("v_sit") || name.includes("v-sit") || name.includes("vsit")) {
+                return { id: "v_sit", ...SKILL_BIOMECHANICS_REGISTRY["v_sit"] };
+            }
+            if (sid.includes("l_sit") || name.includes("l-sit") || name.includes("lsit")) {
+                return { id: "l_sit", ...SKILL_BIOMECHANICS_REGISTRY["l_sit"] };
+            }
+
+            if (sid.includes("pistol") || name.includes("pistol")) {
+                return { id: "pistol_squat", ...SKILL_BIOMECHANICS_REGISTRY["pistol_squat"] };
+            }
+            if (sid.includes("squat") || name.includes("squat") || name.includes("accosciat")) {
+                return { id: "squat", ...SKILL_BIOMECHANICS_REGISTRY["squat"] };
+            }
+
+            if (sid.includes("dip") || name.includes("dip") || name.includes("parallele")) {
+                return { id: "classic_dip", ...SKILL_BIOMECHANICS_REGISTRY["classic_dip"] };
+            }
+
+            if (sid.includes("plank") || name.includes("plank")) {
+                return { id: "plank", ...SKILL_BIOMECHANICS_REGISTRY["plank"] };
+            }
+
+            // Fallback generico
+            return {
+                id: sid || "pushups",
+                name: fallbackName || "Esercizio",
+                mode: "rep",
+                subType: "pushup_two_arms",
+                minRom: 88,
+                maxLockout: 155
+            };
         }
 
         class PoseRepCounterEngine {
@@ -7361,12 +7801,14 @@ function getCalisthenicsExpertResponse(query) {
         this.maxLockout = this.profile.maxLockout || 155;
 
         this.reps = 0;
-        // Stato di calibrazione iniziale per evitare ripetizioni fantasma durante il posizionamento
         this.state = (this.mode === 'rep') ? "need_lockout" : "ready";
         this.lockoutHoldFrames = 0;
         this.holdSeconds = 0;
         this.holdStartTs = null;
         this.stableHoldFrames = 0;
+        this.lastValidHoldTs = 0;
+        this.gracePeriodMs = 450; // Tolleranza anti-jitter di 450ms per i frame rumorosi di MediaPipe
+
         this.repStartTs = 0;
         this.minAngle = 180;
         this.lastRepTs = 0;
@@ -7377,6 +7819,10 @@ function getCalisthenicsExpertResponse(query) {
         this.muscleUpPhase = "hang";
         this.lastElbowAngle = "--";
         this.lastTrunkAngle = "--";
+    }
+
+    get minElbowAngle() {
+        return this.minAngle !== undefined ? this.minAngle : 180;
     }
 
     getTorsoIncline(shoulder, hip) {
@@ -7397,7 +7843,7 @@ function getCalisthenicsExpertResponse(query) {
         const maxShoulderVis = Math.max(lShoulder?.visibility || 0, rShoulder?.visibility || 0);
         const maxHipVis = Math.max(lHip?.visibility || 0, rHip?.visibility || 0);
 
-        if (maxShoulderVis < 0.52 || maxHipVis < 0.48) {
+        if (maxShoulderVis < 0.45 || maxHipVis < 0.42) {
             return {
                 valid: false,
                 reason: "⚠️ Inquadra spalle e bacino: devono essere visibili!"
@@ -7416,18 +7862,13 @@ function getCalisthenicsExpertResponse(query) {
         const ankle = isLeft ? lAnkle : rAnkle;
 
         const torsoDist = Math.hypot(shoulder.x - hip.x, shoulder.y - hip.y);
-        if (torsoDist < 0.12 || torsoDist > 0.78) {
+        if (torsoDist < 0.09 || torsoDist > 0.88) {
             return {
                 valid: false,
                 reason: "⚠️ Posiziona il telefono alla giusta distanza per inquadrare il corpo!"
             };
         }
 
-        let cameraMotion = 0;
-        if (this.prevLandmarks) {
-            cameraMotion = Math.hypot(shoulder.x - this.prevLandmarks.shoulder.x, shoulder.y - this.prevLandmarks.shoulder.y)
-                         + Math.hypot(hip.x - this.prevLandmarks.hip.x, hip.y - this.prevLandmarks.hip.y);
-        }
         this.prevLandmarks = {
             shoulder: { x: shoulder.x, y: shoulder.y },
             hip: { x: hip.x, y: hip.y }
@@ -7442,7 +7883,6 @@ function getCalisthenicsExpertResponse(query) {
             hip,
             knee,
             ankle,
-            cameraMotion,
             lShoulder, rShoulder,
             lElbow, rElbow,
             lWrist, rWrist,
@@ -7453,119 +7893,110 @@ function getCalisthenicsExpertResponse(query) {
     }
 
     processHold(now, isValidHold, formFeedback, holdUnitName = this.name) {
-        if (!isValidHold) {
+        if (isValidHold) {
+            this.lastValidHoldTs = now;
+            this.stableHoldFrames++;
+
+            if (this.stableHoldFrames < 3 && !this.holdStartTs) {
+                return {
+                    reps: this.reps,
+                    elbowAngle: this.lastElbowAngle,
+                    trunkAngle: this.lastTrunkAngle,
+                    feedback: "Stabilizza la posizione di " + holdUnitName + "...",
+                    isValidRep: false
+                };
+            }
+
+            if (!this.holdStartTs) {
+                this.holdStartTs = now;
+            }
+
+            const elapsed = Math.floor((now - this.holdStartTs) / 1000);
+            if (elapsed > this.reps) {
+                this.reps = elapsed;
+                this.holdSeconds = elapsed;
+            }
+
+            return {
+                reps: this.reps,
+                elbowAngle: this.lastElbowAngle,
+                trunkAngle: this.lastTrunkAngle,
+                feedback: "🧱 " + holdUnitName + ": " + this.reps + "s",
+                isValidRep: false
+            };
+        } else {
+            // Se eravamo in hold e il frame cade nella finestra di tolleranza di 450ms, preserva il timer
+            if (this.holdStartTs && (now - this.lastValidHoldTs <= this.gracePeriodMs)) {
+                return {
+                    reps: this.reps,
+                    elbowAngle: this.lastElbowAngle,
+                    trunkAngle: this.lastTrunkAngle,
+                    feedback: "🧱 " + holdUnitName + ": " + this.reps + "s",
+                    isValidRep: false
+                };
+            }
+
+            // Postura realmente interrotta oltre la tolleranza
             this.holdStartTs = null;
             this.stableHoldFrames = 0;
             return {
                 reps: this.reps,
                 elbowAngle: this.lastElbowAngle,
                 trunkAngle: this.lastTrunkAngle,
-                feedback: formFeedback,
+                feedback: formFeedback || ("⚠️ Postura " + holdUnitName + " non valida"),
                 isValidRep: false
             };
         }
-
-        this.stableHoldFrames++;
-        if (this.stableHoldFrames < 4) {
-            return {
-                reps: this.reps,
-                elbowAngle: this.lastElbowAngle,
-                trunkAngle: this.lastTrunkAngle,
-                feedback: "Stabilizza la posizione di " + holdUnitName + "...",
-                isValidRep: false
-            };
-        }
-
-        if (!this.holdStartTs) {
-            this.holdStartTs = now;
-        }
-
-        const elapsed = Math.floor((now - this.holdStartTs) / 1000);
-        if (elapsed > 0 && elapsed > this.reps) {
-            this.reps = elapsed;
-            this.holdSeconds = elapsed;
-        }
-
-        return {
-            reps: this.reps,
-            elbowAngle: this.lastElbowAngle,
-            trunkAngle: this.lastTrunkAngle,
-            feedback: "🧱 " + holdUnitName + ": " + elapsed + "s",
-            isValidRep: false
-        };
     }
 
     processRep(now, currentAngle, isLockout, isDepth, feedbackDown, feedbackUp, repName) {
         let feedback = "";
         let isValidRep = false;
 
-        // Calibrazione iniziale lockout: impedisce di contare la discesa del setup a terra o presa alla sbarra
+        // Calibrazione iniziale lockout per evitare false partenze durante il posizionamento
         if (this.state === "need_lockout") {
             if (isLockout) {
                 this.lockoutHoldFrames++;
-                if (this.lockoutHoldFrames >= 6) {
+                if (this.lockoutHoldFrames >= 4) {
                     this.state = "ready";
-                    this.minAngle = currentAngle;
-                    this.downEntryTs = 0;
-                    return {
-                        reps: this.reps,
-                        elbowAngle: this.lastElbowAngle,
-                        trunkAngle: this.lastTrunkAngle,
-                        feedback: "Pronto: esegui la prima ripetizione!",
-                        isValidRep: false
-                    };
+                    feedback = "✅ Posizione di partenza pronta! Inizia con la prima ripetizione.";
+                } else {
+                    feedback = "Mantieni il blocco articolare per avviare il conteggio...";
                 }
-                return {
-                    reps: this.reps,
-                    elbowAngle: this.lastElbowAngle,
-                    trunkAngle: this.lastTrunkAngle,
-                    feedback: "Blocca l'articolazione in partenza...",
-                    isValidRep: false
-                };
             } else {
                 this.lockoutHoldFrames = 0;
-                return {
-                    reps: this.reps,
-                    elbowAngle: this.lastElbowAngle,
-                    trunkAngle: this.lastTrunkAngle,
-                    feedback: "Distendi completamente per iniziare l'esercizio",
-                    isValidRep: false
-                };
+                feedback = "Distendi completamente le articolazioni per calibrare lo start!";
             }
+            return { reps: this.reps, elbowAngle: this.lastElbowAngle, trunkAngle: this.lastTrunkAngle, feedback, isValidRep: false };
+        }
+
+        if (currentAngle < this.minAngle) {
+            this.minAngle = currentAngle;
         }
 
         if (this.state === "ready") {
             if (isDepth) {
-                if (!this.downEntryTs) {
-                    this.downEntryTs = now;
-                    this.repStartTs = now;
-                }
-                if (now - this.downEntryTs >= 120) {
-                    this.state = "down";
-                    this.minAngle = currentAngle;
-                    feedback = feedbackDown || "✅ Ottima profondità (90°)! Ora distendi forte!";
-                }
+                this.state = "down";
+                this.downEntryTs = now;
+                this.minAngle = currentAngle;
+                feedback = feedbackDown;
             } else {
-                this.downEntryTs = 0;
-                feedback = currentAngle < (this.maxLockout - 15) ? "Scendi a 90° col petto..." : "Pronto: esegui la ripetizione";
+                feedback = repName + ": Inizia la discesa / trazione con ROM completo!";
             }
         } else if (this.state === "down") {
-            if (currentAngle < this.minAngle) this.minAngle = currentAngle;
             if (isLockout) {
-                const repDuration = now - (this.repStartTs || (now - 1000));
-                const repInterval = now - this.lastRepTs;
-                if (repDuration >= 650 && repInterval >= 900) {
+                const repDuration = now - this.downEntryTs;
+                if (repDuration >= 380 && (now - this.lastRepTs >= 650)) {
                     this.reps++;
                     this.lastRepTs = now;
                     isValidRep = true;
-                    feedback = "🎉 " + repName + " " + this.reps + " Valido! (" + this.minAngle + "°)";
-                    this.validHistory.push({ rep: this.reps, angle: this.minAngle, ts: now });
+                    this.validHistory.push({ rep: this.reps, minAngle: this.minAngle, ts: now });
+                    feedback = "🔥 Ripetizione " + this.reps + " Valida!";
                 }
                 this.state = "ready";
-                this.downEntryTs = 0;
-                this.minAngle = currentAngle;
-            } else if (currentAngle > (this.minRom + 25)) {
-                feedback = feedbackUp || "Spingi fino a distendere completamente i gomiti!";
+                this.minAngle = 180;
+            } else {
+                feedback = feedbackUp;
             }
         }
 
@@ -7596,23 +8027,10 @@ function getCalisthenicsExpertResponse(query) {
         }
 
         const {
-            shoulder, elbow, wrist, hip, knee, ankle, cameraMotion,
+            shoulder, elbow, wrist, hip, knee, ankle,
             lShoulder, rShoulder, lElbow, rElbow, lWrist, rWrist,
             lHip, rHip, lKnee, rKnee, lAnkle, rAnkle
         } = gate;
-
-        if (cameraMotion > 0.12) {
-            this.holdStartTs = null;
-            this.stableHoldFrames = 0;
-            this.downEntryTs = 0;
-            return {
-                reps: this.reps,
-                elbowAngle: "--",
-                trunkAngle: "--",
-                feedback: "⚠️ Posiziona il telefono appoggiato e immobile!",
-                isValidRep: false
-            };
-        }
 
         const elbowAngle = calculateJointAngle(shoulder, elbow, wrist);
         const trunkAngle = calculateJointAngle(shoulder, hip, knee);
@@ -7622,16 +8040,22 @@ function getCalisthenicsExpertResponse(query) {
         this.lastElbowAngle = elbowAngle;
         this.lastTrunkAngle = trunkAngle;
 
-        // Calcolo coordinate di riferimento del pavimento
+        // Quote del pavimento basate su polsi e caviglie
         const floorLevel = Math.max(lWrist?.y || 0, rWrist?.y || 0, wrist?.y || 0);
         const maxAnkleY = Math.max(lAnkle?.y || 0, rAnkle?.y || 0, ankle?.y || 0);
         const maxKneeY = Math.max(lKnee?.y || 0, rKnee?.y || 0, knee?.y || 0);
         const minHipY = Math.min(lHip?.y || 1, rHip?.y || 1, hip?.y || 1);
 
+        const leftKneeAng = calculateJointAngle(lHip, lKnee, lAnkle);
+        const rightKneeAng = calculateJointAngle(rHip, rKnee, rAnkle);
+        const minKneeAngle = Math.min(leftKneeAng, rightKneeAng);
+
+        // ============================================================
         // 1. ONE ARM PULL-UP
+        // ============================================================
         if (this.subType === "pullup_one_arm") {
-            const lOverhead = lWrist.y < lShoulder.y - 0.08;
-            const rOverhead = rWrist.y < rShoulder.y - 0.08;
+            const lOverhead = lWrist.y < lShoulder.y - 0.06;
+            const rOverhead = rWrist.y < rShoulder.y - 0.06;
 
             if (lOverhead && rOverhead) {
                 return {
@@ -7662,14 +8086,27 @@ function getCalisthenicsExpertResponse(query) {
             );
         }
 
+        // ============================================================
         // 2. ONE ARM PUSH-UP
+        // ============================================================
         else if (this.subType === "pushup_one_arm") {
-            if (torsoIncline > 38) {
+            if (torsoIncline > 45) {
                 return {
                     reps: this.reps,
                     elbowAngle,
                     trunkAngle,
                     feedback: "⚠️ Corpo orizzontale di plank a terra!",
+                    isValidRep: false
+                };
+            }
+
+            // Anti-Cheat Knee per One-Arm Push-up
+            if (minKneeAngle < 140 || (maxKneeY >= floorLevel - 0.03 && maxAnkleY < maxKneeY + 0.03)) {
+                return {
+                    reps: this.reps,
+                    elbowAngle,
+                    trunkAngle,
+                    feedback: "⚠️ Ginocchia a terra! Solleva le ginocchia per il Push-up a un braccio!",
                     isValidRep: false
                 };
             }
@@ -7696,10 +8133,23 @@ function getCalisthenicsExpertResponse(query) {
             );
         }
 
+        // ============================================================
         // 3. DIAMOND PUSH-UP
+        // ============================================================
         else if (this.subType === "pushup_diamond") {
+            // Anti-Cheat Knee per Diamond Push-up
+            if (minKneeAngle < 140 || (maxKneeY >= floorLevel - 0.03 && maxAnkleY < maxKneeY + 0.03)) {
+                return {
+                    reps: this.reps,
+                    elbowAngle,
+                    trunkAngle,
+                    feedback: "⚠️ Ginocchia a terra! Per i Diamond Push-up tieni le gambe tese!",
+                    isValidRep: false
+                };
+            }
+
             const wristDist = Math.hypot(lWrist.x - rWrist.x, lWrist.y - rWrist.y);
-            if (wristDist > 0.17) {
+            if (wristDist > 0.19) {
                 return {
                     reps: this.reps,
                     elbowAngle,
@@ -7715,13 +8165,69 @@ function getCalisthenicsExpertResponse(query) {
             );
         }
 
-        // 4. PISTOL SQUAT / SINGLE LEG
-        else if (this.subType === "squat_single_leg") {
-            const lKneeAng = calculateJointAngle(lHip, lKnee, lAnkle);
-            const rKneeAng = calculateJointAngle(rHip, rKnee, rAnkle);
+        // ============================================================
+        // 4. KNEE PUSH-UPS (ESCLUSIVO PER PUSH-UP SU GINOCCHIA)
+        // ============================================================
+        else if (this.subType === "pushup_knee") {
+            return this.processRep(now, elbowAngle, elbowAngle >= this.maxLockout, elbowAngle <= this.minRom,
+                "✅ Ottima profondità (90°) sulle ginocchia! Spingi ed estendi!",
+                "Distendi completamente le braccia in risalita!",
+                "Knee Push-Up"
+            );
+        }
 
+        // ============================================================
+        // 5. STANDARD PUSH-UPS & VARIANTI (CON ANTI-CHEAT GINOCCHIA A TERRA)
+        // ============================================================
+        else if (this.subType.startsWith("pushup")) {
+            if (torsoIncline > 45) {
+                return {
+                    reps: this.reps,
+                    elbowAngle,
+                    trunkAngle,
+                    feedback: "⚠️ Posizionati a terra in posizione orizzontale di plank!",
+                    isValidRep: false
+                };
+            }
+
+            // ANTI-CHEAT CRUCIALE: Le ginocchia NON devono toccare il pavimento nei push-up regolari!
+            if (minKneeAngle < 140) {
+                return {
+                    reps: this.reps,
+                    elbowAngle,
+                    trunkAngle,
+                    feedback: "⚠️ Ginocchia piegate! Distendi completamente le gambe per i Push-up regolari!",
+                    isValidRep: false
+                };
+            }
+
+            if (maxKneeY >= floorLevel - 0.035 && maxAnkleY < maxKneeY + 0.04) {
+                return {
+                    reps: this.reps,
+                    elbowAngle,
+                    trunkAngle,
+                    feedback: "⚠️ Ginocchia a terra! Solleva le ginocchia e appoggiati sulle punte dei piedi!",
+                    isValidRep: false
+                };
+            }
+
+            if (trunkAngle < 135) {
+                if (!this.warnings.includes("Bacino ceduto")) this.warnings.push("Bacino ceduto");
+            }
+
+            return this.processRep(now, elbowAngle, elbowAngle >= this.maxLockout, elbowAngle <= this.minRom,
+                "✅ Ottima profondità (90°)! Ora distendi forte le braccia!",
+                "Spingi fino a distendere completamente i gomiti!",
+                this.name
+            );
+        }
+
+        // ============================================================
+        // 6. PISTOL SQUAT / SINGLE LEG SQUAT
+        // ============================================================
+        else if (this.subType === "squat_single_leg") {
             const ankleDiff = Math.abs(lAnkle.y - rAnkle.y);
-            if (ankleDiff < 0.10 && lKneeAng < 110 && rKneeAng < 110) {
+            if (ankleDiff < 0.08 && leftKneeAng < 110 && rightKneeAng < 110) {
                 return {
                     reps: this.reps,
                     elbowAngle,
@@ -7731,7 +8237,7 @@ function getCalisthenicsExpertResponse(query) {
                 };
             }
 
-            const workingKneeAngle = Math.min(lKneeAng, rKneeAng);
+            const workingKneeAngle = Math.min(leftKneeAng, rightKneeAng);
             this.lastTrunkAngle = workingKneeAngle;
             return this.processRep(now, workingKneeAngle, workingKneeAngle >= this.maxLockout, workingKneeAngle <= this.minRom,
                 "✅ Buca il parallelo a una gamba! Ora risali forte!",
@@ -7740,7 +8246,9 @@ function getCalisthenicsExpertResponse(query) {
             );
         }
 
-        // 5. MUSCLE-UP
+        // ============================================================
+        // 7. MUSCLE-UP
+        // ============================================================
         else if (this.subType === "muscle_up") {
             const avgShoulderY = (lShoulder.y + rShoulder.y) / 2;
             const avgWristY = (lWrist.y + rWrist.y) / 2;
@@ -7748,7 +8256,7 @@ function getCalisthenicsExpertResponse(query) {
             let isValidRep = false;
 
             if (this.muscleUpPhase === "hang") {
-                if (avgShoulderY > avgWristY + 0.10) {
+                if (avgShoulderY > avgWristY + 0.08) {
                     if (elbowAngle <= 90) {
                         this.muscleUpPhase = "pulling";
                         feedback = "🚀 Trazione esplosiva! Ruota i polsi e porta le spalle sopra la sbarra!";
@@ -7757,16 +8265,16 @@ function getCalisthenicsExpertResponse(query) {
                     }
                 }
             } else if (this.muscleUpPhase === "pulling") {
-                if (avgShoulderY < avgWristY - 0.04) {
+                if (avgShoulderY < avgWristY - 0.03) {
                     this.muscleUpPhase = "over_bar";
                     feedback = "⚡ Spalle sopra la sbarra! Ora spingi il dip e distendi le braccia!";
-                } else if (elbowAngle > 140) {
+                } else if (elbowAngle > 142) {
                     this.muscleUpPhase = "hang";
                     feedback = "⚠️ Mancata transizione sopra la sbarra! Tira più alto!";
                 }
             } else if (this.muscleUpPhase === "over_bar") {
-                if (elbowAngle >= 152) {
-                    if (now - this.lastRepTs >= 1200) {
+                if (elbowAngle >= 150) {
+                    if (now - this.lastRepTs >= 1100) {
                         this.reps++;
                         this.lastRepTs = now;
                         isValidRep = true;
@@ -7781,10 +8289,12 @@ function getCalisthenicsExpertResponse(query) {
             return { reps: this.reps, elbowAngle, trunkAngle, feedback, isValidRep };
         }
 
-        // 6. STANDARD PULL-UPS (DUE MANI)
+        // ============================================================
+        // 8. STANDARD PULL-UPS (DUE MANI)
+        // ============================================================
         else if (this.subType.startsWith("pullup")) {
-            const isOverhead = wrist.y < shoulder.y - 0.08;
-            if (!isOverhead && torsoIncline > 50) {
+            const isOverhead = wrist.y < shoulder.y - 0.06;
+            if (!isOverhead && torsoIncline > 55) {
                 return {
                     reps: this.reps,
                     elbowAngle,
@@ -7801,30 +8311,9 @@ function getCalisthenicsExpertResponse(query) {
             );
         }
 
-        // 7. STANDARD PUSH-UPS
-        else if (this.subType.startsWith("pushup")) {
-            if (torsoIncline > 36) {
-                return {
-                    reps: this.reps,
-                    elbowAngle,
-                    trunkAngle,
-                    feedback: "⚠️ Posizionati a terra in posizione orizzontale di plank!",
-                    isValidRep: false
-                };
-            }
-
-            if (trunkAngle < 140) {
-                if (!this.warnings.includes("Bacino ceduto")) this.warnings.push("Bacino ceduto");
-            }
-
-            return this.processRep(now, elbowAngle, elbowAngle >= this.maxLockout, elbowAngle <= this.minRom,
-                "✅ Ottima profondità (90°)! Ora distendi forte le braccia!",
-                "Spingi fino a distendere completamente i gomiti!",
-                this.name
-            );
-        }
-
-        // 8. DIPS (PARALLELE, BENCH, KOREAN)
+        // ============================================================
+        // 9. DIPS (PARALLELE, BENCH, KOREAN, RUSSIAN)
+        // ============================================================
         else if (this.subType.startsWith("dip")) {
             return this.processRep(now, elbowAngle, elbowAngle >= this.maxLockout, elbowAngle <= this.minRom,
                 "✅ Profondità 90° raggiunta! Spingi in alto!",
@@ -7833,7 +8322,9 @@ function getCalisthenicsExpertResponse(query) {
             );
         }
 
-        // 9. SQUAT A DUE GAMBE
+        // ============================================================
+        // 10. SQUAT A DUE GAMBE
+        // ============================================================
         else if (this.subType.startsWith("squat")) {
             this.lastTrunkAngle = kneeAngle;
             return this.processRep(now, kneeAngle, kneeAngle >= this.maxLockout, kneeAngle <= this.minRom,
@@ -7843,10 +8334,12 @@ function getCalisthenicsExpertResponse(query) {
             );
         }
 
-        // 10. HSPU (HANDSTAND PUSH-UP)
+        // ============================================================
+        // 11. HSPU (HANDSTAND PUSH-UP)
+        // ============================================================
         else if (this.subType === "hspu") {
             const isInverted = (ankle.y < hip.y) && (hip.y < shoulder.y);
-            if (!isInverted || torsoIncline < 55) {
+            if (!isInverted || torsoIncline < 50) {
                 return {
                     reps: this.reps,
                     elbowAngle,
@@ -7863,268 +8356,135 @@ function getCalisthenicsExpertResponse(query) {
         }
 
         // ============================================================
-        // 11. ELBOW LEVER HOLD (VERIFICA PIEDI SOSPESI DA TERRA)
+        // 12. ELBOW LEVER HOLD (PIEDI SOSPESI CON FILTRO ANTI-JITTER)
         // ============================================================
         else if (this.subType === "elbow_lever") {
-            // Controllo rigoroso appoggio piedi/ginocchia a terra
-            if (maxAnkleY >= floorLevel - 0.05 || maxKneeY >= floorLevel - 0.05) {
-                this.holdStartTs = null;
-                this.stableHoldFrames = 0;
-                return {
-                    reps: this.reps,
-                    elbowAngle,
-                    trunkAngle,
-                    feedback: "⚠️ Piedi a terra! Solleva completamente le gambe dal suolo!",
-                    isValidRep: false
-                };
+            // Controllo piedi a terra: le caviglie non devono superare la quota inferiore del pavimento
+            if (maxAnkleY > floorLevel + 0.035) {
+                return this.processHold(now, false, "⚠️ Piedi a terra! Solleva completamente le gambe dal suolo!", "Elbow Lever");
             }
 
-            if (torsoIncline > 36) {
-                this.holdStartTs = null;
-                this.stableHoldFrames = 0;
-                return {
-                    reps: this.reps,
-                    elbowAngle,
-                    trunkAngle,
-                    feedback: "⚠️ Corpo orizzontale parallelo al pavimento!",
-                    isValidRep: false
-                };
+            // Tolleranza prospettica torso: fino a 48 gradi per inquadrature reali
+            if (torsoIncline > 48) {
+                return this.processHold(now, false, "⚠️ Corpo orizzontale parallelo al pavimento!", "Elbow Lever");
             }
 
-            if (elbowAngle > 135) {
-                this.holdStartTs = null;
-                this.stableHoldFrames = 0;
-                return {
-                    reps: this.reps,
-                    elbowAngle,
-                    trunkAngle,
-                    feedback: "⚠️ Piega i gomiti e appoggiali all'addome per bilanciare la leva!",
-                    isValidRep: false
-                };
+            // Gomiti flessi sotto l'addome (fino a 145 gradi)
+            if (elbowAngle > 145) {
+                return this.processHold(now, false, "⚠️ Piega i gomiti e appoggiali all'addome per bilanciare la leva!", "Elbow Lever");
             }
 
             return this.processHold(now, true, "", "Elbow Lever");
         }
 
         // ============================================================
-        // 12. FROG STAND HOLD (VERIFICA PIEDI SOLLEVATI DA TERRA)
+        // 13. FROG STAND HOLD
         // ============================================================
         else if (this.subType === "frog_stand") {
-            if (maxAnkleY >= floorLevel - 0.05) {
-                this.holdStartTs = null;
-                this.stableHoldFrames = 0;
-                return {
-                    reps: this.reps,
-                    elbowAngle,
-                    trunkAngle,
-                    feedback: "⚠️ Piedi a terra! Solleva i piedi dal suolo!",
-                    isValidRep: false
-                };
+            if (maxAnkleY > floorLevel + 0.02) {
+                return this.processHold(now, false, "⚠️ Piedi a terra! Solleva i piedi dal suolo!", "Frog Stand");
             }
-
             return this.processHold(now, true, "", "Frog Stand");
         }
 
         // ============================================================
-        // 13. PLANCHE & MALTESE HOLD (VERIFICA PIEDI E GINOCCHIA SOSPESI)
+        // 14. PLANCHE & MALTESE HOLD
         // ============================================================
         else if (this.subType.startsWith("planche") || this.subType === "maltese") {
             if (this.subType !== "planche_lean") {
-                if (maxAnkleY >= floorLevel - 0.05 || maxKneeY >= floorLevel - 0.05) {
-                    this.holdStartTs = null;
-                    this.stableHoldFrames = 0;
-                    return {
-                        reps: this.reps,
-                        elbowAngle,
-                        trunkAngle,
-                        feedback: "⚠️ Piedi o ginocchia a terra! Solleva completamente il corpo in sospensione!",
-                        isValidRep: false
-                    };
+                if (maxAnkleY > floorLevel + 0.025 || maxKneeY > floorLevel + 0.025) {
+                    return this.processHold(now, false, "⚠️ Piedi o ginocchia a terra! Solleva completamente il corpo in sospensione!", this.name);
                 }
             }
 
-            if (torsoIncline > 32) {
-                this.holdStartTs = null;
-                this.stableHoldFrames = 0;
-                return {
-                    reps: this.reps,
-                    elbowAngle,
-                    trunkAngle,
-                    feedback: "⚠️ Corpo orizzontale parallelo al pavimento!",
-                    isValidRep: false
-                };
+            if (torsoIncline > 45) {
+                return this.processHold(now, false, "⚠️ Corpo orizzontale parallelo al pavimento!", this.name);
             }
 
-            if (elbowAngle < 150) {
-                this.holdStartTs = null;
-                this.stableHoldFrames = 0;
-                return {
-                    reps: this.reps,
-                    elbowAngle,
-                    trunkAngle,
-                    feedback: "⚠️ Braccia tese e bloccate! Non piegare i gomiti!",
-                    isValidRep: false
-                };
-            }
-
-            let isVariationValid = true;
-            let varFeedback = "";
-            if (this.subType === "planche_tuck") {
-                isVariationValid = kneeAngle < 95;
-                if (!isVariationValid) varFeedback = "⚠️ Raccogli le ginocchia al petto per il Tuck Planche!";
-            } else if (this.subType === "planche_straddle") {
-                const ankleDist = Math.hypot(lAnkle.x - rAnkle.x, lAnkle.y - rAnkle.y);
-                isVariationValid = ankleDist > 0.22 && kneeAngle >= 145;
-                if (!isVariationValid) varFeedback = "⚠️ Apri le gambe a compasso e mantienile tese!";
-            } else if (this.subType === "planche_full" || this.subType === "maltese") {
-                isVariationValid = trunkAngle >= 152 && kneeAngle >= 148;
-                if (!isVariationValid) varFeedback = "⚠️ Corpo e gambe perfettamente tesi e orizzontali!";
-            }
-
-            if (!isVariationValid) {
-                this.holdStartTs = null;
-                this.stableHoldFrames = 0;
-                return { reps: this.reps, elbowAngle, trunkAngle, feedback: varFeedback, isValidRep: false };
+            if (elbowAngle < 145) {
+                return this.processHold(now, false, "⚠️ Braccia tese e bloccate! Non piegare i gomiti!", this.name);
             }
 
             return this.processHold(now, true, "", this.name);
         }
 
         // ============================================================
-        // 14. FRONT LEVER HOLD
+        // 15. FRONT LEVER HOLD
         // ============================================================
         else if (this.subType.startsWith("fl_")) {
-            const isOverhead = wrist.y < shoulder.y - 0.05;
-            if (!isOverhead || torsoIncline > 35) {
-                this.holdStartTs = null;
-                this.stableHoldFrames = 0;
-                return {
-                    reps: this.reps,
-                    elbowAngle,
-                    trunkAngle,
-                    feedback: "⚠️ Corpo orizzontale parallelo al suolo rivolto in alto!",
-                    isValidRep: false
-                };
+            const isOverhead = wrist.y < shoulder.y - 0.03;
+            if (!isOverhead || torsoIncline > 45) {
+                return this.processHold(now, false, "⚠️ Corpo orizzontale parallelo al suolo rivolto in alto!", this.name);
             }
 
-            if (elbowAngle < 150) {
-                this.holdStartTs = null;
-                this.stableHoldFrames = 0;
-                return {
-                    reps: this.reps,
-                    elbowAngle,
-                    trunkAngle,
-                    feedback: "⚠️ Braccia tese e dorsali attivi!",
-                    isValidRep: false
-                };
+            if (elbowAngle < 145) {
+                return this.processHold(now, false, "⚠️ Braccia tese e dorsali attivi!", this.name);
             }
 
             return this.processHold(now, true, "", this.name);
         }
 
         // ============================================================
-        // 15. VERTICALE STATICA (HANDSTAND)
+        // 16. VERTICALE STATICA (HANDSTAND)
         // ============================================================
         else if (this.subType === "handstand_hold") {
-            const isInverted = (ankle.y < hip.y - 0.08) && (hip.y < shoulder.y);
-            if (!isInverted || torsoIncline < 55) {
-                this.holdStartTs = null;
-                this.stableHoldFrames = 0;
-                return {
-                    reps: this.reps,
-                    elbowAngle,
-                    trunkAngle,
-                    feedback: "⚠️ Mettiti in verticale (piedi in alto, bacino sopra le spalle)!",
-                    isValidRep: false
-                };
+            const isInverted = (ankle.y < hip.y - 0.05) && (hip.y < shoulder.y);
+            if (!isInverted || torsoIncline < 50) {
+                return this.processHold(now, false, "⚠️ Mettiti in verticale (piedi in alto, bacino sopra le spalle)!", "Verticale");
             }
 
-            if (elbowAngle < 150) {
-                this.holdStartTs = null;
-                this.stableHoldFrames = 0;
-                return {
-                    reps: this.reps,
-                    elbowAngle,
-                    trunkAngle,
-                    feedback: "⚠️ Distendi completamente i gomiti in alto!",
-                    isValidRep: false
-                };
+            if (elbowAngle < 145) {
+                return this.processHold(now, false, "⚠️ Distendi completamente i gomiti in alto!", "Verticale");
             }
 
             return this.processHold(now, true, "", "Verticale");
         }
 
         // ============================================================
-        // 16. L-SIT & V-SIT (VERIFICA PIEDI E BACINO SOSPESI)
+        // 17. L-SIT & V-SIT
         // ============================================================
         else if (this.subType === "lsit" || this.subType === "vsit") {
-            if (maxAnkleY >= floorLevel - 0.05) {
-                this.holdStartTs = null;
-                this.stableHoldFrames = 0;
-                return {
-                    reps: this.reps,
-                    elbowAngle,
-                    trunkAngle,
-                    feedback: "⚠️ Talloni a terra! Solleva le gambe tese dal suolo!",
-                    isValidRep: false
-                };
+            if (maxAnkleY > floorLevel + 0.02) {
+                return this.processHold(now, false, "⚠️ Talloni a terra! Solleva le gambe tese dal suolo!", this.name);
             }
 
-            if (minHipY >= floorLevel - 0.02) {
-                this.holdStartTs = null;
-                this.stableHoldFrames = 0;
-                return {
-                    reps: this.reps,
-                    elbowAngle,
-                    trunkAngle,
-                    feedback: "⚠️ Bacino a terra! Spingi forte con le braccia verso il basso!",
-                    isValidRep: false
-                };
+            if (minHipY > floorLevel + 0.03) {
+                return this.processHold(now, false, "⚠️ Bacino a terra! Spingi forte con le braccia verso il basso!", this.name);
             }
 
             const isVsit = this.subType === "vsit";
-            const isLegsUp = isVsit ? (trunkAngle <= 85 && maxAnkleY <= minHipY) : (kneeAngle >= 138 && trunkAngle <= 122 && maxAnkleY <= minHipY + 0.15);
+            const isLegsUp = isVsit ? (trunkAngle <= 88 && maxAnkleY <= minHipY) : (kneeAngle >= 135 && trunkAngle <= 125);
 
             if (!isLegsUp) {
-                this.holdStartTs = null;
-                this.stableHoldFrames = 0;
-                return {
-                    reps: this.reps,
-                    elbowAngle,
-                    trunkAngle,
-                    feedback: isVsit ? "⚠️ Chiudi le gambe a V sopra il petto!" : "⚠️ Gambe tese in avanti a 90°!",
-                    isValidRep: false
-                };
+                return this.processHold(now, false, isVsit ? "⚠️ Chiudi le gambe a V sopra il petto!" : "⚠️ Gambe tese in avanti a 90°!", this.name);
             }
 
             return this.processHold(now, true, "", this.name);
         }
 
         // ============================================================
-        // 17. ALTRE TENUTE ISOMETRICHE (PLANK, HANG, DRAGON FLAG, ECC.)
+        // 18. ALTRE TENUTE ISOMETRICHE (PLANK, HANG, DRAGON FLAG, ECC.)
         // ============================================================
         else if (this.mode === "hold") {
             if (this.subType === "hang_one_arm") {
-                const lUp = lWrist.y < lShoulder.y - 0.08;
-                const rUp = rWrist.y < rShoulder.y - 0.08;
+                const lUp = lWrist.y < lShoulder.y - 0.06;
+                const rUp = rWrist.y < rShoulder.y - 0.06;
                 if (lUp && rUp) {
-                    this.holdStartTs = null;
-                    this.stableHoldFrames = 0;
-                    return { reps: this.reps, elbowAngle, trunkAngle, feedback: "⚠️ Sospensione a UN braccio! Stacca l'altra mano dalla sbarra!", isValidRep: false };
+                    return this.processHold(now, false, "⚠️ Sospensione a UN braccio! Stacca l'altra mano dalla sbarra!", this.name);
                 }
             } else if (this.subType.startsWith("hang")) {
-                const isOverhead = wrist.y < shoulder.y - 0.06;
+                const isOverhead = wrist.y < shoulder.y - 0.05;
                 if (!isOverhead) {
-                    this.holdStartTs = null;
-                    this.stableHoldFrames = 0;
-                    return { reps: this.reps, elbowAngle, trunkAngle, feedback: "⚠️ Appenditi alla sbarra con le braccia in alto!", isValidRep: false };
+                    return this.processHold(now, false, "⚠️ Appenditi alla sbarra con le braccia in alto!", this.name);
                 }
             } else if (this.subType === "dragon_flag") {
-                const isLifted = (ankle.y < hip.y + 0.05) && (hip.y < shoulder.y + 0.15);
+                const isLifted = (ankle.y < hip.y + 0.08) && (hip.y < shoulder.y + 0.20);
                 if (!isLifted) {
-                    this.holdStartTs = null;
-                    this.stableHoldFrames = 0;
-                    return { reps: this.reps, elbowAngle, trunkAngle, feedback: "⚠️ Solleva il corpo teso appoggiando solo le scapole!", isValidRep: false };
+                    return this.processHold(now, false, "⚠️ Solleva il corpo teso appoggiando solo le scapole!", this.name);
+                }
+            } else if (this.subType === "plank") {
+                if (torsoIncline > 40) {
+                    return this.processHold(now, false, "⚠️ Mantieni il corpo orizzontale in linea retta!", this.name);
                 }
             }
 
@@ -8132,7 +8492,7 @@ function getCalisthenicsExpertResponse(query) {
         }
 
         // ============================================================
-        // 18. ESERCIZIO A RIPETIZIONI GENERICO
+        // 19. ESERCIZIO A RIPETIZIONI GENERICO
         // ============================================================
         else {
             return this.processRep(now, elbowAngle, elbowAngle >= 150, elbowAngle <= 95,
