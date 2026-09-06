@@ -5563,6 +5563,35 @@ let currentUser = null;
             };
         }
 
+        // HELPER TRADUZIONE ERRORI AUTENTICAZIONE
+        function formatAuthErrorMessage(error) {
+            if (!error) return "Si è verificato un errore.";
+            const code = error.code || "";
+            const msg = error.message || "";
+            if (code === "auth/invalid-credential" || msg.includes("userinfo") || msg.includes("401")) {
+                return "⚠️ Le credenziali Google OAuth sono state appena riattivate e richiedono 2-3 minuti per la sincronizzazione globale sui server di Google. Riprova tra poco, oppure usa Email e Password qui sotto.";
+            }
+            if (code === "auth/user-not-found") {
+                return "❌ Nessun account trovato con questa email. Clicca su 'Registrati qui' in basso per crearlo!";
+            }
+            if (code === "auth/wrong-password") {
+                return "❌ Password errata. Controlla e riprova.";
+            }
+            if (code === "auth/email-already-in-use") {
+                return "⚠️ Questa email è già registrata. Clicca su 'Accedi qui' per entrare.";
+            }
+            if (code === "auth/popup-closed-by-user") {
+                return "Finestra di accesso chiusa prima del completamento.";
+            }
+            if (code === "auth/unauthorized-domain") {
+                return "⚠️ Questo dominio web non è ancora presente nei 'Domini autorizzati' in Firebase Authentication.";
+            }
+            if (code === "auth/operation-not-allowed") {
+                return "⚠️ Questo metodo di accesso non è ancora abilitato su Firebase Authentication.";
+            }
+            return msg;
+        }
+
         // ACCESSO TRAMITE GOOGLE
         function loginWithGoogle() {
             const provider = new firebase.auth.GoogleAuthProvider();
@@ -5572,7 +5601,7 @@ let currentUser = null;
                 })
                 .catch((error) => {
                     const errorEl = document.getElementById('auth-error-msg');
-                    if (errorEl) errorEl.innerText = error.message;
+                    if (errorEl) errorEl.innerText = formatAuthErrorMessage(error);
                 });
         }
 
@@ -5585,7 +5614,7 @@ let currentUser = null;
                 })
                 .catch((error) => {
                     const errorEl = document.getElementById('auth-error-msg');
-                    if (errorEl) errorEl.innerText = error.message;
+                    if (errorEl) errorEl.innerText = formatAuthErrorMessage(error);
                 });
         }
 
@@ -5626,6 +5655,12 @@ let currentUser = null;
                     </div>
                     ${!isLogin ? `<span class="auth-hint">Minimo 8 caratteri ed almeno un carattere speciale (!@#$%^&*)</span>` : ''}
                 </div>
+
+                <div style="text-align:center; margin-top:14px; font-size:0.85rem; color:var(--subtext);">
+                    ${isLogin 
+                        ? 'Non hai ancora un account? <a href="javascript:void(0)" onclick="openAuthModal(\'signup\')" style="color:var(--accent); font-weight:bold; text-decoration:underline;">Registrati qui</a>' 
+                        : 'Hai già un account? <a href="javascript:void(0)" onclick="openAuthModal(\'login\')" style="color:var(--accent); font-weight:bold; text-decoration:underline;">Accedi qui</a>'}
+                </div>
             `;
 
             actionsBox.innerHTML = `
@@ -5648,7 +5683,8 @@ let currentUser = null;
                 }
 
                 if (!isLogin) {
-                    const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>_\-\/\\]/.test(password);
+                    const specialChars = "!@#$%^&*(),.?\":{}|<>_-/\\";
+                    const hasSpecialChar = [...password].some(ch => specialChars.includes(ch));
                     if (password.length < 8) {
                         errorEl.innerText = "La password deve contenere almeno 8 caratteri.";
                         return;
@@ -5671,7 +5707,7 @@ let currentUser = null;
                         }
                     })
                     .catch((error) => {
-                        errorEl.innerText = error.message;
+                        errorEl.innerText = formatAuthErrorMessage(error);
                     });
             };
         }
