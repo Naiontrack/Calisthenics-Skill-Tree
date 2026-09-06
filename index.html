@@ -1097,6 +1097,9 @@
             opacity: 0;
             pointer-events: none;
             transition: all 0.2s ease;
+            overscroll-behavior: contain;
+            overscroll-behavior-y: contain;
+            touch-action: pan-y;
         }
 
         .chat-panel.active {
@@ -1125,6 +1128,11 @@
         .chat-messages {
             flex-grow: 1;
             overflow-y: auto;
+            overflow-x: hidden;
+            -webkit-overflow-scrolling: touch;
+            overscroll-behavior: contain;
+            overscroll-behavior-y: contain;
+            touch-action: pan-y;
             padding: 12px;
             display: flex;
             flex-direction: column;
@@ -1289,6 +1297,9 @@
             padding: 12px 10px;
             box-sizing: border-box;
             width: 100%;
+            touch-action: pan-y;
+            overscroll-behavior: contain;
+            overscroll-behavior-y: contain;
         }
         .ai-chat-msg-wrapper {
             display: flex;
@@ -1296,6 +1307,7 @@
             width: 100%;
             margin-bottom: 2px;
             box-sizing: border-box;
+            scroll-margin-top: 54px;
         }
         .ai-chat-msg-wrapper.user {
             align-items: flex-end;
@@ -1716,11 +1728,37 @@
             opacity: 1;
         }
 
+        html.chat-panel-open,
+        body.chat-panel-open {
+            overflow: hidden !important;
+            overscroll-behavior: none !important;
+            touch-action: none !important;
+        }
+        body.chat-panel-open .chat-panel {
+            touch-action: pan-y !important;
+        }
+
+        @media (max-width: 768px) {
+            .chat-panel {
+                right: 10px;
+                left: 10px;
+                bottom: 75px;
+                width: auto;
+                max-height: calc(100dvh - 85px);
+                overscroll-behavior: contain;
+                overscroll-behavior-y: contain;
+            }
+        }
+
         @media (max-width: 600px) {
             .chat-panel {
                 right: 10px;
-                bottom: 80px;
-                width: calc(100vw - 20px);
+                left: 10px;
+                bottom: 75px;
+                width: auto;
+                max-height: calc(100dvh - 85px);
+                overscroll-behavior: contain;
+                overscroll-behavior-y: contain;
             }
             .chat-fab {
                 right: 15px;
@@ -1974,8 +2012,11 @@
             align-items: center;
             gap: 8px;
             padding: 8px 10px;
-            background: rgba(255, 255, 255, 0.03);
+            background: var(--card-bg, #1a2332);
             border-bottom: 1px solid var(--line-color);
+            position: sticky;
+            top: 0;
+            z-index: 5;
             flex-wrap: wrap;
             justify-content: flex-start;
         }
@@ -6618,7 +6659,29 @@ let currentUser = null;
             return formatted;
         }
 
-        function renderAiHelperView(skipLoad = false) {
+        function alignAiChatToMessage(msgId, smooth = true) {
+            const container = document.getElementById("chat-messages");
+            if (!container || !msgId) return;
+            const targetEl = document.getElementById("ai-msg-" + msgId) || document.getElementById(msgId);
+            if (!targetEl) return;
+
+            const containerRect = container.getBoundingClientRect();
+            const targetRect = targetEl.getBoundingClientRect();
+            const headerEl = container.querySelector(".ai-helper-header-bar");
+            const headerHeight = headerEl ? headerEl.offsetHeight : 0;
+
+            const targetTop = Math.max(0, (targetRect.top - containerRect.top) + container.scrollTop - headerHeight - 8);
+            if (typeof container.scrollTo === "function") {
+                container.scrollTo({
+                    top: targetTop,
+                    behavior: smooth ? "smooth" : "auto"
+                });
+            } else {
+                container.scrollTop = targetTop;
+            }
+        }
+
+        function renderAiHelperView(skipLoad = false, alignMsgId = null) {
             const container = document.getElementById("chat-messages");
             if (!container) return;
             if (!skipLoad && (!aiChatMessages || aiChatMessages.length === 0)) {
@@ -6626,13 +6689,14 @@ let currentUser = null;
             }
 
             let messagesHtml = "";
-            aiChatMessages.forEach(m => {
+            aiChatMessages.forEach((m, idx) => {
                 const isAi = m.sender === "ai";
                 const timeStr = m.timestamp ? new Date(m.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
                 const formatted = formatAiMessageText(m.text || "");
+                const msgDomId = m.id ? `ai-msg-${m.id}` : `ai-msg-idx-${idx}`;
 
                 messagesHtml += `
-                    <div class="ai-chat-msg-wrapper ${isAi ? "ai" : "user"}">
+                    <div class="ai-chat-msg-wrapper ${isAi ? "ai" : "user"}" id="${msgDomId}">
                         <div class="ai-chat-meta">
                             ${isAi 
                                 ? '<span class="ai-chat-meta-badge-ai">🤖 Coach AI Calisthenics</span>' 
@@ -6656,30 +6720,40 @@ let currentUser = null;
                     </button>
                 </div>
 
-                <div class="ai-chat-thread">
+                <div class="ai-chat-thread" id="ai-chat-thread">
                     ${messagesHtml}
                     
-                    <div class="ai-suggested-prompts">
+                    <div class="ai-suggested-prompts" id="ai-suggested-prompts">
                         <div style="font-size:0.75rem; color:var(--subtext); font-weight:bold; margin-bottom:4px;">💡 Domande rapide suggerite:</div>
-                        <button class="ai-suggested-prompt-btn" onclick="sendSuggestedAiPrompt('Come posso sbloccare le skill con l\'AI Referee?')">
+                        <button type="button" class="ai-suggested-prompt-btn" onclick="sendSuggestedPromptBtn(this)" data-prompt="Come posso sbloccare le skill con l'AI Referee?">
                             📱 Come sbloccare le skill con l'AI Referee?
                         </button>
-                        <button class="ai-suggested-prompt-btn" onclick="sendSuggestedAiPrompt('Come posso sbloccare la Planche? Quali sono le progressioni?')">
+                        <button type="button" class="ai-suggested-prompt-btn" onclick="sendSuggestedPromptBtn(this)" data-prompt="Come posso sbloccare la Planche? Quali sono le progressioni?">
                             🤸 Come sbloccare la Planche e progressioni?
                         </button>
-                        <button class="ai-suggested-prompt-btn" onclick="sendSuggestedAiPrompt('Mi fanno male i polsi quando faccio push-up e verticale, cosa posso fare?')">
+                        <button type="button" class="ai-suggested-prompt-btn" onclick="sendSuggestedPromptBtn(this)" data-prompt="Mi fanno male i polsi quando faccio push-up e verticale, cosa posso fare?">
                             ⚠️ Dolore ai polsi nei push-up: rimedi e mobilità
                         </button>
-                        <button class="ai-suggested-prompt-btn" onclick="sendSuggestedAiPrompt('Qual è la tecnica corretta per il Muscle-Up alla sbarra?')">
+                        <button type="button" class="ai-suggested-prompt-btn" onclick="sendSuggestedPromptBtn(this)" data-prompt="Qual è la tecnica corretta per il Muscle-Up alla sbarra?">
                             💪 Tecnica e transizione per il Muscle-Up
                         </button>
-                        <button class="ai-suggested-prompt-btn" onclick="sendSuggestedAiPrompt('Come imparare a fare la verticale a terra (Handstand)?')">
+                        <button type="button" class="ai-suggested-prompt-btn" onclick="sendSuggestedPromptBtn(this)" data-prompt="Come imparare a fare la verticale a terra (Handstand)?">
                             🤸 Guida passo passo per la Verticale (Handstand)
                         </button>
                     </div>
                 </div>
             `;
-            container.scrollTop = container.scrollHeight;
+
+            if (alignMsgId) {
+                // Allinea la vista al messaggio appena scritto dall'utente
+                requestAnimationFrame(() => {
+                    alignAiChatToMessage(alignMsgId, true);
+                });
+            } else {
+                requestAnimationFrame(() => {
+                    container.scrollTop = container.scrollHeight;
+                });
+            }
         }
 
         function clearAiChatHistory() {
@@ -6688,6 +6762,12 @@ let currentUser = null;
             aiChatMessages = [];
             loadAiChatHistory(true);
             renderAiHelperView(true);
+        }
+
+        function sendSuggestedPromptBtn(btn) {
+            if (!btn) return;
+            const text = btn.getAttribute("data-prompt") || btn.innerText.trim();
+            sendSuggestedAiPrompt(text);
         }
 
         function sendSuggestedAiPrompt(text) {
@@ -7069,23 +7149,34 @@ function getCalisthenicsExpertResponse(query) {
 
             input.value = "";
             loadAiChatHistory();
+            const userMsgId = "msg_user_" + Date.now();
             aiChatMessages.push({
-                id: "msg_" + Date.now(),
+                id: userMsgId,
                 sender: "user",
                 text: query,
                 timestamp: Date.now()
             });
             saveAiChatHistory();
-            renderAiHelperView(true);
 
-            // Mostra indicatore di digitazione
-            const container = document.getElementById("chat-messages");
+            // Render e allinea immediatamente al nuovo messaggio dell'utente
+            renderAiHelperView(true, userMsgId);
+
+            // Mostra indicatore di digitazione nel thread subito prima dei prompt suggeriti
+            const threadEl = document.getElementById("ai-chat-thread");
+            const promptsEl = document.getElementById("ai-suggested-prompts");
             const typingEl = document.createElement("div");
             typingEl.id = "ai-typing-indicator";
-            typingEl.style.cssText = "padding:8px 12px; font-size:0.8rem; color:var(--subtext); font-style:italic;";
-            typingEl.innerText = "🤖 Il Coach AI sta analizzando...";
-            if (container) container.appendChild(typingEl);
-            if (container) container.scrollTop = container.scrollHeight;
+            typingEl.style.cssText = "padding:8px 12px; font-size:0.8rem; color:var(--subtext); font-style:italic; display:flex; align-items:center; gap:6px;";
+            typingEl.innerHTML = '🤖 <span>Il Coach AI sta analizzando...</span>';
+            if (threadEl) {
+                if (promptsEl) {
+                    threadEl.insertBefore(typingEl, promptsEl);
+                } else {
+                    threadEl.appendChild(typingEl);
+                }
+            }
+            // Mantieni la vista ancorata al messaggio appena scritto
+            alignAiChatToMessage(userMsgId, false);
 
             // 1. Verifica se è configurata una chiave Gemini personale
             const userGeminiKey = localStorage.getItem("calisthenics_gemini_api_key");
@@ -7129,14 +7220,16 @@ function getCalisthenicsExpertResponse(query) {
             const typingToRemove = document.getElementById("ai-typing-indicator");
             if (typingToRemove) typingToRemove.remove();
 
+            const aiMsgId = "msg_ai_" + Date.now();
             aiChatMessages.push({
-                id: "msg_" + Date.now(),
+                id: aiMsgId,
                 sender: "ai",
                 text: aiResponse,
                 timestamp: Date.now()
             });
             saveAiChatHistory();
-            renderAiHelperView(true);
+            // Mantieni la vista allineata al messaggio dell'utente per una lettura comoda
+            renderAiHelperView(true, userMsgId);
         }
 
         function openGeminiApiKeyModal() {
@@ -7280,29 +7373,163 @@ function getCalisthenicsExpertResponse(query) {
 };
         const ALL_81_SKILLS_REGISTRY = SKILL_BIOMECHANICS_REGISTRY;
 
+        // Alias e sinonimi frequenti (duelli, sfide e denominazioni colloquiali/italiane)
+        const POSE_SKILL_ALIASES = {
+            "pullups": "pullups",
+            "pullup": "pullups",
+            "pull_ups": "pullups",
+            "trazioni": "pullups",
+            "trazione": "pullups",
+            "chinups": "pullups",
+            "chinup": "pullups",
+            "scapularpullups": "pullups",
+            "australianpullups": "australian",
+            "trazioniaustraliane": "australian",
+            "onearmpullups": "one_arm_pullup",
+            "onearmpullup": "one_arm_pullup",
+            "pushups": "pushups",
+            "pushup": "pushups",
+            "push_ups": "pushups",
+            "standardpushups": "pushups",
+            "piegamenti": "pushups",
+            "kneepushups": "pushups_knee",
+            "inclinepushups": "pushups_knee",
+            "clappushups": "clap_pushups",
+            "doubleclappushups": "double_clap_pushups",
+            "behindthebackclappushups": "behind_back_clap",
+            "onearmpushups": "one_arm_pushup",
+            "onearmrussianpushups": "one_arm_russian",
+            "90degreepushups": "freestanding_hspu",
+            "archerpushups": "pseudo_pushups",
+            "pikepushups": "hspu_wall",
+            "squats": "squat",
+            "squat": "squat",
+            "bodyweightsquats": "squat",
+            "pistolsquats": "pistol_squat",
+            "shrimpsquats": "shrimp_squat",
+            "jumpsquats": "jump_squat",
+            "dips": "classic_dip",
+            "parallelbardips": "bar_dips",
+            "benchdips": "bench_dips",
+            "impossibledips": "impossible_dip",
+            "muscleups": "muscle_up",
+            "muscleup": "muscle_up",
+            "crunch": "crunch",
+            "situp": "sit_ups",
+            "situps": "sit_ups",
+            "plank": "plank",
+            "plankhold": "plank",
+            "deadbug": "hollow_body",
+            "lsithold": "l_sit",
+            "lsit": "l_sit",
+            "vsithold": "v_sit",
+            "vsit": "v_sit",
+            "wallhandstandhold": "wall_handstand",
+            "wallhandstand": "wall_handstand",
+            "handstandpushupsalmuro": "hspu_wall",
+            "onearmhandstandhold": "one_arm_hs",
+            "onearmhandstand": "one_arm_hs",
+            "tuckfrontleverhold": "tuck_fl",
+            "frontleverstraddlehold": "straddle_fl",
+            "fullfrontleverhold": "full_fl",
+            "advancedtuckplanchehold": "adv_tuck_planche",
+            "straddleplanchehold": "straddle_planche",
+            "fullplanchehold": "full_planche",
+            "elbowleverhold": "elbow_lever",
+            "backleverhold": "elbow_lever",
+            "dragonflag": "dragon_flag",
+            "victoriancrosssuparallelehold": "victorian"
+        };
+
         function getSkillBiomechanicsProfile(skillId, fallbackName = "") {
-            const sid = (skillId || "").toLowerCase().trim();
-            const name = (fallbackName || "").toLowerCase().trim();
+            const rawId = (skillId || "").trim();
+            const rawName = (fallbackName || "").trim();
 
-            if (SKILL_BIOMECHANICS_REGISTRY[sid]) {
-                return { ...SKILL_BIOMECHANICS_REGISTRY[sid] };
+            // 1. Corrispondenza diretta esatta per ID di registro
+            if (rawId && SKILL_BIOMECHANICS_REGISTRY[rawId]) {
+                return { ...SKILL_BIOMECHANICS_REGISTRY[rawId] };
             }
 
+            const normalizeKey = (s) => (s || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+            const nId = normalizeKey(rawId);
+            const nName = normalizeKey(rawName);
+
+            // 2. Controllo alias esatti normalizzati
+            if (nId && POSE_SKILL_ALIASES[nId] && SKILL_BIOMECHANICS_REGISTRY[POSE_SKILL_ALIASES[nId]]) {
+                return { ...SKILL_BIOMECHANICS_REGISTRY[POSE_SKILL_ALIASES[nId]] };
+            }
+            if (nName && POSE_SKILL_ALIASES[nName] && SKILL_BIOMECHANICS_REGISTRY[POSE_SKILL_ALIASES[nName]]) {
+                return { ...SKILL_BIOMECHANICS_REGISTRY[POSE_SKILL_ALIASES[nName]] };
+            }
+
+            // 3. Controllo normalizzato sulle chiavi e sui nomi del registro
             for (const k in SKILL_BIOMECHANICS_REGISTRY) {
-                if (SKILL_BIOMECHANICS_REGISTRY[k].name.toLowerCase() === name || SKILL_BIOMECHANICS_REGISTRY[k].name.toLowerCase() === sid) {
-                    return { ...SKILL_BIOMECHANICS_REGISTRY[k] };
+                const regItem = SKILL_BIOMECHANICS_REGISTRY[k];
+                const nRegK = normalizeKey(k);
+                const nRegName = normalizeKey(regItem.name);
+
+                if (nId === nRegK || nId === nRegName || nName === nRegK || nName === nRegName) {
+                    return { ...regItem };
                 }
             }
 
-            for (const k in SKILL_BIOMECHANICS_REGISTRY) {
-                if (sid.includes(k) || (name && name.includes(SKILL_BIOMECHANICS_REGISTRY[k].name.toLowerCase()))) {
-                    return { ...SKILL_BIOMECHANICS_REGISTRY[k] };
+            // 4. Corrispondenza per sottostringa con alias ordinati per specificità decrescente
+            const sortedAliasKeys = Object.keys(POSE_SKILL_ALIASES).sort((a, b) => b.length - a.length);
+            for (const aKey of sortedAliasKeys) {
+                if ((nId && nId.includes(aKey)) || (nName && nName.includes(aKey))) {
+                    const targetId = POSE_SKILL_ALIASES[aKey];
+                    if (SKILL_BIOMECHANICS_REGISTRY[targetId]) {
+                        return { ...SKILL_BIOMECHANICS_REGISTRY[targetId] };
+                    }
                 }
             }
 
+            // 5. Corrispondenza per sottostringa normalizzata sui nomi del registro
+            for (const k in SKILL_BIOMECHANICS_REGISTRY) {
+                const regItem = SKILL_BIOMECHANICS_REGISTRY[k];
+                const nRegK = normalizeKey(k);
+                const nRegName = normalizeKey(regItem.name);
+
+                if (nRegK.length >= 4 && ((nId && nId.includes(nRegK)) || (nName && nName.includes(nRegK)))) {
+                    return { ...regItem };
+                }
+                if (nRegName.length >= 4 && ((nId && nId.includes(nRegName)) || (nName && nName.includes(nRegName)))) {
+                    return { ...regItem };
+                }
+            }
+
+            // 6. Rilevamento semantico di sicurezza per parole chiave (previene categoricamente falsi pushup nei pullup)
+            const combined = (rawId + " " + rawName).toLowerCase();
+            if (combined.includes("pull") || combined.includes("trazion") || combined.includes("chin")) {
+                if (combined.includes("australian")) return { ...SKILL_BIOMECHANICS_REGISTRY["australian"] };
+                if (combined.includes("chest")) return { ...SKILL_BIOMECHANICS_REGISTRY["chest_to_bar"] };
+                if (combined.includes("one arm") || combined.includes("un braccio") || combined.includes("singol")) return { ...SKILL_BIOMECHANICS_REGISTRY["one_arm_pullup"] };
+                return { ...SKILL_BIOMECHANICS_REGISTRY["pullups"] };
+            }
+            if (combined.includes("dip")) {
+                if (combined.includes("bench") || combined.includes("panca")) return { ...SKILL_BIOMECHANICS_REGISTRY["bench_dips"] };
+                if (combined.includes("bar") || combined.includes("parallel")) return { ...SKILL_BIOMECHANICS_REGISTRY["bar_dips"] };
+                return { ...SKILL_BIOMECHANICS_REGISTRY["classic_dip"] };
+            }
+            if (combined.includes("squat")) {
+                if (combined.includes("pistol")) return { ...SKILL_BIOMECHANICS_REGISTRY["pistol_squat"] };
+                if (combined.includes("jump") || combined.includes("salto")) return { ...SKILL_BIOMECHANICS_REGISTRY["jump_squat"] };
+                return { ...SKILL_BIOMECHANICS_REGISTRY["squat"] };
+            }
+            if (combined.includes("handstand") || combined.includes("verticale")) {
+                if (combined.includes("push") || combined.includes("hspu") || combined.includes("piegament")) {
+                    return { ...SKILL_BIOMECHANICS_REGISTRY["hspu_wall"] };
+                }
+                return { ...SKILL_BIOMECHANICS_REGISTRY["freestanding_hs"] };
+            }
+            if (combined.includes("plank")) {
+                return { ...SKILL_BIOMECHANICS_REGISTRY["plank"] };
+            }
+
+            // Fallback predefinito
             return {
-                id: sid || "pushups",
-                name: fallbackName || "Esercizio",
+                id: rawId || "pushups",
+                name: rawName || "Esercizio",
                 mode: "rep",
                 subType: "pushup_two_arms",
                 minRom: 88,
@@ -9363,6 +9590,8 @@ function getCalisthenicsExpertResponse(query) {
             const panel = document.getElementById('chat-panel');
             chatPanelOpen = !chatPanelOpen;
             panel.classList.toggle('active', chatPanelOpen);
+            document.body.classList.toggle('chat-panel-open', chatPanelOpen);
+            document.documentElement.classList.toggle('chat-panel-open', chatPanelOpen);
 
             if (chatPanelOpen) {
                 renderChatInputState();
@@ -14416,6 +14645,47 @@ function getCalisthenicsExpertResponse(query) {
                 if (typeof el.blur === 'function') el.blur();
             });
         }, { passive: true });
+
+        // ========================================== 
+        // ISOLAMENTO SCROLL TOUCH MOBILE PER LA CHAT
+        // Evita che lo scorrimento della chat muova la schermata di sfondo su mobile
+        // ========================================== 
+        function initChatMobileTouchIsolation() {
+            const chatPanel = document.getElementById('chat-panel');
+            const chatMessages = document.getElementById('chat-messages');
+            if (!chatPanel || !chatMessages) return;
+
+            // 1. Previeni il rimbalzo rubber-banding su iOS Safari a inizio o fine lista
+            chatMessages.addEventListener('touchstart', function() {
+                const top = chatMessages.scrollTop;
+                const totalScroll = chatMessages.scrollHeight;
+                const currentScroll = top + chatMessages.offsetHeight;
+                if (top <= 0) {
+                    chatMessages.scrollTop = 1;
+                } else if (currentScroll >= totalScroll) {
+                    chatMessages.scrollTop = Math.max(1, top - 1);
+                }
+            }, { passive: true });
+
+            // 2. Isola gli eventi touchmove all'interno del pannello chat
+            chatPanel.addEventListener('touchmove', function(e) {
+                const isInsideMessages = chatMessages.contains(e.target);
+                const isInsideChips = e.target.closest && e.target.closest('.ai-helper-header-bar');
+                if (isInsideMessages || isInsideChips) {
+                    // Consenti lo scorrimento fluido interno della chat bloccando la propagazione allo sfondo
+                    e.stopPropagation();
+                } else {
+                    // Se tocchi l'header, le schede o la barra input, impedisci il trascinamento dello sfondo
+                    if (e.cancelable) e.preventDefault();
+                }
+            }, { passive: false });
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initChatMobileTouchIsolation);
+        } else {
+            initChatMobileTouchIsolation();
+        }
 
         initCategorySelect();
         applyTheme(currentTheme);
