@@ -6818,8 +6818,11 @@ let currentUser = null;
         }
 
         // ==========================================
-        // COMPUTER VISION: MEDIAPIPE POSE & ARBITRAGGIO
         // ==========================================
+        // COMPUTER VISION: MEDIAPIPE POSE & ARBITRAGGIO BIOMECCANICO AVANZATO
+        // REGISTRO SPECIFICO PER OGNI SINGOLO ESERCIZIO (81 SKILL + DUELLI)
+        // ==========================================
+
         function calculateJointAngle(a, b, c) {
             if (!a || !b || !c) return 180;
             const radians = Math.atan2(c.y - b.y, c.x - b.x) - Math.atan2(a.y - b.y, a.x - b.x);
@@ -6830,10 +6833,201 @@ let currentUser = null;
             return Math.round(angle);
         }
 
+        // REGISTRO BIOMECCANICO PER OGNI SINGOLO ESERCIZIO
+        const SKILL_BIOMECHANICS_REGISTRY = {
+            // PUSH / SPINTA
+            "pushups": { name: "Regular Push Ups", mode: "rep", subType: "pushup_two_arms", minRom: 88, maxLockout: 156 },
+            "pushups_knee": { name: "Knee Push Ups", mode: "rep", subType: "pushup_knee", minRom: 90, maxLockout: 155 },
+            "diamond_pushups": { name: "Diamond Push Ups", mode: "rep", subType: "pushup_diamond", minRom: 88, maxLockout: 156 },
+            "clap_pushups": { name: "Clap Push Ups", mode: "rep", subType: "pushup_clap", minRom: 90, maxLockout: 155 },
+            "double_clap_pushups": { name: "Double Clap Push Ups", mode: "rep", subType: "pushup_clap", minRom: 90, maxLockout: 155 },
+            "behind_back_clap": { name: "Behind-the-Back Clap Push Ups", mode: "rep", subType: "pushup_clap", minRom: 90, maxLockout: 155 },
+            "pseudo_pushups": { name: "PPPU (Pseudo Push Ups)", mode: "rep", subType: "pushup_pseudo", minRom: 88, maxLockout: 155 },
+            "one_arm_pushup": { name: "One Arm Push Up", mode: "rep", subType: "pushup_one_arm", minRom: 90, maxLockout: 154 },
+            "one_arm_russian": { name: "One Arm Russian Push Up", mode: "rep", subType: "pushup_one_arm", minRom: 90, maxLockout: 154 },
+            "planche_lean": { name: "Planche Lean", mode: "hold", subType: "planche_lean" },
+            "frog_stand": { name: "Frog Stand Hold", mode: "hold", subType: "frog_stand" },
+            "elbow_lever": { name: "Elbow Lever Hold", mode: "hold", subType: "elbow_lever" },
+            "tuck_planche": { name: "Tuck Planche Hold", mode: "hold", subType: "planche_tuck" },
+            "adv_tuck_planche": { name: "Advanced Tuck Planche", mode: "hold", subType: "planche_adv_tuck" },
+            "straddle_planche": { name: "Straddle Planche", mode: "hold", subType: "planche_straddle" },
+            "full_planche": { name: "Full Planche Hold", mode: "hold", subType: "planche_full" },
+            "maltese": { name: "Maltese Hold", mode: "hold", subType: "maltese" },
+
+            // PULL / TRAZIONE
+            "pullups": { name: "Pull Ups", mode: "rep", subType: "pullup_two_arms", minRom: 80, maxLockout: 150 },
+            "australian": { name: "Australian Pull Ups", mode: "rep", subType: "pullup_australian", minRom: 82, maxLockout: 155 },
+            "chest_to_bar": { name: "Chest to Bar Pull Ups", mode: "rep", subType: "pullup_chest_to_bar", minRom: 72, maxLockout: 150 },
+            "one_arm_pullup": { name: "One Arm Pull Up", mode: "rep", subType: "pullup_one_arm", minRom: 82, maxLockout: 145 },
+            "tuck_fl": { name: "Tuck Front Lever", mode: "hold", subType: "fl_tuck" },
+            "adv_tuck_fl": { name: "Adv. Tuck Front Lever", mode: "hold", subType: "fl_adv_tuck" },
+            "straddle_fl": { name: "Straddle Front Lever", mode: "hold", subType: "fl_straddle" },
+            "full_fl": { name: "Full Front Lever", mode: "hold", subType: "fl_full" },
+            "muscle_up": { name: "Bar Muscle Up", mode: "rep", subType: "muscle_up" },
+            "explosive_pullup": { name: "Kipping Pull Ups", mode: "rep", subType: "pullup_two_arms", minRom: 85, maxLockout: 145 },
+            "towel_pullup": { name: "Towel Pull Ups", mode: "rep", subType: "pullup_two_arms", minRom: 82, maxLockout: 145 },
+
+            // DIPS & VERTICALI
+            "classic_dip": { name: "Classic Dip (Parallel Bars)", mode: "rep", subType: "dip_parallel", minRom: 90, maxLockout: 155 },
+            "bar_dips": { name: "Parallel Bar Dips", mode: "rep", subType: "dip_parallel", minRom: 90, maxLockout: 155 },
+            "bench_dips": { name: "Bench Dips", mode: "rep", subType: "dip_bench", minRom: 90, maxLockout: 155 },
+            "l_sit_dip": { name: "L-Sit Dip", mode: "rep", subType: "dip_lsit", minRom: 90, maxLockout: 155 },
+            "korean_dip": { name: "Korean Dips", mode: "rep", subType: "dip_korean", minRom: 90, maxLockout: 155 },
+            "russian_dip": { name: "Russian Dips", mode: "rep", subType: "dip_russian", minRom: 90, maxLockout: 155 },
+            "impossible_dip": { name: "Impossible Dip", mode: "rep", subType: "dip_russian", minRom: 90, maxLockout: 155 },
+            "wall_handstand": { name: "Wall Handstand", mode: "hold", subType: "handstand_hold" },
+            "freestanding_hs": { name: "Freestanding Handstand", mode: "hold", subType: "handstand_hold" },
+            "hspu_wall": { name: "Wall HSPU", mode: "rep", subType: "hspu", minRom: 92, maxLockout: 155 },
+            "freestanding_hspu": { name: "Freestanding HSPU", mode: "rep", subType: "hspu", minRom: 92, maxLockout: 155 },
+            "l_sit": { name: "L-Sit Hold", mode: "hold", subType: "lsit" },
+            "v_sit": { name: "V-Sit Hold", mode: "hold", subType: "vsit" },
+
+            // RINGS / ANELLI
+            "ring_support": { name: "Ring Support Hold", mode: "hold", subType: "ring_support" },
+            "ring_dips": { name: "Ring Dips", mode: "rep", subType: "dip_parallel", minRom: 90, maxLockout: 155 },
+            "ring_muscle_up": { name: "Ring Muscle Up", mode: "rep", subType: "muscle_up" },
+            "iron_cross": { name: "Iron Cross Hold", mode: "hold", subType: "iron_cross" },
+            "victorian": { name: "Victorian Cross on Rings", mode: "hold", subType: "victorian" },
+
+            // CORE / ADDOMINALI
+            "plank": { name: "Plank Hold", mode: "hold", subType: "plank" },
+            "side_plank": { name: "Side Plank Hold", mode: "hold", subType: "side_plank" },
+            "crunch": { name: "Ab Crunches", mode: "rep", subType: "crunch" },
+            "hollow_body": { name: "Hollow Body Hold", mode: "hold", subType: "hollow_body" },
+            "dragon_flag": { name: "Dragon Flag Hold", mode: "hold", subType: "dragon_flag" },
+            "human_flag_tuck": { name: "Tuck Human Flag", mode: "hold", subType: "human_flag" },
+            "human_flag_straddle": { name: "Straddle Human Flag", mode: "hold", subType: "human_flag" },
+            "human_flag": { name: "Full Human Flag", mode: "hold", subType: "human_flag" },
+            "leg_raises": { name: "Hanging Leg Raises", mode: "rep", subType: "leg_raises" },
+            "ab_wheel": { name: "Ab Wheel Rollout", mode: "rep", subType: "ab_wheel" },
+            "windshield_wipers": { name: "Windshield Wipers", mode: "rep", subType: "windshield_wipers" },
+            "russian_twist": { name: "Russian Twist", mode: "rep", subType: "russian_twist" },
+            "superman_hold": { name: "Superman Hold", mode: "hold", subType: "superman_hold" },
+
+            // GAMBE / LEGS
+            "squat": { name: "Air Squats", mode: "rep", subType: "squat_two_legs", minRom: 90, maxLockout: 158 },
+            "pistol_squat": { name: "Pistol Squats", mode: "rep", subType: "squat_single_leg", minRom: 85, maxLockout: 155 },
+            "shrimp_squat": { name: "Shrimp Squat", mode: "rep", subType: "squat_single_leg", minRom: 88, maxLockout: 155 },
+            "lunges": { name: "Lunges", mode: "rep", subType: "lunges", minRom: 90, maxLockout: 155 },
+            "bulgarian_split_squat": { name: "Bulgarian Split Squat", mode: "rep", subType: "squat_single_leg", minRom: 90, maxLockout: 155 },
+            "cossack_squat": { name: "Cossack Squat", mode: "rep", subType: "squat_single_leg", minRom: 90, maxLockout: 155 },
+            "jump_squat": { name: "Jump Squat", mode: "rep", subType: "squat_two_legs", minRom: 90, maxLockout: 158 },
+            "box_jump": { name: "Box Jump", mode: "rep", subType: "box_jump" },
+            "wall_sit": { name: "Wall Sit", mode: "hold", subType: "wall_sit" },
+            "calf_raises": { name: "Calf Raises", mode: "rep", subType: "calf_raises" },
+            "glute_bridge": { name: "Glute Bridge", mode: "rep", subType: "glute_bridge" },
+            "nordic_curl": { name: "Nordic Hamstring Curl", mode: "rep", subType: "nordic_curl" },
+
+            // GRIP / PRESA
+            "dead_hang": { name: "Dead Hang (Passive Hang)", mode: "hold", subType: "hang_two_arms" },
+            "one_arm_hang": { name: "One Arm Hang", mode: "hold", subType: "hang_one_arm" },
+            "towel_hang": { name: "Towel Hang", mode: "hold", subType: "hang_two_arms" },
+            "fingertip_hang": { name: "Fingertip Hang", mode: "hold", subType: "hang_two_arms" },
+
+            // FREESTYLE & ESPLOSIVI
+            "pullover": { name: "Bar Pull Over", mode: "rep", subType: "pullover" },
+            "spin_360": { name: "360 Spin / Bar Hop", mode: "rep", subType: "spin_360" },
+            "freestyle_combo": { name: "Freestyle Flow Combo", mode: "hold", subType: "freestyle_combo" },
+            "burpees": { name: "Burpees", mode: "rep", subType: "burpees" },
+            "mountain_climbers": { name: "Mountain Climbers", mode: "rep", subType: "mountain_climbers" },
+            "broad_jump": { name: "Standing Broad Jump", mode: "rep", subType: "broad_jump" }
+        };
+
+        function getSkillBiomechanicsProfile(skillId, fallbackName = "") {
+            const sid = (skillId || "").toLowerCase().trim();
+            const name = (fallbackName || "").toLowerCase().trim();
+
+            // 1. Corrispondenza diretta per ID nel registro
+            if (SKILL_BIOMECHANICS_REGISTRY[sid]) {
+                const reg = SKILL_BIOMECHANICS_REGISTRY[sid];
+                return { id: sid, ...reg };
+            }
+
+            // 2. Corrispondenza intelligente per nome/keyword
+            if (sid.includes("one_arm_pull") || sid.includes("one arm pull") || name.includes("one arm pull") || name.includes("trazione a un braccio") || name.includes("trazione monobraccio")) {
+                return { id: "one_arm_pullup", ...SKILL_BIOMECHANICS_REGISTRY["one_arm_pullup"] };
+            }
+            if (sid.includes("one_arm_push") || sid.includes("one arm push") || name.includes("one arm push") || name.includes("piegamento a un braccio") || name.includes("pushup a una mano")) {
+                return { id: "one_arm_pushup", ...SKILL_BIOMECHANICS_REGISTRY["one_arm_pushup"] };
+            }
+            if (sid.includes("diamond") || name.includes("diamond")) {
+                return { id: "diamond_pushups", ...SKILL_BIOMECHANICS_REGISTRY["diamond_pushups"] };
+            }
+            if (sid.includes("pseudo") || sid.includes("pppu") || name.includes("pseudo")) {
+                return { id: "pseudo_pushups", ...SKILL_BIOMECHANICS_REGISTRY["pseudo_pushups"] };
+            }
+            if (sid.includes("pistol") || name.includes("pistol")) {
+                return { id: "pistol_squat", ...SKILL_BIOMECHANICS_REGISTRY["pistol_squat"] };
+            }
+            if (sid.includes("muscle_up") || sid.includes("muscle up") || name.includes("muscle up") || name.includes("muscle-up")) {
+                return { id: "muscle_up", ...SKILL_BIOMECHANICS_REGISTRY["muscle_up"] };
+            }
+            if (sid.includes("chest_to_bar") || name.includes("chest to bar")) {
+                return { id: "chest_to_bar", ...SKILL_BIOMECHANICS_REGISTRY["chest_to_bar"] };
+            }
+            if (sid.includes("hspu") || name.includes("hspu") || name.includes("handstand push")) {
+                return { id: "freestanding_hspu", ...SKILL_BIOMECHANICS_REGISTRY["freestanding_hspu"] };
+            }
+            if (sid.includes("handstand") || sid.includes("verticale") || name.includes("handstand") || name.includes("verticale")) {
+                return { id: "freestanding_hs", ...SKILL_BIOMECHANICS_REGISTRY["freestanding_hs"] };
+            }
+            if (sid.includes("tuck_planche") || name.includes("tuck planche")) {
+                return { id: "tuck_planche", ...SKILL_BIOMECHANICS_REGISTRY["tuck_planche"] };
+            }
+            if (sid.includes("straddle_planche") || name.includes("straddle planche")) {
+                return { id: "straddle_planche", ...SKILL_BIOMECHANICS_REGISTRY["straddle_planche"] };
+            }
+            if (sid.includes("full_planche") || sid.includes("planche") || name.includes("planche")) {
+                return { id: "full_planche", ...SKILL_BIOMECHANICS_REGISTRY["full_planche"] };
+            }
+            if (sid.includes("tuck_fl") || name.includes("tuck front lever")) {
+                return { id: "tuck_fl", ...SKILL_BIOMECHANICS_REGISTRY["tuck_fl"] };
+            }
+            if (sid.includes("straddle_fl") || name.includes("straddle front lever")) {
+                return { id: "straddle_fl", ...SKILL_BIOMECHANICS_REGISTRY["straddle_fl"] };
+            }
+            if (sid.includes("fl") || sid.includes("front_lever") || name.includes("front lever")) {
+                return { id: "full_fl", ...SKILL_BIOMECHANICS_REGISTRY["full_fl"] };
+            }
+            if (sid.includes("lsit") || sid.includes("l_sit") || name.includes("l-sit") || name.includes("lsit")) {
+                return { id: "l_sit", ...SKILL_BIOMECHANICS_REGISTRY["l_sit"] };
+            }
+            if (sid.includes("vsit") || sid.includes("v_sit") || name.includes("v-sit") || name.includes("vsit")) {
+                return { id: "v_sit", ...SKILL_BIOMECHANICS_REGISTRY["v_sit"] };
+            }
+            if (sid.includes("dragon_flag") || name.includes("dragon flag")) {
+                return { id: "dragon_flag", ...SKILL_BIOMECHANICS_REGISTRY["dragon_flag"] };
+            }
+            if (sid.includes("human_flag") || name.includes("human flag") || name.includes("bandiera")) {
+                return { id: "human_flag", ...SKILL_BIOMECHANICS_REGISTRY["human_flag"] };
+            }
+            if (sid.includes("dip") || name.includes("dip")) {
+                return { id: "classic_dip", ...SKILL_BIOMECHANICS_REGISTRY["classic_dip"] };
+            }
+            if (sid.includes("squat") || name.includes("squat")) {
+                return { id: "squat", ...SKILL_BIOMECHANICS_REGISTRY["squat"] };
+            }
+            if (sid.includes("pull") || sid.includes("trazion") || name.includes("pull") || name.includes("trazion")) {
+                return { id: "pullups", ...SKILL_BIOMECHANICS_REGISTRY["pullups"] };
+            }
+
+            // Fallback predefinito: Push-up regolari
+            return { id: sid || "pushups", ...SKILL_BIOMECHANICS_REGISTRY["pushups"] };
+        }
+
         class PoseRepCounterEngine {
             constructor(skillProfile) {
-                this.profile = skillProfile || { id: "pushup", category: "pushup", name: "Push-up" };
-                this.type = this.profile.category || "pushup";
+                if (typeof skillProfile === 'string') {
+                    this.profile = getSkillBiomechanicsProfile(skillProfile);
+                } else {
+                    this.profile = skillProfile || getSkillBiomechanicsProfile("pushups");
+                }
+                this.subType = this.profile.subType || "pushup_two_arms";
+                this.mode = this.profile.mode || "rep";
+                this.name = this.profile.name || "Esercizio";
+                this.minRom = this.profile.minRom || 88;
+                this.maxLockout = this.profile.maxLockout || 155;
+
                 this.reps = 0;
                 this.state = "ready";
                 this.holdSeconds = 0;
@@ -6844,6 +7038,7 @@ let currentUser = null;
                 this.warnings = [];
                 this.validHistory = [];
                 this.prevLandmarks = null;
+                this.muscleUpPhase = "hang";
             }
 
             getTorsoIncline(shoulder, hip) {
@@ -6853,7 +7048,6 @@ let currentUser = null;
                 return Math.round(Math.atan2(dy, dx) * 180 / Math.PI);
             }
 
-            // Gate biometrico: verifica che il corpo intero sia inquadrato autenticamente
             validateFullBodyPresence(landmarks) {
                 const lShoulder = landmarks[11], rShoulder = landmarks[12];
                 const lElbow = landmarks[13], rElbow = landmarks[14];
@@ -6862,18 +7056,16 @@ let currentUser = null;
                 const lKnee = landmarks[25], rKnee = landmarks[26];
                 const lAnkle = landmarks[27], rAnkle = landmarks[28];
 
-                // 1. Spalle e Busto: devono essere presenti e visibili
                 const maxShoulderVis = Math.max(lShoulder?.visibility || 0, rShoulder?.visibility || 0);
                 const maxHipVis = Math.max(lHip?.visibility || 0, rHip?.visibility || 0);
 
-                if (maxShoulderVis < 0.60 || maxHipVis < 0.55) {
+                if (maxShoulderVis < 0.55 || maxHipVis < 0.50) {
                     return {
                         valid: false,
-                        reason: "⚠️ Inquadra tutto il corpo: spalle e bacino devono essere visibili!"
+                        reason: "⚠️ Inquadra spalle e bacino: devono essere visibili!"
                     };
                 }
 
-                // Determina lato principale visibile
                 const leftScore = (lShoulder?.visibility || 0) + (lElbow?.visibility || 0) + (lWrist?.visibility || 0) + (lHip?.visibility || 0);
                 const rightScore = (rShoulder?.visibility || 0) + (rElbow?.visibility || 0) + (rWrist?.visibility || 0) + (rHip?.visibility || 0);
                 const isLeft = leftScore >= rightScore;
@@ -6885,59 +7077,14 @@ let currentUser = null;
                 const knee = isLeft ? lKnee : rKnee;
                 const ankle = isLeft ? lAnkle : rAnkle;
 
-                // 2. Controllo proporzioni umane (evita telefono in mano / solo volto ravvicinato)
                 const torsoDist = Math.hypot(shoulder.x - hip.x, shoulder.y - hip.y);
-                if (torsoDist < 0.13 || torsoDist > 0.75) {
+                if (torsoDist < 0.12 || torsoDist > 0.78) {
                     return {
                         valid: false,
-                        reason: "⚠️ Allontana la fotocamera per inquadrare bene tutto il corpo!"
+                        reason: "⚠️ Posiziona il telefono alla giusta distanza per inquadrare il corpo!"
                     };
                 }
 
-                // 3. Controllo specifico per categoria esercizio
-                if (this.type === "pushup" || this.type === "planche" || this.type === "hold") {
-                    const kneeVis = Math.max(lKnee?.visibility || 0, rKnee?.visibility || 0);
-                    if (kneeVis < 0.45) {
-                        return {
-                            valid: false,
-                            reason: "⚠️ Per piegamenti e tenute orizzontali inquadra anche gambe e piedi!"
-                        };
-                    }
-                    const legDist = Math.hypot(hip.x - knee.x, hip.y - knee.y);
-                    if (legDist < 0.10) {
-                        return {
-                            valid: false,
-                            reason: "⚠️ Inquadra l'intera figura orizzontale a terra!"
-                        };
-                    }
-                } else if (this.type === "squat") {
-                    const kneeVis = Math.max(lKnee?.visibility || 0, rKnee?.visibility || 0);
-                    const ankleVis = Math.max(lAnkle?.visibility || 0, rAnkle?.visibility || 0);
-                    if (kneeVis < 0.55 || ankleVis < 0.45) {
-                        return {
-                            valid: false,
-                            reason: "⚠️ Per lo squat inquadra l'atleta dalla testa ai piedi!"
-                        };
-                    }
-                } else if (this.type === "lsit") {
-                    const kneeVis = Math.max(lKnee?.visibility || 0, rKnee?.visibility || 0);
-                    if (kneeVis < 0.55) {
-                        return {
-                            valid: false,
-                            reason: "⚠️ Per l'L-Sit inquadra chiaramente le gambe tese!"
-                        };
-                    }
-                } else if (this.type === "handstand") {
-                    const ankleVis = Math.max(lAnkle?.visibility || 0, rAnkle?.visibility || 0);
-                    if (ankleVis < 0.50) {
-                        return {
-                            valid: false,
-                            reason: "⚠️ Per la verticale inquadra l'intero corpo fino ai piedi in alto!"
-                        };
-                    }
-                }
-
-                // Controllo oscillazione telecamera (evita falsi conteggi muovendo il telefono)
                 let cameraMotion = 0;
                 if (this.prevLandmarks) {
                     cameraMotion = Math.hypot(shoulder.x - this.prevLandmarks.shoulder.x, shoulder.y - this.prevLandmarks.shoulder.y)
@@ -6957,7 +7104,13 @@ let currentUser = null;
                     hip,
                     knee,
                     ankle,
-                    cameraMotion
+                    cameraMotion,
+                    lShoulder, rShoulder,
+                    lElbow, rElbow,
+                    lWrist, rWrist,
+                    lHip, rHip,
+                    lKnee, rKnee,
+                    lAnkle, rAnkle
                 };
             }
 
@@ -6977,9 +7130,12 @@ let currentUser = null;
                     };
                 }
 
-                const { shoulder, elbow, wrist, hip, knee, ankle, cameraMotion } = gate;
+                const {
+                    shoulder, elbow, wrist, hip, knee, ankle, cameraMotion,
+                    lShoulder, rShoulder, lElbow, rElbow, lWrist, rWrist,
+                    lHip, rHip, lKnee, rKnee, lAnkle, rAnkle
+                } = gate;
 
-                // Se la fotocamera sta oscillando (telefono tenuto in mano e mosso)
                 if (cameraMotion > 0.12) {
                     this.holdStartTs = null;
                     this.downEntryTs = 0;
@@ -7000,30 +7156,293 @@ let currentUser = null;
                 let feedback = "";
                 let isValidRep = false;
 
-                // ==========================================
-                // 1. PUSH-UP (PIEGAMENTI A TERRA)
-                // ==========================================
-                if (this.type === "pushup") {
+                // 1. ONE ARM PULL-UP
+                if (this.subType === "pullup_one_arm") {
+                    const lOverhead = lWrist.y < lShoulder.y - 0.08;
+                    const rOverhead = rWrist.y < rShoulder.y - 0.08;
+
+                    if (lOverhead && rOverhead) {
+                        this.state = "ready";
+                        return {
+                            reps: this.reps,
+                            elbowAngle,
+                            trunkAngle,
+                            feedback: "⚠️ Trazione a UN braccio! Solo una mano alla sbarra, tieni l'altro braccio libero o dietro la schiena!",
+                            isValidRep: false
+                        };
+                    }
+
+                    if (!lOverhead && !rOverhead) {
+                        this.state = "ready";
+                        return {
+                            reps: this.reps,
+                            elbowAngle,
+                            trunkAngle,
+                            feedback: "⚠️ Appenditi alla sbarra con un solo braccio disteso!",
+                            isValidRep: false
+                        };
+                    }
+
+                    const activeElbowAngle = lOverhead ? calculateJointAngle(lShoulder, lElbow, lWrist) : calculateJointAngle(rShoulder, rElbow, rWrist);
+
+                    if (this.state === "ready") {
+                        if (activeElbowAngle <= this.minRom) {
+                            if (!this.downEntryTs) this.downEntryTs = now;
+                            if (now - this.downEntryTs >= 120) {
+                                this.state = "top";
+                                this.minAngle = activeElbowAngle;
+                                feedback = "🔥 Trazione a un braccio al mento (" + activeElbowAngle + "°)! Ora scendi controllato!";
+                            }
+                        } else {
+                            this.downEntryTs = 0;
+                            feedback = activeElbowAngle < 125 ? "Tira forte al mento col singolo braccio..." : "Pronto: trazione a un braccio!";
+                        }
+                    } else if (this.state === "top") {
+                        if (activeElbowAngle < this.minAngle) this.minAngle = activeElbowAngle;
+                        if (activeElbowAngle >= this.maxLockout) {
+                            if (now - this.lastRepTs >= 900) {
+                                this.reps++;
+                                this.lastRepTs = now;
+                                isValidRep = true;
+                                feedback = "🏆 One Arm Pull-Up " + this.reps + " Valida!";
+                                this.validHistory.push({ rep: this.reps, angle: this.minAngle, ts: now });
+                            }
+                            this.state = "ready";
+                            this.downEntryTs = 0;
+                        } else {
+                            feedback = "Distendi completamente il braccio in discesa!";
+                        }
+                    }
+                    return { reps: this.reps, elbowAngle: activeElbowAngle, trunkAngle, feedback, isValidRep };
+                }
+
+                // 2. ONE ARM PUSH-UP
+                else if (this.subType === "pushup_one_arm") {
+                    if (torsoIncline > 38) {
+                        return {
+                            reps: this.reps,
+                            elbowAngle,
+                            trunkAngle,
+                            feedback: "⚠️ Corpo orizzontale di plank a terra!",
+                            isValidRep: false
+                        };
+                    }
+
+                    const lOnFloor = lWrist.y > lShoulder.y - 0.05;
+                    const rOnFloor = rWrist.y > rShoulder.y - 0.05;
+
+                    if (lOnFloor && rOnFloor) {
+                        this.state = "ready";
+                        return {
+                            reps: this.reps,
+                            elbowAngle,
+                            trunkAngle,
+                            feedback: "⚠️ Push-up a UN braccio! Stacca l'altra mano da terra e posizionala dietro la schiena!",
+                            isValidRep: false
+                        };
+                    }
+
+                    const activeElbowAngle = lOnFloor ? calculateJointAngle(lShoulder, lElbow, lWrist) : calculateJointAngle(rShoulder, rElbow, rWrist);
+
+                    if (this.state === "ready") {
+                        if (activeElbowAngle <= this.minRom) {
+                            if (!this.downEntryTs) this.downEntryTs = now;
+                            if (now - this.downEntryTs >= 120) {
+                                this.state = "down";
+                                this.minAngle = activeElbowAngle;
+                                feedback = "✅ Profondità 90° raggiunta a un braccio! Spingi ed estendi!";
+                            }
+                        } else {
+                            this.downEntryTs = 0;
+                            feedback = activeElbowAngle < 130 ? "Scendi a 90° col singolo braccio..." : "Pronto: scendi a terra a un braccio";
+                        }
+                    } else if (this.state === "down") {
+                        if (activeElbowAngle < this.minAngle) this.minAngle = activeElbowAngle;
+                        if (activeElbowAngle >= this.maxLockout) {
+                            if (now - this.lastRepTs >= 800) {
+                                this.reps++;
+                                this.lastRepTs = now;
+                                isValidRep = true;
+                                feedback = "🏆 One Arm Push-Up " + this.reps + " Valido!";
+                                this.validHistory.push({ rep: this.reps, angle: this.minAngle, ts: now });
+                            }
+                            this.state = "ready";
+                            this.downEntryTs = 0;
+                        } else {
+                            feedback = "Distendi completamente il gomito!";
+                        }
+                    }
+                    return { reps: this.reps, elbowAngle: activeElbowAngle, trunkAngle, feedback, isValidRep };
+                }
+
+                // 3. DIAMOND PUSH-UP
+                else if (this.subType === "pushup_diamond") {
+                    const wristDist = Math.hypot(lWrist.x - rWrist.x, lWrist.y - rWrist.y);
+                    if (wristDist > 0.17) {
+                        return {
+                            reps: this.reps,
+                            elbowAngle,
+                            trunkAngle,
+                            feedback: "⚠️ Mani a diamante! Unisci pollici e indici sotto il petto!",
+                            isValidRep: false
+                        };
+                    }
+                    if (this.state === "ready") {
+                        if (elbowAngle <= this.minRom) {
+                            this.state = "down";
+                            feedback = "✅ Petto a diamante! Ora distendi!";
+                        } else {
+                            feedback = elbowAngle < 130 ? "Scendi col petto verso le mani a diamante..." : "Pronto: Diamond Push-up";
+                        }
+                    } else if (this.state === "down") {
+                        if (elbowAngle >= this.maxLockout) {
+                            if (now - this.lastRepTs >= 700) {
+                                this.reps++;
+                                this.lastRepTs = now;
+                                isValidRep = true;
+                                feedback = "💎 Diamond Push-up " + this.reps + " Valido!";
+                            }
+                            this.state = "ready";
+                        }
+                    }
+                    return { reps: this.reps, elbowAngle, trunkAngle, feedback, isValidRep };
+                }
+
+                // 4. PISTOL SQUAT / SHRIMP SQUAT
+                else if (this.subType === "squat_single_leg") {
+                    const lKneeAng = calculateJointAngle(lHip, lKnee, lAnkle);
+                    const rKneeAng = calculateJointAngle(rHip, rKnee, rAnkle);
+
+                    const ankleDiff = Math.abs(lAnkle.y - rAnkle.y);
+                    if (ankleDiff < 0.10 && lKneeAng < 110 && rKneeAng < 110) {
+                        this.state = "ready";
+                        return {
+                            reps: this.reps,
+                            elbowAngle,
+                            trunkAngle,
+                            feedback: "⚠️ Pistol Squat: solleva ed estendi una gamba in avanti senza toccare terra!",
+                            isValidRep: false
+                        };
+                    }
+
+                    const workingKneeAngle = Math.min(lKneeAng, rKneeAng);
+
+                    if (this.state === "ready") {
+                        if (workingKneeAngle <= this.minRom) {
+                            this.state = "down";
+                            feedback = "✅ Buca il parallelo a una gamba! Ora risali forte!";
+                        } else {
+                            feedback = workingKneeAngle < 130 ? "Scendi profondo su una sola gamba..." : "Pronto: Pistol Squat!";
+                        }
+                    } else if (this.state === "down") {
+                        if (workingKneeAngle >= this.maxLockout) {
+                            if (now - this.lastRepTs >= 800) {
+                                this.reps++;
+                                this.lastRepTs = now;
+                                isValidRep = true;
+                                feedback = "🦵 Pistol Squat " + this.reps + " Valido!";
+                                this.validHistory.push({ rep: this.reps, angle: workingKneeAngle, ts: now });
+                            }
+                            this.state = "ready";
+                        } else {
+                            feedback = "Risali fino a distendere la gamba d'appoggio!";
+                        }
+                    }
+                    return { reps: this.reps, elbowAngle, trunkAngle: workingKneeAngle, feedback, isValidRep };
+                }
+
+                // 5. MUSCLE-UP
+                else if (this.subType === "muscle_up") {
+                    const avgShoulderY = (lShoulder.y + rShoulder.y) / 2;
+                    const avgWristY = (lWrist.y + rWrist.y) / 2;
+
+                    if (this.muscleUpPhase === "hang") {
+                        if (avgShoulderY > avgWristY + 0.10) {
+                            if (elbowAngle <= 90) {
+                                this.muscleUpPhase = "pulling";
+                                feedback = "🚀 Trazione esplosiva! Ruota i polsi e porta le spalle sopra la sbarra!";
+                            } else {
+                                feedback = "Pronto: tira esplosivo al petto per il Muscle-Up!";
+                            }
+                        }
+                    } else if (this.muscleUpPhase === "pulling") {
+                        if (avgShoulderY < avgWristY - 0.04) {
+                            this.muscleUpPhase = "over_bar";
+                            feedback = "⚡ Spalle sopra la sbarra! Ora spingi il dip e distendi le braccia!";
+                        } else if (elbowAngle > 140) {
+                            this.muscleUpPhase = "hang";
+                            feedback = "⚠️ Mancata transizione sopra la sbarra! Tira più alto!";
+                        }
+                    } else if (this.muscleUpPhase === "over_bar") {
+                        if (elbowAngle >= 152) {
+                            if (now - this.lastRepTs >= 1200) {
+                                this.reps++;
+                                this.lastRepTs = now;
+                                isValidRep = true;
+                                feedback = "🔥 Bar Muscle-Up " + this.reps + " Valido!";
+                            }
+                            this.muscleUpPhase = "hang";
+                        } else {
+                            feedback = "Blocca i gomiti a fine dip sopra la sbarra!";
+                        }
+                    }
+
+                    return { reps: this.reps, elbowAngle, trunkAngle, feedback, isValidRep };
+                }
+
+                // 6. STANDARD PULL-UPS (DUE MANI)
+                else if (this.subType.startsWith("pullup")) {
+                    const isOverhead = wrist.y < shoulder.y - 0.08;
+                    if (!isOverhead && torsoIncline > 50) {
+                        return {
+                            reps: this.reps,
+                            elbowAngle,
+                            trunkAngle,
+                            feedback: "⚠️ Appenditi alla sbarra con le braccia distese in alto!",
+                            isValidRep: false
+                        };
+                    }
+
+                    if (this.state === "ready") {
+                        if (elbowAngle <= this.minRom) {
+                            if (!this.downEntryTs) this.downEntryTs = now;
+                            if (now - this.downEntryTs >= 120) {
+                                this.state = "top";
+                                this.minAngle = elbowAngle;
+                                feedback = "✅ Mento sopra la sbarra (" + elbowAngle + "°)! Ora scendi controllato!";
+                            }
+                        } else {
+                            this.downEntryTs = 0;
+                            feedback = elbowAngle < 135 ? "Sali col mento sopra la sbarra..." : "Pronto: tirati su!";
+                        }
+                    } else if (this.state === "top") {
+                        if (elbowAngle < this.minAngle) this.minAngle = elbowAngle;
+                        if (elbowAngle >= this.maxLockout) {
+                            if (now - this.lastRepTs >= 700) {
+                                this.reps++;
+                                this.lastRepTs = now;
+                                isValidRep = true;
+                                feedback = "🎉 Pull-up " + this.reps + " Valido! (" + this.minAngle + "°)";
+                                this.validHistory.push({ rep: this.reps, angle: this.minAngle, ts: now });
+                            }
+                            this.state = "ready";
+                            this.downEntryTs = 0;
+                        } else if (elbowAngle > 110) {
+                            feedback = "Distendi completamente le braccia prima della prossima rep!";
+                        }
+                    }
+                    return { reps: this.reps, elbowAngle, trunkAngle, feedback, isValidRep };
+                }
+
+                // 7. STANDARD PUSH-UPS
+                else if (this.subType.startsWith("pushup")) {
                     if (torsoIncline > 36) {
                         this.state = "ready";
-                        this.downEntryTs = 0;
                         return {
                             reps: this.reps,
                             elbowAngle,
                             trunkAngle,
                             feedback: "⚠️ Posizionati a terra in posizione orizzontale di plank!",
-                            isValidRep: false
-                        };
-                    }
-
-                    if (wrist.y < shoulder.y - 0.08) {
-                        this.state = "ready";
-                        this.downEntryTs = 0;
-                        return {
-                            reps: this.reps,
-                            elbowAngle,
-                            trunkAngle,
-                            feedback: "⚠️ Appoggia i palmi al pavimento!",
                             isValidRep: false
                         };
                     }
@@ -7034,7 +7453,7 @@ let currentUser = null;
                     }
 
                     if (this.state === "ready") {
-                        if (elbowAngle <= 88) {
+                        if (elbowAngle <= this.minRom) {
                             if (!this.downEntryTs) this.downEntryTs = now;
                             if (now - this.downEntryTs >= 120) {
                                 this.state = "down";
@@ -7043,12 +7462,11 @@ let currentUser = null;
                             }
                         } else {
                             this.downEntryTs = 0;
-                            if (elbowAngle < 135) feedback = "Scendi fino a 90° col petto...";
-                            else feedback = "Pronto: piega i gomiti e scendi a terra";
+                            feedback = elbowAngle < 135 ? "Scendi fino a 90° col petto..." : "Pronto: piega i gomiti e scendi a terra";
                         }
                     } else if (this.state === "down") {
                         if (elbowAngle < this.minAngle) this.minAngle = elbowAngle;
-                        if (elbowAngle >= 156) {
+                        if (elbowAngle >= this.maxLockout) {
                             if (now - this.lastRepTs >= 700) {
                                 this.reps++;
                                 this.lastRepTs = now;
@@ -7062,82 +7480,26 @@ let currentUser = null;
                             feedback = "Spingi fino a distendere completamente i gomiti!";
                         }
                     }
+                    return { reps: this.reps, elbowAngle, trunkAngle, feedback, isValidRep };
                 }
-                // ==========================================
-                // 2. PULL-UP (TRAZIONI ALLA SBARRA)
-                // ==========================================
-                else if (this.type === "pullup") {
-                    const isOverhead = wrist.y < shoulder.y - 0.08;
-                    if (!isOverhead && torsoIncline > 50) {
-                        return {
-                            reps: this.reps,
-                            elbowAngle,
-                            trunkAngle,
-                            feedback: "⚠️ Appenditi alla sbarra con le braccia distese in alto!",
-                            isValidRep: false
-                        };
-                    }
 
+                // 8. DIPS (PARALLELE, BENCH, KOREAN)
+                else if (this.subType.startsWith("dip")) {
                     if (this.state === "ready") {
-                        if (elbowAngle <= 82 && wrist.y >= shoulder.y - 0.06) {
+                        if (elbowAngle <= this.minRom) {
                             if (!this.downEntryTs) this.downEntryTs = now;
                             if (now - this.downEntryTs >= 120) {
                                 this.state = "down";
                                 this.minAngle = elbowAngle;
-                                feedback = "✅ Mento sopra la sbarra! Ora scendi controllato!";
+                                feedback = "✅ Profondità 90° raggiunta! Spingi in alto!";
                             }
                         } else {
                             this.downEntryTs = 0;
-                            if (elbowAngle < 130) feedback = "Tira il petto verso la sbarra...";
-                            else feedback = "Appeso a braccia tese: inizia la trazione!";
+                            feedback = elbowAngle < 135 ? "Scendi fino a 90° col gomito..." : "Pronto: scendi controllato";
                         }
                     } else if (this.state === "down") {
                         if (elbowAngle < this.minAngle) this.minAngle = elbowAngle;
-                        if (elbowAngle >= 156) {
-                            if (now - this.lastRepTs >= 800) {
-                                this.reps++;
-                                this.lastRepTs = now;
-                                isValidRep = true;
-                                feedback = "🎉 Trazione " + this.reps + " Valida! Lockout completo!";
-                                this.validHistory.push({ rep: this.reps, angle: this.minAngle, ts: now });
-                            }
-                            this.state = "ready";
-                            this.downEntryTs = 0;
-                        } else {
-                            feedback = "Distendi completamente fino al deadhang!";
-                        }
-                    }
-                }
-                // ==========================================
-                // 3. DIP ALLE PARALLELE
-                // ==========================================
-                else if (this.type === "dip") {
-                    if (wrist.y < shoulder.y) {
-                        return {
-                            reps: this.reps,
-                            elbowAngle,
-                            trunkAngle,
-                            feedback: "⚠️ Posizionati sulle parallele con le braccia distese!",
-                            isValidRep: false
-                        };
-                    }
-
-                    if (this.state === "ready") {
-                        if (elbowAngle <= 88) {
-                            if (!this.downEntryTs) this.downEntryTs = now;
-                            if (now - this.downEntryTs >= 120) {
-                                this.state = "down";
-                                this.minAngle = elbowAngle;
-                                feedback = "✅ Profondità 90° raggiunta! Ora spingi su!";
-                            }
-                        } else {
-                            this.downEntryTs = 0;
-                            if (elbowAngle < 135) feedback = "Scendi fino a 90° col gomito...";
-                            else feedback = "Pronto: scendi controllato";
-                        }
-                    } else if (this.state === "down") {
-                        if (elbowAngle < this.minAngle) this.minAngle = elbowAngle;
-                        if (elbowAngle >= 156) {
+                        if (elbowAngle >= this.maxLockout) {
                             if (now - this.lastRepTs >= 700) {
                                 this.reps++;
                                 this.lastRepTs = now;
@@ -7151,13 +7513,13 @@ let currentUser = null;
                             feedback = "Blocca le braccia a fine risalita!";
                         }
                     }
+                    return { reps: this.reps, elbowAngle, trunkAngle, feedback, isValidRep };
                 }
-                // ==========================================
-                // 4. SQUAT
-                // ==========================================
-                else if (this.type === "squat") {
+
+                // 9. SQUAT A DUE GAMBE
+                else if (this.subType.startsWith("squat")) {
                     if (this.state === "ready") {
-                        if (kneeAngle <= 92) {
+                        if (kneeAngle <= this.minRom) {
                             if (!this.downEntryTs) this.downEntryTs = now;
                             if (now - this.downEntryTs >= 120) {
                                 this.state = "down";
@@ -7168,7 +7530,7 @@ let currentUser = null;
                             feedback = "Scendi fino al parallelo (ginocchio a 90°)...";
                         }
                     } else if (this.state === "down") {
-                        if (kneeAngle >= 158) {
+                        if (kneeAngle >= this.maxLockout) {
                             if (now - this.lastRepTs >= 750) {
                                 this.reps++;
                                 this.lastRepTs = now;
@@ -7181,11 +7543,132 @@ let currentUser = null;
                             feedback = "Risali fino a distendere le gambe!";
                         }
                     }
+                    return { reps: this.reps, elbowAngle, trunkAngle: kneeAngle, feedback, isValidRep };
                 }
-                // ==========================================
-                // 5. HANDSTAND (VERTICALE)
-                // ==========================================
-                else if (this.type === "handstand") {
+
+                // 10. HSPU (HANDSTAND PUSH-UP)
+                else if (this.subType === "hspu") {
+                    const isInverted = (ankle.y < hip.y) && (hip.y < shoulder.y);
+                    if (!isInverted || torsoIncline < 55) {
+                        return {
+                            reps: this.reps,
+                            elbowAngle,
+                            trunkAngle,
+                            feedback: "⚠️ Mettiti in verticale (piedi in alto) per l'HSPU!",
+                            isValidRep: false
+                        };
+                    }
+                    if (this.state === "ready") {
+                        if (elbowAngle <= this.minRom) {
+                            this.state = "down";
+                            feedback = "✅ Testa al pavimento (90°)! Ora spingi in alto!";
+                        } else {
+                            feedback = elbowAngle < 135 ? "Piega i gomiti e scendi verso terra..." : "Pronto: piega i gomiti in verticale";
+                        }
+                    } else if (this.state === "down") {
+                        if (elbowAngle >= this.maxLockout) {
+                            if (now - this.lastRepTs >= 800) {
+                                this.reps++;
+                                this.lastRepTs = now;
+                                isValidRep = true;
+                                feedback = "🤸 HSPU " + this.reps + " Valido!";
+                            }
+                            this.state = "ready";
+                        }
+                    }
+                    return { reps: this.reps, elbowAngle, trunkAngle, feedback, isValidRep };
+                }
+
+                // 11. PLANCHE & MALTESE HOLD
+                else if (this.subType.startsWith("planche") || this.subType === "maltese") {
+                    if (torsoIncline > 30) {
+                        this.holdStartTs = null;
+                        return {
+                            reps: this.reps,
+                            elbowAngle,
+                            trunkAngle,
+                            feedback: "⚠️ Corpo orizzontale parallelo al pavimento!",
+                            isValidRep: false
+                        };
+                    }
+
+                    if (elbowAngle < 152) {
+                        this.holdStartTs = null;
+                        return {
+                            reps: this.reps,
+                            elbowAngle,
+                            trunkAngle,
+                            feedback: "⚠️ Braccia tese e bloccate! Non piegare i gomiti!",
+                            isValidRep: false
+                        };
+                    }
+
+                    let isVariationValid = true;
+                    if (this.subType === "planche_tuck") {
+                        isVariationValid = kneeAngle < 90;
+                        if (!isVariationValid) feedback = "⚠️ Raccogli le ginocchia al petto per il Tuck Planche!";
+                    } else if (this.subType === "planche_straddle") {
+                        const ankleDist = Math.hypot(lAnkle.x - rAnkle.x, lAnkle.y - rAnkle.y);
+                        isVariationValid = ankleDist > 0.25;
+                        if (!isVariationValid) feedback = "⚠️ Apri le gambe a compasso per la Straddle Planche!";
+                    } else if (this.subType === "planche_full" || this.subType === "maltese") {
+                        isVariationValid = trunkAngle >= 155 && kneeAngle >= 148;
+                        if (!isVariationValid) feedback = "⚠️ Corpo perfettamente dritto e orizzontale!";
+                    }
+
+                    if (isVariationValid) {
+                        if (!this.holdStartTs) this.holdStartTs = now;
+                        const elapsed = Math.floor((now - this.holdStartTs) / 1000);
+                        if (elapsed > this.holdSeconds) {
+                            this.holdSeconds = elapsed;
+                            this.reps = this.holdSeconds;
+                            feedback = "🧱 " + this.name + ": " + this.holdSeconds + "s";
+                        } else {
+                            feedback = "🧱 Mantieni la tenuta: " + elapsed + "s";
+                        }
+                    } else {
+                        this.holdStartTs = null;
+                    }
+                    return { reps: this.reps, elbowAngle, trunkAngle, feedback, isValidRep };
+                }
+
+                // 12. FRONT LEVER HOLD
+                else if (this.subType.startsWith("fl_")) {
+                    if (torsoIncline > 35) {
+                        this.holdStartTs = null;
+                        return {
+                            reps: this.reps,
+                            elbowAngle,
+                            trunkAngle,
+                            feedback: "⚠️ Corpo orizzontale parallelo al suolo rivolto in alto!",
+                            isValidRep: false
+                        };
+                    }
+                    if (elbowAngle < 150) {
+                        this.holdStartTs = null;
+                        return {
+                            reps: this.reps,
+                            elbowAngle,
+                            trunkAngle,
+                            feedback: "⚠️ Braccia tese e dorsali attivi!",
+                            isValidRep: false
+                        };
+                    }
+
+                    if (!this.holdStartTs) this.holdStartTs = now;
+                    const elapsed = Math.floor((now - this.holdStartTs) / 1000);
+                    if (elapsed > this.holdSeconds) {
+                        this.holdSeconds = elapsed;
+                        this.reps = this.holdSeconds;
+                        feedback = "⚓ " + this.name + ": " + this.holdSeconds + "s";
+                    } else {
+                        feedback = "⚓ Mantieni il Front Lever: " + elapsed + "s";
+                    }
+                    return { reps: this.reps, elbowAngle, trunkAngle, feedback, isValidRep };
+                }
+
+                // 13. VERTICALE STATICA (HANDSTAND)
+                else if (this.subType === "handstand_hold") {
                     const isInverted = (ankle.y < hip.y) && (hip.y < shoulder.y);
                     if (!isInverted || torsoIncline < 55) {
                         this.holdStartTs = null;
@@ -7198,90 +7681,90 @@ let currentUser = null;
                         };
                     }
 
-                    if (elbowAngle >= 152) {
+                    if (elbowAngle >= 150) {
                         if (!this.holdStartTs) this.holdStartTs = now;
                         const elapsed = Math.floor((now - this.holdStartTs) / 1000);
                         if (elapsed > this.holdSeconds) {
                             this.holdSeconds = elapsed;
                             this.reps = this.holdSeconds;
-                            feedback = "🤸 Verticale valida: " + this.holdSeconds + "s";
+                            feedback = "🤸 Verticale: " + this.holdSeconds + "s";
                         } else {
                             feedback = "🤸 Mantieni la verticale ferma: " + elapsed + "s";
                         }
                     } else {
                         this.holdStartTs = null;
-                        feedback = "⚠️ Distendi completamente i gomiti!";
+                        feedback = "⚠️ Distendi completamente i gomiti in alto!";
                     }
+                    return { reps: this.reps, elbowAngle, trunkAngle, feedback, isValidRep };
                 }
-                // ==========================================
-                // 6. PLANCHE / PLANK / FRONT LEVER HOLD
-                // ==========================================
-                else if (this.type === "planche" || this.type === "hold") {
-                    if (torsoIncline > 32) {
-                        this.holdStartTs = null;
-                        return {
-                            reps: this.reps,
-                            elbowAngle,
-                            trunkAngle,
-                            feedback: "⚠️ Corpo orizzontale parallelo al suolo!",
-                            isValidRep: false
-                        };
-                    }
 
-                    if (elbowAngle < 155) {
-                        this.holdStartTs = null;
-                        return {
-                            reps: this.reps,
-                            elbowAngle,
-                            trunkAngle,
-                            feedback: "⚠️ Braccia tese e bloccate! Non piegare i gomiti!",
-                            isValidRep: false
-                        };
-                    }
+                // 14. L-SIT & V-SIT
+                else if (this.subType === "lsit" || this.subType === "vsit") {
+                    const isVsit = this.subType === "vsit";
+                    const isLegsUp = isVsit ? (trunkAngle <= 80 && ankle.y <= hip.y) : (kneeAngle >= 140 && trunkAngle <= 120 && ankle.y <= hip.y + 0.15);
 
-                    if (trunkAngle >= 145) {
+                    if (isLegsUp) {
                         if (!this.holdStartTs) this.holdStartTs = now;
                         const elapsed = Math.floor((now - this.holdStartTs) / 1000);
                         if (elapsed > this.holdSeconds) {
                             this.holdSeconds = elapsed;
                             this.reps = this.holdSeconds;
-                            feedback = "🧱 Tenuta valida: " + this.holdSeconds + "s";
+                            feedback = "📐 " + this.name + ": " + this.holdSeconds + "s";
                         } else {
-                            feedback = "🧱 Mantieni la tenuta orizzontale: " + elapsed + "s";
+                            feedback = "📐 Mantieni le gambe tese: " + elapsed + "s";
                         }
                     } else {
                         this.holdStartTs = null;
-                        feedback = "⚠️ Allinea busto e bacino, non cedere con la schiena!";
+                        feedback = isVsit ? "⚠️ Chiudi le gambe a V sopra il petto!" : "⚠️ Gambe tese in avanti a 90°!";
                     }
-                }
-                // ==========================================
-                // 7. L-SIT HOLD
-                // ==========================================
-                else if (this.type === "lsit") {
-                    const isGoodLSit = (kneeAngle >= 140) && (trunkAngle <= 120) && (ankle.y <= hip.y + 0.15);
-                    if (isGoodLSit) {
-                        if (!this.holdStartTs) this.holdStartTs = now;
-                        const elapsed = Math.floor((now - this.holdStartTs) / 1000);
-                        if (elapsed > this.holdSeconds) {
-                            this.holdSeconds = elapsed;
-                            this.reps = this.holdSeconds;
-                            feedback = "📐 L-Sit valida: " + this.holdSeconds + "s";
-                        } else {
-                            feedback = "📐 Mantieni le gambe tese a 90°: " + elapsed + "s";
-                        }
-                    } else {
-                        this.holdStartTs = null;
-                        feedback = "⚠️ Gambe tese in avanti all'altezza del bacino (L a 90°)!";
-                    }
+                    return { reps: this.reps, elbowAngle, trunkAngle, feedback, isValidRep };
                 }
 
-                return {
-                    reps: this.reps,
-                    elbowAngle,
-                    trunkAngle,
-                    feedback,
-                    isValidRep
-                };
+                // 15. ALTRE TENUTE ISOMETRICHE (PLANK, HANG, DRAGON FLAG, ECC.)
+                else if (this.mode === "hold") {
+                    if (this.subType === "hang_one_arm") {
+                        const lUp = lWrist.y < lShoulder.y - 0.08;
+                        const rUp = rWrist.y < rShoulder.y - 0.08;
+                        if (lUp && rUp) {
+                            this.holdStartTs = null;
+                            return { reps: this.reps, elbowAngle, trunkAngle, feedback: "⚠️ Sospensione a UN braccio! Stacca l'altra mano dalla sbarra!", isValidRep: false };
+                        }
+                    }
+
+                    if (!this.holdStartTs) this.holdStartTs = now;
+                    const elapsed = Math.floor((now - this.holdStartTs) / 1000);
+                    if (elapsed > this.holdSeconds) {
+                        this.holdSeconds = elapsed;
+                        this.reps = this.holdSeconds;
+                        feedback = "⏱️ " + this.name + ": " + this.holdSeconds + "s";
+                    } else {
+                        feedback = "⏱️ Mantieni la tenuta: " + elapsed + "s";
+                    }
+                    return { reps: this.reps, elbowAngle, trunkAngle, feedback, isValidRep };
+                }
+
+                // 16. ESERCIZIO A RIPETIZIONI GENERICO
+                else {
+                    if (this.state === "ready") {
+                        if (elbowAngle <= 95 || kneeAngle <= 95) {
+                            this.state = "down";
+                            feedback = "✅ Movimento avviato! Estendi!";
+                        } else {
+                            feedback = "Esegui il movimento a ROM completo...";
+                        }
+                    } else if (this.state === "down") {
+                        if (elbowAngle >= 150 || kneeAngle >= 150) {
+                            if (now - this.lastRepTs >= 700) {
+                                this.reps++;
+                                this.lastRepTs = now;
+                                isValidRep = true;
+                                feedback = "✅ " + this.name + " " + this.reps + " Valida!";
+                            }
+                            this.state = "ready";
+                        }
+                    }
+                    return { reps: this.reps, elbowAngle, trunkAngle, feedback, isValidRep };
+                }
             }
         }
 
@@ -7291,7 +7774,7 @@ let currentUser = null;
         let poseScannerActiveMode = 'analysis';
         let poseRefereeTargetReps = 0;
         let poseRefereeCallback = null;
-        let poseTrackedExercise = 'pushup';
+        let poseTrackedExercise = 'pushups';
         let poseRepCounter = null;
         let poseVoiceFeedbackEnabled = true;
         let poseCurrentFacingMode = 'user';
@@ -7300,34 +7783,42 @@ let currentUser = null;
         let poseAnimationReqId = null;
         let poseIsProcessingFrame = false;
 
-        // Apertura dello Scanner Videocamera
-        
-        function getSkillBiomechanicsProfile(skillId, fallbackName = "") {
-            const sid = (skillId || "").toLowerCase();
-            const name = (fallbackName || "").toLowerCase();
+        function populatePoseExerciseSelect(selectedId) {
+            const selectEl = document.getElementById('pose-exercise-select');
+            if (!selectEl) return;
+            selectEl.innerHTML = '';
 
-            if (sid.includes("handstand") || sid.includes("verticale") || sid.includes("hspu") || name.includes("handstand") || name.includes("verticale")) {
-                return { id: sid || "handstand", category: "handstand", name: "Handstand (Verticale)", unit: sid.includes("hspu") ? "rep" : "sec" };
+            const groups = {
+                "🤸 Spinta / Push": ["pushups", "pushups_knee", "diamond_pushups", "one_arm_pushup", "pseudo_pushups", "clap_pushups", "planche_lean", "tuck_planche", "adv_tuck_planche", "straddle_planche", "full_planche", "maltese"],
+                "🏋️ Trazione / Pull": ["pullups", "one_arm_pullup", "chest_to_bar", "muscle_up", "australian", "tuck_fl", "adv_tuck_fl", "straddle_fl", "full_fl"],
+                "⚡ Dips & Verticali": ["classic_dip", "bar_dips", "bench_dips", "korean_dip", "l_sit", "v_sit", "freestanding_hs", "freestanding_hspu"],
+                "🦵 Gambe / Legs": ["squat", "pistol_squat", "shrimp_squat", "lunges", "jump_squat"],
+                "🧱 Core & Tenute": ["plank", "hollow_body", "dragon_flag", "human_flag", "dead_hang", "one_arm_hang", "leg_raises"]
+            };
+
+            for (const [groupName, skillIds] of Object.entries(groups)) {
+                const optGroup = document.createElement('optgroup');
+                optGroup.label = groupName;
+                skillIds.forEach(id => {
+                    const prof = SKILL_BIOMECHANICS_REGISTRY[id];
+                    if (prof) {
+                        const opt = document.createElement('option');
+                        opt.value = id;
+                        opt.textContent = prof.name + (prof.mode === 'hold' ? ' (Tenuta)' : ' (Reps)');
+                        if (id === selectedId) opt.selected = true;
+                        optGroup.appendChild(opt);
+                    }
+                });
+                selectEl.appendChild(optGroup);
             }
-            if (sid.includes("planche") || sid.includes("maltese") || sid.includes("frog_stand") || sid.includes("elbow_lever") || sid.includes("plank") || sid.includes("human_flag")) {
-                return { id: sid || "planche", category: "planche", name: "Planche / Plank Hold", unit: "sec" };
+
+            if (selectedId && !selectEl.value) {
+                const customOpt = document.createElement('option');
+                customOpt.value = selectedId;
+                customOpt.textContent = selectedId.toUpperCase();
+                customOpt.selected = true;
+                selectEl.prepend(customOpt);
             }
-            if (sid.includes("front_lever") || sid.includes("dragon_flag") || name.includes("front lever") || name.includes("dragon flag")) {
-                return { id: sid || "planche", category: "planche", name: "Front Lever / Dragon Flag", unit: "sec" };
-            }
-            if (sid.includes("lsit") || sid.includes("vsit") || sid.includes("manna") || name.includes("l-sit") || name.includes("v-sit")) {
-                return { id: sid || "lsit", category: "lsit", name: "L-Sit / V-Sit Hold", unit: "sec" };
-            }
-            if (sid.includes("pull") || sid.includes("trazion") || sid.includes("muscle") || sid.includes("chin") || name.includes("pull") || name.includes("trazion") || name.includes("muscle")) {
-                return { id: sid || "pullup", category: "pullup", name: "Pull-up (Trazioni)", unit: "rep" };
-            }
-            if (sid.includes("dip") || name.includes("dip")) {
-                return { id: sid || "dip", category: "dip", name: "Dip alle Parallele", unit: "rep" };
-            }
-            if (sid.includes("squat") || sid.includes("lunge") || name.includes("squat") || name.includes("pistol")) {
-                return { id: sid || "squat", category: "squat", name: "Squat", unit: "rep" };
-            }
-            return { id: sid || "pushup", category: "pushup", name: "Push-up (Piegamenti)", unit: "rep" };
         }
 
         async function openPoseScannerModal(options = {}) {
@@ -7336,16 +7827,10 @@ let currentUser = null;
             poseRefereeCallback = options.onComplete || null;
 
             const skillProfile = getSkillBiomechanicsProfile(options.skillId || options.exercise, options.skillName || options.exercise);
-            poseTrackedExercise = skillProfile.category;
+            poseTrackedExercise = skillProfile.id;
             poseRepCounter = new PoseRepCounterEngine(skillProfile);
 
-            const selectEl = document.getElementById('pose-exercise-select');
-            if (selectEl) {
-                selectEl.value = skillProfile.category;
-                if (!selectEl.value) {
-                    selectEl.value = (skillProfile.category === 'planche') ? 'planche' : 'pushup';
-                }
-            }
+            populatePoseExerciseSelect(skillProfile.id);
 
             const titleEl = document.getElementById('pose-scanner-title');
             const badgeEl = document.getElementById('pose-scanner-badge');
@@ -7356,7 +7841,7 @@ let currentUser = null;
             }
 
             if (poseScannerActiveMode === 'referee') {
-                if (titleEl) titleEl.innerText = "⚖️ AI Referee — Arbitro Anti-Cheat";
+                if (titleEl) titleEl.innerText = "⚖️ AI Referee — " + skillProfile.name;
                 if (badgeEl) {
                     badgeEl.innerText = "Verifica Ufficiale";
                     badgeEl.style.background = "rgba(16,185,129,0.15)";
@@ -7365,7 +7850,7 @@ let currentUser = null;
                 }
                 if (finishBtn) finishBtn.innerText = "✅ Valida e Conferma Punteggio";
             } else {
-                if (titleEl) titleEl.innerText = "📷 Scanner Articolare AI";
+                if (titleEl) titleEl.innerText = "📷 Scanner Articolare — " + skillProfile.name;
                 if (badgeEl) {
                     badgeEl.innerText = "Analisi Postura";
                     badgeEl.style.background = "rgba(56,189,248,0.15)";
@@ -7437,7 +7922,6 @@ let currentUser = null;
                         audio: false
                     });
                 } catch(camErr1) {
-                    // Fallback senza facingMode per webcam desktop
                     stream = await navigator.mediaDevices.getUserMedia({
                         video: true,
                         audio: false
@@ -7455,7 +7939,6 @@ let currentUser = null;
                 canvas.width = video.videoWidth || 640;
                 canvas.height = video.videoHeight || 480;
 
-                // Inizializza MediaPipe Pose se non già presente
                 if (typeof Pose === 'undefined') {
                     if (banner) banner.innerText = "Caricamento librerie AI MediaPipe in corso... Inquadrati!";
                     return;
@@ -7476,7 +7959,6 @@ let currentUser = null;
 
                 poseInstance.onResults((results) => onPoseResults(results, canvas, video));
 
-                // Loop frame fotocamera con semaforo anti-congestione
                 async function processFrame() {
                     if (!poseCameraStream) return;
                     if (video.readyState >= 2 && poseInstance && !poseIsProcessingFrame) {
@@ -7528,7 +8010,6 @@ let currentUser = null;
             } catch(e) {}
         }
 
-        // Elaborazione landmark e rendering overlay su Canvas
         function onPoseResults(results, canvas, video) {
             const ctx = canvas.getContext('2d');
             ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -7541,7 +8022,6 @@ let currentUser = null;
             const lm = results.poseLandmarks;
             const res = poseRepCounter.update(lm);
 
-            // Aggiorna HUD
             const statAngle = document.getElementById('pose-stat-angle');
             const statTrunk = document.getElementById('pose-stat-trunk');
             const statReps = document.getElementById('pose-stat-reps');
@@ -7550,7 +8030,7 @@ let currentUser = null;
             if (statAngle) statAngle.innerText = `📐 Gomito: ${res.elbowAngle}°`;
             if (statTrunk) statTrunk.innerText = `📏 Busto: ${res.trunkAngle}°`;
             if (statReps) {
-                const unit = (poseTrackedExercise === 'hold' || poseTrackedExercise === 'lsit') ? 's' : '';
+                const unit = (poseRepCounter && poseRepCounter.mode === 'hold') ? 's' : '';
                 statReps.innerText = `🔢 ${res.reps} ${unit}`;
             }
             if (banner && res.feedback) {
@@ -7561,13 +8041,12 @@ let currentUser = null;
                 speakPoseFeedback(`Ripetizione ${res.reps}`);
             }
 
-            // Disegna scheletro articolare sul Canvas
             const connections = [
-                [11, 12], [11, 13], [13, 15], // Braccio sinistro
-                [12, 14], [14, 16], // Braccio destro
-                [11, 23], [12, 24], [23, 24], // Busto / Fianchi
-                [23, 25], [25, 27], // Gamba sinistra
-                [24, 26], [26, 28]  // Gamba destra
+                [11, 12], [11, 13], [13, 15],
+                [12, 14], [14, 16],
+                [11, 23], [12, 24], [23, 24],
+                [23, 25], [25, 27],
+                [24, 26], [26, 28]
             ];
 
             ctx.lineWidth = 4;
@@ -7582,7 +8061,6 @@ let currentUser = null;
                 }
             });
 
-            // Disegna punti articolari
             [11, 12, 13, 14, 15, 16, 23, 24, 25, 26, 27, 28].forEach(idx => {
                 const p = lm[idx];
                 if (p && p.visibility > 0.4) {
@@ -7636,30 +8114,41 @@ let currentUser = null;
             }
         }
 
-        // Integrazione AI Referee nei Duelli
+        // Integrazione AI Referee nei Duelli (Anti-Cheat Obbligatorio)
         function startDuelRoundAiReferee(challengeId, roundNum) {
             const c = activeChallengesList.find(x => x.id === challengeId);
             if (!c) return;
-            const exName = getDuelRoundExercise(c, roundNum).toLowerCase();
-            let mappedEx = 'pushup';
-            if (exName.includes('pull') || exName.includes('trazion')) mappedEx = 'pullup';
-            else if (exName.includes('squat')) mappedEx = 'squat';
-            else if (exName.includes('dip')) mappedEx = 'dip';
-            else if (exName.includes('crunch')) mappedEx = 'hold';
+            const rawExName = getDuelRoundExercise(c, roundNum);
+            const profile = getSkillBiomechanicsProfile(rawExName, rawExName);
 
             openPoseScannerModal({
                 mode: 'referee',
-                exercise: mappedEx,
+                exercise: profile.id,
+                skillName: profile.name,
                 onComplete: (verifiedReps) => {
-                    const inputEl = document.getElementById(`duel-reps-${challengeId}-${roundNum}`);
-                    if (inputEl) inputEl.value = verifiedReps;
-                    openCustomModal(
-                        "⚖️ Conteggio Verificato dall'AI Referee!",
-                        `L'Arbitro Virtuale ha certificato **${verifiedReps} ripetizioni** a ROM completo senza possibilità di contestazioni! Vuoi confermare il tuo risultato?`,
-                        "Invia Risultato Verificato ⚔️",
-                        true,
-                        () => submitDuelRoundScore(challengeId, roundNum)
-                    );
+                    duelAiVerifiedScores[`${challengeId}_${roundNum}`] = {
+                        verifiedReps: verifiedReps,
+                        timestamp: Date.now()
+                    };
+                    renderChallengesList();
+
+                    if (verifiedReps > 0) {
+                        openCustomModal(
+                            "⚖️ Massimale Certificato dall'AI Referee!",
+                            `L'Arbitro Virtuale ha convalidato <strong>${verifiedReps} ripetizioni valide</strong> a ROM completo per <strong>${escapeHtml(profile.name)}</strong>!<br><br>Vuoi confermare e inviare ufficialmente il tuo punteggio per il Round ${roundNum}?`,
+                            "Invia Risultato Verificato ⚔️",
+                            false,
+                            () => submitDuelRoundScore(challengeId, roundNum)
+                        );
+                    } else {
+                        openCustomModal(
+                            "⚠️ Nessuna Ripetizione Valida Registrata",
+                            `L'AI Referee non ha riscontrato ripetizioni con ROM completo a 90° e lockout.<br><br>Per registrare il tuo punteggio al duello devi completare almeno 1 ripetizione valida davanti alla videocamera.`,
+                            "Riprova Ora 📷",
+                            false,
+                            () => startDuelRoundAiReferee(challengeId, roundNum)
+                        );
+                    }
                 }
             });
         }
@@ -7668,6 +8157,7 @@ let currentUser = null;
         // SEZIONE CONDIVIDI & SISTEMA REFERRAL ANTI-CHEAT (+3.000 XP)
         // ===============================================================
         let isShareSectionOpen = false;
+        let duelAiVerifiedScores = {}; // key: [challengeId_roundNum] -> { verifiedReps, timestamp }
 
         // Rilevamento univoco del dispositivo (Fingerprint Hardware + Cookie + LocalStorage)
         function getDeviceFingerprint() {
@@ -11366,16 +11856,39 @@ let currentUser = null;
                                 `;
                             } else if (isCurrent) {
                                 if (myReps == null) {
-                                    rStatusText = `
-                                        <div style="margin-top:8px;">
-                                            <div style="font-size:0.75rem; color:#facc15; margin-bottom:4px; font-weight:600;">⚡ Tocca a te! Inserisci il massimale di <strong>${escapeHtml(rExName)}</strong> per il Round ${r}:</div>
-                                            <div style="display:flex; gap:6px;">
-                                                <input type="number" id="duel-reps-${c.id}-${r}" placeholder="Massimale ${escapeHtml(rExName)}" min="1" max="500" style="flex:1; padding:7px 10px; background:var(--input-bg); border:1px solid var(--accent); border-radius:8px; color:var(--text); font-size:0.85rem;">
-                                                <button class="btn-confirm" onclick="submitDuelRoundScore('${c.id}', ${r})" style="padding:7px 10px; font-size:0.82rem; font-weight:700; background:#f59e0b; border-color:#f59e0b; white-space:nowrap;">Invia</button>
-<button class="btn-confirm" onclick="startDuelRoundAiReferee('${c.id}', ${r})" style="padding:7px 10px; font-size:0.82rem; font-weight:700; background:#10b981; border-color:#10b981; white-space:nowrap;" title="Verifica reps con videocamera anti-cheat">📷 AI Referee</button>
+                                    const verifiedData = duelAiVerifiedScores[`${c.id}_${r}`];
+                                    if (verifiedData && verifiedData.verifiedReps != null) {
+                                        rStatusText = `
+                                            <div style="margin-top:8px; padding:10px 12px; background:rgba(16,185,129,0.12); border:1px solid #10b981; border-radius:10px;">
+                                                <div style="display:flex; justify-content:space-between; align-items:center;">
+                                                    <span style="font-size:0.8rem; font-weight:bold; color:#10b981;">🛡️ Certificato AI Referee: <strong>${verifiedData.verifiedReps} reps</strong> (${escapeHtml(rExName)})</span>
+                                                    <span style="font-size:0.7rem; color:var(--subtext);">Appena verificato</span>
+                                                </div>
+                                                <div style="display:flex; gap:8px; margin-top:8px;">
+                                                    <button class="btn-confirm" onclick="submitDuelRoundScore('${c.id}', ${r})" style="flex:1; padding:8px 12px; font-weight:700; background:#10b981; border-color:#10b981; font-size:0.84rem;">
+                                                        ⚔️ Invia Punteggio Ufficiale (${verifiedData.verifiedReps} reps)
+                                                    </button>
+                                                    <button class="btn-cancel" onclick="startDuelRoundAiReferee('${c.id}', ${r})" style="padding:8px 10px; font-size:0.78rem;" title="Ripeti la prova per migliorare">
+                                                        🔄 Rifai
+                                                    </button>
+                                                </div>
                                             </div>
-                                        </div>
-                                    `;
+                                        `;
+                                    } else {
+                                        rStatusText = `
+                                            <div style="margin-top:8px; padding:10px 12px; background:rgba(255,255,255,0.03); border:1px dashed var(--line-color); border-radius:10px;">
+                                                <div style="font-size:0.8rem; color:#facc15; font-weight:700; margin-bottom:4px;">
+                                                    ⚡ Round ${r} — ${escapeHtml(rExName)}
+                                                </div>
+                                                <div style="font-size:0.75rem; color:var(--subtext); margin-bottom:8px; line-height:1.35;">
+                                                    🔒 <strong>Verifica AI Obbligatoria</strong>: per prevenire il cheating nei duelli, devi convalidare il tuo massimale davanti alla fotocamera prima di poter inviare il punteggio.
+                                                </div>
+                                                <button class="btn-confirm" onclick="startDuelRoundAiReferee('${c.id}', ${r})" style="width:100%; padding:10px 14px; font-size:0.88rem; font-weight:800; background:linear-gradient(135deg, #10b981, #059669); border:none; border-radius:8px; display:flex; align-items:center; justify-content:center; gap:6px; cursor:pointer;">
+                                                    📷 Avvia Verifica con AI Referee
+                                                </button>
+                                            </div>
+                                        `;
+                                    }
                                 } else {
                                     rStatusText = `
                                         <div style="margin-top:6px; font-size:0.8rem; color:var(--accent);">
@@ -12284,14 +12797,20 @@ let currentUser = null;
 
         async function submitDuelRoundScore(challengeId, roundNum) {
             if (!currentUser) return;
-            const inputEl = document.getElementById(`duel-reps-${challengeId}-${roundNum}`);
-            if (!inputEl) return;
 
-            const inputReps = parseInt(inputEl.value, 10);
-            if (isNaN(inputReps) || inputReps < 0 || inputReps > 1000) {
-                alert("Inserisci un numero valido di ripetizioni (da 0 a 1000).");
+            const verifiedData = duelAiVerifiedScores[`${challengeId}_${roundNum}`];
+            if (!verifiedData || verifiedData.verifiedReps == null) {
+                openCustomModal(
+                    "🛡️ Verifica AI Obbligatoria",
+                    "Nei duelli ufficiali non è consentito inserire punteggi manuali.<br><br>Per garantire l'onestà della sfida ed evitare il cheating, posizionati davanti alla videocamera ed esegui le ripetizioni con l'arbitraggio dell'<strong>AI Referee</strong>.",
+                    "📷 Avvia Verifica Ora",
+                    false,
+                    () => startDuelRoundAiReferee(challengeId, roundNum)
+                );
                 return;
             }
+
+            const inputReps = verifiedData.verifiedReps;
 
             try {
                 const docRef = db.collection("challenges").doc(challengeId);
