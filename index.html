@@ -718,16 +718,7 @@
             color: #000;
         }
 
-        button.relock-btn {
-            background: var(--locked);
-            color: var(--subtext);
-            padding: 6px 8px;
-        }
-
-        button.relock-btn:hover {
-            background: var(--danger);
-            color: #fff;
-        }
+        
 
         button:active {
             transform: scale(0.95);
@@ -3116,7 +3107,7 @@
 
 
     <!-- MODALE POSE SCANNER VIDEOCAMERA & AI REFEREE -->
-    <div class="pose-scanner-modal-overlay" id="pose-scanner-modal">
+    <div class="pose-scanner-modal-overlay" id="pose-scanner-modal" onclick="unlockPoseAudioSynthesis()" ontouchstart="unlockPoseAudioSynthesis()">
         <!-- Top bar responsive per mobile: nessun pulsante tagliato! -->
         <div class="pose-scanner-modal-header" style="display:flex; flex-direction:column; gap:6px; max-width:600px; margin:0 auto 8px auto; width:100%; box-sizing:border-box;">
             <!-- Riga 1: Titolo, Badge e Pulsanti Azione in flex container compatto -->
@@ -5368,7 +5359,7 @@ let currentUser = null;
                                 <input type="number" id="input-${skill.id}" value="${val}" min="0" onclick="event.stopPropagation()">
                                 <button onclick="event.stopPropagation(); updateSkill('${skill.id}')">Salva</button>
                                 <button class="ai-verify-btn" title="Verifica record con AI Referee (anti-cheat)" onclick="event.stopPropagation(); startSkillRecordAiReferee('${skill.id}')" style="background:rgba(56,189,248,0.15); border:1px solid var(--accent); color:var(--accent); padding:4px 8px; border-radius:6px; font-size:0.75rem; font-weight:bold; cursor:pointer;">📹 AI</button>
-                                <button class="relock-btn" title="Blocca di nuovo la skill" onclick="event.stopPropagation(); askRelock('${skill.id}')">🔒</button>
+                                
                             ` : `
                                 <button class="unlock-btn" onclick="event.stopPropagation(); askUnlock('${skill.id}')">🔓 Sblocca</button>
                             `}
@@ -7094,7 +7085,7 @@ function getCalisthenicsExpertResponse(query) {
             if (userGeminiKey && userGeminiKey.trim()) {
                 const cleanKey = userGeminiKey.trim().replace(/^["']|["']$/g, '');
                 const promptText = "Sei il Coach Esperto di Calisthenics dell'app Calisthenics Skill Tree. Rispondi in italiano con precisione tecnica, tono motivante da atleta, consigli pratici, serie/ripetizioni e prevenzione articolare:\n\n" + query;
-                const modelsToTry = ["gemini-2.0-flash", "gemini-1.5-flash", "gemini-2.5-flash"];
+                const modelsToTry = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash"];
                 for (const m of modelsToTry) {
                     try {
                         const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${encodeURIComponent(cleanKey)}`, {
@@ -7122,9 +7113,7 @@ function getCalisthenicsExpertResponse(query) {
             if (!aiResponse) {
                 await new Promise(r => setTimeout(r, 450));
                 aiResponse = getCalisthenicsExpertResponse(query);
-                if (userGeminiKey && apiErrorMessage) {
-                    aiResponse = `⚠️ *[Nota sulla tua chiave API Gemini: ${apiErrorMessage}. Sto usando il Coach Offline Integrato]*\n\n` + aiResponse;
-                }
+                // Silent fallback senza alcun prefisso di errore
             }
 
             const typingToRemove = document.getElementById("ai-typing-indicator");
@@ -7359,757 +7348,802 @@ function getCalisthenicsExpertResponse(query) {
         }
 
         class PoseRepCounterEngine {
-            constructor(skillProfile) {
-                if (typeof skillProfile === 'string') {
-                    this.profile = getSkillBiomechanicsProfile(skillProfile);
-                } else {
-                    this.profile = skillProfile || getSkillBiomechanicsProfile("pushups");
-                }
-                this.subType = this.profile.subType || "pushup_two_arms";
-                this.mode = this.profile.mode || "rep";
-                this.name = this.profile.name || "Esercizio";
-                this.minRom = this.profile.minRom || 88;
-                this.maxLockout = this.profile.maxLockout || 155;
+    constructor(skillProfile) {
+        if (typeof skillProfile === 'string') {
+            this.profile = getSkillBiomechanicsProfile(skillProfile);
+        } else {
+            this.profile = skillProfile || getSkillBiomechanicsProfile("pushups");
+        }
+        this.subType = this.profile.subType || "pushup_two_arms";
+        this.mode = this.profile.mode || "rep";
+        this.name = this.profile.name || "Esercizio";
+        this.minRom = this.profile.minRom || 88;
+        this.maxLockout = this.profile.maxLockout || 155;
 
-                this.reps = 0;
-                this.state = "ready";
-                this.holdSeconds = 0;
-                this.holdStartTs = null;
-                this.minAngle = 180;
-                this.lastRepTs = 0;
-                this.downEntryTs = 0;
-                this.warnings = [];
-                this.validHistory = [];
-                this.prevLandmarks = null;
-                this.muscleUpPhase = "hang";
-            }
+        this.reps = 0;
+        // Stato di calibrazione iniziale per evitare ripetizioni fantasma durante il posizionamento
+        this.state = (this.mode === 'rep') ? "need_lockout" : "ready";
+        this.lockoutHoldFrames = 0;
+        this.holdSeconds = 0;
+        this.holdStartTs = null;
+        this.stableHoldFrames = 0;
+        this.repStartTs = 0;
+        this.minAngle = 180;
+        this.lastRepTs = 0;
+        this.downEntryTs = 0;
+        this.warnings = [];
+        this.validHistory = [];
+        this.prevLandmarks = null;
+        this.muscleUpPhase = "hang";
+        this.lastElbowAngle = "--";
+        this.lastTrunkAngle = "--";
+    }
 
-            getTorsoIncline(shoulder, hip) {
-                if (!shoulder || !hip) return 90;
-                const dy = Math.abs(shoulder.y - hip.y);
-                const dx = Math.abs(shoulder.x - hip.x);
-                return Math.round(Math.atan2(dy, dx) * 180 / Math.PI);
-            }
+    getTorsoIncline(shoulder, hip) {
+        if (!shoulder || !hip) return 90;
+        const dy = Math.abs(shoulder.y - hip.y);
+        const dx = Math.abs(shoulder.x - hip.x);
+        return Math.round(Math.atan2(dy, dx) * 180 / Math.PI);
+    }
 
-            validateFullBodyPresence(landmarks) {
-                const lShoulder = landmarks[11], rShoulder = landmarks[12];
-                const lElbow = landmarks[13], rElbow = landmarks[14];
-                const lWrist = landmarks[15], rWrist = landmarks[16];
-                const lHip = landmarks[23], rHip = landmarks[24];
-                const lKnee = landmarks[25], rKnee = landmarks[26];
-                const lAnkle = landmarks[27], rAnkle = landmarks[28];
+    validateFullBodyPresence(landmarks) {
+        const lShoulder = landmarks[11], rShoulder = landmarks[12];
+        const lElbow = landmarks[13], rElbow = landmarks[14];
+        const lWrist = landmarks[15], rWrist = landmarks[16];
+        const lHip = landmarks[23], rHip = landmarks[24];
+        const lKnee = landmarks[25], rKnee = landmarks[26];
+        const lAnkle = landmarks[27], rAnkle = landmarks[28];
 
-                const maxShoulderVis = Math.max(lShoulder?.visibility || 0, rShoulder?.visibility || 0);
-                const maxHipVis = Math.max(lHip?.visibility || 0, rHip?.visibility || 0);
+        const maxShoulderVis = Math.max(lShoulder?.visibility || 0, rShoulder?.visibility || 0);
+        const maxHipVis = Math.max(lHip?.visibility || 0, rHip?.visibility || 0);
 
-                if (maxShoulderVis < 0.55 || maxHipVis < 0.50) {
+        if (maxShoulderVis < 0.52 || maxHipVis < 0.48) {
+            return {
+                valid: false,
+                reason: "⚠️ Inquadra spalle e bacino: devono essere visibili!"
+            };
+        }
+
+        const leftScore = (lShoulder?.visibility || 0) + (lElbow?.visibility || 0) + (lWrist?.visibility || 0) + (lHip?.visibility || 0);
+        const rightScore = (rShoulder?.visibility || 0) + (rElbow?.visibility || 0) + (rWrist?.visibility || 0) + (rHip?.visibility || 0);
+        const isLeft = leftScore >= rightScore;
+
+        const shoulder = isLeft ? lShoulder : rShoulder;
+        const elbow = isLeft ? lElbow : rElbow;
+        const wrist = isLeft ? lWrist : rWrist;
+        const hip = isLeft ? lHip : rHip;
+        const knee = isLeft ? lKnee : rKnee;
+        const ankle = isLeft ? lAnkle : rAnkle;
+
+        const torsoDist = Math.hypot(shoulder.x - hip.x, shoulder.y - hip.y);
+        if (torsoDist < 0.12 || torsoDist > 0.78) {
+            return {
+                valid: false,
+                reason: "⚠️ Posiziona il telefono alla giusta distanza per inquadrare il corpo!"
+            };
+        }
+
+        let cameraMotion = 0;
+        if (this.prevLandmarks) {
+            cameraMotion = Math.hypot(shoulder.x - this.prevLandmarks.shoulder.x, shoulder.y - this.prevLandmarks.shoulder.y)
+                         + Math.hypot(hip.x - this.prevLandmarks.hip.x, hip.y - this.prevLandmarks.hip.y);
+        }
+        this.prevLandmarks = {
+            shoulder: { x: shoulder.x, y: shoulder.y },
+            hip: { x: hip.x, y: hip.y }
+        };
+
+        return {
+            valid: true,
+            isLeft,
+            shoulder,
+            elbow,
+            wrist,
+            hip,
+            knee,
+            ankle,
+            cameraMotion,
+            lShoulder, rShoulder,
+            lElbow, rElbow,
+            lWrist, rWrist,
+            lHip, rHip,
+            lKnee, rKnee,
+            lAnkle, rAnkle
+        };
+    }
+
+    processHold(now, isValidHold, formFeedback, holdUnitName = this.name) {
+        if (!isValidHold) {
+            this.holdStartTs = null;
+            this.stableHoldFrames = 0;
+            return {
+                reps: this.reps,
+                elbowAngle: this.lastElbowAngle,
+                trunkAngle: this.lastTrunkAngle,
+                feedback: formFeedback,
+                isValidRep: false
+            };
+        }
+
+        this.stableHoldFrames++;
+        if (this.stableHoldFrames < 4) {
+            return {
+                reps: this.reps,
+                elbowAngle: this.lastElbowAngle,
+                trunkAngle: this.lastTrunkAngle,
+                feedback: "Stabilizza la posizione di " + holdUnitName + "...",
+                isValidRep: false
+            };
+        }
+
+        if (!this.holdStartTs) {
+            this.holdStartTs = now;
+        }
+
+        const elapsed = Math.floor((now - this.holdStartTs) / 1000);
+        if (elapsed > 0 && elapsed > this.reps) {
+            this.reps = elapsed;
+            this.holdSeconds = elapsed;
+        }
+
+        return {
+            reps: this.reps,
+            elbowAngle: this.lastElbowAngle,
+            trunkAngle: this.lastTrunkAngle,
+            feedback: "🧱 " + holdUnitName + ": " + elapsed + "s",
+            isValidRep: false
+        };
+    }
+
+    processRep(now, currentAngle, isLockout, isDepth, feedbackDown, feedbackUp, repName) {
+        let feedback = "";
+        let isValidRep = false;
+
+        // Calibrazione iniziale lockout: impedisce di contare la discesa del setup a terra o presa alla sbarra
+        if (this.state === "need_lockout") {
+            if (isLockout) {
+                this.lockoutHoldFrames++;
+                if (this.lockoutHoldFrames >= 6) {
+                    this.state = "ready";
+                    this.minAngle = currentAngle;
+                    this.downEntryTs = 0;
                     return {
-                        valid: false,
-                        reason: "⚠️ Inquadra spalle e bacino: devono essere visibili!"
+                        reps: this.reps,
+                        elbowAngle: this.lastElbowAngle,
+                        trunkAngle: this.lastTrunkAngle,
+                        feedback: "Pronto: esegui la prima ripetizione!",
+                        isValidRep: false
                     };
                 }
-
-                const leftScore = (lShoulder?.visibility || 0) + (lElbow?.visibility || 0) + (lWrist?.visibility || 0) + (lHip?.visibility || 0);
-                const rightScore = (rShoulder?.visibility || 0) + (rElbow?.visibility || 0) + (rWrist?.visibility || 0) + (rHip?.visibility || 0);
-                const isLeft = leftScore >= rightScore;
-
-                const shoulder = isLeft ? lShoulder : rShoulder;
-                const elbow = isLeft ? lElbow : rElbow;
-                const wrist = isLeft ? lWrist : rWrist;
-                const hip = isLeft ? lHip : rHip;
-                const knee = isLeft ? lKnee : rKnee;
-                const ankle = isLeft ? lAnkle : rAnkle;
-
-                const torsoDist = Math.hypot(shoulder.x - hip.x, shoulder.y - hip.y);
-                if (torsoDist < 0.12 || torsoDist > 0.78) {
-                    return {
-                        valid: false,
-                        reason: "⚠️ Posiziona il telefono alla giusta distanza per inquadrare il corpo!"
-                    };
-                }
-
-                let cameraMotion = 0;
-                if (this.prevLandmarks) {
-                    cameraMotion = Math.hypot(shoulder.x - this.prevLandmarks.shoulder.x, shoulder.y - this.prevLandmarks.shoulder.y)
-                                 + Math.hypot(hip.x - this.prevLandmarks.hip.x, hip.y - this.prevLandmarks.hip.y);
-                }
-                this.prevLandmarks = {
-                    shoulder: { x: shoulder.x, y: shoulder.y },
-                    hip: { x: hip.x, y: hip.y }
-                };
-
                 return {
-                    valid: true,
-                    isLeft,
-                    shoulder,
-                    elbow,
-                    wrist,
-                    hip,
-                    knee,
-                    ankle,
-                    cameraMotion,
-                    lShoulder, rShoulder,
-                    lElbow, rElbow,
-                    lWrist, rWrist,
-                    lHip, rHip,
-                    lKnee, rKnee,
-                    lAnkle, rAnkle
+                    reps: this.reps,
+                    elbowAngle: this.lastElbowAngle,
+                    trunkAngle: this.lastTrunkAngle,
+                    feedback: "Blocca l'articolazione in partenza...",
+                    isValidRep: false
                 };
-            }
-
-            update(landmarks) {
-                const now = Date.now();
-                const gate = this.validateFullBodyPresence(landmarks);
-
-                if (!gate.valid) {
-                    this.holdStartTs = null;
-                    this.downEntryTs = 0;
-                    return {
-                        reps: this.reps,
-                        elbowAngle: "--",
-                        trunkAngle: "--",
-                        feedback: gate.reason,
-                        isValidRep: false
-                    };
-                }
-
-                const {
-                    shoulder, elbow, wrist, hip, knee, ankle, cameraMotion,
-                    lShoulder, rShoulder, lElbow, rElbow, lWrist, rWrist,
-                    lHip, rHip, lKnee, rKnee, lAnkle, rAnkle
-                } = gate;
-
-                if (cameraMotion > 0.12) {
-                    this.holdStartTs = null;
-                    this.downEntryTs = 0;
-                    return {
-                        reps: this.reps,
-                        elbowAngle: "--",
-                        trunkAngle: "--",
-                        feedback: "⚠️ Posiziona il telefono appoggiato e immobile!",
-                        isValidRep: false
-                    };
-                }
-
-                const elbowAngle = calculateJointAngle(shoulder, elbow, wrist);
-                const trunkAngle = calculateJointAngle(shoulder, hip, knee);
-                const kneeAngle = calculateJointAngle(hip, knee, ankle);
-                const torsoIncline = this.getTorsoIncline(shoulder, hip);
-
-                let feedback = "";
-                let isValidRep = false;
-
-                // 1. ONE ARM PULL-UP
-                if (this.subType === "pullup_one_arm") {
-                    const lOverhead = lWrist.y < lShoulder.y - 0.08;
-                    const rOverhead = rWrist.y < rShoulder.y - 0.08;
-
-                    if (lOverhead && rOverhead) {
-                        this.state = "ready";
-                        return {
-                            reps: this.reps,
-                            elbowAngle,
-                            trunkAngle,
-                            feedback: "⚠️ Trazione a UN braccio! Solo una mano alla sbarra, tieni l'altro braccio libero o dietro la schiena!",
-                            isValidRep: false
-                        };
-                    }
-
-                    if (!lOverhead && !rOverhead) {
-                        this.state = "ready";
-                        return {
-                            reps: this.reps,
-                            elbowAngle,
-                            trunkAngle,
-                            feedback: "⚠️ Appenditi alla sbarra con un solo braccio disteso!",
-                            isValidRep: false
-                        };
-                    }
-
-                    const activeElbowAngle = lOverhead ? calculateJointAngle(lShoulder, lElbow, lWrist) : calculateJointAngle(rShoulder, rElbow, rWrist);
-
-                    if (this.state === "ready") {
-                        if (activeElbowAngle <= this.minRom) {
-                            if (!this.downEntryTs) this.downEntryTs = now;
-                            if (now - this.downEntryTs >= 120) {
-                                this.state = "top";
-                                this.minAngle = activeElbowAngle;
-                                feedback = "🔥 Trazione a un braccio al mento (" + activeElbowAngle + "°)! Ora scendi controllato!";
-                            }
-                        } else {
-                            this.downEntryTs = 0;
-                            feedback = activeElbowAngle < 125 ? "Tira forte al mento col singolo braccio..." : "Pronto: trazione a un braccio!";
-                        }
-                    } else if (this.state === "top") {
-                        if (activeElbowAngle < this.minAngle) this.minAngle = activeElbowAngle;
-                        if (activeElbowAngle >= this.maxLockout) {
-                            if (now - this.lastRepTs >= 900) {
-                                this.reps++;
-                                this.lastRepTs = now;
-                                isValidRep = true;
-                                feedback = "🏆 One Arm Pull-Up " + this.reps + " Valida!";
-                                this.validHistory.push({ rep: this.reps, angle: this.minAngle, ts: now });
-                            }
-                            this.state = "ready";
-                            this.downEntryTs = 0;
-                        } else {
-                            feedback = "Distendi completamente il braccio in discesa!";
-                        }
-                    }
-                    return { reps: this.reps, elbowAngle: activeElbowAngle, trunkAngle, feedback, isValidRep };
-                }
-
-                // 2. ONE ARM PUSH-UP
-                else if (this.subType === "pushup_one_arm") {
-                    if (torsoIncline > 38) {
-                        return {
-                            reps: this.reps,
-                            elbowAngle,
-                            trunkAngle,
-                            feedback: "⚠️ Corpo orizzontale di plank a terra!",
-                            isValidRep: false
-                        };
-                    }
-
-                    const lOnFloor = lWrist.y > lShoulder.y - 0.05;
-                    const rOnFloor = rWrist.y > rShoulder.y - 0.05;
-
-                    if (lOnFloor && rOnFloor) {
-                        this.state = "ready";
-                        return {
-                            reps: this.reps,
-                            elbowAngle,
-                            trunkAngle,
-                            feedback: "⚠️ Push-up a UN braccio! Stacca l'altra mano da terra e posizionala dietro la schiena!",
-                            isValidRep: false
-                        };
-                    }
-
-                    const activeElbowAngle = lOnFloor ? calculateJointAngle(lShoulder, lElbow, lWrist) : calculateJointAngle(rShoulder, rElbow, rWrist);
-
-                    if (this.state === "ready") {
-                        if (activeElbowAngle <= this.minRom) {
-                            if (!this.downEntryTs) this.downEntryTs = now;
-                            if (now - this.downEntryTs >= 120) {
-                                this.state = "down";
-                                this.minAngle = activeElbowAngle;
-                                feedback = "✅ Profondità 90° raggiunta a un braccio! Spingi ed estendi!";
-                            }
-                        } else {
-                            this.downEntryTs = 0;
-                            feedback = activeElbowAngle < 130 ? "Scendi a 90° col singolo braccio..." : "Pronto: scendi a terra a un braccio";
-                        }
-                    } else if (this.state === "down") {
-                        if (activeElbowAngle < this.minAngle) this.minAngle = activeElbowAngle;
-                        if (activeElbowAngle >= this.maxLockout) {
-                            if (now - this.lastRepTs >= 800) {
-                                this.reps++;
-                                this.lastRepTs = now;
-                                isValidRep = true;
-                                feedback = "🏆 One Arm Push-Up " + this.reps + " Valido!";
-                                this.validHistory.push({ rep: this.reps, angle: this.minAngle, ts: now });
-                            }
-                            this.state = "ready";
-                            this.downEntryTs = 0;
-                        } else {
-                            feedback = "Distendi completamente il gomito!";
-                        }
-                    }
-                    return { reps: this.reps, elbowAngle: activeElbowAngle, trunkAngle, feedback, isValidRep };
-                }
-
-                // 3. DIAMOND PUSH-UP
-                else if (this.subType === "pushup_diamond") {
-                    const wristDist = Math.hypot(lWrist.x - rWrist.x, lWrist.y - rWrist.y);
-                    if (wristDist > 0.17) {
-                        return {
-                            reps: this.reps,
-                            elbowAngle,
-                            trunkAngle,
-                            feedback: "⚠️ Mani a diamante! Unisci pollici e indici sotto il petto!",
-                            isValidRep: false
-                        };
-                    }
-                    if (this.state === "ready") {
-                        if (elbowAngle <= this.minRom) {
-                            this.state = "down";
-                            feedback = "✅ Petto a diamante! Ora distendi!";
-                        } else {
-                            feedback = elbowAngle < 130 ? "Scendi col petto verso le mani a diamante..." : "Pronto: Diamond Push-up";
-                        }
-                    } else if (this.state === "down") {
-                        if (elbowAngle >= this.maxLockout) {
-                            if (now - this.lastRepTs >= 700) {
-                                this.reps++;
-                                this.lastRepTs = now;
-                                isValidRep = true;
-                                feedback = "💎 Diamond Push-up " + this.reps + " Valido!";
-                            }
-                            this.state = "ready";
-                        }
-                    }
-                    return { reps: this.reps, elbowAngle, trunkAngle, feedback, isValidRep };
-                }
-
-                // 4. PISTOL SQUAT / SHRIMP SQUAT
-                else if (this.subType === "squat_single_leg") {
-                    const lKneeAng = calculateJointAngle(lHip, lKnee, lAnkle);
-                    const rKneeAng = calculateJointAngle(rHip, rKnee, rAnkle);
-
-                    const ankleDiff = Math.abs(lAnkle.y - rAnkle.y);
-                    if (ankleDiff < 0.10 && lKneeAng < 110 && rKneeAng < 110) {
-                        this.state = "ready";
-                        return {
-                            reps: this.reps,
-                            elbowAngle,
-                            trunkAngle,
-                            feedback: "⚠️ Pistol Squat: solleva ed estendi una gamba in avanti senza toccare terra!",
-                            isValidRep: false
-                        };
-                    }
-
-                    const workingKneeAngle = Math.min(lKneeAng, rKneeAng);
-
-                    if (this.state === "ready") {
-                        if (workingKneeAngle <= this.minRom) {
-                            this.state = "down";
-                            feedback = "✅ Buca il parallelo a una gamba! Ora risali forte!";
-                        } else {
-                            feedback = workingKneeAngle < 130 ? "Scendi profondo su una sola gamba..." : "Pronto: Pistol Squat!";
-                        }
-                    } else if (this.state === "down") {
-                        if (workingKneeAngle >= this.maxLockout) {
-                            if (now - this.lastRepTs >= 800) {
-                                this.reps++;
-                                this.lastRepTs = now;
-                                isValidRep = true;
-                                feedback = "🦵 Pistol Squat " + this.reps + " Valido!";
-                                this.validHistory.push({ rep: this.reps, angle: workingKneeAngle, ts: now });
-                            }
-                            this.state = "ready";
-                        } else {
-                            feedback = "Risali fino a distendere la gamba d'appoggio!";
-                        }
-                    }
-                    return { reps: this.reps, elbowAngle, trunkAngle: workingKneeAngle, feedback, isValidRep };
-                }
-
-                // 5. MUSCLE-UP
-                else if (this.subType === "muscle_up") {
-                    const avgShoulderY = (lShoulder.y + rShoulder.y) / 2;
-                    const avgWristY = (lWrist.y + rWrist.y) / 2;
-
-                    if (this.muscleUpPhase === "hang") {
-                        if (avgShoulderY > avgWristY + 0.10) {
-                            if (elbowAngle <= 90) {
-                                this.muscleUpPhase = "pulling";
-                                feedback = "🚀 Trazione esplosiva! Ruota i polsi e porta le spalle sopra la sbarra!";
-                            } else {
-                                feedback = "Pronto: tira esplosivo al petto per il Muscle-Up!";
-                            }
-                        }
-                    } else if (this.muscleUpPhase === "pulling") {
-                        if (avgShoulderY < avgWristY - 0.04) {
-                            this.muscleUpPhase = "over_bar";
-                            feedback = "⚡ Spalle sopra la sbarra! Ora spingi il dip e distendi le braccia!";
-                        } else if (elbowAngle > 140) {
-                            this.muscleUpPhase = "hang";
-                            feedback = "⚠️ Mancata transizione sopra la sbarra! Tira più alto!";
-                        }
-                    } else if (this.muscleUpPhase === "over_bar") {
-                        if (elbowAngle >= 152) {
-                            if (now - this.lastRepTs >= 1200) {
-                                this.reps++;
-                                this.lastRepTs = now;
-                                isValidRep = true;
-                                feedback = "🔥 Bar Muscle-Up " + this.reps + " Valido!";
-                            }
-                            this.muscleUpPhase = "hang";
-                        } else {
-                            feedback = "Blocca i gomiti a fine dip sopra la sbarra!";
-                        }
-                    }
-
-                    return { reps: this.reps, elbowAngle, trunkAngle, feedback, isValidRep };
-                }
-
-                // 6. STANDARD PULL-UPS (DUE MANI)
-                else if (this.subType.startsWith("pullup")) {
-                    const isOverhead = wrist.y < shoulder.y - 0.08;
-                    if (!isOverhead && torsoIncline > 50) {
-                        return {
-                            reps: this.reps,
-                            elbowAngle,
-                            trunkAngle,
-                            feedback: "⚠️ Appenditi alla sbarra con le braccia distese in alto!",
-                            isValidRep: false
-                        };
-                    }
-
-                    if (this.state === "ready") {
-                        if (elbowAngle <= this.minRom) {
-                            if (!this.downEntryTs) this.downEntryTs = now;
-                            if (now - this.downEntryTs >= 120) {
-                                this.state = "top";
-                                this.minAngle = elbowAngle;
-                                feedback = "✅ Mento sopra la sbarra (" + elbowAngle + "°)! Ora scendi controllato!";
-                            }
-                        } else {
-                            this.downEntryTs = 0;
-                            feedback = elbowAngle < 135 ? "Sali col mento sopra la sbarra..." : "Pronto: tirati su!";
-                        }
-                    } else if (this.state === "top") {
-                        if (elbowAngle < this.minAngle) this.minAngle = elbowAngle;
-                        if (elbowAngle >= this.maxLockout) {
-                            if (now - this.lastRepTs >= 700) {
-                                this.reps++;
-                                this.lastRepTs = now;
-                                isValidRep = true;
-                                feedback = "🎉 Pull-up " + this.reps + " Valido! (" + this.minAngle + "°)";
-                                this.validHistory.push({ rep: this.reps, angle: this.minAngle, ts: now });
-                            }
-                            this.state = "ready";
-                            this.downEntryTs = 0;
-                        } else if (elbowAngle > 110) {
-                            feedback = "Distendi completamente le braccia prima della prossima rep!";
-                        }
-                    }
-                    return { reps: this.reps, elbowAngle, trunkAngle, feedback, isValidRep };
-                }
-
-                // 7. STANDARD PUSH-UPS
-                else if (this.subType.startsWith("pushup")) {
-                    if (torsoIncline > 36) {
-                        this.state = "ready";
-                        return {
-                            reps: this.reps,
-                            elbowAngle,
-                            trunkAngle,
-                            feedback: "⚠️ Posizionati a terra in posizione orizzontale di plank!",
-                            isValidRep: false
-                        };
-                    }
-
-                    if (trunkAngle < 140) {
-                        feedback = "⚠️ Bacino troppo basso! Contrai addominali e glutei!";
-                        if (!this.warnings.includes("Bacino ceduto")) this.warnings.push("Bacino ceduto");
-                    }
-
-                    if (this.state === "ready") {
-                        if (elbowAngle <= this.minRom) {
-                            if (!this.downEntryTs) this.downEntryTs = now;
-                            if (now - this.downEntryTs >= 120) {
-                                this.state = "down";
-                                this.minAngle = elbowAngle;
-                                feedback = "✅ Ottima profondità (90°)! Ora distendi forte le braccia!";
-                            }
-                        } else {
-                            this.downEntryTs = 0;
-                            feedback = elbowAngle < 135 ? "Scendi fino a 90° col petto..." : "Pronto: piega i gomiti e scendi a terra";
-                        }
-                    } else if (this.state === "down") {
-                        if (elbowAngle < this.minAngle) this.minAngle = elbowAngle;
-                        if (elbowAngle >= this.maxLockout) {
-                            if (now - this.lastRepTs >= 700) {
-                                this.reps++;
-                                this.lastRepTs = now;
-                                isValidRep = true;
-                                feedback = "🎉 Push-up " + this.reps + " Valido! (" + this.minAngle + "°)";
-                                this.validHistory.push({ rep: this.reps, angle: this.minAngle, ts: now });
-                            }
-                            this.state = "ready";
-                            this.downEntryTs = 0;
-                        } else if (elbowAngle > 115) {
-                            feedback = "Spingi fino a distendere completamente i gomiti!";
-                        }
-                    }
-                    return { reps: this.reps, elbowAngle, trunkAngle, feedback, isValidRep };
-                }
-
-                // 8. DIPS (PARALLELE, BENCH, KOREAN)
-                else if (this.subType.startsWith("dip")) {
-                    if (this.state === "ready") {
-                        if (elbowAngle <= this.minRom) {
-                            if (!this.downEntryTs) this.downEntryTs = now;
-                            if (now - this.downEntryTs >= 120) {
-                                this.state = "down";
-                                this.minAngle = elbowAngle;
-                                feedback = "✅ Profondità 90° raggiunta! Spingi in alto!";
-                            }
-                        } else {
-                            this.downEntryTs = 0;
-                            feedback = elbowAngle < 135 ? "Scendi fino a 90° col gomito..." : "Pronto: scendi controllato";
-                        }
-                    } else if (this.state === "down") {
-                        if (elbowAngle < this.minAngle) this.minAngle = elbowAngle;
-                        if (elbowAngle >= this.maxLockout) {
-                            if (now - this.lastRepTs >= 700) {
-                                this.reps++;
-                                this.lastRepTs = now;
-                                isValidRep = true;
-                                feedback = "🎉 Dip " + this.reps + " Valido!";
-                                this.validHistory.push({ rep: this.reps, angle: this.minAngle, ts: now });
-                            }
-                            this.state = "ready";
-                            this.downEntryTs = 0;
-                        } else {
-                            feedback = "Blocca le braccia a fine risalita!";
-                        }
-                    }
-                    return { reps: this.reps, elbowAngle, trunkAngle, feedback, isValidRep };
-                }
-
-                // 9. SQUAT A DUE GAMBE
-                else if (this.subType.startsWith("squat")) {
-                    if (this.state === "ready") {
-                        if (kneeAngle <= this.minRom) {
-                            if (!this.downEntryTs) this.downEntryTs = now;
-                            if (now - this.downEntryTs >= 120) {
-                                this.state = "down";
-                                feedback = "✅ Parallelo raggiunto! Risali in piedi!";
-                            }
-                        } else {
-                            this.downEntryTs = 0;
-                            feedback = "Scendi fino al parallelo (ginocchio a 90°)...";
-                        }
-                    } else if (this.state === "down") {
-                        if (kneeAngle >= this.maxLockout) {
-                            if (now - this.lastRepTs >= 750) {
-                                this.reps++;
-                                this.lastRepTs = now;
-                                isValidRep = true;
-                                feedback = "🎉 Squat " + this.reps + " Valido!";
-                            }
-                            this.state = "ready";
-                            this.downEntryTs = 0;
-                        } else {
-                            feedback = "Risali fino a distendere le gambe!";
-                        }
-                    }
-                    return { reps: this.reps, elbowAngle, trunkAngle: kneeAngle, feedback, isValidRep };
-                }
-
-                // 10. HSPU (HANDSTAND PUSH-UP)
-                else if (this.subType === "hspu") {
-                    const isInverted = (ankle.y < hip.y) && (hip.y < shoulder.y);
-                    if (!isInverted || torsoIncline < 55) {
-                        return {
-                            reps: this.reps,
-                            elbowAngle,
-                            trunkAngle,
-                            feedback: "⚠️ Mettiti in verticale (piedi in alto) per l'HSPU!",
-                            isValidRep: false
-                        };
-                    }
-                    if (this.state === "ready") {
-                        if (elbowAngle <= this.minRom) {
-                            this.state = "down";
-                            feedback = "✅ Testa al pavimento (90°)! Ora spingi in alto!";
-                        } else {
-                            feedback = elbowAngle < 135 ? "Piega i gomiti e scendi verso terra..." : "Pronto: piega i gomiti in verticale";
-                        }
-                    } else if (this.state === "down") {
-                        if (elbowAngle >= this.maxLockout) {
-                            if (now - this.lastRepTs >= 800) {
-                                this.reps++;
-                                this.lastRepTs = now;
-                                isValidRep = true;
-                                feedback = "🤸 HSPU " + this.reps + " Valido!";
-                            }
-                            this.state = "ready";
-                        }
-                    }
-                    return { reps: this.reps, elbowAngle, trunkAngle, feedback, isValidRep };
-                }
-
-                // 11. PLANCHE & MALTESE HOLD
-                else if (this.subType.startsWith("planche") || this.subType === "maltese") {
-                    if (torsoIncline > 30) {
-                        this.holdStartTs = null;
-                        return {
-                            reps: this.reps,
-                            elbowAngle,
-                            trunkAngle,
-                            feedback: "⚠️ Corpo orizzontale parallelo al pavimento!",
-                            isValidRep: false
-                        };
-                    }
-
-                    if (elbowAngle < 152) {
-                        this.holdStartTs = null;
-                        return {
-                            reps: this.reps,
-                            elbowAngle,
-                            trunkAngle,
-                            feedback: "⚠️ Braccia tese e bloccate! Non piegare i gomiti!",
-                            isValidRep: false
-                        };
-                    }
-
-                    let isVariationValid = true;
-                    if (this.subType === "planche_tuck") {
-                        isVariationValid = kneeAngle < 90;
-                        if (!isVariationValid) feedback = "⚠️ Raccogli le ginocchia al petto per il Tuck Planche!";
-                    } else if (this.subType === "planche_straddle") {
-                        const ankleDist = Math.hypot(lAnkle.x - rAnkle.x, lAnkle.y - rAnkle.y);
-                        isVariationValid = ankleDist > 0.25;
-                        if (!isVariationValid) feedback = "⚠️ Apri le gambe a compasso per la Straddle Planche!";
-                    } else if (this.subType === "planche_full" || this.subType === "maltese") {
-                        isVariationValid = trunkAngle >= 155 && kneeAngle >= 148;
-                        if (!isVariationValid) feedback = "⚠️ Corpo perfettamente dritto e orizzontale!";
-                    }
-
-                    if (isVariationValid) {
-                        if (!this.holdStartTs) this.holdStartTs = now;
-                        const elapsed = Math.floor((now - this.holdStartTs) / 1000);
-                        if (elapsed > this.holdSeconds) {
-                            this.holdSeconds = elapsed;
-                            this.reps = this.holdSeconds;
-                            feedback = "🧱 " + this.name + ": " + this.holdSeconds + "s";
-                        } else {
-                            feedback = "🧱 Mantieni la tenuta: " + elapsed + "s";
-                        }
-                    } else {
-                        this.holdStartTs = null;
-                    }
-                    return { reps: this.reps, elbowAngle, trunkAngle, feedback, isValidRep };
-                }
-
-                // 12. FRONT LEVER HOLD
-                else if (this.subType.startsWith("fl_")) {
-                    if (torsoIncline > 35) {
-                        this.holdStartTs = null;
-                        return {
-                            reps: this.reps,
-                            elbowAngle,
-                            trunkAngle,
-                            feedback: "⚠️ Corpo orizzontale parallelo al suolo rivolto in alto!",
-                            isValidRep: false
-                        };
-                    }
-                    if (elbowAngle < 150) {
-                        this.holdStartTs = null;
-                        return {
-                            reps: this.reps,
-                            elbowAngle,
-                            trunkAngle,
-                            feedback: "⚠️ Braccia tese e dorsali attivi!",
-                            isValidRep: false
-                        };
-                    }
-
-                    if (!this.holdStartTs) this.holdStartTs = now;
-                    const elapsed = Math.floor((now - this.holdStartTs) / 1000);
-                    if (elapsed > this.holdSeconds) {
-                        this.holdSeconds = elapsed;
-                        this.reps = this.holdSeconds;
-                        feedback = "⚓ " + this.name + ": " + this.holdSeconds + "s";
-                    } else {
-                        feedback = "⚓ Mantieni il Front Lever: " + elapsed + "s";
-                    }
-                    return { reps: this.reps, elbowAngle, trunkAngle, feedback, isValidRep };
-                }
-
-                // 13. VERTICALE STATICA (HANDSTAND)
-                else if (this.subType === "handstand_hold") {
-                    const isInverted = (ankle.y < hip.y) && (hip.y < shoulder.y);
-                    if (!isInverted || torsoIncline < 55) {
-                        this.holdStartTs = null;
-                        return {
-                            reps: this.reps,
-                            elbowAngle,
-                            trunkAngle,
-                            feedback: "⚠️ Mettiti in verticale (piedi in alto, bacino sopra le spalle)!",
-                            isValidRep: false
-                        };
-                    }
-
-                    if (elbowAngle >= 150) {
-                        if (!this.holdStartTs) this.holdStartTs = now;
-                        const elapsed = Math.floor((now - this.holdStartTs) / 1000);
-                        if (elapsed > this.holdSeconds) {
-                            this.holdSeconds = elapsed;
-                            this.reps = this.holdSeconds;
-                            feedback = "🤸 Verticale: " + this.holdSeconds + "s";
-                        } else {
-                            feedback = "🤸 Mantieni la verticale ferma: " + elapsed + "s";
-                        }
-                    } else {
-                        this.holdStartTs = null;
-                        feedback = "⚠️ Distendi completamente i gomiti in alto!";
-                    }
-                    return { reps: this.reps, elbowAngle, trunkAngle, feedback, isValidRep };
-                }
-
-                // 14. L-SIT & V-SIT
-                else if (this.subType === "lsit" || this.subType === "vsit") {
-                    const isVsit = this.subType === "vsit";
-                    const isLegsUp = isVsit ? (trunkAngle <= 80 && ankle.y <= hip.y) : (kneeAngle >= 140 && trunkAngle <= 120 && ankle.y <= hip.y + 0.15);
-
-                    if (isLegsUp) {
-                        if (!this.holdStartTs) this.holdStartTs = now;
-                        const elapsed = Math.floor((now - this.holdStartTs) / 1000);
-                        if (elapsed > this.holdSeconds) {
-                            this.holdSeconds = elapsed;
-                            this.reps = this.holdSeconds;
-                            feedback = "📐 " + this.name + ": " + this.holdSeconds + "s";
-                        } else {
-                            feedback = "📐 Mantieni le gambe tese: " + elapsed + "s";
-                        }
-                    } else {
-                        this.holdStartTs = null;
-                        feedback = isVsit ? "⚠️ Chiudi le gambe a V sopra il petto!" : "⚠️ Gambe tese in avanti a 90°!";
-                    }
-                    return { reps: this.reps, elbowAngle, trunkAngle, feedback, isValidRep };
-                }
-
-                // 15. ALTRE TENUTE ISOMETRICHE (PLANK, HANG, DRAGON FLAG, ECC.)
-                else if (this.mode === "hold") {
-                    if (this.subType === "hang_one_arm") {
-                        const lUp = lWrist.y < lShoulder.y - 0.08;
-                        const rUp = rWrist.y < rShoulder.y - 0.08;
-                        if (lUp && rUp) {
-                            this.holdStartTs = null;
-                            return { reps: this.reps, elbowAngle, trunkAngle, feedback: "⚠️ Sospensione a UN braccio! Stacca l'altra mano dalla sbarra!", isValidRep: false };
-                        }
-                    }
-
-                    if (!this.holdStartTs) this.holdStartTs = now;
-                    const elapsed = Math.floor((now - this.holdStartTs) / 1000);
-                    if (elapsed > this.holdSeconds) {
-                        this.holdSeconds = elapsed;
-                        this.reps = this.holdSeconds;
-                        feedback = "⏱️ " + this.name + ": " + this.holdSeconds + "s";
-                    } else {
-                        feedback = "⏱️ Mantieni la tenuta: " + elapsed + "s";
-                    }
-                    return { reps: this.reps, elbowAngle, trunkAngle, feedback, isValidRep };
-                }
-
-                // 16. ESERCIZIO A RIPETIZIONI GENERICO
-                else {
-                    if (this.state === "ready") {
-                        if (elbowAngle <= 95 || kneeAngle <= 95) {
-                            this.state = "down";
-                            feedback = "✅ Movimento avviato! Estendi!";
-                        } else {
-                            feedback = "Esegui il movimento a ROM completo...";
-                        }
-                    } else if (this.state === "down") {
-                        if (elbowAngle >= 150 || kneeAngle >= 150) {
-                            if (now - this.lastRepTs >= 700) {
-                                this.reps++;
-                                this.lastRepTs = now;
-                                isValidRep = true;
-                                feedback = "✅ " + this.name + " " + this.reps + " Valida!";
-                            }
-                            this.state = "ready";
-                        }
-                    }
-                    return { reps: this.reps, elbowAngle, trunkAngle, feedback, isValidRep };
-                }
+            } else {
+                this.lockoutHoldFrames = 0;
+                return {
+                    reps: this.reps,
+                    elbowAngle: this.lastElbowAngle,
+                    trunkAngle: this.lastTrunkAngle,
+                    feedback: "Distendi completamente per iniziare l'esercizio",
+                    isValidRep: false
+                };
             }
         }
+
+        if (this.state === "ready") {
+            if (isDepth) {
+                if (!this.downEntryTs) {
+                    this.downEntryTs = now;
+                    this.repStartTs = now;
+                }
+                if (now - this.downEntryTs >= 120) {
+                    this.state = "down";
+                    this.minAngle = currentAngle;
+                    feedback = feedbackDown || "✅ Ottima profondità (90°)! Ora distendi forte!";
+                }
+            } else {
+                this.downEntryTs = 0;
+                feedback = currentAngle < (this.maxLockout - 15) ? "Scendi a 90° col petto..." : "Pronto: esegui la ripetizione";
+            }
+        } else if (this.state === "down") {
+            if (currentAngle < this.minAngle) this.minAngle = currentAngle;
+            if (isLockout) {
+                const repDuration = now - (this.repStartTs || (now - 1000));
+                const repInterval = now - this.lastRepTs;
+                if (repDuration >= 650 && repInterval >= 900) {
+                    this.reps++;
+                    this.lastRepTs = now;
+                    isValidRep = true;
+                    feedback = "🎉 " + repName + " " + this.reps + " Valido! (" + this.minAngle + "°)";
+                    this.validHistory.push({ rep: this.reps, angle: this.minAngle, ts: now });
+                }
+                this.state = "ready";
+                this.downEntryTs = 0;
+                this.minAngle = currentAngle;
+            } else if (currentAngle > (this.minRom + 25)) {
+                feedback = feedbackUp || "Spingi fino a distendere completamente i gomiti!";
+            }
+        }
+
+        return {
+            reps: this.reps,
+            elbowAngle: this.lastElbowAngle,
+            trunkAngle: this.lastTrunkAngle,
+            feedback,
+            isValidRep
+        };
+    }
+
+    update(landmarks) {
+        const now = Date.now();
+        const gate = this.validateFullBodyPresence(landmarks);
+
+        if (!gate.valid) {
+            this.holdStartTs = null;
+            this.stableHoldFrames = 0;
+            this.downEntryTs = 0;
+            return {
+                reps: this.reps,
+                elbowAngle: "--",
+                trunkAngle: "--",
+                feedback: gate.reason,
+                isValidRep: false
+            };
+        }
+
+        const {
+            shoulder, elbow, wrist, hip, knee, ankle, cameraMotion,
+            lShoulder, rShoulder, lElbow, rElbow, lWrist, rWrist,
+            lHip, rHip, lKnee, rKnee, lAnkle, rAnkle
+        } = gate;
+
+        if (cameraMotion > 0.12) {
+            this.holdStartTs = null;
+            this.stableHoldFrames = 0;
+            this.downEntryTs = 0;
+            return {
+                reps: this.reps,
+                elbowAngle: "--",
+                trunkAngle: "--",
+                feedback: "⚠️ Posiziona il telefono appoggiato e immobile!",
+                isValidRep: false
+            };
+        }
+
+        const elbowAngle = calculateJointAngle(shoulder, elbow, wrist);
+        const trunkAngle = calculateJointAngle(shoulder, hip, knee);
+        const kneeAngle = calculateJointAngle(hip, knee, ankle);
+        const torsoIncline = this.getTorsoIncline(shoulder, hip);
+
+        this.lastElbowAngle = elbowAngle;
+        this.lastTrunkAngle = trunkAngle;
+
+        // Calcolo coordinate di riferimento del pavimento
+        const floorLevel = Math.max(lWrist?.y || 0, rWrist?.y || 0, wrist?.y || 0);
+        const maxAnkleY = Math.max(lAnkle?.y || 0, rAnkle?.y || 0, ankle?.y || 0);
+        const maxKneeY = Math.max(lKnee?.y || 0, rKnee?.y || 0, knee?.y || 0);
+        const minHipY = Math.min(lHip?.y || 1, rHip?.y || 1, hip?.y || 1);
+
+        // 1. ONE ARM PULL-UP
+        if (this.subType === "pullup_one_arm") {
+            const lOverhead = lWrist.y < lShoulder.y - 0.08;
+            const rOverhead = rWrist.y < rShoulder.y - 0.08;
+
+            if (lOverhead && rOverhead) {
+                return {
+                    reps: this.reps,
+                    elbowAngle,
+                    trunkAngle,
+                    feedback: "⚠️ Trazione a UN braccio! Solo una mano alla sbarra, tieni l'altro braccio libero o dietro la schiena!",
+                    isValidRep: false
+                };
+            }
+
+            if (!lOverhead && !rOverhead) {
+                return {
+                    reps: this.reps,
+                    elbowAngle,
+                    trunkAngle,
+                    feedback: "⚠️ Appenditi alla sbarra con un solo braccio disteso!",
+                    isValidRep: false
+                };
+            }
+
+            const activeElbowAngle = lOverhead ? calculateJointAngle(lShoulder, lElbow, lWrist) : calculateJointAngle(rShoulder, rElbow, rWrist);
+            this.lastElbowAngle = activeElbowAngle;
+            return this.processRep(now, activeElbowAngle, activeElbowAngle >= this.maxLockout, activeElbowAngle <= this.minRom,
+                "🔥 Mento sopra la sbarra a un braccio! Ora scendi controllato!",
+                "Distendi completamente il braccio in discesa!",
+                "One Arm Pull-Up"
+            );
+        }
+
+        // 2. ONE ARM PUSH-UP
+        else if (this.subType === "pushup_one_arm") {
+            if (torsoIncline > 38) {
+                return {
+                    reps: this.reps,
+                    elbowAngle,
+                    trunkAngle,
+                    feedback: "⚠️ Corpo orizzontale di plank a terra!",
+                    isValidRep: false
+                };
+            }
+
+            const lOnFloor = lWrist.y > lShoulder.y - 0.05;
+            const rOnFloor = rWrist.y > rShoulder.y - 0.05;
+
+            if (lOnFloor && rOnFloor) {
+                return {
+                    reps: this.reps,
+                    elbowAngle,
+                    trunkAngle,
+                    feedback: "⚠️ Push-up a UN braccio! Stacca l'altra mano da terra e posizionala dietro la schiena!",
+                    isValidRep: false
+                };
+            }
+
+            const activeElbowAngle = lOnFloor ? calculateJointAngle(lShoulder, lElbow, lWrist) : calculateJointAngle(rShoulder, rElbow, rWrist);
+            this.lastElbowAngle = activeElbowAngle;
+            return this.processRep(now, activeElbowAngle, activeElbowAngle >= this.maxLockout, activeElbowAngle <= this.minRom,
+                "✅ Profondità 90° raggiunta a un braccio! Spingi ed estendi!",
+                "Distendi completamente il gomito!",
+                "One Arm Push-Up"
+            );
+        }
+
+        // 3. DIAMOND PUSH-UP
+        else if (this.subType === "pushup_diamond") {
+            const wristDist = Math.hypot(lWrist.x - rWrist.x, lWrist.y - rWrist.y);
+            if (wristDist > 0.17) {
+                return {
+                    reps: this.reps,
+                    elbowAngle,
+                    trunkAngle,
+                    feedback: "⚠️ Mani a diamante! Unisci pollici e indici sotto il petto!",
+                    isValidRep: false
+                };
+            }
+            return this.processRep(now, elbowAngle, elbowAngle >= this.maxLockout, elbowAngle <= this.minRom,
+                "✅ Petto a diamante! Ora distendi forte!",
+                "Spingi fino a distendere le braccia a diamante!",
+                "Diamond Push-Up"
+            );
+        }
+
+        // 4. PISTOL SQUAT / SINGLE LEG
+        else if (this.subType === "squat_single_leg") {
+            const lKneeAng = calculateJointAngle(lHip, lKnee, lAnkle);
+            const rKneeAng = calculateJointAngle(rHip, rKnee, rAnkle);
+
+            const ankleDiff = Math.abs(lAnkle.y - rAnkle.y);
+            if (ankleDiff < 0.10 && lKneeAng < 110 && rKneeAng < 110) {
+                return {
+                    reps: this.reps,
+                    elbowAngle,
+                    trunkAngle,
+                    feedback: "⚠️ Pistol Squat: solleva ed estendi una gamba in avanti senza toccare terra!",
+                    isValidRep: false
+                };
+            }
+
+            const workingKneeAngle = Math.min(lKneeAng, rKneeAng);
+            this.lastTrunkAngle = workingKneeAngle;
+            return this.processRep(now, workingKneeAngle, workingKneeAngle >= this.maxLockout, workingKneeAngle <= this.minRom,
+                "✅ Buca il parallelo a una gamba! Ora risali forte!",
+                "Risali fino a distendere la gamba d'appoggio!",
+                "Pistol Squat"
+            );
+        }
+
+        // 5. MUSCLE-UP
+        else if (this.subType === "muscle_up") {
+            const avgShoulderY = (lShoulder.y + rShoulder.y) / 2;
+            const avgWristY = (lWrist.y + rWrist.y) / 2;
+            let feedback = "";
+            let isValidRep = false;
+
+            if (this.muscleUpPhase === "hang") {
+                if (avgShoulderY > avgWristY + 0.10) {
+                    if (elbowAngle <= 90) {
+                        this.muscleUpPhase = "pulling";
+                        feedback = "🚀 Trazione esplosiva! Ruota i polsi e porta le spalle sopra la sbarra!";
+                    } else {
+                        feedback = "Pronto: tira esplosivo al petto per il Muscle-Up!";
+                    }
+                }
+            } else if (this.muscleUpPhase === "pulling") {
+                if (avgShoulderY < avgWristY - 0.04) {
+                    this.muscleUpPhase = "over_bar";
+                    feedback = "⚡ Spalle sopra la sbarra! Ora spingi il dip e distendi le braccia!";
+                } else if (elbowAngle > 140) {
+                    this.muscleUpPhase = "hang";
+                    feedback = "⚠️ Mancata transizione sopra la sbarra! Tira più alto!";
+                }
+            } else if (this.muscleUpPhase === "over_bar") {
+                if (elbowAngle >= 152) {
+                    if (now - this.lastRepTs >= 1200) {
+                        this.reps++;
+                        this.lastRepTs = now;
+                        isValidRep = true;
+                        feedback = "🔥 Bar Muscle-Up " + this.reps + " Valido!";
+                    }
+                    this.muscleUpPhase = "hang";
+                } else {
+                    feedback = "Blocca i gomiti a fine dip sopra la sbarra!";
+                }
+            }
+
+            return { reps: this.reps, elbowAngle, trunkAngle, feedback, isValidRep };
+        }
+
+        // 6. STANDARD PULL-UPS (DUE MANI)
+        else if (this.subType.startsWith("pullup")) {
+            const isOverhead = wrist.y < shoulder.y - 0.08;
+            if (!isOverhead && torsoIncline > 50) {
+                return {
+                    reps: this.reps,
+                    elbowAngle,
+                    trunkAngle,
+                    feedback: "⚠️ Appenditi alla sbarra con le braccia distese in alto!",
+                    isValidRep: false
+                };
+            }
+
+            return this.processRep(now, elbowAngle, elbowAngle >= this.maxLockout, elbowAngle <= this.minRom,
+                "✅ Mento sopra la sbarra! Ora scendi controllato!",
+                "Distendi completamente le braccia in discesa!",
+                this.name
+            );
+        }
+
+        // 7. STANDARD PUSH-UPS
+        else if (this.subType.startsWith("pushup")) {
+            if (torsoIncline > 36) {
+                return {
+                    reps: this.reps,
+                    elbowAngle,
+                    trunkAngle,
+                    feedback: "⚠️ Posizionati a terra in posizione orizzontale di plank!",
+                    isValidRep: false
+                };
+            }
+
+            if (trunkAngle < 140) {
+                if (!this.warnings.includes("Bacino ceduto")) this.warnings.push("Bacino ceduto");
+            }
+
+            return this.processRep(now, elbowAngle, elbowAngle >= this.maxLockout, elbowAngle <= this.minRom,
+                "✅ Ottima profondità (90°)! Ora distendi forte le braccia!",
+                "Spingi fino a distendere completamente i gomiti!",
+                this.name
+            );
+        }
+
+        // 8. DIPS (PARALLELE, BENCH, KOREAN)
+        else if (this.subType.startsWith("dip")) {
+            return this.processRep(now, elbowAngle, elbowAngle >= this.maxLockout, elbowAngle <= this.minRom,
+                "✅ Profondità 90° raggiunta! Spingi in alto!",
+                "Blocca le braccia a fine risalita!",
+                this.name
+            );
+        }
+
+        // 9. SQUAT A DUE GAMBE
+        else if (this.subType.startsWith("squat")) {
+            this.lastTrunkAngle = kneeAngle;
+            return this.processRep(now, kneeAngle, kneeAngle >= this.maxLockout, kneeAngle <= this.minRom,
+                "✅ Parallelo raggiunto! Risali in piedi!",
+                "Risali fino a distendere completamente le gambe!",
+                this.name
+            );
+        }
+
+        // 10. HSPU (HANDSTAND PUSH-UP)
+        else if (this.subType === "hspu") {
+            const isInverted = (ankle.y < hip.y) && (hip.y < shoulder.y);
+            if (!isInverted || torsoIncline < 55) {
+                return {
+                    reps: this.reps,
+                    elbowAngle,
+                    trunkAngle,
+                    feedback: "⚠️ Mettiti in verticale (piedi in alto) per l'HSPU!",
+                    isValidRep: false
+                };
+            }
+            return this.processRep(now, elbowAngle, elbowAngle >= this.maxLockout, elbowAngle <= this.minRom,
+                "✅ Testa verso il pavimento (90°)! Ora spingi in alto!",
+                "Distendi completamente le braccia in verticale!",
+                "HSPU"
+            );
+        }
+
+        // ============================================================
+        // 11. ELBOW LEVER HOLD (VERIFICA PIEDI SOSPESI DA TERRA)
+        // ============================================================
+        else if (this.subType === "elbow_lever") {
+            // Controllo rigoroso appoggio piedi/ginocchia a terra
+            if (maxAnkleY >= floorLevel - 0.05 || maxKneeY >= floorLevel - 0.05) {
+                this.holdStartTs = null;
+                this.stableHoldFrames = 0;
+                return {
+                    reps: this.reps,
+                    elbowAngle,
+                    trunkAngle,
+                    feedback: "⚠️ Piedi a terra! Solleva completamente le gambe dal suolo!",
+                    isValidRep: false
+                };
+            }
+
+            if (torsoIncline > 36) {
+                this.holdStartTs = null;
+                this.stableHoldFrames = 0;
+                return {
+                    reps: this.reps,
+                    elbowAngle,
+                    trunkAngle,
+                    feedback: "⚠️ Corpo orizzontale parallelo al pavimento!",
+                    isValidRep: false
+                };
+            }
+
+            if (elbowAngle > 135) {
+                this.holdStartTs = null;
+                this.stableHoldFrames = 0;
+                return {
+                    reps: this.reps,
+                    elbowAngle,
+                    trunkAngle,
+                    feedback: "⚠️ Piega i gomiti e appoggiali all'addome per bilanciare la leva!",
+                    isValidRep: false
+                };
+            }
+
+            return this.processHold(now, true, "", "Elbow Lever");
+        }
+
+        // ============================================================
+        // 12. FROG STAND HOLD (VERIFICA PIEDI SOLLEVATI DA TERRA)
+        // ============================================================
+        else if (this.subType === "frog_stand") {
+            if (maxAnkleY >= floorLevel - 0.05) {
+                this.holdStartTs = null;
+                this.stableHoldFrames = 0;
+                return {
+                    reps: this.reps,
+                    elbowAngle,
+                    trunkAngle,
+                    feedback: "⚠️ Piedi a terra! Solleva i piedi dal suolo!",
+                    isValidRep: false
+                };
+            }
+
+            return this.processHold(now, true, "", "Frog Stand");
+        }
+
+        // ============================================================
+        // 13. PLANCHE & MALTESE HOLD (VERIFICA PIEDI E GINOCCHIA SOSPESI)
+        // ============================================================
+        else if (this.subType.startsWith("planche") || this.subType === "maltese") {
+            if (this.subType !== "planche_lean") {
+                if (maxAnkleY >= floorLevel - 0.05 || maxKneeY >= floorLevel - 0.05) {
+                    this.holdStartTs = null;
+                    this.stableHoldFrames = 0;
+                    return {
+                        reps: this.reps,
+                        elbowAngle,
+                        trunkAngle,
+                        feedback: "⚠️ Piedi o ginocchia a terra! Solleva completamente il corpo in sospensione!",
+                        isValidRep: false
+                    };
+                }
+            }
+
+            if (torsoIncline > 32) {
+                this.holdStartTs = null;
+                this.stableHoldFrames = 0;
+                return {
+                    reps: this.reps,
+                    elbowAngle,
+                    trunkAngle,
+                    feedback: "⚠️ Corpo orizzontale parallelo al pavimento!",
+                    isValidRep: false
+                };
+            }
+
+            if (elbowAngle < 150) {
+                this.holdStartTs = null;
+                this.stableHoldFrames = 0;
+                return {
+                    reps: this.reps,
+                    elbowAngle,
+                    trunkAngle,
+                    feedback: "⚠️ Braccia tese e bloccate! Non piegare i gomiti!",
+                    isValidRep: false
+                };
+            }
+
+            let isVariationValid = true;
+            let varFeedback = "";
+            if (this.subType === "planche_tuck") {
+                isVariationValid = kneeAngle < 95;
+                if (!isVariationValid) varFeedback = "⚠️ Raccogli le ginocchia al petto per il Tuck Planche!";
+            } else if (this.subType === "planche_straddle") {
+                const ankleDist = Math.hypot(lAnkle.x - rAnkle.x, lAnkle.y - rAnkle.y);
+                isVariationValid = ankleDist > 0.22 && kneeAngle >= 145;
+                if (!isVariationValid) varFeedback = "⚠️ Apri le gambe a compasso e mantienile tese!";
+            } else if (this.subType === "planche_full" || this.subType === "maltese") {
+                isVariationValid = trunkAngle >= 152 && kneeAngle >= 148;
+                if (!isVariationValid) varFeedback = "⚠️ Corpo e gambe perfettamente tesi e orizzontali!";
+            }
+
+            if (!isVariationValid) {
+                this.holdStartTs = null;
+                this.stableHoldFrames = 0;
+                return { reps: this.reps, elbowAngle, trunkAngle, feedback: varFeedback, isValidRep: false };
+            }
+
+            return this.processHold(now, true, "", this.name);
+        }
+
+        // ============================================================
+        // 14. FRONT LEVER HOLD
+        // ============================================================
+        else if (this.subType.startsWith("fl_")) {
+            const isOverhead = wrist.y < shoulder.y - 0.05;
+            if (!isOverhead || torsoIncline > 35) {
+                this.holdStartTs = null;
+                this.stableHoldFrames = 0;
+                return {
+                    reps: this.reps,
+                    elbowAngle,
+                    trunkAngle,
+                    feedback: "⚠️ Corpo orizzontale parallelo al suolo rivolto in alto!",
+                    isValidRep: false
+                };
+            }
+
+            if (elbowAngle < 150) {
+                this.holdStartTs = null;
+                this.stableHoldFrames = 0;
+                return {
+                    reps: this.reps,
+                    elbowAngle,
+                    trunkAngle,
+                    feedback: "⚠️ Braccia tese e dorsali attivi!",
+                    isValidRep: false
+                };
+            }
+
+            return this.processHold(now, true, "", this.name);
+        }
+
+        // ============================================================
+        // 15. VERTICALE STATICA (HANDSTAND)
+        // ============================================================
+        else if (this.subType === "handstand_hold") {
+            const isInverted = (ankle.y < hip.y - 0.08) && (hip.y < shoulder.y);
+            if (!isInverted || torsoIncline < 55) {
+                this.holdStartTs = null;
+                this.stableHoldFrames = 0;
+                return {
+                    reps: this.reps,
+                    elbowAngle,
+                    trunkAngle,
+                    feedback: "⚠️ Mettiti in verticale (piedi in alto, bacino sopra le spalle)!",
+                    isValidRep: false
+                };
+            }
+
+            if (elbowAngle < 150) {
+                this.holdStartTs = null;
+                this.stableHoldFrames = 0;
+                return {
+                    reps: this.reps,
+                    elbowAngle,
+                    trunkAngle,
+                    feedback: "⚠️ Distendi completamente i gomiti in alto!",
+                    isValidRep: false
+                };
+            }
+
+            return this.processHold(now, true, "", "Verticale");
+        }
+
+        // ============================================================
+        // 16. L-SIT & V-SIT (VERIFICA PIEDI E BACINO SOSPESI)
+        // ============================================================
+        else if (this.subType === "lsit" || this.subType === "vsit") {
+            if (maxAnkleY >= floorLevel - 0.05) {
+                this.holdStartTs = null;
+                this.stableHoldFrames = 0;
+                return {
+                    reps: this.reps,
+                    elbowAngle,
+                    trunkAngle,
+                    feedback: "⚠️ Talloni a terra! Solleva le gambe tese dal suolo!",
+                    isValidRep: false
+                };
+            }
+
+            if (minHipY >= floorLevel - 0.02) {
+                this.holdStartTs = null;
+                this.stableHoldFrames = 0;
+                return {
+                    reps: this.reps,
+                    elbowAngle,
+                    trunkAngle,
+                    feedback: "⚠️ Bacino a terra! Spingi forte con le braccia verso il basso!",
+                    isValidRep: false
+                };
+            }
+
+            const isVsit = this.subType === "vsit";
+            const isLegsUp = isVsit ? (trunkAngle <= 85 && maxAnkleY <= minHipY) : (kneeAngle >= 138 && trunkAngle <= 122 && maxAnkleY <= minHipY + 0.15);
+
+            if (!isLegsUp) {
+                this.holdStartTs = null;
+                this.stableHoldFrames = 0;
+                return {
+                    reps: this.reps,
+                    elbowAngle,
+                    trunkAngle,
+                    feedback: isVsit ? "⚠️ Chiudi le gambe a V sopra il petto!" : "⚠️ Gambe tese in avanti a 90°!",
+                    isValidRep: false
+                };
+            }
+
+            return this.processHold(now, true, "", this.name);
+        }
+
+        // ============================================================
+        // 17. ALTRE TENUTE ISOMETRICHE (PLANK, HANG, DRAGON FLAG, ECC.)
+        // ============================================================
+        else if (this.mode === "hold") {
+            if (this.subType === "hang_one_arm") {
+                const lUp = lWrist.y < lShoulder.y - 0.08;
+                const rUp = rWrist.y < rShoulder.y - 0.08;
+                if (lUp && rUp) {
+                    this.holdStartTs = null;
+                    this.stableHoldFrames = 0;
+                    return { reps: this.reps, elbowAngle, trunkAngle, feedback: "⚠️ Sospensione a UN braccio! Stacca l'altra mano dalla sbarra!", isValidRep: false };
+                }
+            } else if (this.subType.startsWith("hang")) {
+                const isOverhead = wrist.y < shoulder.y - 0.06;
+                if (!isOverhead) {
+                    this.holdStartTs = null;
+                    this.stableHoldFrames = 0;
+                    return { reps: this.reps, elbowAngle, trunkAngle, feedback: "⚠️ Appenditi alla sbarra con le braccia in alto!", isValidRep: false };
+                }
+            } else if (this.subType === "dragon_flag") {
+                const isLifted = (ankle.y < hip.y + 0.05) && (hip.y < shoulder.y + 0.15);
+                if (!isLifted) {
+                    this.holdStartTs = null;
+                    this.stableHoldFrames = 0;
+                    return { reps: this.reps, elbowAngle, trunkAngle, feedback: "⚠️ Solleva il corpo teso appoggiando solo le scapole!", isValidRep: false };
+                }
+            }
+
+            return this.processHold(now, true, "", this.name);
+        }
+
+        // ============================================================
+        // 18. ESERCIZIO A RIPETIZIONI GENERICO
+        // ============================================================
+        else {
+            return this.processRep(now, elbowAngle, elbowAngle >= 150, elbowAngle <= 95,
+                "✅ Movimento avviato a fondo! Ora distendi forte!",
+                "Distendi completamente le braccia!",
+                this.name
+            );
+        }
+    }
+}
+
 
         // ==========================================
         // VARIABILI GLOBALI POSE SCANNER & AI REFEREE
@@ -8117,50 +8151,201 @@ function getCalisthenicsExpertResponse(query) {
         let poseScannerActiveMode = 'analysis';
         let poseRefereeTargetReps = 0;
         let poseRefereeCallback = null;
+        let poseRefereeTargetReachedAnnounced = false;
         let poseTrackedExercise = 'pushups';
         let poseRepCounter = null;
         let poseVoiceFeedbackEnabled = true;
+        let poseSpeechQueue = [];
+        let poseIsSpeaking = false;
+        let poseSpeechPauseTimer = null;
+        let poseLastSpokenText = "";
+        let poseLastSpokenTime = 0;
+        let poseItalianVoice = null;
+        let poseLastHoldSecondAnnounced = 0;
+        let poseLastFeedbackCuesTime = 0;
+        let poseLastFeedbackCueText = "";
         let poseCurrentFacingMode = 'user';
-        let poseCameraStream = null;
-        let poseInstance = null;
-        let poseAnimationReqId = null;
-        let poseIsProcessingFrame = false;
 
-        function populatePoseExerciseSelect(selectedId) {
-            const selectEl = document.getElementById('pose-exercise-select');
-            if (!selectEl) return;
-            selectEl.innerHTML = '';
-
-            const groups = {
-                "🤸 Spinta / Push": ["pushups", "pushups_knee", "diamond_pushups", "one_arm_pushup", "pseudo_pushups", "clap_pushups", "planche_lean", "tuck_planche", "adv_tuck_planche", "straddle_planche", "full_planche", "maltese"],
-                "🏋️ Trazione / Pull": ["pullups", "one_arm_pullup", "chest_to_bar", "muscle_up", "australian", "tuck_fl", "adv_tuck_fl", "straddle_fl", "full_fl"],
-                "⚡ Dips & Verticali": ["classic_dip", "bar_dips", "bench_dips", "korean_dip", "l_sit", "v_sit", "freestanding_hs", "freestanding_hspu"],
-                "🦵 Gambe / Legs": ["squat", "pistol_squat", "shrimp_squat", "lunges", "jump_squat"],
-                "🧱 Core & Tenute": ["plank", "hollow_body", "dragon_flag", "human_flag", "dead_hang", "one_arm_hang", "leg_raises"]
-            };
-
-            for (const [groupName, skillIds] of Object.entries(groups)) {
-                const optGroup = document.createElement('optgroup');
-                optGroup.label = groupName;
-                skillIds.forEach(id => {
-                    const prof = SKILL_BIOMECHANICS_REGISTRY[id];
-                    if (prof) {
-                        const opt = document.createElement('option');
-                        opt.value = id;
-                        opt.textContent = prof.name + (prof.mode === 'hold' ? ' (Tenuta)' : ' (Reps)');
-                        if (id === selectedId) opt.selected = true;
-                        optGroup.appendChild(opt);
+        // Inizializzazione Voci di Sistema con supporto per lingua Italiana
+        function initPoseVoices() {
+            if (!('speechSynthesis' in window)) return;
+            try {
+                const updateVoices = () => {
+                    const voices = window.speechSynthesis.getVoices();
+                    if (voices && voices.length > 0) {
+                        poseItalianVoice = voices.find(v => v.lang && (v.lang === 'it-IT' || v.lang.toLowerCase().startsWith('it'))) || null;
                     }
-                });
-                selectEl.appendChild(optGroup);
+                };
+                updateVoices();
+                if (window.speechSynthesis.onvoiceschanged !== undefined) {
+                    window.speechSynthesis.onvoiceschanged = updateVoices;
+                }
+            } catch(e) {}
+        }
+        try { initPoseVoices(); } catch(e) {}
+
+        // Sblocco Web Speech AudioContext per browser mobile (iOS Safari, Chrome Android)
+        function unlockPoseAudioSynthesis() {
+            if (!('speechSynthesis' in window)) return;
+            try {
+                if (window.speechSynthesis.paused) {
+                    window.speechSynthesis.resume();
+                }
+                const silentUtterance = new SpeechSynthesisUtterance(' ');
+                silentUtterance.volume = 0.01;
+                silentUtterance.rate = 10;
+                silentUtterance.lang = 'it-IT';
+                window.speechSynthesis.speak(silentUtterance);
+            } catch(e) {}
+        }
+
+        function clearPoseSpeechQueue() {
+            if (poseSpeechPauseTimer) {
+                clearTimeout(poseSpeechPauseTimer);
+                poseSpeechPauseTimer = null;
+            }
+            poseSpeechQueue = [];
+            poseIsSpeaking = false;
+            try {
+                if ('speechSynthesis' in window) {
+                    window.speechSynthesis.cancel();
+                }
+            } catch(e) {}
+        }
+
+        function cleanSpeechText(text) {
+            if (!text) return "";
+            return String(text)
+                .replace(/[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu, '')
+                .replace(/[⚠️✅🔥🎉📐📏🔢🧱⚓🏋️🤸⚡🦵🎪🥇💎🏆🛡️]/g, '')
+                .replace(/(\d+)\s*s\b/gi, (m, n) => parseInt(n) === 1 ? '1 secondo' : (n + ' secondi'))
+                .replace(/(\d+)\s*°/g, '$1 gradi')
+                .replace(/(\d+)\s*rip\b/gi, (m, n) => parseInt(n) === 1 ? '1 ripetizione' : (n + ' ripetizioni'))
+                .replace(/\s+/g, ' ')
+                .replace(/^[:\-\.\s]+|[:\-\.\s]+$/g, '')
+                .trim();
+        }
+
+        function updatePoseHudBanner(rawText) {
+            const banner = document.getElementById('pose-hud-banner');
+            if (banner && banner.innerText !== rawText) {
+                banner.innerText = rawText;
+            }
+            speakPoseFeedback(rawText);
+        }
+
+        function speakPoseFeedback(rawText) {
+            if (!poseVoiceFeedbackEnabled || !('speechSynthesis' in window)) return;
+            const text = cleanSpeechText(rawText);
+            if (!text || text.length < 2) return;
+
+            const now = Date.now();
+            // Evita ripetizioni immediate della stessa frase entro 3.5 secondi
+            if (text === poseLastSpokenText && (now - poseLastSpokenTime < 3500)) {
+                return;
+            }
+            if (poseSpeechQueue.includes(text)) {
+                return;
             }
 
-            if (selectedId && !selectEl.value) {
-                const customOpt = document.createElement('option');
-                customOpt.value = selectedId;
-                customOpt.textContent = selectedId.toUpperCase();
-                customOpt.selected = true;
-                selectEl.prepend(customOpt);
+            const isHighPriority = rawText.includes("⚠️") || rawText.includes("🎉") || rawText.includes("Valido") || rawText.includes("Target") || rawText.includes("Piedi a terra") || rawText.includes("secondi");
+
+            if (isHighPriority) {
+                // Precedenza assoluta ad allarmi e traguardi
+                poseSpeechQueue = poseSpeechQueue.filter(t => t.includes("Valido") || t.includes("Target") || t.includes("second"));
+                poseSpeechQueue.push(text);
+            } else {
+                if (poseSpeechQueue.length < 2) {
+                    poseSpeechQueue.push(text);
+                }
+            }
+
+            if (!poseIsSpeaking && !poseSpeechPauseTimer) {
+                processPoseSpeechQueue();
+            }
+        }
+
+        function processPoseSpeechQueue() {
+            if (!poseVoiceFeedbackEnabled || !('speechSynthesis' in window)) {
+                poseSpeechQueue = [];
+                poseIsSpeaking = false;
+                return;
+            }
+
+            // REQUISITO TASSATIVO 1: Nessuna interruzione a metà frase!
+            if (poseIsSpeaking) {
+                return;
+            }
+
+            // REQUISITO TASSATIVO 2: Pausa di 1 secondo esatto (1000ms) tra le frasi!
+            if (poseSpeechPauseTimer) {
+                return;
+            }
+
+            if (poseSpeechQueue.length === 0) {
+                poseIsSpeaking = false;
+                return;
+            }
+
+            const nextText = poseSpeechQueue.shift();
+            poseIsSpeaking = true;
+
+            try {
+                if (window.speechSynthesis.paused) {
+                    window.speechSynthesis.resume();
+                }
+
+                const u = new SpeechSynthesisUtterance(nextText);
+                u.lang = 'it-IT';
+                u.rate = 1.02;
+                u.pitch = 1.0;
+
+                if (poseItalianVoice) {
+                    u.voice = poseItalianVoice;
+                } else {
+                    const voices = window.speechSynthesis.getVoices();
+                    const it = voices.find(v => v.lang && (v.lang === 'it-IT' || v.lang.toLowerCase().startsWith('it')));
+                    if (it) {
+                        poseItalianVoice = it;
+                        u.voice = it;
+                    }
+                }
+
+                let finishedCalled = false;
+                const onUtteranceComplete = () => {
+                    if (finishedCalled) return;
+                    finishedCalled = true;
+
+                    poseLastSpokenText = nextText;
+                    poseLastSpokenTime = Date.now();
+
+                    // PAUSA DI 1 SECONDO ESATTO PRIMA DELLA PROSSIMA FRASE
+                    if (poseSpeechPauseTimer) clearTimeout(poseSpeechPauseTimer);
+                    poseSpeechPauseTimer = setTimeout(() => {
+                        poseSpeechPauseTimer = null;
+                        poseIsSpeaking = false;
+                        processPoseSpeechQueue();
+                    }, 1000);
+                };
+
+                u.onend = onUtteranceComplete;
+                u.onerror = (err) => {
+                    console.warn("SpeechSynthesis error:", err);
+                    onUtteranceComplete();
+                };
+
+                // Watchdog di sicurezza per evitare blocchi su mobile
+                const maxExpectedMs = Math.max(2500, nextText.length * 115 + 1500);
+                setTimeout(() => {
+                    if (!finishedCalled && poseIsSpeaking) {
+                        onUtteranceComplete();
+                    }
+                }, maxExpectedMs);
+
+                window.speechSynthesis.speak(u);
+            } catch(err) {
+                console.warn("SpeechSynthesis exception:", err);
+                poseIsSpeaking = false;
             }
         }
 
@@ -8168,11 +8353,19 @@ function getCalisthenicsExpertResponse(query) {
             poseScannerActiveMode = options.mode || 'analysis';
             poseRefereeTargetReps = options.targetReps || 0;
             poseRefereeCallback = options.onComplete || null;
+            poseRefereeTargetReachedAnnounced = false;
             const isLocked = !!options.isLocked || (poseScannerActiveMode === 'referee');
 
             const skillProfile = getSkillBiomechanicsProfile(options.skillId || options.exercise, options.skillName || options.exercise);
             poseTrackedExercise = skillProfile.id;
             poseRepCounter = new PoseRepCounterEngine(skillProfile);
+
+            // Reset stato vocale per la nuova sessione
+            poseLastHoldSecondAnnounced = 0;
+            poseLastFeedbackCuesTime = 0;
+            poseLastFeedbackCueText = "";
+            clearPoseSpeechQueue();
+            unlockPoseAudioSynthesis();
 
             const titleEl = document.getElementById('pose-scanner-title');
             const badgeEl = document.getElementById('pose-scanner-badge');
@@ -8220,11 +8413,10 @@ function getCalisthenicsExpertResponse(query) {
 
             const banner = document.getElementById('pose-hud-banner');
             if (banner) {
-                if (isLocked) {
-                    banner.innerText = "Inquadra il corpo intero per verificare: " + skillProfile.name + " (" + (skillProfile.mode === 'hold' ? 'Tenuta isometrica' : 'Ripetizioni ROM 90°') + ")";
-                } else {
-                    banner.innerText = "Inquadra il corpo intero per iniziare l'analisi...";
-                }
+                const initialMsg = isLocked ?
+                    ("Inquadra il corpo intero per verificare: " + skillProfile.name + " (" + (skillProfile.mode === 'hold' ? 'Tenuta' : 'Ripetizioni') + ")") :
+                    ("Inquadra il corpo intero per iniziare l'analisi...");
+                updatePoseHudBanner(initialMsg);
             }
 
             const modal = document.getElementById('pose-scanner-modal');
@@ -8234,6 +8426,7 @@ function getCalisthenicsExpertResponse(query) {
         }
 
         function closePoseScannerModal() {
+            clearPoseSpeechQueue();
             stopPoseCamera();
             const modal = document.getElementById('pose-scanner-modal');
             if (modal) modal.classList.remove('active');
@@ -8248,11 +8441,14 @@ function getCalisthenicsExpertResponse(query) {
         }
 
         function togglePoseVoiceFeedback() {
+            unlockPoseAudioSynthesis();
             poseVoiceFeedbackEnabled = !poseVoiceFeedbackEnabled;
             const btn = document.getElementById('pose-voice-toggle-btn');
             if (btn) btn.innerText = poseVoiceFeedbackEnabled ? "🔊 Voce: ON" : "🔇 Voce: OFF";
             if (poseVoiceFeedbackEnabled) {
                 speakPoseFeedback("Feedback vocale attivato");
+            } else {
+                clearPoseSpeechQueue();
             }
         }
 
@@ -8366,23 +8562,14 @@ function getCalisthenicsExpertResponse(query) {
             poseIsProcessingFrame = false;
         }
 
-        function speakPoseFeedback(text) {
-            if (!poseVoiceFeedbackEnabled || !('speechSynthesis' in window)) return;
-            try {
-                window.speechSynthesis.cancel();
-                const u = new SpeechSynthesisUtterance(text);
-                u.lang = 'it-IT';
-                u.rate = 1.05;
-                window.speechSynthesis.speak(u);
-            } catch(e) {}
-        }
+
 
         function onPoseResults(results, canvas, video) {
             const ctx = canvas.getContext('2d');
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
             if (!results.poseLandmarks) {
-                document.getElementById('pose-hud-banner').innerText = "Inquadra il corpo intero per rilevare le articolazioni...";
+                updatePoseHudBanner("Inquadra il corpo intero per rilevare le articolazioni...");
                 return;
             }
 
@@ -8392,7 +8579,6 @@ function getCalisthenicsExpertResponse(query) {
             const statAngle = document.getElementById('pose-stat-angle');
             const statTrunk = document.getElementById('pose-stat-trunk');
             const statReps = document.getElementById('pose-stat-reps');
-            const banner = document.getElementById('pose-hud-banner');
 
             if (statAngle) statAngle.innerText = `📐 Gomito: ${res.elbowAngle}°`;
             if (statTrunk) statTrunk.innerText = `📏 Busto: ${res.trunkAngle}°`;
@@ -8400,12 +8586,17 @@ function getCalisthenicsExpertResponse(query) {
                 const unit = (poseRepCounter && poseRepCounter.mode === 'hold') ? 's' : '';
                 statReps.innerText = `🔢 ${res.reps} ${unit}`;
             }
-            if (banner && res.feedback) {
-                banner.innerText = res.feedback;
+
+            // Aggiorna sempre il riquadro HUD banner con il messaggio del coach
+            if (res.feedback) {
+                updatePoseHudBanner(res.feedback);
             }
 
-            if (res.isValidRep) {
-                speakPoseFeedback(`Ripetizione ${res.reps}`);
+            // Target raggiunto (duello o obiettivo)
+            if (poseRefereeTargetReps > 0 && res.reps >= poseRefereeTargetReps && !poseRefereeTargetReachedAnnounced) {
+                poseRefereeTargetReachedAnnounced = true;
+                const unit = (poseRepCounter && poseRepCounter.mode === 'hold') ? 'secondi' : 'ripetizioni';
+                updatePoseHudBanner(`🏆 Target raggiunto! ${res.reps} ${unit} convalidati!`);
             }
 
             const connections = [
