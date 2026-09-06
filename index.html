@@ -3107,7 +3107,7 @@
 
 
     <!-- MODALE POSE SCANNER VIDEOCAMERA & AI REFEREE -->
-    <div class="pose-scanner-modal-overlay" id="pose-scanner-modal" onclick="unlockPoseAudioSynthesis()" ontouchstart="unlockPoseAudioSynthesis()">
+    <div class="pose-scanner-modal-overlay" id="pose-scanner-modal">
         <!-- Top bar responsive per mobile: nessun pulsante tagliato! -->
         <div class="pose-scanner-modal-header" style="display:flex; flex-direction:column; gap:6px; max-width:600px; margin:0 auto 8px auto; width:100%; box-sizing:border-box;">
             <!-- Riga 1: Titolo, Badge e Pulsanti Azione in flex container compatto -->
@@ -7113,7 +7113,7 @@ function getCalisthenicsExpertResponse(query) {
             if (!aiResponse) {
                 await new Promise(r => setTimeout(r, 450));
                 aiResponse = getCalisthenicsExpertResponse(query);
-                // Silent fallback senza alcun prefisso di errore
+                // Silent fallback offline coach
             }
 
             const typingToRemove = document.getElementById("ai-typing-indicator");
@@ -8151,7 +8151,6 @@ function getCalisthenicsExpertResponse(query) {
         let poseScannerActiveMode = 'analysis';
         let poseRefereeTargetReps = 0;
         let poseRefereeCallback = null;
-        let poseRefereeTargetReachedAnnounced = false;
         let poseTrackedExercise = 'pushups';
         let poseRepCounter = null;
         let poseVoiceFeedbackEnabled = true;
@@ -8220,18 +8219,10 @@ function getCalisthenicsExpertResponse(query) {
                 .replace(/[⚠️✅🔥🎉📐📏🔢🧱⚓🏋️🤸⚡🦵🎪🥇💎🏆🛡️]/g, '')
                 .replace(/(\d+)\s*s\b/gi, (m, n) => parseInt(n) === 1 ? '1 secondo' : (n + ' secondi'))
                 .replace(/(\d+)\s*°/g, '$1 gradi')
-                .replace(/(\d+)\s*rip\b/gi, (m, n) => parseInt(n) === 1 ? '1 ripetizione' : (n + ' ripetizioni'))
+                .replace(/(\d+)\s*(?:rip|rep)s?\b/gi, (m, n) => parseInt(n) === 1 ? '1 ripetizione' : (n + ' ripetizioni'))
                 .replace(/\s+/g, ' ')
                 .replace(/^[:\-\.\s]+|[:\-\.\s]+$/g, '')
                 .trim();
-        }
-
-        function updatePoseHudBanner(rawText) {
-            const banner = document.getElementById('pose-hud-banner');
-            if (banner && banner.innerText !== rawText) {
-                banner.innerText = rawText;
-            }
-            speakPoseFeedback(rawText);
         }
 
         function speakPoseFeedback(rawText) {
@@ -8240,26 +8231,19 @@ function getCalisthenicsExpertResponse(query) {
             if (!text || text.length < 2) return;
 
             const now = Date.now();
-            // Evita ripetizioni immediate della stessa frase entro 3.5 secondi
-            if (text === poseLastSpokenText && (now - poseLastSpokenTime < 3500)) {
+            // Evita ripetizioni immediate della stessa frase negli ultimi 3 secondi
+            if (text === poseLastSpokenText && (now - poseLastSpokenTime < 3000)) {
                 return;
             }
+            // Evita duplicati identici già presenti in coda
             if (poseSpeechQueue.includes(text)) {
                 return;
             }
 
-            const isHighPriority = rawText.includes("⚠️") || rawText.includes("🎉") || rawText.includes("Valido") || rawText.includes("Target") || rawText.includes("Piedi a terra") || rawText.includes("secondi");
+            // Inserimento in coda sequenziale FIFO
+            poseSpeechQueue.push(text);
 
-            if (isHighPriority) {
-                // Precedenza assoluta ad allarmi e traguardi
-                poseSpeechQueue = poseSpeechQueue.filter(t => t.includes("Valido") || t.includes("Target") || t.includes("second"));
-                poseSpeechQueue.push(text);
-            } else {
-                if (poseSpeechQueue.length < 2) {
-                    poseSpeechQueue.push(text);
-                }
-            }
-
+            // Se non sta già parlando e non è in pausa, elabora la coda
             if (!poseIsSpeaking && !poseSpeechPauseTimer) {
                 processPoseSpeechQueue();
             }
@@ -8272,13 +8256,8 @@ function getCalisthenicsExpertResponse(query) {
                 return;
             }
 
-            // REQUISITO TASSATIVO 1: Nessuna interruzione a metà frase!
+            // REQUISITO CHIAVE: se sta parlando, DEVE PRIMA FINIRE di dire la prima cosa!
             if (poseIsSpeaking) {
-                return;
-            }
-
-            // REQUISITO TASSATIVO 2: Pausa di 1 secondo esatto (1000ms) tra le frasi!
-            if (poseSpeechPauseTimer) {
                 return;
             }
 
@@ -8289,6 +8268,8 @@ function getCalisthenicsExpertResponse(query) {
 
             const nextText = poseSpeechQueue.shift();
             poseIsSpeaking = true;
+            poseLastSpokenText = nextText;
+            poseLastSpokenTime = Date.now();
 
             try {
                 if (window.speechSynthesis.paused) {
@@ -8316,10 +8297,7 @@ function getCalisthenicsExpertResponse(query) {
                     if (finishedCalled) return;
                     finishedCalled = true;
 
-                    poseLastSpokenText = nextText;
-                    poseLastSpokenTime = Date.now();
-
-                    // PAUSA DI 1 SECONDO ESATTO PRIMA DELLA PROSSIMA FRASE
+                    // REQUISITO CHIAVE: pausa di esattamente un secondo prima di dire la seconda cosa!
                     if (poseSpeechPauseTimer) clearTimeout(poseSpeechPauseTimer);
                     poseSpeechPauseTimer = setTimeout(() => {
                         poseSpeechPauseTimer = null;
@@ -8334,8 +8312,8 @@ function getCalisthenicsExpertResponse(query) {
                     onUtteranceComplete();
                 };
 
-                // Watchdog di sicurezza per evitare blocchi su mobile
-                const maxExpectedMs = Math.max(2500, nextText.length * 115 + 1500);
+                // Watchdog di sicurezza per evitare blocchi se onend non dovesse scattare su mobile
+                const maxExpectedMs = Math.max(2500, nextText.length * 110 + 1500);
                 setTimeout(() => {
                     if (!finishedCalled && poseIsSpeaking) {
                         onUtteranceComplete();
@@ -8343,9 +8321,55 @@ function getCalisthenicsExpertResponse(query) {
                 }, maxExpectedMs);
 
                 window.speechSynthesis.speak(u);
-            } catch(err) {
-                console.warn("SpeechSynthesis exception:", err);
+
+            } catch(e) {
+                console.warn("Errore speech:", e);
                 poseIsSpeaking = false;
+                if (poseSpeechQueue.length > 0) {
+                    setTimeout(processPoseSpeechQueue, 1000);
+                }
+            }
+        }
+        let poseCameraStream = null;
+        let poseInstance = null;
+        let poseAnimationReqId = null;
+        let poseIsProcessingFrame = false;
+
+        function populatePoseExerciseSelect(selectedId) {
+            const selectEl = document.getElementById('pose-exercise-select');
+            if (!selectEl) return;
+            selectEl.innerHTML = '';
+
+            const groups = {
+                "🤸 Spinta / Push": ["pushups", "pushups_knee", "diamond_pushups", "one_arm_pushup", "pseudo_pushups", "clap_pushups", "planche_lean", "tuck_planche", "adv_tuck_planche", "straddle_planche", "full_planche", "maltese"],
+                "🏋️ Trazione / Pull": ["pullups", "one_arm_pullup", "chest_to_bar", "muscle_up", "australian", "tuck_fl", "adv_tuck_fl", "straddle_fl", "full_fl"],
+                "⚡ Dips & Verticali": ["classic_dip", "bar_dips", "bench_dips", "korean_dip", "l_sit", "v_sit", "freestanding_hs", "freestanding_hspu"],
+                "🦵 Gambe / Legs": ["squat", "pistol_squat", "shrimp_squat", "lunges", "jump_squat"],
+                "🧱 Core & Tenute": ["plank", "hollow_body", "dragon_flag", "human_flag", "dead_hang", "one_arm_hang", "leg_raises"]
+            };
+
+            for (const [groupName, skillIds] of Object.entries(groups)) {
+                const optGroup = document.createElement('optgroup');
+                optGroup.label = groupName;
+                skillIds.forEach(id => {
+                    const prof = SKILL_BIOMECHANICS_REGISTRY[id];
+                    if (prof) {
+                        const opt = document.createElement('option');
+                        opt.value = id;
+                        opt.textContent = prof.name + (prof.mode === 'hold' ? ' (Tenuta)' : ' (Reps)');
+                        if (id === selectedId) opt.selected = true;
+                        optGroup.appendChild(opt);
+                    }
+                });
+                selectEl.appendChild(optGroup);
+            }
+
+            if (selectedId && !selectEl.value) {
+                const customOpt = document.createElement('option');
+                customOpt.value = selectedId;
+                customOpt.textContent = selectedId.toUpperCase();
+                customOpt.selected = true;
+                selectEl.prepend(customOpt);
             }
         }
 
@@ -8353,7 +8377,6 @@ function getCalisthenicsExpertResponse(query) {
             poseScannerActiveMode = options.mode || 'analysis';
             poseRefereeTargetReps = options.targetReps || 0;
             poseRefereeCallback = options.onComplete || null;
-            poseRefereeTargetReachedAnnounced = false;
             const isLocked = !!options.isLocked || (poseScannerActiveMode === 'referee');
 
             const skillProfile = getSkillBiomechanicsProfile(options.skillId || options.exercise, options.skillName || options.exercise);
@@ -8413,16 +8436,17 @@ function getCalisthenicsExpertResponse(query) {
 
             const banner = document.getElementById('pose-hud-banner');
             if (banner) {
-                const initialMsg = isLocked ?
-                    ("Inquadra il corpo intero per verificare: " + skillProfile.name + " (" + (skillProfile.mode === 'hold' ? 'Tenuta' : 'Ripetizioni') + ")") :
-                    ("Inquadra il corpo intero per iniziare l'analisi...");
-                updatePoseHudBanner(initialMsg);
+                if (isLocked) {
+                    banner.innerText = "Inquadra il corpo intero per verificare: " + skillProfile.name + " (" + (skillProfile.mode === 'hold' ? 'Tenuta isometrica' : 'Ripetizioni ROM 90°') + ")";
+                } else {
+                    banner.innerText = "Inquadra il corpo intero per iniziare l'analisi...";
+                }
             }
 
             const modal = document.getElementById('pose-scanner-modal');
             if (modal) modal.classList.add('active');
 
-            await startPoseCamera();
+            try { await startPoseCamera(); } catch(camErr) { console.error("Errore apertura videocamera:", camErr); }
         }
 
         function closePoseScannerModal() {
@@ -8468,7 +8492,7 @@ function getCalisthenicsExpertResponse(query) {
 
             if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
                 if (banner) {
-                    banner.innerHTML = "⚠️ Fotocamera non disponibile.<br><small>Se utilizzi file://, apri la pagina tramite un server web locale o consenti la videocamera nel browser.</small>";
+                    banner.innerHTML = "⚠️ Fotocamera non disponibile nel browser.<br><small>Assicurati di usare HTTPS o un server locale e di aver concesso i permessi per la videocamera.</small>";
                 }
                 return;
             }
@@ -8497,19 +8521,40 @@ function getCalisthenicsExpertResponse(query) {
                 video.playsInline = true;
                 video.setAttribute('playsinline', '');
                 video.setAttribute('webkit-playsinline', '');
-                await video.play();
+
+                try {
+                    await video.play();
+                } catch(playErr) {
+                    console.warn("video.play() rejected, waiting for onloadedmetadata:", playErr);
+                    await new Promise(resolve => {
+                        video.onloadedmetadata = () => {
+                            video.play().catch(() => {});
+                            resolve();
+                        };
+                        setTimeout(resolve, 800);
+                    });
+                }
 
                 canvas.width = video.videoWidth || 640;
                 canvas.height = video.videoHeight || 480;
 
                 if (typeof Pose === 'undefined') {
-                    if (banner) banner.innerText = "Caricamento librerie AI MediaPipe in corso... Inquadrati!";
+                    if (banner) banner.innerText = "Caricamento intelligenza artificiale MediaPipe in corso...";
+                    let retries = 0;
+                    while (typeof Pose === 'undefined' && retries < 20 && poseCameraStream) {
+                        await new Promise(r => setTimeout(r, 500));
+                        retries++;
+                    }
+                }
+
+                if (typeof Pose === 'undefined') {
+                    if (banner) banner.innerText = "⚠️ Impossibile caricare MediaPipe AI. Verifica la connessione internet.";
                     return;
                 }
 
                 if (!poseInstance) {
                     poseInstance = new Pose({
-                        locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`
+                        locateFile: (file) => "https://cdn.jsdelivr.net/npm/@mediapipe/pose/" + file
                     });
                     poseInstance.setOptions({
                         modelComplexity: 1,
@@ -8543,7 +8588,7 @@ function getCalisthenicsExpertResponse(query) {
             } catch(err) {
                 console.error("Errore avvio fotocamera MediaPipe:", err);
                 if (banner) {
-                    banner.innerHTML = `⚠️ Videocamera non consentita: ${err.message || err.name}.`;
+                    banner.innerHTML = "⚠️ Errore videocamera: " + (err.message || err.name) + ".<br><small>Verifica i permessi della videocamera nel browser.</small>";
                 }
             }
         }
@@ -8569,7 +8614,7 @@ function getCalisthenicsExpertResponse(query) {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
             if (!results.poseLandmarks) {
-                updatePoseHudBanner("Inquadra il corpo intero per rilevare le articolazioni...");
+                document.getElementById('pose-hud-banner').innerText = "Inquadra il corpo intero per rilevare le articolazioni...";
                 return;
             }
 
@@ -8579,6 +8624,7 @@ function getCalisthenicsExpertResponse(query) {
             const statAngle = document.getElementById('pose-stat-angle');
             const statTrunk = document.getElementById('pose-stat-trunk');
             const statReps = document.getElementById('pose-stat-reps');
+            const banner = document.getElementById('pose-hud-banner');
 
             if (statAngle) statAngle.innerText = `📐 Gomito: ${res.elbowAngle}°`;
             if (statTrunk) statTrunk.innerText = `📏 Busto: ${res.trunkAngle}°`;
@@ -8586,17 +8632,42 @@ function getCalisthenicsExpertResponse(query) {
                 const unit = (poseRepCounter && poseRepCounter.mode === 'hold') ? 's' : '';
                 statReps.innerText = `🔢 ${res.reps} ${unit}`;
             }
-
-            // Aggiorna sempre il riquadro HUD banner con il messaggio del coach
-            if (res.feedback) {
-                updatePoseHudBanner(res.feedback);
+            if (banner && res.feedback) {
+                banner.innerText = res.feedback;
             }
 
-            // Target raggiunto (duello o obiettivo)
-            if (poseRefereeTargetReps > 0 && res.reps >= poseRefereeTargetReps && !poseRefereeTargetReachedAnnounced) {
-                poseRefereeTargetReachedAnnounced = true;
-                const unit = (poseRepCounter && poseRepCounter.mode === 'hold') ? 'secondi' : 'ripetizioni';
-                updatePoseHudBanner(`🏆 Target raggiunto! ${res.reps} ${unit} convalidati!`);
+            // 1. Ripetizioni validate (Push-up, Pull-up, Dip, Squat, ecc.)
+            if (res.isValidRep) {
+                if (poseRefereeTargetReps > 0 && res.reps >= poseRefereeTargetReps) {
+                    speakPoseFeedback(`Target raggiunto! ${res.reps} ripetizioni.`);
+                } else {
+                    speakPoseFeedback(`Ripetizione ${res.reps}`);
+                }
+            }
+
+            // 2. Tenute isometriche (Planche, Front Lever, L-Sit, Handstand, Plank, ecc.)
+            if (poseRepCounter && poseRepCounter.mode === 'hold' && res.reps > poseLastHoldSecondAnnounced) {
+                poseLastHoldSecondAnnounced = res.reps;
+                if (poseRefereeTargetReps > 0 && res.reps >= poseRefereeTargetReps) {
+                    speakPoseFeedback(`Target raggiunto! ${res.reps} secondi.`);
+                } else {
+                    speakPoseFeedback(`${res.reps} ${res.reps === 1 ? 'secondo' : 'secondi'}`);
+                }
+            }
+
+            // 3. Feedback posturale correttivo in tempo reale
+            if (res.feedback) {
+                const isWarning = res.feedback.includes("⚠️");
+                const isCheer = res.feedback.includes("✅") || res.feedback.includes("🔥");
+                if (isWarning || isCheer) {
+                    const cleanCue = cleanSpeechText(res.feedback);
+                    const now = Date.now();
+                    if (cleanCue && cleanCue !== poseLastFeedbackCueText && (now - poseLastFeedbackCuesTime >= 3500)) {
+                        poseLastFeedbackCueText = cleanCue;
+                        poseLastFeedbackCuesTime = now;
+                        speakPoseFeedback(cleanCue);
+                    }
+                }
             }
 
             const connections = [
