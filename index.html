@@ -2062,15 +2062,25 @@
             width: 100%;
             height: 100%;
             object-fit: cover;
-            transform: scaleX(-1);
+            transform: none;
+            -webkit-transform: none;
+            transition: transform 0.15s ease;
         }
         .pose-viewport-container canvas {
             position: absolute;
             width: 100%;
             height: 100%;
             object-fit: cover;
-            transform: scaleX(-1);
+            transform: none;
+            -webkit-transform: none;
             pointer-events: none;
+            transition: transform 0.15s ease;
+        }
+        /* Solo la fotocamera frontale (selfie) è specchiata; la fotocamera posteriore esterna rimane naturale! */
+        .pose-viewport-container.mirrored video,
+        .pose-viewport-container.mirrored canvas {
+            transform: scaleX(-1);
+            -webkit-transform: scaleX(-1);
         }
         .pose-hud-top {
             position: absolute;
@@ -3118,7 +3128,7 @@
                 </div>
                 <div style="display:flex; align-items:center; gap:6px; flex-shrink:0;">
                     <button id="pose-voice-toggle-btn" onclick="togglePoseVoiceFeedback()" style="background:rgba(255,255,255,0.08); border:1px solid var(--line-color); color:var(--text); border-radius:8px; padding:5px 8px; font-size:0.78rem; font-weight:600; cursor:pointer; white-space:nowrap; display:flex; align-items:center; gap:4px;" title="Attiva/Disattiva feedback vocale">🔊 Voce: ON</button>
-                    <button onclick="flipPoseCameraDirection()" style="background:rgba(255,255,255,0.08); border:1px solid var(--line-color); color:var(--text); border-radius:8px; padding:5px 8px; font-size:0.85rem; cursor:pointer;" title="Inverti fotocamera">🔄</button>
+                    <button id="pose-flip-camera-btn" onclick="flipPoseCameraDirection()" style="background:rgba(255,255,255,0.08); border:1px solid var(--line-color); color:var(--text); border-radius:8px; padding:5px 8px; font-size:0.85rem; cursor:pointer;" title="Inverti fotocamera (Frontale / Posteriore)">🔄</button>
                     <button onclick="closePoseScannerModal()" style="background:none; border:none; color:var(--text); font-size:1.3rem; line-height:1; cursor:pointer; padding:2px 6px;" title="Chiudi">✕</button>
                 </div>
             </div>
@@ -3139,7 +3149,7 @@
             </div>
         </div>
 
-        <div class="pose-viewport-container" id="pose-viewport-container">
+        <div class="pose-viewport-container mirrored" id="pose-viewport-container">
             <video id="pose-camera-video" playsinline autoplay muted></video>
             <canvas id="pose-overlay-canvas"></canvas>
 
@@ -8749,6 +8759,7 @@ function getCalisthenicsExpertResponse(query) {
             poseLastFeedbackCueText = "";
             clearPoseSpeechQueue();
             unlockPoseAudioSynthesis();
+            updateCameraMirroring();
 
             const titleEl = document.getElementById('pose-scanner-title');
             const badgeEl = document.getElementById('pose-scanner-badge');
@@ -8836,13 +8847,44 @@ function getCalisthenicsExpertResponse(query) {
             }
         }
 
+        function updateCameraMirroring() {
+            const container = document.getElementById('pose-viewport-container');
+            const video = document.getElementById('pose-camera-video');
+            const canvas = document.getElementById('pose-overlay-canvas');
+            const flipBtn = document.getElementById('pose-flip-camera-btn');
+            const isFront = (poseCurrentFacingMode === 'user');
+
+            if (container) {
+                if (isFront) {
+                    container.classList.add('mirrored');
+                } else {
+                    container.classList.remove('mirrored');
+                }
+            }
+            if (video) {
+                video.style.transform = isFront ? 'scaleX(-1)' : 'none';
+                video.style.webkitTransform = isFront ? 'scaleX(-1)' : 'none';
+            }
+            if (canvas) {
+                canvas.style.transform = isFront ? 'scaleX(-1)' : 'none';
+                canvas.style.webkitTransform = isFront ? 'scaleX(-1)' : 'none';
+            }
+            if (flipBtn) {
+                flipBtn.title = isFront
+                    ? "Fotocamera Frontale (Specchiata) - Clicca per passare alla fotocamera posteriore"
+                    : "Fotocamera Posteriore (Naturale) - Clicca per passare alla fotocamera frontale";
+            }
+        }
+
         function flipPoseCameraDirection() {
             poseCurrentFacingMode = (poseCurrentFacingMode === 'user') ? 'environment' : 'user';
+            updateCameraMirroring();
             startPoseCamera();
         }
 
         async function startPoseCamera() {
             stopPoseCamera();
+            updateCameraMirroring();
             const video = document.getElementById('pose-camera-video');
             const canvas = document.getElementById('pose-overlay-canvas');
             const banner = document.getElementById('pose-hud-banner');
@@ -8970,6 +9012,12 @@ function getCalisthenicsExpertResponse(query) {
 
 
         function onPoseResults(results, canvas, video) {
+            if (video && video.videoWidth && video.videoHeight) {
+                if (canvas.width !== video.videoWidth || canvas.height !== video.videoHeight) {
+                    canvas.width = video.videoWidth;
+                    canvas.height = video.videoHeight;
+                }
+            }
             const ctx = canvas.getContext('2d');
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
