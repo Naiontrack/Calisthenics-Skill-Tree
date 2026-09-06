@@ -1256,39 +1256,55 @@
         }
 
         /* ===============================================================
-           AI HELPER CHAT SLEEK REDESIGN
+           AI HELPER CHAT HEADER BAR & BUTTONS
            =============================================================== */
         .ai-helper-header-bar {
             display: flex;
+            align-items: center;
+            justify-content: space-between;
             gap: 8px;
             padding: 8px 12px;
+            background: var(--card-bg, #1a2332);
             border-bottom: 1px solid var(--line-color);
-            background: rgba(0, 0, 0, 0.25);
             flex-shrink: 0;
-            overflow-x: auto;
-            scrollbar-width: none;
-        }
-        .ai-helper-header-bar::-webkit-scrollbar {
-            display: none;
+            box-sizing: border-box;
+            width: 100%;
+            z-index: 5;
         }
         .ai-helper-chip-btn {
-            background: rgba(56, 189, 248, 0.1);
+            flex: 1;
+            min-width: 0;
+            background: rgba(56, 189, 248, 0.12);
             border: 1px solid rgba(56, 189, 248, 0.3);
             color: var(--accent);
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: 600;
-            white-space: nowrap;
+            font-size: 0.78rem;
+            font-weight: 700;
+            padding: 7px 8px;
+            border-radius: 999px;
             cursor: pointer;
             display: inline-flex;
             align-items: center;
+            justify-content: center;
             gap: 5px;
+            white-space: nowrap;
             transition: all 0.2s ease;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+            text-decoration: none;
+            box-sizing: border-box;
         }
         .ai-helper-chip-btn:hover {
-            background: rgba(56, 189, 248, 0.2);
+            background: rgba(56, 189, 248, 0.22);
+            border-color: var(--accent);
             transform: translateY(-1px);
+        }
+        .ai-helper-chip-btn.ai-helper-chip-clear {
+            color: #ef4444;
+            border-color: rgba(239, 68, 68, 0.35);
+            background: rgba(239, 68, 68, 0.1);
+        }
+        .ai-helper-chip-btn.ai-helper-chip-clear:hover {
+            background: rgba(239, 68, 68, 0.2);
+            border-color: #ef4444;
         }
         .ai-chat-thread {
             display: flex;
@@ -2007,40 +2023,6 @@
         /* ========================================== */
         /* AI HELPER & POSE SCANNER VIDEOCAMERA      */
         /* ========================================== */
-        .ai-helper-header-bar {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 8px 10px;
-            background: var(--card-bg, #1a2332);
-            border-bottom: 1px solid var(--line-color);
-            position: sticky;
-            top: 0;
-            z-index: 5;
-            flex-wrap: wrap;
-            justify-content: flex-start;
-        }
-        .ai-helper-chip-btn {
-            background: rgba(56, 189, 248, 0.14);
-            border: 1px solid rgba(56, 189, 248, 0.3);
-            color: var(--accent);
-            font-size: 0.82rem;
-            font-weight: 700;
-            padding: 7px 12px;
-            border-radius: 999px;
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            transition: all 0.2s ease;
-            flex-shrink: 0;
-            white-space: normal;
-            text-align: center;
-            box-sizing: border-box;
-        }
-        .ai-helper-chip-btn:hover {
-            background: rgba(56, 189, 248, 0.25);
-        }
         .ai-suggested-prompts {
             display: flex;
             flex-direction: column;
@@ -3302,6 +3284,14 @@
             <span id="chat-thread-title"></span>
             <button class="chat-thread-poll-btn" id="chat-thread-poll-btn" onclick="openGroupPollsModal()" title="Sondaggi del gruppo" style="display:none; background:none; border:none; color:var(--text); font-size:1.15rem; cursor:pointer; padding:4px 8px; border-radius:8px; margin-right:4px;">📊</button>
             <button class="chat-thread-menu-btn" id="chat-thread-menu-btn" onclick="openConversationOptionsModal()" title="Opzioni chat">⋮</button>
+        </div>
+        <div class="ai-helper-header-bar" id="ai-helper-header-bar" style="display:none;">
+            <button type="button" class="ai-helper-chip-btn" onclick="openPoseScannerModal({ mode: 'analysis' })">
+                📷 Scanner Movimenti
+            </button>
+            <button type="button" class="ai-helper-chip-btn ai-helper-chip-clear" onclick="clearAiChatHistory()">
+                🗑️ Pulisci Chat
+            </button>
         </div>
         <div class="chat-messages" id="chat-messages">
             <p style="color: var(--subtext); text-align:center; font-size:0.85rem;">Apri la chat per vedere i messaggi...</p>
@@ -5184,6 +5174,8 @@ let currentUser = null;
                 activeConversationId = null;
                 activeConversationData = null;
                 document.getElementById('chat-thread-header').style.display = 'none';
+                const aiHeaderBarAuth = document.getElementById('ai-helper-header-bar');
+                if (aiHeaderBarAuth) aiHeaderBarAuth.style.display = 'none';
                 document.getElementById('chat-tab-general').classList.add('active');
                 document.getElementById('chat-tab-private').classList.remove('active');
                 document.getElementById('chat-panel-title').innerText = '💬 Chat Generale';
@@ -6667,10 +6659,8 @@ let currentUser = null;
 
             const containerRect = container.getBoundingClientRect();
             const targetRect = targetEl.getBoundingClientRect();
-            const headerEl = container.querySelector(".ai-helper-header-bar");
-            const headerHeight = headerEl ? headerEl.offsetHeight : 0;
 
-            const targetTop = Math.max(0, (targetRect.top - containerRect.top) + container.scrollTop - headerHeight - 8);
+            const targetTop = Math.max(0, (targetRect.top - containerRect.top) + container.scrollTop - 4);
             if (typeof container.scrollTo === "function") {
                 container.scrollTo({
                     top: targetTop,
@@ -6684,6 +6674,9 @@ let currentUser = null;
         function renderAiHelperView(skipLoad = false, alignMsgId = null) {
             const container = document.getElementById("chat-messages");
             if (!container) return;
+            const aiHeaderBar = document.getElementById("ai-helper-header-bar");
+            if (aiHeaderBar) aiHeaderBar.style.display = "flex";
+
             if (!skipLoad && (!aiChatMessages || aiChatMessages.length === 0)) {
                 loadAiChatHistory();
             }
@@ -6711,15 +6704,6 @@ let currentUser = null;
             });
 
             container.innerHTML = `
-                <div class="ai-helper-header-bar">
-                    <button class="ai-helper-chip-btn" onclick="openPoseScannerModal({ mode: 'analysis' })">
-                        📷 Scanner Movimenti
-                    </button>
-                    <button class="ai-helper-chip-btn" onclick="clearAiChatHistory()" style="color:#ef4444; border-color:rgba(239,68,68,0.3);">
-                        🗑️ Pulisci Chat
-                    </button>
-                </div>
-
                 <div class="ai-chat-thread" id="ai-chat-thread">
                     ${messagesHtml}
                     
@@ -9618,6 +9602,7 @@ function getCalisthenicsExpertResponse(query) {
 
             const titleEl = document.getElementById('chat-panel-title');
             const threadHeader = document.getElementById('chat-thread-header');
+            const aiHeaderBar = document.getElementById('ai-helper-header-bar');
             const tabGeneral = document.getElementById('chat-tab-general');
             const tabPrivate = document.getElementById('chat-tab-private');
             const pollBtn = document.getElementById('chat-thread-poll-btn');
@@ -9629,6 +9614,7 @@ function getCalisthenicsExpertResponse(query) {
                 activeConversationId = null;
                 activeConversationData = null;
                 threadHeader.style.display = 'none';
+                if (aiHeaderBar) aiHeaderBar.style.display = 'none';
                 titleEl.innerText = '💬 Chat Generale';
                 tabGeneral.classList.add('active');
                 tabPrivate.classList.remove('active');
@@ -9638,6 +9624,7 @@ function getCalisthenicsExpertResponse(query) {
                 activeConversationId = null;
                 activeConversationData = null;
                 threadHeader.style.display = 'none';
+                if (aiHeaderBar) aiHeaderBar.style.display = 'flex';
                 titleEl.innerText = '🤖 AI Helper Coach';
                 tabGeneral.classList.remove('active');
                 tabPrivate.classList.remove('active');
@@ -9650,6 +9637,7 @@ function getCalisthenicsExpertResponse(query) {
                 activeConversationId = null;
                 activeConversationData = null;
                 threadHeader.style.display = 'none';
+                if (aiHeaderBar) aiHeaderBar.style.display = 'none';
                 titleEl.innerText = '👤 Chat Private';
                 tabGeneral.classList.remove('active');
                 tabPrivate.classList.add('active');
@@ -10438,6 +10426,8 @@ function getCalisthenicsExpertResponse(query) {
                                 activeConversationId = null;
                                 activeConversationData = null;
                                 document.getElementById('chat-thread-header').style.display = 'none';
+                                const aiHeaderBarRemoved = document.getElementById('ai-helper-header-bar');
+                                if (aiHeaderBarRemoved) aiHeaderBarRemoved.style.display = 'none';
                                 const pollBtn = document.getElementById('chat-thread-poll-btn');
                                 if (pollBtn) pollBtn.style.display = 'none';
                                 renderChatInputState();
@@ -10596,6 +10586,8 @@ function getCalisthenicsExpertResponse(query) {
             activeConversationData = null;
 
             document.getElementById('chat-thread-header').style.display = 'flex';
+            const aiHeaderBarConv = document.getElementById('ai-helper-header-bar');
+            if (aiHeaderBarConv) aiHeaderBarConv.style.display = 'none';
             document.getElementById('chat-thread-title').innerText = '...';
             document.getElementById('chat-messages').innerHTML = `<p style="color: var(--subtext); text-align:center; font-size:0.85rem;">Caricamento...</p>`;
 
@@ -10638,6 +10630,8 @@ function getCalisthenicsExpertResponse(query) {
             activeConversationId = null;
             activeConversationData = null;
             document.getElementById('chat-thread-header').style.display = 'none';
+            const aiHeaderBarBack = document.getElementById('ai-helper-header-bar');
+            if (aiHeaderBarBack) aiHeaderBarBack.style.display = 'none';
             const pollBtn = document.getElementById('chat-thread-poll-btn');
             if (pollBtn) pollBtn.style.display = 'none';
             renderChatInputState();
