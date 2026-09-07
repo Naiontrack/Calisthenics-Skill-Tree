@@ -3659,33 +3659,36 @@
         .tree-exit-fullscreen-btn {
             display: none;
             position: absolute;
-            top: 14px;
-            right: 14px;
+            top: max(24px, calc(env(safe-area-inset-top, 0px) + 16px));
+            left: 50%;
+            transform: translateX(-50%);
             z-index: 50;
-            padding: 7px 16px;
-            background: rgba(15, 23, 42, 0.92);
+            padding: 8px 18px;
+            background: rgba(15, 23, 42, 0.94);
             border: 1.5px solid var(--accent);
             color: #ffffff;
-            font-size: 0.84rem;
+            font-size: 0.85rem;
             font-weight: 700;
             border-radius: 999px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5), 0 0 12px rgba(56, 189, 248, 0.3);
+            box-shadow: 0 4px 22px rgba(0, 0, 0, 0.55), 0 0 14px rgba(56, 189, 248, 0.35);
             cursor: pointer;
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
             transition: all 0.2s ease;
             align-items: center;
-            gap: 6px;
+            justify-content: center;
+            gap: 7px;
+            white-space: nowrap;
         }
 
         body.theme-light .tree-exit-fullscreen-btn {
-            background: rgba(255, 255, 255, 0.95);
+            background: rgba(255, 255, 255, 0.96);
             color: #0f172a;
             border-color: var(--accent);
         }
 
         .tree-exit-fullscreen-btn:hover {
-            transform: scale(1.04);
+            transform: translateX(-50%) scale(1.04);
             background: var(--accent);
             color: #000000;
         }
@@ -3695,22 +3698,33 @@
             animation: fadeIn 0.2s ease;
         }
 
+        .tree-fullscreen-mode .tree-legend-hud {
+            top: auto;
+            bottom: max(20px, calc(env(safe-area-inset-bottom, 0px) + 14px));
+            left: 16px;
+        }
+
+        .tree-fullscreen-mode .tree-zoom-hud {
+            bottom: max(20px, calc(env(safe-area-inset-bottom, 0px) + 14px));
+            right: 16px;
+        }
+
         @media (max-width: 500px) {
             .tree-exit-fullscreen-btn {
-                padding: 6px 12px;
+                padding: 7px 14px;
                 font-size: 0.8rem;
-                top: 12px;
-                right: 12px;
-            }
-            .tree-exit-fullscreen-btn .desktop-only-text {
-                display: none;
+                top: max(20px, calc(env(safe-area-inset-top, 0px) + 14px));
             }
             .tree-fullscreen-mode .tree-legend-hud {
-                top: 52px;
+                bottom: max(16px, calc(env(safe-area-inset-bottom, 0px) + 10px));
                 left: 12px;
                 gap: 8px;
-                padding: 4px 10px;
+                padding: 5px 10px;
                 font-size: 0.68rem;
+            }
+            .tree-fullscreen-mode .tree-zoom-hud {
+                bottom: max(16px, calc(env(safe-area-inset-bottom, 0px) + 10px));
+                right: 12px;
             }
         }
 
@@ -3919,10 +3933,7 @@
             transition: top 0.2s ease, left 0.2s ease;
         }
 
-        .tree-fullscreen-mode .tree-legend-hud {
-            top: 56px;
-            left: 14px;
-        }
+        
 
         @media (max-width: 500px) {
             .tree-legend-hud {
@@ -4612,7 +4623,7 @@
                     <button type="button" class="tree-hud-btn" onclick="zoomSkillTree(0.8)" title="Rimpicciolisci">−</button>
                     <button type="button" class="tree-hud-btn" id="btn-tree-fullscreen" onclick="toggleSkillTreeFullscreen()" title="Schermo Intero / Ingrandisci Albero" aria-label="Schermo Intero">⛶</button>
                 </div>
-                <button type="button" class="tree-exit-fullscreen-btn" id="btn-tree-exit-fullscreen" onclick="toggleSkillTreeFullscreen()" title="Esci da Schermo Intero" aria-label="Esci da Schermo Intero"><span style="font-weight:900;">✕</span> <span>Esci</span><span class="desktop-only-text"> Schermo Intero</span></button>
+                <button type="button" class="tree-exit-fullscreen-btn" id="btn-tree-exit-fullscreen" onclick="toggleSkillTreeFullscreen()" title="Esci da Schermo Intero" aria-label="Esci da Schermo Intero"><span style="font-weight:900; font-size:1rem;">✕</span> <span>Esci da Schermo Intero</span></button>
                 <div class="tree-legend-hud">
                     <span class="tree-legend-item"><span class="legend-dot locked"></span> Bloccata</span>
                     <span class="tree-legend-item"><span class="legend-dot available"></span> Sbloccabile</span>
@@ -8092,7 +8103,7 @@ let currentUser = null;
                                 <button class="ai-verify-btn" title="Verifica record con AI Referee (anti-cheat)" onclick="event.stopPropagation(); startSkillRecordAiReferee('${skill.id}')" style="background:rgba(56,189,248,0.15); border:1px solid var(--accent); color:var(--accent); padding:4px 8px; border-radius:6px; font-size:0.75rem; font-weight:bold; cursor:pointer;">📹 AI</button>
                                 
                             ` : `
-                                <button class="unlock-btn" onclick="event.stopPropagation(); askUnlock('${skill.id}')">🔓 Sblocca</button>
+                                <button class="unlock-btn" onclick="event.stopPropagation(); askUnlock('${skill.id}')">🔓 Sblocca (+${skill.unlockXp || 100} XP)</button>
                             `}
                         </div>
                     `;
@@ -8628,6 +8639,11 @@ let currentUser = null;
             const skill = findSkillById(id);
             if (!skill) return;
 
+            const isHold = (skill.type === 'sec');
+            const unitLabel = isHold ? 'secondi di tenuta' : 'ripetizioni';
+            const minTarget = skill.baseTarget || (isHold ? 3 : 1);
+            const xpReward = skill.unlockXp || (skill.goalBonusXp || 100);
+
             if (!isSkillPrerequisitesMet(id)) {
                 const missing = getMissingPrerequisitesNames(id);
                 openCustomModal(
@@ -8645,10 +8661,11 @@ let currentUser = null;
             }
 
             openCustomModal(
-                "🎉 Sblocca Skill con AI Referee",
-                `Vuoi sbloccare <strong>"${escapeHtml(skill.name)}"</strong> per <strong style="color: var(--accent);">+${skill.unlockXp} XP</strong>?<br><br>` +
-                `🛡️ <strong>Anti-Cheat AI Referee</strong>: per garantire la lealtà e prevenire il cheating, posizionati davanti alla videocamera.<br>L'AI analizzerà le tue articolazioni in tempo reale e convaliderà la ripetizione a ROM completo per sbloccare la skill!`,
-                "📹 Verifica con AI Referee",
+                `🎉 Sblocca Skill con AI Referee (+${xpReward} XP)`,
+                `Vuoi sbloccare <strong>"${escapeHtml(skill.name)}"</strong> per guadagnare subito <span style="color: var(--accent); font-size: 1.25rem; font-weight: 900;">+${xpReward} XP</span>?<br><br>` +
+                `🎯 <strong>Obiettivo</strong>: esegui almeno <strong>${minTarget} ${unitLabel}</strong> con forma impeccabile.<br><br>` +
+                `🛡️ <strong>Anti-Cheat AI Referee</strong>: posizionati davanti alla videocamera. L'AI analizzerà le tue articolazioni in tempo reale e convaliderà il ROM completo per sbloccare la skill!`,
+                `📹 Avvia AI Referee (+${xpReward} XP)`,
                 false,
                 () => {
                     startSkillUnlockAiReferee(id);
@@ -18206,12 +18223,20 @@ function getCalisthenicsExpertResponse(query) {
             const backdrop = document.getElementById('skill-detail-drawer-backdrop');
             if (!drawer || !backdrop) return;
 
-            const isUnlocked = userState[skillId] && userState[skillId].unlocked;
+            const userSkillData = userState[skillId] || {};
+            const isUnlocked = !!userSkillData.unlocked;
             const isPrereqMet = isSkillPrerequisitesMet(skillId);
             const missingPrereqs = getMissingPrerequisitesNames(skillId);
-            const userSkillData = userState[skillId] || {};
-            const reps = userSkillData.reps || userSkillData.seconds || 0;
+
+            const isHold = (skill.type === 'sec');
+            const unitLabel = isHold ? 'secondi di hold' : 'ripetizioni';
+            const unitShort = isHold ? 'sec' : 'reps';
+            const currentVal = (userSkillData.val !== undefined)
+                ? userSkillData.val
+                : (isUnlocked ? (skill.baseTarget || 1) : 0);
             const level = userSkillData.level || (isUnlocked ? 1 : 0);
+            const xpReward = skill.unlockXp || (skill.goalBonusXp || 100);
+            const minTarget = skill.baseTarget || (isHold ? 3 : 1);
 
             const stickman = (typeof skillStickmen !== 'undefined' && skillStickmen[skillId]) ||
                 `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="8" fill="none"><circle cx="50" cy="30" r="14"/><line x1="50" y1="44" x2="50" y2="70"/><line x1="28" y1="52" x2="72" y2="52"/><line x1="50" y1="70" x2="35" y2="92"/><line x1="50" y1="70" x2="65" y2="92"/></svg>`;
@@ -18252,29 +18277,71 @@ function getCalisthenicsExpertResponse(query) {
                 `;
             }
 
+            let statCardHtml = '';
             let actionButtonsHtml = '';
-            if (!isUnlocked) {
+
+            if (isUnlocked) {
+                statCardHtml = `
+                    <div style="background: rgba(16, 185, 129, 0.12); border: 1.5px solid var(--unlocked); border-radius: 14px; padding: 14px 18px; margin: 14px 0; display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+                        <div>
+                            <div style="font-size: 0.76rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.8px; color: var(--subtext);">
+                                ${isHold ? '⏱️ Durata di Hold Attuale' : '💪 Ripetizioni Padroneggiate'}
+                            </div>
+                            <div style="font-size: 1.55rem; font-weight: 900; color: var(--unlocked); margin-top: 2px; display: flex; align-items: baseline; gap: 6px;">
+                                <span>${currentVal}</span>
+                                <span style="font-size: 0.92rem; font-weight: 700; color: var(--text);">${unitLabel}</span>
+                            </div>
+                        </div>
+                        <div style="text-align: right;">
+                            <span style="background: rgba(16, 185, 129, 0.25); border: 1px solid var(--unlocked); border-radius: 999px; padding: 4px 12px; font-size: 0.78rem; font-weight: 800; color: var(--unlocked); display: inline-block;">
+                                ✅ Padroneggiata
+                            </span>
+                            <div style="font-size: 0.74rem; color: var(--subtext); margin-top: 4px;">
+                                Minimo base: ${minTarget} ${unitShort}
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                actionButtonsHtml = `
+                    <div style="display:flex; flex-direction:column; gap:10px; width:100%;">
+                        <button type="button" class="btn-confirm" style="width:100%; padding:13px; font-size:0.95rem; font-weight:800; display:flex; align-items:center; justify-content:center; gap:8px;" onclick="closeSkillDetailDrawer(); openPoseScannerModal({ skillId: '${skill.id}', mode: 'test' });">
+                            📹 Migliora Record con AI Referee
+                        </button>
+                    </div>
+                `;
+            } else {
+                statCardHtml = `
+                    <div style="background: rgba(56, 189, 248, 0.1); border: 1.5px solid var(--accent); border-radius: 14px; padding: 14px 18px; margin: 14px 0; display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+                        <div>
+                            <div style="font-size: 0.76rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.8px; color: var(--accent);">
+                                🎁 Ricompensa Sblocco Skill
+                            </div>
+                            <div style="font-size: 1.55rem; font-weight: 900; color: var(--accent); margin-top: 2px;">
+                                +${xpReward} <span style="font-size: 0.92rem; font-weight: 700; color: var(--text);">XP</span>
+                            </div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="font-size: 0.74rem; color: var(--subtext);">Obiettivo Richiesto:</div>
+                            <div style="font-size: 0.95rem; font-weight: 800; color: var(--text); margin-top:2px;">${minTarget} ${unitShort}</div>
+                        </div>
+                    </div>
+                `;
+
                 if (!isPrereqMet) {
                     actionButtonsHtml = `
-                        <div style="padding:12px; border-radius:12px; background:rgba(239, 68, 68, 0.1); border:1px solid rgba(239,68,68,0.3); color:#f87171; font-size:0.85rem; font-weight:600; text-align:center;">
-                            🔒 Devi prima completare tutte le skill propedeutiche indicate sopra per sbloccare questa variante avanzata!
+                        <div style="padding:12px 14px; border-radius:12px; background:rgba(239, 68, 68, 0.1); border:1.5px solid rgba(239,68,68,0.3); color:#f87171; font-size:0.85rem; font-weight:700; text-align:center;">
+                            🔒 Completa prima tutte le skill propedeutiche indicate sopra per sbloccare questa variante (+${xpReward} XP)!
                         </div>
                     `;
                 } else {
                     actionButtonsHtml = `
-                        <button type="button" class="btn-confirm" style="width:100%; padding:14px; font-size:1rem;" onclick="closeSkillDetailDrawer(); askUnlock('${skill.id}');">
-                            🎉 Sblocca Skill con AI Referee
+                        <button type="button" class="btn-confirm" style="width:100%; padding:14px; font-size:1rem; font-weight:800; display:flex; align-items:center; justify-content:center; gap:8px;" onclick="closeSkillDetailDrawer(); askUnlock('${skill.id}');">
+                            <span>📹 Sblocca con AI Referee</span>
+                            <span style="background:rgba(0,0,0,0.28); padding:3px 10px; border-radius:999px; font-size:0.85rem; border:1px solid rgba(255,255,255,0.35); font-weight:900;">+${xpReward} XP</span>
                         </button>
                     `;
                 }
-            } else {
-                actionButtonsHtml = `
-                    <div style="display:flex; gap:10px;">
-                        <button type="button" class="btn-confirm" style="flex:1; padding:12px;" onclick="closeSkillDetailDrawer(); openPoseScannerModal({ skillId: '${skill.id}', mode: 'test' });">
-                            📹 AI Referee Test
-                        </button>
-                    </div>
-                `;
             }
 
             drawer.innerHTML = `
@@ -18286,10 +18353,14 @@ function getCalisthenicsExpertResponse(query) {
                         <div class="drawer-meta">
                             <span class="drawer-tier-badge">${(skill.tier || 'Base').toUpperCase()}</span>
                             <span>⭐ Livello: ${level}</span>
-                            <span>🏆 Record: ${reps} ${skill.tier === 'core' || skill.name.toLowerCase().includes('plank') || skill.name.toLowerCase().includes('hold') ? 'sec' : 'rep'}</span>
+                            <span style="color: ${isUnlocked ? 'var(--unlocked)' : 'var(--accent)'}; font-weight: 700;">
+                                ${isUnlocked ? `🏆 ${currentVal} ${unitShort}` : `🎁 +${xpReward} XP`}
+                            </span>
                         </div>
                     </div>
                 </div>
+
+                ${statCardHtml}
 
                 ${prereqHtml}
 
