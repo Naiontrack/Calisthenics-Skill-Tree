@@ -3562,7 +3562,10 @@
         }
 
         @media (max-width: 768px) {
-            #tab-view-chat {
+            #tab-view-chat:not(.active) {
+                display: none !important;
+            }
+            #tab-view-chat.active {
                 height: calc(100dvh - 64px) !important;
                 max-height: calc(100dvh - 64px) !important;
                 padding: 6px 8px 6px 8px !important;
@@ -4785,7 +4788,11 @@
             overscroll-behavior: none !important;
         }
 
-        #tab-view-chat {
+        #tab-view-chat:not(.active) {
+            display: none !important;
+        }
+
+        #tab-view-chat.active {
             height: calc(100dvh - 64px) !important;
             max-height: calc(100dvh - 64px) !important;
             min-height: 0 !important;
