@@ -794,6 +794,62 @@
             overflow-y: auto;
         }
 
+        .modal-box.modal-compact {
+            max-width: 450px;
+            padding: 14px 18px;
+            max-height: 94vh;
+            overflow-y: visible;
+        }
+
+        .modal-compact h3 {
+            margin-top: 0;
+            margin-bottom: 10px;
+            font-size: 1.15rem;
+        }
+
+        .modal-compact .auth-form-group {
+            margin-bottom: 8px;
+            gap: 4px;
+        }
+
+        .modal-compact .auth-form-group label {
+            font-size: 0.78rem;
+            margin-bottom: 2px;
+            font-weight: 600;
+        }
+
+        .modal-compact .auth-form-group input,
+        .modal-compact .auth-form-group select {
+            padding: 7px 10px;
+            font-size: 0.85rem;
+            border-radius: 8px;
+        }
+
+        .modal-compact .workout-form-row {
+            display: flex;
+            gap: 8px;
+            width: 100%;
+            margin-bottom: 8px;
+        }
+
+        .modal-compact .workout-form-row .auth-form-group {
+            flex: 1;
+            min-width: 0;
+            margin-bottom: 0;
+        }
+
+        .modal-compact .modal-actions {
+            margin-top: 10px;
+            gap: 8px;
+        }
+
+        .modal-compact .modal-actions button {
+            padding: 8px 14px;
+            font-size: 0.86rem;
+            min-height: 38px;
+            white-space: nowrap;
+        }
+
         .modal-overlay.active .modal-box {
             transform: scale(1);
         }
@@ -3258,10 +3314,13 @@
             max-width: 1200px;
             margin: 0 auto;
             width: 100%;
+            box-sizing: border-box;
         }
 
         .main-tab-view.active {
-            display: block;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
             opacity: 1;
             animation: tabFadeIn 0.22s ease-out forwards;
         }
@@ -3272,11 +3331,14 @@
         }
 
         .tab-header-banner {
+            width: 100%;
+            max-width: 920px;
+            box-sizing: border-box;
             padding: 16px 20px;
             background: linear-gradient(135deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
             border: 1px solid var(--line-color);
             border-radius: 16px;
-            margin-bottom: 16px;
+            margin: 0 auto 16px auto;
             text-align: center;
         }
 
@@ -3381,9 +3443,14 @@
             line-height: 1.2;
         }
 
-        /* VIEW SWITCHER & TREE CONTROLS */
+        /* VIEW SWITCHER & TREE CONTROLS (PERFECTLY CENTERED) */
         .tree-view-header-controls {
-            margin-bottom: 12px;
+            width: 100%;
+            max-width: 920px;
+            margin: 0 auto 12px auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
 
         .tree-view-toggle-bar {
@@ -3394,12 +3461,12 @@
         }
 
         .tree-view-toggle-btn {
-            padding: 8px 18px;
+            padding: 8px 20px;
             border-radius: 999px;
             border: 1px solid var(--line-color);
             background: var(--card-bg);
             color: var(--subtext);
-            font-size: 0.84rem;
+            font-size: 0.86rem;
             font-weight: 700;
             cursor: pointer;
             transition: all 0.2s ease;
@@ -3418,10 +3485,11 @@
             box-shadow: 0 3px 12px rgba(56, 189, 248, 0.4);
         }
 
-        /* RPG SKILL TREE GRAPH VIEWPORT */
+        /* RPG SKILL TREE GRAPH VIEWPORT (PERFECTLY CENTERED & EXPANDED) */
         .skill-tree-viewport-wrapper {
             width: 100%;
-            margin: 10px 0 20px 0;
+            max-width: 1200px;
+            margin: 10px auto 20px auto;
             border-radius: 20px;
             overflow: hidden;
             border: 1px solid var(--line-color);
@@ -3433,15 +3501,15 @@
             position: relative;
             width: 100%;
             height: calc(100vh - 270px);
-            min-height: 540px;
+            min-height: 560px;
             overflow: hidden;
             cursor: grab;
             user-select: none;
             touch-action: none;
             background-image: 
                 radial-gradient(circle at 50% 50%, rgba(56, 189, 248, 0.04) 0%, transparent 60%),
-                radial-gradient(var(--tree-grid) 1px, transparent 1px);
-            background-size: 100% 100%, 32px 32px;
+                radial-gradient(var(--tree-grid) 1.5px, transparent 1.5px);
+            background-size: 100% 100%, 36px 36px;
         }
 
         .skill-tree-viewport:active {
@@ -3476,15 +3544,15 @@
 
         .tree-branch-line.locked {
             stroke: var(--tree-line-locked);
-            stroke-width: 2px;
-            stroke-dasharray: 5 5;
-            opacity: 0.6;
+            stroke-width: 2.5px;
+            stroke-dasharray: 6 6;
+            opacity: 0.65;
         }
 
         .tree-branch-line.active {
             stroke: var(--tree-line-active);
-            stroke-width: 3.5px;
-            filter: drop-shadow(0 0 6px var(--tree-line-active));
+            stroke-width: 4px;
+            filter: drop-shadow(0 0 8px var(--tree-line-active));
             opacity: 0.95;
         }
 
@@ -3492,26 +3560,31 @@
             position: absolute;
             top: 24px;
             text-align: center;
-            width: 240px;
+            width: 260px;
             font-weight: 800;
-            font-size: 0.88rem;
+            font-size: 0.92rem;
             text-transform: uppercase;
             letter-spacing: 1px;
             color: var(--accent);
-            background: rgba(15, 23, 42, 0.65);
+            background: rgba(15, 23, 42, 0.78);
             backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
             border: 1px solid var(--line-color);
             border-radius: 999px;
-            padding: 6px 14px;
+            padding: 7px 16px;
             pointer-events: none;
-            box-shadow: 0 4px 14px rgba(0,0,0,0.25);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.3);
         }
 
-        /* CIRCULAR SKILL NODES */
+        body.theme-light .tree-category-banner {
+            background: rgba(255, 255, 255, 0.88);
+        }
+
+        /* CIRCULAR SKILL NODES (LARGER 78px & HIGH-CONTRAST LABELS) */
         .tree-node {
             position: absolute;
-            width: 62px;
-            height: 62px;
+            width: 78px;
+            height: 78px;
             border-radius: 50%;
             cursor: pointer;
             transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s;
@@ -3521,6 +3594,7 @@
             background: var(--tree-node-bg);
             box-sizing: border-box;
             user-select: none;
+            z-index: 10;
         }
 
         .tree-node:hover {
@@ -3529,30 +3603,30 @@
         }
 
         .tree-node.locked {
-            border: 2px solid rgba(148, 163, 184, 0.3);
-            opacity: 0.55;
+            border: 2.5px solid rgba(148, 163, 184, 0.35);
+            opacity: 0.58;
             filter: grayscale(0.65);
         }
 
         .tree-node.available {
-            border: 2.5px solid var(--accent);
-            box-shadow: 0 0 14px rgba(56, 189, 248, 0.45);
+            border: 3px solid var(--accent);
+            box-shadow: 0 0 16px rgba(56, 189, 248, 0.5);
             animation: nodePulsing 2.5s infinite ease-in-out;
         }
 
         .tree-node.unlocked {
-            border: 2.5px solid var(--tree-node-unlocked);
-            box-shadow: 0 0 16px rgba(34, 197, 94, 0.55);
+            border: 3px solid var(--tree-node-unlocked);
+            box-shadow: 0 0 18px rgba(34, 197, 94, 0.6);
         }
 
         .tree-node.mastered {
-            border: 2.5px solid var(--tree-node-mastered);
-            box-shadow: 0 0 20px rgba(245, 158, 11, 0.7);
+            border: 3px solid var(--tree-node-mastered);
+            box-shadow: 0 0 22px rgba(245, 158, 11, 0.75);
         }
 
         @keyframes nodePulsing {
             0%, 100% { box-shadow: 0 0 10px rgba(56, 189, 248, 0.3); }
-            50% { box-shadow: 0 0 22px rgba(56, 189, 248, 0.8); }
+            50% { box-shadow: 0 0 24px rgba(56, 189, 248, 0.85); }
         }
 
         .tree-node-inner {
@@ -3563,7 +3637,7 @@
             align-items: center;
             justify-content: center;
             overflow: hidden;
-            padding: 7px;
+            padding: 8px;
             box-sizing: border-box;
         }
 
@@ -3584,54 +3658,71 @@
             object-fit: contain;
         }
 
+        /* HIGH-CONTRAST READABLE LABEL UNDER NODE */
         .tree-node-label {
             position: absolute;
-            top: 66px;
+            top: 84px;
             left: 50%;
             transform: translateX(-50%);
-            width: 100px;
+            width: max-content;
+            max-width: 130px;
             text-align: center;
-            font-size: 0.7rem;
-            font-weight: 700;
+            font-size: 0.8rem;
+            font-weight: 800;
             color: var(--text);
             pointer-events: none;
-            line-height: 1.2;
-            text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9);
+            line-height: 1.25;
+            background: rgba(15, 23, 42, 0.88);
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            padding: 3px 8px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
             white-space: normal;
             word-break: break-word;
         }
 
+        body.theme-light .tree-node-label {
+            background: rgba(255, 255, 255, 0.92);
+            border-color: rgba(0, 0, 0, 0.1);
+            color: #0f172a;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+        }
+
         .tree-node-lock-badge {
             position: absolute;
-            top: -3px;
-            right: -3px;
-            background: rgba(15, 23, 42, 0.92);
-            border: 1px solid rgba(239, 68, 68, 0.6);
+            top: -4px;
+            right: -4px;
+            background: rgba(15, 23, 42, 0.94);
+            border: 1.5px solid rgba(239, 68, 68, 0.7);
             border-radius: 50%;
-            width: 18px;
-            height: 18px;
-            font-size: 0.65rem;
+            width: 22px;
+            height: 22px;
+            font-size: 0.75rem;
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+            z-index: 12;
         }
 
         .tree-node-check-badge {
             position: absolute;
-            top: -3px;
-            right: -3px;
-            background: rgba(34, 197, 94, 0.9);
-            border: 1px solid #ffffff;
+            top: -4px;
+            right: -4px;
+            background: rgba(34, 197, 94, 0.95);
+            border: 1.5px solid #ffffff;
             border-radius: 50%;
-            width: 18px;
-            height: 18px;
-            font-size: 0.62rem;
+            width: 22px;
+            height: 22px;
+            font-size: 0.72rem;
             color: #ffffff;
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+            z-index: 12;
         }
 
         /* ZOOM HUD */
@@ -3646,14 +3737,14 @@
         }
 
         .tree-hud-btn {
-            width: 38px;
-            height: 38px;
+            width: 40px;
+            height: 40px;
             border-radius: 12px;
-            background: rgba(15, 23, 42, 0.85);
+            background: rgba(15, 23, 42, 0.88);
             backdrop-filter: blur(10px);
             border: 1px solid var(--line-color);
             color: var(--text);
-            font-size: 1.15rem;
+            font-size: 1.2rem;
             font-weight: bold;
             cursor: pointer;
             display: flex;
@@ -3676,12 +3767,12 @@
             left: 16px;
             display: flex;
             gap: 12px;
-            background: rgba(15, 23, 42, 0.85);
+            background: rgba(15, 23, 42, 0.88);
             backdrop-filter: blur(10px);
             border: 1px solid var(--line-color);
             border-radius: 12px;
             padding: 6px 14px;
-            font-size: 0.72rem;
+            font-size: 0.74rem;
             color: var(--subtext);
             font-weight: 600;
             z-index: 20;
@@ -3695,8 +3786,8 @@
         }
 
         .legend-dot {
-            width: 9px;
-            height: 9px;
+            width: 10px;
+            height: 10px;
             border-radius: 50%;
             display: inline-block;
         }
@@ -3853,12 +3944,28 @@
             margin-top: 20px;
         }
 
-        /* PROFILE BENTO GRID */
-        .profile-bento-grid {
+        /* PROFILE SECTION REORGANIZATION (BALANCED & NO DEAD GAP) */
+        .profile-layout-wrapper, .profile-bento-grid {
+            width: 100%;
+            max-width: 960px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            box-sizing: border-box;
+        }
+
+        .profile-two-columns {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
-            gap: 14px;
-            margin-top: 14px;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            align-items: start;
+        }
+
+        .profile-col {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
         }
 
         .bento-card {
@@ -3867,10 +3974,10 @@
             border-radius: 18px;
             padding: 18px;
             box-shadow: var(--card-shadow);
+            box-sizing: border-box;
         }
 
         .bento-hero {
-            grid-column: 1 / -1;
             display: flex;
             align-items: center;
             gap: 18px;
@@ -4014,6 +4121,7 @@
             color: var(--subtext);
         }
 
+        /* TEMA GRAFICO: COMPACT & ELEGANT */
         .bento-theme-swatches {
             display: flex;
             gap: 8px;
@@ -4049,13 +4157,57 @@
             color: var(--accent);
         }
 
+        /* CONDIVIDI AMICI: PREVENT CUT-OFF */
+        .share-link-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 10px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .share-link-input {
+            width: 100%;
+            box-sizing: border-box;
+            background: var(--bg-color);
+            border: 1px solid var(--line-color);
+            border-radius: 10px;
+            padding: 9px 12px;
+            color: var(--text);
+            font-size: 0.84rem;
+            font-family: monospace;
+            outline: none;
+            user-select: all;
+        }
+
+        .share-link-actions {
+            display: flex;
+            gap: 8px;
+            width: 100%;
+        }
+
+        .share-link-actions button {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px 14px;
+            font-size: 0.84rem;
+            white-space: nowrap;
+            border-radius: 10px;
+        }
+
         /* ARENA SUBTABS */
         .arena-subtabs-nav {
             display: flex;
             gap: 8px;
             overflow-x: auto;
             padding-bottom: 6px;
-            margin-bottom: 14px;
+            margin: 0 auto 14px auto;
+            width: 100%;
+            max-width: 920px;
+            justify-content: center;
         }
 
         .arena-subtab-btn {
@@ -4080,6 +4232,9 @@
 
         .arena-subtab-pane {
             display: none;
+            width: 100%;
+            max-width: 920px;
+            margin: 0 auto;
         }
 
         .arena-subtab-pane.active {
@@ -4111,11 +4266,29 @@
             color: var(--text);
         }
 
-        /* MOBILE ADJUSTMENTS */
-        @media (max-width: 640px) {
+        /* GENERAL CENTERING OVERRIDES */
+        .header {
+            margin: 0 auto 20px auto !important;
+        }
+
+        .workouts-section {
+            margin: 0 auto 25px auto !important;
+            max-width: 920px !important;
+        }
+
+        .tree-container {
+            margin: 0 auto !important;
+            max-width: 920px !important;
+        }
+
+        /* RESPONSIVE LAYOUT BREAKPOINTS */
+        @media (max-width: 768px) {
+            .profile-two-columns {
+                grid-template-columns: 1fr;
+            }
             .skill-tree-viewport {
                 height: calc(100vh - 290px);
-                min-height: 460px;
+                min-height: 480px;
             }
             .bento-hero {
                 flex-direction: column;
@@ -4180,7 +4353,7 @@
         <div class="tree-view-header-controls">
             <div class="tree-view-toggle-bar">
                 <button type="button" class="tree-view-toggle-btn active" id="btn-view-graph" onclick="toggleSkillTreeView('graph')">
-                    🕸️ Albero RPG (Grafo)
+                    🕸️ Albero RPG
                 </button>
                 <button type="button" class="tree-view-toggle-btn" id="btn-view-cards" onclick="toggleSkillTreeView('cards')">
                     📋 Schede Classiche
@@ -4374,8 +4547,8 @@
             <p>Panoramica completa del tuo grado, statistiche duelli, composizione corporea e impostazioni.</p>
         </div>
 
-        <div class="profile-bento-grid">
-            <!-- Bento Hero -->
+        <div class="profile-layout-wrapper profile-bento-grid">
+            <!-- Hero Card -->
             <div class="bento-card bento-hero">
                 <div class="bento-hero-avatar" id="bento-avatar-box"></div>
                 <div class="bento-hero-info">
@@ -4386,89 +4559,98 @@
                 </div>
             </div>
 
-            <!-- Bento Duelli 1vs1 -->
-            <div class="bento-card bento-duels">
-                <div class="bento-card-title">⚔️ Statistiche Duelli 1vs1</div>
-                <div class="bento-stats-row">
-                    <div class="bento-stat-pill">
-                        <span class="stat-num" id="bento-stat-total" style="color:var(--text);">0</span>
-                        <span class="stat-lbl">Totali</span>
+            <!-- Two Balanced Columns -->
+            <div class="profile-two-columns">
+                <!-- Colonna Sinistra -->
+                <div class="profile-col">
+                    <!-- Statistiche Duelli 1vs1 -->
+                    <div class="bento-card bento-duels">
+                        <div class="bento-card-title">⚔️ Statistiche Duelli 1vs1</div>
+                        <div class="bento-stats-row">
+                            <div class="bento-stat-pill">
+                                <span class="stat-num" id="bento-stat-total" style="color:var(--text);">0</span>
+                                <span class="stat-lbl">Totali</span>
+                            </div>
+                            <div class="bento-stat-pill">
+                                <span class="stat-num" id="bento-stat-wins" style="color:#22c55e;">0</span>
+                                <span class="stat-lbl">Vinti 🏆</span>
+                            </div>
+                            <div class="bento-stat-pill">
+                                <span class="stat-num" id="bento-stat-losses" style="color:#ef4444;">0</span>
+                                <span class="stat-lbl">Persi ❌</span>
+                            </div>
+                            <div class="bento-stat-pill">
+                                <span class="stat-num" id="bento-stat-ties" style="color:#f59e0b;">0</span>
+                                <span class="stat-lbl">Pari 🤝</span>
+                            </div>
+                        </div>
+                        <div class="bento-winrate-bar">
+                            <div class="bento-winrate-fill" id="bento-winrate-fill" style="width:0%;"></div>
+                        </div>
+                        <span id="bento-winrate-label" style="font-size:0.78rem; color:var(--subtext); font-weight:600; margin-top:5px; display:block; text-align:right;">Win Rate: 0%</span>
                     </div>
-                    <div class="bento-stat-pill">
-                        <span class="stat-num" id="bento-stat-wins" style="color:#22c55e;">0</span>
-                        <span class="stat-lbl">Vinti 🏆</span>
-                    </div>
-                    <div class="bento-stat-pill">
-                        <span class="stat-num" id="bento-stat-losses" style="color:#ef4444;">0</span>
-                        <span class="stat-lbl">Persi ❌</span>
-                    </div>
-                    <div class="bento-stat-pill">
-                        <span class="stat-num" id="bento-stat-ties" style="color:#f59e0b;">0</span>
-                        <span class="stat-lbl">Pari 🤝</span>
-                    </div>
-                </div>
-                <div class="bento-winrate-bar">
-                    <div class="bento-winrate-fill" id="bento-winrate-fill" style="width:0%;"></div>
-                </div>
-                <span id="bento-winrate-label" style="font-size:0.78rem; color:var(--subtext); font-weight:600; margin-top:5px; display:block; text-align:right;">Win Rate: 0%</span>
-            </div>
 
-            <!-- Bento Composizione Corporea & BMI -->
-            <div class="bento-card bento-body">
-                <div class="bento-card-title">⚖️ Composizione Corporea & BMI</div>
-                <div class="bento-body-inputs">
-                    <div class="bento-input-group">
-                        <label for="bento-body-weight">Peso (kg):</label>
-                        <input type="number" id="bento-body-weight" placeholder="es. 72" step="0.5" oninput="calculateBentoBMI()">
+                    <!-- Composizione Corporea & BMI -->
+                    <div class="bento-card bento-body">
+                        <div class="bento-card-title">⚖️ Composizione Corporea & BMI</div>
+                        <div class="bento-body-inputs">
+                            <div class="bento-input-group">
+                                <label for="bento-body-weight">Peso (kg):</label>
+                                <input type="number" id="bento-body-weight" placeholder="es. 72" step="0.5" oninput="calculateBentoBMI()">
+                            </div>
+                            <div class="bento-input-group">
+                                <label for="bento-body-height">Altezza (cm):</label>
+                                <input type="number" id="bento-body-height" placeholder="es. 178" step="1" oninput="calculateBentoBMI()">
+                            </div>
+                        </div>
+                        <div class="bento-bmi-display">
+                            <span class="bento-bmi-val" id="bento-bmi-val">--</span>
+                            <span class="bento-bmi-status" id="bento-bmi-status">Inserisci peso e altezza</span>
+                        </div>
+                        <button type="button" class="btn-auth-secondary" style="width:100%; margin-top:8px; font-size:0.82rem;" onclick="saveBentoBodyStats()">💾 Salva Dati Corporei</button>
                     </div>
-                    <div class="bento-input-group">
-                        <label for="bento-body-height">Altezza (cm):</label>
-                        <input type="number" id="bento-body-height" placeholder="es. 178" step="1" oninput="calculateBentoBMI()">
+
+                    <!-- Tema Grafico (Compatto e senza spazio vuoto!) -->
+                    <div class="bento-card bento-theme">
+                        <div class="bento-card-title">🎨 Tema Grafico</div>
+                        <div class="bento-theme-swatches">
+                            <button type="button" class="bento-theme-chip active" id="theme-chip-default" onclick="changeTheme('default'); syncBentoThemeChips();">
+                                <span class="swatch" style="background:#38bdf8;"></span> Predefinito
+                            </button>
+                            <button type="button" class="bento-theme-chip" id="theme-chip-light" onclick="changeTheme('light'); syncBentoThemeChips();">
+                                <span class="swatch" style="background:#0284c7;"></span> Chiaro
+                            </button>
+                            <button type="button" class="bento-theme-chip" id="theme-chip-dark" onclick="changeTheme('dark'); syncBentoThemeChips();">
+                                <span class="swatch" style="background:#bb86fc;"></span> Scuro
+                            </button>
+                        </div>
                     </div>
                 </div>
-                <div class="bento-bmi-display">
-                    <span class="bento-bmi-val" id="bento-bmi-val">--</span>
-                    <span class="bento-bmi-status" id="bento-bmi-status">Inserisci peso e altezza</span>
-                </div>
-                <button type="button" class="btn-auth-secondary" style="width:100%; margin-top:8px; font-size:0.82rem;" onclick="saveBentoBodyStats()">💾 Salva Dati Corporei</button>
-            </div>
 
-            <!-- Bento Invita Amici -->
-            <div class="bento-card bento-share" id="share-section">
-                <div class="share-header-left" style="display:flex; justify-content:space-between; align-items:center;">
-                    <div class="bento-card-title" style="margin:0;">🎁 Invita Amici & Guadagna XP</div>
-                    <span class="share-bonus-badge">+3.000 XP</span>
-                </div>
-                <span class="collapsible-icon" id="share-toggle-icon" style="display:none;">▼ Espandi</span>
-                <div id="share-collapsible-content" style="display:block; margin-top:10px;">
-                    <div id="share-section-body"></div>
-                </div>
-            </div>
+                <!-- Colonna Destra -->
+                <div class="profile-col">
+                    <!-- Invita Amici & Guadagna XP -->
+                    <div class="bento-card bento-share" id="share-section">
+                        <div class="share-header-left" style="display:flex; justify-content:space-between; align-items:center;">
+                            <div class="bento-card-title" style="margin:0;">🎁 Invita Amici & Guadagna XP</div>
+                            <span class="share-bonus-badge">+3.000 XP</span>
+                        </div>
+                        <span class="collapsible-icon" id="share-toggle-icon" style="display:none;">▼ Espandi</span>
+                        <div id="share-collapsible-content" style="display:block; margin-top:10px;">
+                            <div id="share-section-body"></div>
+                        </div>
+                    </div>
 
-            <!-- Bento Tema Grafico -->
-            <div class="bento-card bento-theme">
-                <div class="bento-card-title">🎨 Tema Grafico</div>
-                <div class="bento-theme-swatches">
-                    <button type="button" class="bento-theme-chip active" id="theme-chip-default" onclick="changeTheme('default'); syncBentoThemeChips();">
-                        <span class="swatch" style="background:#38bdf8;"></span> Predefinito
-                    </button>
-                    <button type="button" class="bento-theme-chip" id="theme-chip-light" onclick="changeTheme('light'); syncBentoThemeChips();">
-                        <span class="swatch" style="background:#0284c7;"></span> Chiaro
-                    </button>
-                    <button type="button" class="bento-theme-chip" id="theme-chip-dark" onclick="changeTheme('dark'); syncBentoThemeChips();">
-                        <span class="swatch" style="background:#bb86fc;"></span> Scuro
-                    </button>
-                </div>
-            </div>
-
-            <!-- Bento Impostazioni Profilo -->
-            <div class="bento-card bento-settings" id="profile-settings-section">
-                <div class="section-collapsible-header" onclick="toggleProfileSection()" style="display:flex; justify-content:space-between; align-items:center;">
-                    <div class="bento-card-title" style="margin:0;">⚙️ Impostazioni Account & Privacy</div>
-                    <span class="collapsible-icon" id="profile-toggle-icon">▲ Riduci</span>
-                </div>
-                <div id="profile-collapsible-content" style="display:block; margin-top:12px;">
-                    <div id="profile-settings-body"></div>
+                    <!-- Impostazioni Account & Privacy -->
+                    <div class="bento-card bento-settings" id="profile-settings-section">
+                        <div class="section-collapsible-header" onclick="toggleProfileSection()" style="display:flex; justify-content:space-between; align-items:center;">
+                            <div class="bento-card-title" style="margin:0;">⚙️ Impostazioni Account & Privacy</div>
+                            <span class="collapsible-icon" id="profile-toggle-icon">▲ Riduci</span>
+                        </div>
+                        <div id="profile-collapsible-content" style="display:block; margin-top:12px;">
+                            <div id="profile-settings-body"></div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -6521,6 +6703,9 @@ let currentUser = null;
             currentCategoryFilter = catId;
             localStorage.setItem('naiontrackCategory', catId);
             updateUI();
+            if (typeof resetSkillTreeZoom === 'function' && treeViewMode === 'graph') {
+                resetSkillTreeZoom();
+            }
         }
 
         function applyTheme(theme) {
@@ -7348,8 +7533,22 @@ let currentUser = null;
                     if (typeof isShareSectionOpen !== 'undefined' && isShareSectionOpen) {
                         renderShareSection();
                     }
-                    if (chatPanelOpen) {
-                        renderChatInputState();
+                    // Reset stale private thread on account change
+                    if (activeChatView === 'private-thread') {
+                        activeChatView = 'general';
+                        activeConversationId = null;
+                        activeConversationData = null;
+                        const th = document.getElementById('chat-thread-header');
+                        if (th) th.style.display = 'none';
+                        const tg = document.getElementById('chat-tab-general');
+                        if (tg) tg.classList.add('active');
+                        const tp = document.getElementById('chat-tab-private');
+                        if (tp) tp.classList.remove('active');
+                        const pt = document.getElementById('chat-panel-title');
+                        if (pt) pt.innerText = '💬 Chat Generale';
+                    }
+                    renderChatInputState();
+                    if (chatPanelOpen || currentMainTab === 'chat') {
                         resumeActiveChatListener();
                     }
                 }).catch((error) => {
@@ -7700,6 +7899,7 @@ let currentUser = null;
         }
 
         function openCustomModal(title, text, confirmText, isDanger, onConfirm, onSuccess) {
+            const _mBox = document.querySelector('#custom-modal .modal-box'); if (_mBox) _mBox.classList.remove('modal-compact');
             const modal = document.getElementById('custom-modal');
             const titleEl = document.getElementById('modal-title');
             const bodyContent = document.getElementById('modal-body-content');
@@ -7769,6 +7969,7 @@ let currentUser = null;
 
         // MODALE NICKNAME CON VERIFICA DI UNICITÀ SU FIRESTORE
         function openNicknameModal() {
+            const _mBox = document.querySelector('#custom-modal .modal-box'); if (_mBox) _mBox.classList.remove('modal-compact');
             const modal = document.getElementById('custom-modal');
             const titleEl = document.getElementById('modal-title');
             const bodyContent = document.getElementById('modal-body-content');
@@ -7834,8 +8035,14 @@ let currentUser = null;
             if (!error) return "Si è verificato un errore.";
             const code = error.code || "";
             const msg = error.message || "";
-            if (code === "auth/invalid-credential" || msg.includes("userinfo") || msg.includes("401")) {
-                return "⚠️ Le credenziali Google OAuth sono state appena riattivate e richiedono 2-3 minuti per la sincronizzazione globale sui server di Google. Riprova tra poco, oppure usa Email e Password qui sotto.";
+            if (code === "auth/invalid-credential" || msg.includes("userinfo") || msg.includes("401") || code === "auth/internal-error" || msg.includes("500") || msg.includes("Server Error")) {
+                return "⚠️ <strong>Errore autenticazione Google (500 Server Error):</strong><br>I server OAuth di Google hanno riscontrato un problema di sincronizzazione o configurazione.<br>💡 <strong>Soluzione immediata:</strong> Accedi o registrati subito usando <strong>Email e Password</strong> nel modulo qui sotto (funziona istantaneamente!).";
+            }
+            if (code === "auth/popup-closed-by-user") {
+                return "Finestra di accesso Google chiusa prima del completamento.";
+            }
+            if (code === "auth/popup-blocked") {
+                return "⚠️ Finestra popup bloccata dal browser. Consenti i popup per questo sito e riprova.";
             }
             if (code === "auth/user-not-found") {
                 return "❌ Nessun account trovato con questa email. Clicca su 'Registrati qui' in basso per crearlo!";
@@ -7846,14 +8053,11 @@ let currentUser = null;
             if (code === "auth/email-already-in-use") {
                 return "⚠️ Questa email è già registrata. Clicca su 'Accedi qui' in basso per entrare.";
             }
-            if (code === "auth/popup-closed-by-user") {
-                return "Finestra di accesso chiusa prima del completamento.";
-            }
             if (code === "auth/unauthorized-domain") {
                 return "⚠️ Questo dominio web non è ancora presente nei 'Domini autorizzati' in Firebase Authentication.";
             }
             if (code === "auth/operation-not-allowed") {
-                return "⚠️ L'accesso con Apple via Web richiede la configurazione delle chiavi Apple Developer (Services ID, Team ID e chiave .p8) nella console Firebase. Usa invece 'Continua con Google' o Email e Password qui sotto!";
+                return "⚠️ Questo metodo di accesso non è abilitato nella console Firebase Authentication.";
             }
             return msg;
         }
@@ -7861,19 +8065,31 @@ let currentUser = null;
         // ACCESSO TRAMITE GOOGLE
         function loginWithGoogle() {
             const provider = new firebase.auth.GoogleAuthProvider();
+            provider.setCustomParameters({ prompt: 'select_account' });
+            provider.addScope('profile');
+            provider.addScope('email');
+
+            const errorEl = document.getElementById('auth-error-msg');
+            if (errorEl) errorEl.innerHTML = '<span style="color:var(--accent); font-size:0.84rem;">⏳ Apertura Google Sign-In in corso...</span>';
+
             auth.signInWithPopup(provider)
                 .then(() => {
-                    document.getElementById('custom-modal').classList.remove('active');
+                    const modal = document.getElementById('custom-modal');
+                    if (modal) {
+                        const modalBox = modal.querySelector('.modal-box');
+                        if (modalBox) modalBox.classList.remove('modal-compact');
+                        modal.classList.remove('active');
+                    }
                 })
                 .catch((error) => {
+                    console.warn("Errore accesso Google:", error);
                     const errorEl = document.getElementById('auth-error-msg');
-                    if (errorEl) errorEl.innerText = formatAuthErrorMessage(error);
+                    if (errorEl) errorEl.innerHTML = formatAuthErrorMessage(error);
                 });
         }
 
-
-
         function openAuthModal(mode) {
+            const _mBox = document.querySelector('#custom-modal .modal-box'); if (_mBox) _mBox.classList.remove('modal-compact');
             const modal = document.getElementById('custom-modal');
             const titleEl = document.getElementById('modal-title');
             const bodyContent = document.getElementById('modal-body-content');
@@ -8539,6 +8755,9 @@ let currentUser = null;
 
         function openNewWorkoutModal() {
             const modal = document.getElementById('custom-modal');
+            const modalBox = modal ? modal.querySelector('.modal-box') : null;
+            if (modalBox) modalBox.classList.add('modal-compact');
+
             const titleEl = document.getElementById('modal-title');
             const bodyContent = document.getElementById('modal-body-content');
             const actionsBox = document.getElementById('modal-actions-box');
@@ -8548,43 +8767,51 @@ let currentUser = null;
             titleEl.innerText = "🏋️ Nuovo Allenamento";
             bodyContent.innerHTML = `
                 <div class="auth-error" id="new-workout-error"></div>
-                <div class="auth-form-group">
-                    <label>Nome allenamento (facoltativo)</label>
-                    <input type="text" id="new-workout-name" placeholder="es. Push Day" maxlength="60">
-                </div>
                 <div class="workout-form-row">
-                    <div class="auth-form-group" style="flex:1; min-width:120px;">
+                    <div class="auth-form-group" style="flex:1.4; min-width:0;">
+                        <label>Nome allenamento</label>
+                        <input type="text" id="new-workout-name" placeholder="es. Push Day" maxlength="60">
+                    </div>
+                    <div class="auth-form-group" style="flex:1; min-width:0;">
                         <label>Data</label>
                         <input type="date" id="new-workout-date" value="${todayStr}">
                     </div>
-                    <div class="auth-form-group" style="flex:1; min-width:120px;">
+                </div>
+                <div class="workout-form-row">
+                    <div class="auth-form-group" style="flex:1; min-width:0;">
                         <label>Durata (min)</label>
                         <input type="number" id="new-workout-duration" min="0" max="600" placeholder="es. 45" oninput="updateWorkoutXpPreview()">
                     </div>
+                    <div class="auth-form-group" style="flex:1.2; min-width:0;">
+                        <label>Intensità: <strong id="workout-intensity-value" style="color:var(--accent);">5</strong>/10</label>
+                        <input type="range" id="new-workout-intensity" min="1" max="10" value="5" style="width:100%; margin-top:6px;" oninput="document.getElementById('workout-intensity-value').innerText = this.value; updateWorkoutXpPreview();">
+                    </div>
                 </div>
-                <div class="auth-form-group">
-                    <label>Intensità percepita: <span id="workout-intensity-value">5</span>/10</label>
-                    <input type="range" id="new-workout-intensity" min="1" max="10" value="5" style="width:100%;" oninput="document.getElementById('workout-intensity-value').innerText = this.value; updateWorkoutXpPreview();">
+                <div class="auth-form-group" style="margin-bottom:6px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                        <label style="margin:0;">Esercizi svolti</label>
+                        <button type="button" class="btn-auth-secondary" style="padding:3px 9px; font-size:0.75rem; border-radius:6px; cursor:pointer;" onclick="addWorkoutExerciseRow()">➕ Esercizio</button>
+                    </div>
+                    <div id="workout-exercises-list" style="max-height:110px; overflow-y:auto; display:flex; flex-direction:column; gap:4px;"></div>
                 </div>
-                <div class="auth-form-group">
-                    <label>Esercizi svolti</label>
-                    <div id="workout-exercises-list"></div>
-                    <button type="button" class="btn-auth-secondary" style="margin-top:6px; width:100%;" onclick="addWorkoutExerciseRow()">➕ Aggiungi esercizio</button>
-                </div>
-                <div class="auth-form-group">
+                <div class="auth-form-group" style="margin-bottom:8px;">
                     <label>Note (facoltative)</label>
                     <input type="text" id="new-workout-notes" placeholder="Come ti sei sentito, sensazioni..." maxlength="200">
                 </div>
-                <div style="padding:10px 14px; background:rgba(56,189,248,0.08); border:1px solid rgba(56,189,248,0.2); border-radius:8px; font-size:0.82rem; color:var(--accent); text-align:center; margin-top:16px; margin-bottom:24px;">📓 Questa sessione verrà archiviata nel tuo diario personale per monitorare i tuoi progressi.</div>
             `;
             actionsBox.innerHTML = `
                 <button class="btn-cancel" id="modal-btn-cancel">Annulla</button>
-                <button class="btn-confirm" id="new-workout-confirm-btn">Salva allenamento</button>
+                <button class="btn-confirm" id="new-workout-confirm-btn">Crea allenamento</button>
             `;
 
             modal.classList.add('active');
-            document.getElementById('modal-btn-cancel').onclick = () => modal.classList.remove('active');
-            document.getElementById('new-workout-confirm-btn').onclick = confirmCreateWorkout;
+            document.getElementById('modal-btn-cancel').onclick = () => {
+                if (modalBox) modalBox.classList.remove('modal-compact');
+                modal.classList.remove('active');
+            };
+            document.getElementById('new-workout-confirm-btn').onclick = () => {
+                confirmCreateWorkout();
+            };
 
             document.getElementById('workout-exercises-list').innerHTML = '';
             addWorkoutExerciseRow();
@@ -8695,6 +8922,8 @@ let currentUser = null;
                     local.unshift(workoutData);
                     saveLocalWorkouts(local);
 
+                    const mBox = document.querySelector('#custom-modal .modal-box');
+                    if (mBox) mBox.classList.remove('modal-compact');
                     document.getElementById('custom-modal').classList.remove('active');
                     openWorkoutsSection();
                     renderLocalWorkoutsList();
@@ -12059,7 +12288,7 @@ function getCalisthenicsExpertResponse(query) {
             }
 
             if (!currentUser) {
-                box.innerHTML = `<p style="color: var(--subtext); font-size: 0.85rem; text-align:center; margin:0; padding:8px; width:100%;">🔒 Accedi per scrivere in chat.</p>`;
+                box.innerHTML = `<p style="color: var(--subtext); font-size: 0.88rem; text-align:center; margin:0; padding:10px; width:100%; cursor:pointer;" onclick="openAuthModal('login')">🔒 Accedi per scrivere in chat. <span style="text-decoration:underline; color:var(--accent); font-weight:600;">Accedi ora</span></p>`;
                 return;
             }
 
@@ -14358,6 +14587,7 @@ function getCalisthenicsExpertResponse(query) {
         let currentEventConvId = null;
 
         function openCreateEventModal(convId = null) {
+            const _mBox = document.querySelector('#custom-modal .modal-box'); if (_mBox) _mBox.classList.remove('modal-compact');
             if (!currentUser) return;
             currentEventConvId = convId;
             eventsAllowMaybeDraft = false;
@@ -15771,6 +16001,7 @@ function getCalisthenicsExpertResponse(query) {
         let challengeAllUsers = [];
 
         function openCreateChallengeModal() {
+            const _mBox = document.querySelector('#custom-modal .modal-box'); if (_mBox) _mBox.classList.remove('modal-compact');
             if (!currentUser) return;
             challengeSelectedUsers = {};
             currentChallengeModalMode = 'standard';
@@ -17347,13 +17578,24 @@ function getCalisthenicsExpertResponse(query) {
                 if (typeof initChallengesListener === 'function') initChallengesListener();
                 if (typeof initEventsListener === 'function') initEventsListener();
             } else if (tabName === 'chat') {
-                if (typeof initChatListener === 'function') initChatListener();
+                chatPanelOpen = true;
+                if (typeof renderChatInputState === 'function') renderChatInputState();
+                if (typeof resumeActiveChatListener === 'function') resumeActiveChatListener();
+                else if (typeof initChatListener === 'function') initChatListener();
+                if (activeChatView === 'general' && typeof markGeneralChatAsRead === 'function') {
+                    markGeneralChatAsRead();
+                }
                 if (typeof scrollChatToBottom === 'function') setTimeout(scrollChatToBottom, 120);
             } else if (tabName === 'profile') {
                 if (typeof renderProfileSettings === 'function') renderProfileSettings();
                 if (typeof renderShareSection === 'function') renderShareSection();
                 updateBentoProfileStats();
             }
+
+            if (tabName !== 'chat') {
+                chatPanelOpen = false;
+            }
+
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
@@ -17390,13 +17632,19 @@ function getCalisthenicsExpertResponse(query) {
 
         function computeSkillCoordinates() {
             const coords = {};
-            const CANVAS_HEIGHT = 1400;
-            const NODE_Y_GAP = 125;
-            const CAT_WIDTH = 280;
-
             if (typeof categories === 'undefined') return coords;
 
-            categories.forEach((cat, catIdx) => {
+            const filteredCats = (currentCategoryFilter && currentCategoryFilter !== 'all')
+                ? categories.filter(c => c.id === currentCategoryFilter)
+                : categories;
+
+            const isSingleCat = filteredCats.length === 1;
+            const CANVAS_HEIGHT = 1400;
+            const NODE_Y_GAP = 135;
+            const CAT_WIDTH = isSingleCat ? 650 : 280;
+            const subGap = isSingleCat ? 130 : 100;
+
+            filteredCats.forEach((cat, catIdx) => {
                 const byDepth = {};
                 cat.skills.forEach(skill => {
                     const d = getSkillDepth(skill.id);
@@ -17404,18 +17652,17 @@ function getCalisthenicsExpertResponse(query) {
                     byDepth[d].push(skill);
                 });
 
-                const catCenterX = catIdx * CAT_WIDTH + (CAT_WIDTH / 2) + 60;
+                const catCenterX = isSingleCat ? 450 : (catIdx * CAT_WIDTH + (CAT_WIDTH / 2) + 60);
 
                 Object.keys(byDepth).forEach(dStr => {
                     const d = parseInt(dStr, 10);
                     const skillsAtDepth = byDepth[d];
                     const count = skillsAtDepth.length;
-                    const subGap = 85;
 
                     skillsAtDepth.forEach((s, subIdx) => {
                         const xOffset = (subIdx - (count - 1) / 2) * subGap;
                         const x = Math.round(catCenterX + xOffset);
-                        const y = Math.round(CANVAS_HEIGHT - 120 - (d * NODE_Y_GAP));
+                        const y = Math.round(CANVAS_HEIGHT - 130 - (d * NODE_Y_GAP));
 
                         coords[s.id] = {
                             id: s.id,
@@ -17439,7 +17686,25 @@ function getCalisthenicsExpertResponse(query) {
         function renderSkillTreeGraph() {
             const svgEl = document.getElementById('skill-tree-svg');
             const nodesLayer = document.getElementById('skill-tree-nodes-layer');
+            const canvasEl = document.getElementById('skill-tree-canvas');
             if (!svgEl || !nodesLayer) return;
+
+            const filteredCats = (currentCategoryFilter && currentCategoryFilter !== 'all')
+                ? categories.filter(c => c.id === currentCategoryFilter)
+                : categories;
+
+            const isSingleCat = filteredCats.length === 1;
+            const canvasWidth = isSingleCat ? 900 : 2920;
+            const canvasHeight = 1400;
+
+            if (canvasEl) {
+                canvasEl.style.width = canvasWidth + 'px';
+                canvasEl.style.height = canvasHeight + 'px';
+            }
+            svgEl.setAttribute('width', canvasWidth);
+            svgEl.setAttribute('height', canvasHeight);
+            svgEl.style.width = canvasWidth + 'px';
+            svgEl.style.height = canvasHeight + 'px';
 
             const coords = computeSkillCoordinates();
 
@@ -17449,7 +17714,7 @@ function getCalisthenicsExpertResponse(query) {
                 const isChildUnlocked = userState[s.id] && userState[s.id].unlocked;
                 s.prerequisites.forEach(pId => {
                     const parent = coords[pId];
-                    if (!parent) return;
+                    if (!parent) return; // Only draw within visible category skills
                     const isParentUnlocked = userState[pId] && userState[pId].unlocked;
                     const isPathActive = isParentUnlocked && isChildUnlocked;
                     const midY = Math.round((parent.y + s.y) / 2);
@@ -17461,12 +17726,10 @@ function getCalisthenicsExpertResponse(query) {
 
             // HTML Nodes & Category Banners
             let nodesHtml = '';
-            if (typeof categories !== 'undefined') {
-                categories.forEach((cat, cIdx) => {
-                    const catCenterX = cIdx * 280 + 140 + 60;
-                    nodesHtml += `<div class="tree-category-banner" style="left: ${catCenterX - 120}px;">${escapeHtml(cat.title)}</div>`;
-                });
-            }
+            filteredCats.forEach((cat, cIdx) => {
+                const catCenterX = isSingleCat ? 450 : (cIdx * 280 + 140 + 60);
+                nodesHtml += `<div class="tree-category-banner" style="left: ${catCenterX - 130}px;">${escapeHtml(cat.title)}</div>`;
+            });
 
             Object.values(coords).forEach(s => {
                 const isUnlocked = userState[s.id] && userState[s.id].unlocked;
@@ -17476,10 +17739,10 @@ function getCalisthenicsExpertResponse(query) {
                 const nodeClass = isMastered ? 'mastered' : (isUnlocked ? 'unlocked' : (isPrereqMet ? 'available' : 'locked'));
 
                 const stickman = (typeof skillStickmen !== 'undefined' && skillStickmen[s.id]) ||
-                    `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="8" fill="none"><circle cx="50" cy="30" r="14"/><line x1="50" y1="44" x2="50" y2="70"/><line x1="28" y1="52" x2="72" y2="52"/><line x1="50" y1="70" x2="35" y2="92"/><line x1="50" y1="70" x2="65" y2="92"/></svg>`;
+                    `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="9" fill="none"><circle cx="50" cy="30" r="14"/><line x1="50" y1="44" x2="50" y2="70"/><line x1="28" y1="52" x2="72" y2="52"/><line x1="50" y1="70" x2="35" y2="92"/><line x1="50" y1="70" x2="65" y2="92"/></svg>`;
 
                 nodesHtml += `
-                    <div class="tree-node ${nodeClass}" style="left: ${s.x - 31}px; top: ${s.y - 31}px;" onclick="openSkillDetailDrawer('${s.id}')" title="${escapeHtml(s.name)}">
+                    <div class="tree-node ${nodeClass}" style="left: ${s.x - 39}px; top: ${s.y - 39}px;" onclick="openSkillDetailDrawer('${s.id}')" title="${escapeHtml(s.name)}">
                         <div class="tree-node-inner">
                             <div class="tree-node-svg">${stickman}</div>
                         </div>
@@ -17516,18 +17779,20 @@ function getCalisthenicsExpertResponse(query) {
         }
 
         function resetSkillTreeZoom() {
-            treeZoom = 0.85;
             const viewport = document.getElementById('skill-tree-viewport');
+            const isSingleCat = currentCategoryFilter && currentCategoryFilter !== 'all';
+            const canvasWidth = isSingleCat ? 900 : 2920;
+            treeZoom = isSingleCat ? 0.92 : 0.85;
             if (viewport) {
-                treePanX = (viewport.clientWidth - 2920 * treeZoom) / 2;
-                treePanY = -480;
+                treePanX = Math.round((viewport.clientWidth - canvasWidth * treeZoom) / 2);
+                treePanY = isSingleCat ? -240 : -480;
             } else {
                 treePanX = -350;
                 treePanY = -480;
             }
             applyTreeTransform();
         }
-
+        
         function initSkillTreePanZoom() {
             const viewport = document.getElementById('skill-tree-viewport');
             if (!viewport) return;
