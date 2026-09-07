@@ -3318,6 +3318,7 @@
             display: none;
             opacity: 0;
             transition: opacity 0.2s ease-in-out;
+            padding-top: 22px;
             padding-bottom: 95px; /* Spazio per bottom nav */
             max-width: 1200px;
             margin: 0 auto;
@@ -3348,17 +3349,20 @@
             border-radius: 16px;
             margin: 0 auto 16px auto;
             text-align: center;
+            overflow: visible;
         }
 
         .tab-header-banner h2 {
             margin: 0;
             font-size: 1.35rem;
+            line-height: 1.4;
             color: var(--text);
         }
 
         .tab-header-banner p {
             margin: 6px 0 0 0;
             font-size: 0.88rem;
+            line-height: 1.45;
             color: var(--subtext);
         }
 
@@ -4357,6 +4361,52 @@
             animation: tabFadeIn 0.2s ease-out forwards;
         }
 
+        /* WORKOUTS SUBTABS */
+        .workouts-subtabs-nav {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            padding-bottom: 6px;
+            margin: 0 auto 14px auto;
+            width: 100%;
+            max-width: 920px;
+            justify-content: center;
+        }
+
+        .workouts-subtab-btn {
+            padding: 8px 18px;
+            border-radius: 999px;
+            border: 1px solid var(--line-color);
+            background: var(--card-bg);
+            color: var(--subtext);
+            font-size: 0.84rem;
+            font-weight: 700;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .workouts-subtab-btn.active {
+            background: var(--accent);
+            color: #ffffff;
+            border-color: var(--accent);
+            box-shadow: 0 3px 12px rgba(56, 189, 248, 0.35);
+        }
+
+        .workouts-subtab-pane {
+            display: none;
+            width: 100%;
+            max-width: 920px;
+            margin: 0 auto;
+        }
+
+        .workouts-subtab-pane.active {
+            display: block;
+            animation: tabFadeIn 0.2s ease-out forwards;
+        }
+
         .arena-card-box {
             background: var(--card-bg);
             border: 1px solid var(--line-color);
@@ -4510,45 +4560,72 @@
     </div>
 
     <!-- ====================================================================
-         TAB 2: ALLENAMENTI (WORKOUT LOGS & VOLUME)
+         TAB 2: ALLENAMENTI (WORKOUT LOGS & VOLUMI / SONDAGGI & RITROVI)
          ==================================================================== -->
     <div class="main-tab-view" id="tab-view-workouts">
         <div class="tab-header-banner">
-            <h2>🏋️ Registro Allenamenti</h2>
-            <p>Traccia i tuoi volumi, ripetizioni e storici delle sessioni di Calisthenics.</p>
+            <h2>🏋️ Registro Allenamenti & Community</h2>
+            <p>Traccia i tuoi volumi personali o partecipa ai ritrovi e sondaggi della community.</p>
         </div>
-        <div class="workouts-section full-tab-card" id="workouts-section">
-            <div class="workouts-section-header">
-                <div class="workouts-toggle-title" onclick="toggleWorkoutsSection()">
-                    <h3 class="leaderboard-title" style="margin:0; border-bottom:none; padding-bottom:0;">
-                        📋 I Miei Allenamenti <span id="workouts-count-badge" class="workouts-count-badge">(0)</span>
-                    </h3>
-                    <span class="collapsible-icon" id="workouts-toggle-icon">▼ Espandi</span>
+
+        <div class="workouts-subtabs-nav">
+            <button type="button" class="workouts-subtab-btn active" id="btn-subtab-workouts-diary" onclick="switchWorkoutsSubTab('diary')">📋 Diario Personale</button>
+            <button type="button" class="workouts-subtab-btn" id="btn-subtab-workouts-events" onclick="switchWorkoutsSubTab('events')">📅 Sondaggi & Ritrovi <span class="events-badge-dot" id="events-badge-dot" style="display:none; position:relative; top:auto; right:auto; width:8px; height:8px; background:#ef4444; border-radius:50%; margin-left:6px; vertical-align:middle;"></span></button>
+        </div>
+
+        <!-- Subtab 1: Personal Workout Diary -->
+        <div class="workouts-subtab-pane active" id="workouts-subtab-diary">
+            <div class="workouts-section full-tab-card" id="workouts-section">
+                <div class="workouts-section-header">
+                    <div class="workouts-toggle-title" onclick="toggleWorkoutsSection()">
+                        <h3 class="leaderboard-title" style="margin:0; border-bottom:none; padding-bottom:0;">
+                            📋 I Miei Allenamenti <span id="workouts-count-badge" class="workouts-count-badge">(0)</span>
+                        </h3>
+                        <span class="collapsible-icon" id="workouts-toggle-icon">▼ Espandi</span>
+                    </div>
+                    <button class="btn-confirm" id="new-workout-btn" onclick="openNewWorkoutModal()">➕ Nuovo Allenamento</button>
                 </div>
-                <button class="btn-confirm" id="new-workout-btn" onclick="openNewWorkoutModal()">➕ Nuovo Allenamento</button>
+                <div id="workouts-collapsible-content" style="display: block; margin-top: 14px; border-top: 1px solid var(--line-color); padding-top: 14px;">
+                    <div id="workouts-list-container" style="max-height: calc(100vh - 270px); overflow-y: auto; padding-right: 4px;">
+                        <p style="color: var(--subtext); text-align:center; font-size:0.85rem;">Caricamento allenamenti...</p>
+                    </div>
+                </div>
             </div>
-            <div id="workouts-collapsible-content" style="display: block; margin-top: 14px; border-top: 1px solid var(--line-color); padding-top: 14px;">
-                <div id="workouts-list-container" style="max-height: calc(100vh - 270px); overflow-y: auto; padding-right: 4px;">
-                    <p style="color: var(--subtext); text-align:center; font-size:0.85rem;">Caricamento allenamenti...</p>
+        </div>
+
+        <!-- Subtab 2: Events & Polls (Separato dal Diario Personale) -->
+        <div class="workouts-subtab-pane" id="workouts-subtab-events">
+            <div class="arena-card-box">
+                <div class="arena-card-box-header">
+                    <h3>📅 Eventi & Sondaggi Allenamento</h3>
+                    <div style="display:flex; gap:8px; align-items:center;">
+                        <button class="chat-new-btn" onclick="openCreateEventModal()">➕ Nuovo Sondaggio</button>
+                    </div>
+                </div>
+                <div class="events-panel active" id="events-panel" style="position:static; width:100%; height:auto; box-shadow:none; border:none; background:transparent;">
+                    <div class="events-list" id="events-list">
+                        <p style="color: var(--subtext); text-align:center; font-size:0.85rem;">Caricamento sondaggi...</p>
+                    </div>
+                    <div class="events-footer" id="events-footer" style="margin-top:12px;">
+                        <p style="color: var(--subtext); font-size: 0.85rem; text-align:center; margin:0; padding:8px; width:100%;">🔒 Accedi per creare o votare i sondaggi.</p>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
     <!-- ====================================================================
-         TAB 3: ARENA (DUELLI 1VS1, CLASSIFICA, SONDAGGI, RUOTA)
+         TAB 3: ARENA (DUELLI 1VS1 & CLASSIFICA GLOBALE)
          ==================================================================== -->
     <div class="main-tab-view" id="tab-view-arena">
         <div class="tab-header-banner">
             <h2>⚔️ Arena Calisthenica</h2>
-            <p>Sfida gli altri atleti in duelli 1vs1, scala la Classifica Globale e partecipa ai Sondaggi.</p>
+            <p>Sfida gli altri atleti in duelli 1vs1 e scala la Classifica Globale.</p>
         </div>
 
         <div class="arena-subtabs-nav">
             <button type="button" class="arena-subtab-btn active" id="btn-subtab-challenges" onclick="switchArenaSubTab('challenges')">🏹 Duelli & Sfide</button>
             <button type="button" class="arena-subtab-btn" id="btn-subtab-leaderboard" onclick="switchArenaSubTab('leaderboard')">🏆 Classifica Globale</button>
-            <button type="button" class="arena-subtab-btn" id="btn-subtab-events" onclick="switchArenaSubTab('events')">📅 Sondaggi & Ritrovi</button>
-            <button type="button" class="arena-subtab-btn" id="btn-subtab-wheel" onclick="switchArenaSubTab('wheel')">🎡 Ruota Fortuna</button>
         </div>
 
         <!-- Subtab 1: Challenges -->
@@ -4579,39 +4656,6 @@
                         <p style="color: var(--subtext); text-align: center; font-size: 0.9rem;">Caricamento classifica...</p>
                     </div>
                 </div>
-            </div>
-        </div>
-
-        <!-- Subtab 3: Events & Polls -->
-        <div class="arena-subtab-pane" id="arena-subtab-events">
-            <div class="arena-card-box">
-                <div class="arena-card-box-header">
-                    <h3>📅 Eventi & Sondaggi Allenamento</h3>
-                    <div style="display:flex; gap:8px; align-items:center;">
-                        <span class="events-badge-dot" id="events-badge-dot" style="display:none;"></span>
-                        <button class="chat-new-btn" onclick="openCreateEventModal()">➕ Nuovo Sondaggio</button>
-                    </div>
-                </div>
-                <div class="events-panel active" id="events-panel" style="position:static; width:100%; height:auto; box-shadow:none; border:none; background:transparent;">
-                    <div class="events-list" id="events-list">
-                        <p style="color: var(--subtext); text-align:center; font-size:0.85rem;">Caricamento sondaggi...</p>
-                    </div>
-                    <div class="events-footer" id="events-footer" style="margin-top:12px;">
-                        <p style="color: var(--subtext); font-size: 0.85rem; text-align:center; margin:0; padding:8px; width:100%;">🔒 Accedi per creare o votare i sondaggi.</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Subtab 4: Wheel of Fortune -->
-        <div class="arena-subtab-pane" id="arena-subtab-wheel">
-            <div class="arena-card-box" style="text-align:center; padding:30px 20px;">
-                <div style="font-size:3rem; margin-bottom:8px;">🎡</div>
-                <h3 style="margin:0; font-size:1.3rem; color:var(--text);">Ruota della Fortuna</h3>
-                <p style="color:var(--subtext); font-size:0.9rem; max-width:440px; margin:10px auto 20px auto;">
-                    Gira la Ruota della Fortuna dopo una vittoria per moltiplicare i tuoi XP guadagnati da 1.1x fino a 2.0x!
-                </p>
-                <button type="button" class="wheel-spin-btn" style="max-width:240px; margin:0 auto;" onclick="openWheelModal()">🎡 APRI LA RUOTA</button>
             </div>
         </div>
     </div>
@@ -7416,7 +7460,8 @@ let currentUser = null;
             } else if (options.type === 'challenge' || options.type === 'challengeInvite') {
                 if (!challengesPanelOpen) toggleChallengesPanel();
             } else if (options.type === 'event') {
-                if (!eventsPanelOpen) toggleEventsPanel();
+                switchMainTab('workouts');
+                switchWorkoutsSubTab('events');
             } else if (options.type === 'inactivity') {
                 openWorkoutsSection();
             }
@@ -14488,15 +14533,8 @@ function getCalisthenicsExpertResponse(query) {
         // EVENTI & SONDAGGI ALLENAMENTI
         // ==========================================
         function toggleEventsPanel() {
-            const panel = document.getElementById('events-panel');
-            eventsPanelOpen = !eventsPanelOpen;
-            panel.classList.toggle('active', eventsPanelOpen);
-
-            if (eventsPanelOpen) {
-                renderEventsFooter();
-                initEventsListener();
-                markEventsAsRead();
-            }
+            switchMainTab('workouts');
+            switchWorkoutsSubTab('events');
         }
 
         function renderEventsFooter() {
@@ -17476,8 +17514,25 @@ function getCalisthenicsExpertResponse(query) {
         }
 
         function openWheelModal(challengeId) {
-            const c = activeChallengesList.find(item => item.id === challengeId);
-            if (!c) return;
+            let c = null;
+            if (challengeId) {
+                c = activeChallengesList.find(item => item.id === challengeId);
+            } else {
+                // Fallback: cerca la prima sfida vinta dall'utente corrente con bonus non ancora riscosso
+                c = activeChallengesList.find(item => item.status === 'completed' && item.winnerUid === (currentUser && currentUser.uid) && !item.bonusClaimed);
+            }
+
+            if (!c) {
+                openCustomModal(
+                    "🎡 Ruota della Fortuna",
+                    "La Ruota della Fortuna si attiva solo quando vinci una sfida contro altri atleti per moltiplicare i tuoi XP vinti!<br><br>Vinci una sfida nell'Arena per sbloccare il tuo giro fortunato! ⚔️",
+                    "Ho capito 👍",
+                    false,
+                    () => {}
+                );
+                return;
+            }
+
             currentWheelChallenge = c;
             isWheelSpinning = false;
             wheelRotation = 0;
@@ -17487,7 +17542,7 @@ function getCalisthenicsExpertResponse(query) {
             const spinBtn = document.getElementById('wheel-spin-btn');
             const resultBox = document.getElementById('wheel-result-box');
 
-            if (titleEl) titleEl.innerText = `Sfida: "${c.title || 'Sfida'}" • Obiettivo: ${c.targetXp} XP`;
+            if (titleEl) titleEl.innerText = `Sfida: "${c.title || 'Sfida'}" • Obiettivo: ${c.targetXp || 1000} XP`;
             if (spinBtn) {
                 spinBtn.style.display = 'inline-block';
                 spinBtn.disabled = false;
@@ -17673,6 +17728,8 @@ function getCalisthenicsExpertResponse(query) {
         let lastTouchDist = 0;
 
         function switchMainTab(tabName) {
+            window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+
             // Se un popup/modal è aperto (es. Nuovo Allenamento), chiudilo automaticamente al cambio sezione
             const activeModal = document.getElementById('custom-modal');
             if (activeModal && activeModal.classList.contains('active')) {
@@ -17700,6 +17757,7 @@ function getCalisthenicsExpertResponse(query) {
                 }
             } else if (tabName === 'workouts') {
                 if (typeof renderWorkouts === 'function') renderWorkouts();
+                if (typeof initEventsListener === 'function') initEventsListener();
             } else if (tabName === 'arena') {
                 if (typeof initChallengesListener === 'function') initChallengesListener();
                 if (typeof initEventsListener === 'function') initEventsListener();
@@ -18190,7 +18248,29 @@ function getCalisthenicsExpertResponse(query) {
         // =========================================================================
         // ARENA SUBTABS
         // =========================================================================
+        function switchWorkoutsSubTab(subTabName) {
+            const panes = document.querySelectorAll('.workouts-subtab-pane');
+            panes.forEach(p => p.classList.remove('active'));
+            const targetPane = document.getElementById('workouts-subtab-' + subTabName);
+            if (targetPane) targetPane.classList.add('active');
+
+            const btns = document.querySelectorAll('.workouts-subtab-btn');
+            btns.forEach(b => b.classList.remove('active'));
+            const targetBtn = document.getElementById('btn-subtab-workouts-' + subTabName);
+            if (targetBtn) targetBtn.classList.add('active');
+
+            if (subTabName === 'events') {
+                if (typeof initEventsListener === 'function') initEventsListener();
+                if (typeof markEventsAsRead === 'function') markEventsAsRead();
+            }
+        }
+
         function switchArenaSubTab(subTabName) {
+            if (subTabName === 'events') {
+                switchMainTab('workouts');
+                switchWorkoutsSubTab('events');
+                return;
+            }
             const panes = document.querySelectorAll('.arena-subtab-pane');
             panes.forEach(p => p.classList.remove('active'));
             const targetPane = document.getElementById('arena-subtab-' + subTabName);
