@@ -3562,6 +3562,12 @@
         }
 
         @media (max-width: 768px) {
+            #tab-view-chat {
+                height: calc(100dvh - 64px) !important;
+                max-height: calc(100dvh - 64px) !important;
+                padding: 6px 8px 6px 8px !important;
+            }
+
             #tab-view-chat .chat-panel {
                 position: relative !important;
                 top: auto !important;
@@ -3569,9 +3575,10 @@
                 left: auto !important;
                 right: auto !important;
                 width: 100% !important;
-                height: calc(100dvh - 240px) !important;
-                min-height: 440px !important;
-                max-height: calc(100dvh - 210px) !important;
+                flex: 1 1 auto !important;
+                height: auto !important;
+                min-height: 0 !important;
+                max-height: none !important;
                 margin: 0 auto !important;
                 transform: none !important;
             }
@@ -3585,9 +3592,10 @@
                 left: auto !important;
                 right: auto !important;
                 width: 100% !important;
-                height: calc(100dvh - 240px) !important;
-                min-height: 420px !important;
-                max-height: calc(100dvh - 210px) !important;
+                flex: 1 1 auto !important;
+                height: auto !important;
+                min-height: 0 !important;
+                max-height: none !important;
                 margin: 0 auto !important;
                 transform: none !important;
             }
@@ -4765,6 +4773,114 @@
             }
         }
 
+    
+        /* ====================================================================
+           CHAT VIEW NO-SCROLL & COMPACT STREAMLINED LAYOUT
+           ==================================================================== */
+        body.chat-tab-active,
+        html.chat-tab-active {
+            overflow: hidden !important;
+            height: 100dvh !important;
+            max-height: 100dvh !important;
+            overscroll-behavior: none !important;
+        }
+
+        #tab-view-chat {
+            height: calc(100dvh - 64px) !important;
+            max-height: calc(100dvh - 64px) !important;
+            min-height: 0 !important;
+            overflow: hidden !important;
+            padding-top: 8px !important;
+            padding-bottom: 8px !important;
+            padding-left: 12px !important;
+            padding-right: 12px !important;
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: center !important;
+            box-sizing: border-box !important;
+        }
+
+        #tab-view-chat .tab-header-banner {
+            margin: 0 auto 6px auto !important;
+            padding: 6px 14px !important;
+            width: 100% !important;
+            max-width: 920px !important;
+            flex-shrink: 0 !important;
+            border-radius: 12px !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+        }
+
+        #tab-view-chat .chat-panel {
+            position: relative !important;
+            top: auto !important;
+            bottom: auto !important;
+            left: auto !important;
+            right: auto !important;
+            width: 100% !important;
+            max-width: 920px !important;
+            flex: 1 1 auto !important;
+            height: auto !important;
+            min-height: 0 !important;
+            max-height: none !important;
+            margin: 0 auto !important;
+            transform: none !important;
+            opacity: 1 !important;
+            pointer-events: auto !important;
+            border-radius: 16px !important;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25) !important;
+            border: 1px solid var(--line-color) !important;
+            overflow: hidden !important;
+            display: flex !important;
+            flex-direction: column !important;
+            z-index: 10 !important;
+        }
+
+        #tab-view-chat .chat-panel-header {
+            padding: 8px 14px !important;
+            font-size: 0.92rem !important;
+            min-height: 38px !important;
+        }
+
+        #tab-view-chat .chat-tabs {
+            min-height: 38px !important;
+        }
+
+        #tab-view-chat .chat-tab-btn {
+            padding: 8px 8px !important;
+            min-height: 38px !important;
+            font-size: 0.82rem !important;
+        }
+
+        #tab-view-chat .chat-messages {
+            flex: 1 1 auto !important;
+            min-height: 0 !important;
+            overflow-y: auto !important;
+            overscroll-behavior: contain !important;
+            padding: 10px !important;
+            display: flex !important;
+            flex-direction: column !important;
+            gap: 6px !important;
+        }
+
+        #tab-view-chat .chat-list-item {
+            padding: 8px 12px !important;
+            margin-bottom: 5px !important;
+            border-radius: 10px !important;
+        }
+
+        #tab-view-chat .chat-message {
+            padding: 6px 10px !important;
+            font-size: 0.85rem !important;
+        }
+
+        #tab-view-chat .chat-input-box {
+            padding: 8px 10px !important;
+            min-height: 48px !important;
+            flex-shrink: 0 !important;
+        }
+
     </style>
 </head>
 <body>
@@ -4963,11 +5079,11 @@
          TAB 4: CHAT (COMMUNITY, PRIVATE & AI COACH)
          ==================================================================== -->
     <div class="main-tab-view" id="tab-view-chat">
-        <div class="tab-header-banner" style="margin-bottom: 14px;">
-            <h2>💬 Chat & Community</h2>
-            <p>Confrontati con la community, invia messaggi privati o chiedi consiglio al Coach AI.</p>
+        <div class="tab-header-banner chat-banner-compact" style="margin: 0 auto 6px auto; padding: 6px 14px; width: 100%; max-width: 920px; flex-shrink: 0; border-radius: 12px; display: flex; align-items: center; justify-content: space-between; box-sizing: border-box;">
+            <h2 style="font-size: 1.05rem; margin: 0; display: flex; align-items: center; gap: 6px;">💬 Chat & Community</h2>
+            <span style="font-size: 0.74rem; color: var(--subtext);">Community • Private • Coach AI</span>
         </div>
-        <div class="chat-panel active" id="chat-panel" style="position:relative; width:100%; max-width:920px; height:calc(100vh - 275px); min-height:480px; max-height:calc(100vh - 250px); right:auto; top:auto; box-shadow:none; border-radius:18px; border:1px solid var(--line-color); z-index:10; margin:0 auto;">
+        <div class="chat-panel active" id="chat-panel" style="position:relative; width:100%; max-width:920px; flex:1 1 auto; height:auto; min-height:0; right:auto; top:auto; box-shadow:none; border-radius:16px; border:1px solid var(--line-color); z-index:10; margin:0 auto; display:flex; flex-direction:column; overflow:hidden;">
             <div class="chat-panel-header">
                 <span id="chat-panel-title">💬 Chat Generale</span>
                 <span class="chat-badge" id="chat-badge" style="display:none;">0</span>
@@ -5006,7 +5122,7 @@
     <div class="main-tab-view" id="tab-view-profile">
         <div class="tab-header-banner">
             <h2>👤 Profilo & Scheda Atleta</h2>
-            <p>Panoramica completa del tuo grado, statistiche duelli, composizione corporea e impostazioni.</p>
+            <p>Panoramica completa del tuo grado, statistiche duelli, tema grafico e impostazioni.</p>
         </div>
 
         <div class="profile-layout-wrapper profile-bento-grid">
@@ -5059,8 +5175,8 @@
                         <span id="bento-winrate-label" style="font-size:0.78rem; color:var(--subtext); font-weight:600; margin-top:5px; display:block; text-align:right;">Win Rate: 0%</span>
                     </div>
 
-                    <!-- Composizione Corporea & BMI -->
-                    <div class="bento-card bento-body">
+                    <!-- Composizione Corporea & BMI (Nascosta visivamente: gestita in Impostazioni Account & Privacy) -->
+                    <div class="bento-card bento-body" style="display: none !important;" aria-hidden="true">
                         <div class="bento-card-title">⚖️ Composizione Corporea & BMI</div>
                         <div class="bento-body-inputs">
                             <div class="bento-input-group">
@@ -5509,7 +5625,7 @@ let currentUser = null;
         let newChatMode = 'dm'; // 'dm' | 'group'
 
         let userRankCache = {}; // uid -> nome grado (es. "Oro (Intermedio)")
-        let isProfileSectionOpen = false;
+        let isProfileSectionOpen = true;
         let isWorkoutsSectionOpen = false;
         let currentSkillSearchQuery = '';
 
@@ -7950,6 +8066,7 @@ let currentUser = null;
         function loadUserData(user) {
             if (user) {
                 currentUser = user;
+                renderProfileSettings();
                 startUnreadListeners();
                 startEventsBadgeListener();
                 startChallengesBadgeListener();
@@ -8659,6 +8776,8 @@ let currentUser = null;
                     .then((userCred) => {
                         modal.classList.remove('active');
                         if (userCred && userCred.user) {
+                            currentUser = userCred.user;
+                            renderProfileSettings();
                             autoRegisterOneSignalPush(userCred.user.uid);
                         }
                     })
@@ -9026,11 +9145,13 @@ let currentUser = null;
         function isEmailPasswordUser() {
             const user = (typeof firebase !== 'undefined' && firebase.auth) ? (firebase.auth().currentUser || currentUser) : currentUser;
             if (!user) return false;
-            if (Array.isArray(user.providerData) && user.providerData.length > 0) {
-                return user.providerData.some(p => p && p.providerId === 'password');
+            if (Array.isArray(user.providerData) && user.providerData.some(p => p && p.providerId && p.providerId.includes('google'))) {
+                return false;
             }
-            // Fallback: se ha email e non è Google/Apple
-            return !!(user.email && (!user.providerData || user.providerData.length === 0));
+            if (Array.isArray(user.providerData) && user.providerData.some(p => p && p.providerId === 'password')) {
+                return true;
+            }
+            return !!(user.email);
         }
 
         function changeUserPasswordFromSettings() {
@@ -9151,14 +9272,9 @@ let currentUser = null;
             const container = document.getElementById('profile-settings-body');
             if (!container) return;
 
-            if (!currentUser) {
-                container.innerHTML = `<p style="color: var(--subtext); font-size: 0.85rem; text-align: center; margin: 0;">🔒 Accedi al tuo account per impostare altezza, peso e privacy del profilo.</p>`;
-                return;
-            }
-
-            const height = userProfileData.heightCm || '';
-            const weight = userProfileData.weightKg || '';
-            const isPublic = userProfileData.isPublic !== false;
+            const height = (userProfileData && userProfileData.heightCm) || localStorage.getItem('naiontrackHeight') || '';
+            const weight = (userProfileData && userProfileData.weightKg) || localStorage.getItem('naiontrackWeight') || '';
+            const isPublic = userProfileData ? (userProfileData.isPublic !== false) : true;
 
             const ios = getIOSInfo();
             const isUnsupportedIOS = ios.isIOS && !ios.isSupported;
@@ -9166,6 +9282,79 @@ let currentUser = null;
             const pushRowStyle = isUnsupportedIOS 
                 ? 'margin-top: 14px; padding-top: 12px; border-top: 1px dashed var(--line-color); opacity: 0.38; filter: grayscale(0.9); cursor: not-allowed;' 
                 : 'margin-top: 14px; padding-top: 12px; border-top: 1px dashed var(--line-color);';
+
+            let passwordBoxHtml = '';
+            if (currentUser && isEmailPasswordUser()) {
+                // Utente loggato con Email & Password standard
+                passwordBoxHtml = `
+                <div class="profile-password-change-box" id="profile-password-box" style="margin-top: 22px; padding: 18px; border-radius: 14px; background: rgba(56, 189, 248, 0.05); border: 1px solid rgba(56, 189, 248, 0.28); box-shadow: 0 4px 15px rgba(0,0,0,0.12);">
+                    <div style="font-weight: 800; font-size: 0.96rem; color: var(--text); margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px;">
+                        <span style="display:flex; align-items:center; gap:6px;">🔐 Sicurezza: Cambia Password</span>
+                        <span style="font-size: 0.72rem; color: var(--accent); font-weight: 700; background: rgba(56,189,248,0.14); padding: 3px 10px; border-radius: 999px;">Account Email</span>
+                    </div>
+                    <p style="font-size: 0.78rem; color: var(--subtext); margin: 0 0 14px 0; line-height: 1.4;">
+                        Inserisci la tua password attuale e imposta una nuova password (minimo 8 caratteri e almeno un carattere speciale).
+                    </p>
+
+                    <div class="auth-form-group" style="margin-bottom: 12px;">
+                        <label style="font-size: 0.8rem; font-weight: 700; color: var(--text); display: block; margin-bottom: 4px;">Password Attuale</label>
+                        <div class="password-container">
+                            <input type="password" id="profile-old-password" placeholder="Inserisci la password precedente" autocomplete="current-password">
+                            <button type="button" class="toggle-password-btn" onclick="togglePasswordVisibility('profile-old-password', this)" title="Mostra/Nascondi password">👁️</button>
+                        </div>
+                    </div>
+
+                    <div class="auth-form-group" style="margin-bottom: 12px;">
+                        <label style="font-size: 0.8rem; font-weight: 700; color: var(--text); display: block; margin-bottom: 4px;">Nuova Password (min. 8 caratteri, almeno 1 speciale)</label>
+                        <div class="password-container">
+                            <input type="password" id="profile-new-password" placeholder="Inserisci la nuova password" autocomplete="new-password">
+                            <button type="button" class="toggle-password-btn" onclick="togglePasswordVisibility('profile-new-password', this)" title="Mostra/Nascondi password">👁️</button>
+                        </div>
+                    </div>
+
+                    <div class="auth-form-group" style="margin-bottom: 12px;">
+                        <label style="font-size: 0.8rem; font-weight: 700; color: var(--text); display: block; margin-bottom: 4px;">Conferma Nuova Password</label>
+                        <div class="password-container">
+                            <input type="password" id="profile-confirm-password" placeholder="Ripeti la nuova password" autocomplete="new-password">
+                            <button type="button" class="toggle-password-btn" onclick="togglePasswordVisibility('profile-confirm-password', this)" title="Mostra/Nascondi password">👁️</button>
+                        </div>
+                    </div>
+
+                    <p class="auth-error" id="profile-password-error" style="min-height: 16px; margin: 4px 0 8px 0; font-size: 0.8rem; font-weight: 600;"></p>
+                    <p class="auth-success" id="profile-password-success" style="min-height: 16px; margin: 4px 0 8px 0; font-size: 0.8rem; font-weight: 600; color: #22c55e; display: none;"></p>
+                    <button type="button" class="btn-auth-primary" id="btn-change-password" style="width: 100%; padding: 10px 14px; font-weight: 700; cursor: pointer; border-radius: 10px; font-size: 0.88rem;" onclick="changeUserPasswordFromSettings()">🔑 Aggiorna Password</button>
+                </div>
+                `;
+            } else if (currentUser && !isEmailPasswordUser()) {
+                // Utente autenticato tramite Google
+                passwordBoxHtml = `
+                <div class="profile-password-change-box" id="profile-password-box" style="margin-top: 22px; padding: 16px 18px; border-radius: 14px; background: rgba(255, 255, 255, 0.03); border: 1px solid var(--line-color);">
+                    <div style="font-weight: 800; font-size: 0.95rem; color: var(--text); margin-bottom: 6px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px;">
+                        <span style="display:flex; align-items:center; gap:6px;">🔐 Sicurezza: Password Account</span>
+                        <span style="font-size: 0.72rem; color: #ea4335; font-weight: 700; background: rgba(234,67,53,0.12); padding: 3px 10px; border-radius: 999px;">Google Sign-In</span>
+                    </div>
+                    <p style="font-size: 0.82rem; color: var(--subtext); margin: 0; line-height: 1.4;">
+                        ℹ️ Hai effettuato l'accesso con <strong>Google</strong> (${currentUser.email || ''}). La tua password è gestita e protetta direttamente dai server sicuri di Google.
+                    </p>
+                </div>
+                `;
+            } else {
+                // Utente ospite o locale (non autenticato su Firebase)
+                passwordBoxHtml = `
+                <div class="profile-password-change-box" id="profile-password-box" style="margin-top: 22px; padding: 18px; border-radius: 14px; background: rgba(56, 189, 248, 0.05); border: 1px dashed var(--accent); box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+                    <div style="font-weight: 800; font-size: 0.95rem; color: var(--text); margin-bottom: 6px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px;">
+                        <span style="display:flex; align-items:center; gap:6px;">🔐 Sicurezza: Cambia Password</span>
+                        <span style="font-size: 0.72rem; color: var(--accent); font-weight: 700; background: rgba(56,189,248,0.14); padding: 3px 10px; border-radius: 999px;">Account Email</span>
+                    </div>
+                    <p style="font-size: 0.82rem; color: var(--subtext); margin: 0 0 14px 0; line-height: 1.4;">
+                        L'opzione per cambiare password è attiva per gli account registrati con email e password default dell'app. Effettua l'accesso al tuo account per modificare la password.
+                    </p>
+                    <button type="button" class="btn-auth-primary" onclick="openAuthModal('login')" style="padding: 8px 20px; font-size: 0.84rem; display: inline-flex; align-items: center; gap: 6px; border-radius: 8px;">
+                        🔑 Accedi per Cambiare Password
+                    </button>
+                </div>
+                `;
+            }
 
             container.innerHTML = `
                 <div class="profile-settings-grid">
@@ -9207,45 +9396,13 @@ let currentUser = null;
                 <p class="auth-error" id="profile-settings-error" style="min-height: 16px; margin-top: 6px;"></p>
                 <button class="btn-confirm" style="width: 100%; margin-top: 4px;" onclick="saveProfileSettings()">💾 Salva Profilo</button>
 
-                ${isEmailPasswordUser() ? `
-                <div class="profile-password-change-box" id="profile-password-box" style="margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--line-color);">
-                    <div style="font-weight: 800; font-size: 0.92rem; color: var(--text); margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between;">
-                        <span>🔐 Sicurezza: Cambia Password</span>
-                        <span style="font-size: 0.72rem; color: var(--subtext); font-weight: normal;">(Account Email)</span>
-                    </div>
-
-                    <div class="auth-form-group" style="margin-bottom: 10px;">
-                        <label style="font-size: 0.8rem; font-weight: 700; color: var(--text); display: block; margin-bottom: 4px;">Password Attuale</label>
-                        <div class="password-container">
-                            <input type="password" id="profile-old-password" placeholder="Inserisci la password precedente" autocomplete="current-password">
-                            <button type="button" class="toggle-password-btn" onclick="togglePasswordVisibility('profile-old-password', this)" title="Mostra/Nascondi password">👁️</button>
-                        </div>
-                    </div>
-
-                    <div class="auth-form-group" style="margin-bottom: 10px;">
-                        <label style="font-size: 0.8rem; font-weight: 700; color: var(--text); display: block; margin-bottom: 4px;">Nuova Password (min. 8 caratteri, almeno 1 speciale)</label>
-                        <div class="password-container">
-                            <input type="password" id="profile-new-password" placeholder="Inserisci la nuova password" autocomplete="new-password">
-                            <button type="button" class="toggle-password-btn" onclick="togglePasswordVisibility('profile-new-password', this)" title="Mostra/Nascondi password">👁️</button>
-                        </div>
-                    </div>
-
-                    <div class="auth-form-group" style="margin-bottom: 10px;">
-                        <label style="font-size: 0.8rem; font-weight: 700; color: var(--text); display: block; margin-bottom: 4px;">Conferma Nuova Password</label>
-                        <div class="password-container">
-                            <input type="password" id="profile-confirm-password" placeholder="Ripeti la nuova password" autocomplete="new-password">
-                            <button type="button" class="toggle-password-btn" onclick="togglePasswordVisibility('profile-confirm-password', this)" title="Mostra/Nascondi password">👁️</button>
-                        </div>
-                    </div>
-
-                    <p class="auth-error" id="profile-password-error" style="min-height: 16px; margin: 4px 0 8px 0; font-size: 0.8rem; font-weight: 600;"></p>
-                    <button type="button" class="btn-auth-secondary" id="btn-change-password" style="width: 100%; padding: 8px 12px; font-weight: 700; cursor: pointer;" onclick="changeUserPasswordFromSettings()">🔑 Aggiorna Password</button>
-                </div>
-                ` : ''}
+                ${passwordBoxHtml}
             `;
 
-            document.getElementById('profile-height-input').oninput = updateBmiPreview;
-            document.getElementById('profile-weight-input').oninput = updateBmiPreview;
+            const hInput = document.getElementById('profile-height-input');
+            const wInput = document.getElementById('profile-weight-input');
+            if (hInput) hInput.oninput = updateBmiPreview;
+            if (wInput) wInput.oninput = updateBmiPreview;
             updateBmiPreview();
         }
 
@@ -9254,6 +9411,87 @@ let currentUser = null;
             const label = document.getElementById('privacy-toggle-label');
             if (!checkbox || !label) return;
             label.innerText = checkbox.checked ? '🌐 Profilo Pubblico' : '🔒 Profilo Privato';
+        }
+
+        function saveProfileSettings() {
+            const errEl = document.getElementById('profile-settings-error');
+            if (errEl) {
+                errEl.style.color = 'var(--danger)';
+                errEl.innerText = '';
+            }
+
+            const hEl = document.getElementById('profile-height-input');
+            const wEl = document.getElementById('profile-weight-input');
+            const pubEl = document.getElementById('profile-public-toggle');
+            if (!hEl || !wEl) return;
+
+            const heightRaw = hEl.value.trim();
+            const weightRaw = wEl.value.trim();
+            const isPublic = pubEl ? pubEl.checked : true;
+
+            let heightCm = null;
+            let weightKg = null;
+
+            if (heightRaw !== '') {
+                const h = parseFloat(heightRaw);
+                if (isNaN(h) || h < 120 || h > 220) {
+                    if (errEl) errEl.innerText = "❌ L'altezza deve essere un numero tra 120 e 220 cm.";
+                    return;
+                }
+                heightCm = h;
+            }
+
+            if (weightRaw !== '') {
+                const w = parseFloat(weightRaw);
+                if (isNaN(w) || w < 40 || w > 130) {
+                    if (errEl) errEl.innerText = "❌ Il peso deve essere un numero tra 40 e 130 kg.";
+                    return;
+                }
+                weightKg = w;
+            }
+
+            userProfileData = {
+                heightCm: heightCm,
+                weightKg: weightKg,
+                isPublic: isPublic
+            };
+            if (heightCm) localStorage.setItem('naiontrackHeight', heightCm);
+            else localStorage.removeItem('naiontrackHeight');
+            if (weightKg) localStorage.setItem('naiontrackWeight', weightKg);
+            else localStorage.removeItem('naiontrackWeight');
+
+            // Sincronizza anche elementi bento nascosti
+            const bWeight = document.getElementById('bento-body-weight');
+            const bHeight = document.getElementById('bento-body-height');
+            if (bWeight && weightKg) bWeight.value = weightKg;
+            if (bHeight && heightCm) bHeight.value = heightCm;
+            if (typeof calculateBentoBMI === 'function') calculateBentoBMI();
+
+            if (!currentUser) {
+                if (errEl) {
+                    errEl.style.color = '#22c55e';
+                    errEl.innerText = "✅ Dati corporei salvati localmente! (Accedi per sincronizzarli online)";
+                }
+                updateBmiPreview();
+                return;
+            }
+
+            db.collection("users").doc(currentUser.uid).update({
+                heightCm: heightCm,
+                weightKg: weightKg,
+                isPublic: isPublic
+            }).then(() => {
+                if (errEl) {
+                    errEl.style.color = '#22c55e';
+                    errEl.innerText = "✅ Profilo salvato con successo!";
+                }
+                updateBmiPreview();
+            }).catch((err) => {
+                console.error("Errore salvataggio profilo:", err);
+                if (errEl) {
+                    errEl.innerText = "❌ Errore durante il salvataggio su server. Riprova più tardi.";
+                }
+            });
         }
 
         function updateBmiPreview() {
@@ -18225,6 +18463,14 @@ function getCalisthenicsExpertResponse(query) {
 
         function switchMainTab(tabName) {
             window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+
+            if (tabName === 'chat') {
+                document.body.classList.add('chat-tab-active');
+                document.documentElement.classList.add('chat-tab-active');
+            } else {
+                document.body.classList.remove('chat-tab-active');
+                document.documentElement.classList.remove('chat-tab-active');
+            }
 
             // Se un popup/modal è aperto (es. Nuovo Allenamento), chiudilo automaticamente al cambio sezione
             const activeModal = document.getElementById('custom-modal');
