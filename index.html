@@ -3493,6 +3493,73 @@
             box-shadow: 0 3px 12px rgba(56, 189, 248, 0.4);
         }
 
+
+        /* ====================================================================
+           TAB VIEW CHAT: CHAT PANEL CARD SIZING & NO OVERLAPS
+           ==================================================================== */
+        #tab-view-chat {
+            width: 100%;
+            max-width: 920px;
+            margin: 0 auto;
+            box-sizing: border-box;
+        }
+
+        #tab-view-chat .chat-panel {
+            position: relative !important;
+            top: auto !important;
+            bottom: auto !important;
+            left: auto !important;
+            right: auto !important;
+            width: 100% !important;
+            max-width: 920px !important;
+            height: calc(100vh - 275px) !important;
+            min-height: 480px !important;
+            max-height: calc(100vh - 250px) !important;
+            margin: 0 auto !important;
+            transform: none !important;
+            opacity: 1 !important;
+            pointer-events: auto !important;
+            border-radius: 18px !important;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3) !important;
+            border: 1px solid var(--line-color) !important;
+            overflow: hidden !important;
+            display: flex !important;
+            flex-direction: column !important;
+            z-index: 10 !important;
+        }
+
+        @media (max-width: 768px) {
+            #tab-view-chat .chat-panel {
+                position: relative !important;
+                top: auto !important;
+                bottom: auto !important;
+                left: auto !important;
+                right: auto !important;
+                width: 100% !important;
+                height: calc(100dvh - 240px) !important;
+                min-height: 440px !important;
+                max-height: calc(100dvh - 210px) !important;
+                margin: 0 auto !important;
+                transform: none !important;
+            }
+        }
+
+        @media (max-width: 600px) {
+            #tab-view-chat .chat-panel {
+                position: relative !important;
+                top: auto !important;
+                bottom: auto !important;
+                left: auto !important;
+                right: auto !important;
+                width: 100% !important;
+                height: calc(100dvh - 240px) !important;
+                min-height: 420px !important;
+                max-height: calc(100dvh - 210px) !important;
+                margin: 0 auto !important;
+                transform: none !important;
+            }
+        }
+
         /* RPG SKILL TREE GRAPH VIEWPORT (PERFECTLY CENTERED & EXPANDED) */
         .skill-tree-viewport-wrapper {
             width: 100%;
@@ -3768,23 +3835,63 @@
             transform: scale(1.08);
         }
 
-        /* TREE LEGEND HUD */
+        /* TREE LEGEND HUD - POSIZIONATO IN ALTO A SINISTRA PER NON SOVRAPPORSI AI TASTI ZOOM */
         .tree-legend-hud {
             position: absolute;
-            bottom: 16px;
-            left: 16px;
+            top: 14px;
+            left: 14px;
             display: flex;
             gap: 12px;
             background: rgba(15, 23, 42, 0.88);
             backdrop-filter: blur(10px);
             border: 1px solid var(--line-color);
-            border-radius: 12px;
+            border-radius: 999px;
             padding: 6px 14px;
             font-size: 0.74rem;
             color: var(--subtext);
             font-weight: 600;
             z-index: 20;
             box-shadow: 0 4px 14px rgba(0,0,0,0.3);
+            pointer-events: none;
+        }
+
+        @media (max-width: 500px) {
+            .tree-legend-hud {
+                top: 10px;
+                left: 10px;
+                font-size: 0.68rem;
+                padding: 5px 10px;
+                gap: 8px;
+            }
+        }
+
+        /* FULLSCREEN EXPAND MODE PER ALBERO RPG */
+        .skill-tree-viewport-wrapper.tree-fullscreen-mode {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            bottom: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            max-width: 100vw !important;
+            max-height: 100vh !important;
+            border-radius: 0 !important;
+            margin: 0 !important;
+            z-index: 999999 !important;
+            background: var(--tree-bg) !important;
+            border: none !important;
+            box-shadow: none !important;
+        }
+
+        .skill-tree-viewport-wrapper.tree-fullscreen-mode .skill-tree-viewport {
+            height: 100vh !important;
+            min-height: 100vh !important;
+            border-radius: 0 !important;
+        }
+
+        body.tree-fullscreen-active {
+            overflow: hidden !important;
         }
 
         .tree-legend-item {
@@ -4388,7 +4495,7 @@
                 <div class="tree-zoom-hud">
                     <button type="button" class="tree-hud-btn" onclick="zoomSkillTree(1.2)" title="Ingrandisci">+</button>
                     <button type="button" class="tree-hud-btn" onclick="zoomSkillTree(0.8)" title="Rimpicciolisci">−</button>
-                    <button type="button" class="tree-hud-btn" onclick="resetSkillTreeZoom()" title="Centra / Reset">🎯</button>
+                    <button type="button" class="tree-hud-btn" id="btn-tree-fullscreen" onclick="toggleSkillTreeFullscreen()" title="Schermo Intero / Ingrandisci Albero" aria-label="Schermo Intero">⛶</button>
                 </div>
                 <div class="tree-legend-hud">
                     <span class="tree-legend-item"><span class="legend-dot locked"></span> Bloccata</span>
@@ -17659,9 +17766,9 @@ function getCalisthenicsExpertResponse(query) {
 
             const isSingleCat = filteredCats.length === 1;
             const CANVAS_HEIGHT = 1400;
-            const NODE_Y_GAP = 135;
-            const CAT_WIDTH = isSingleCat ? 650 : 280;
-            const subGap = isSingleCat ? 130 : 100;
+            const NODE_Y_GAP = 145;
+            const CAT_WIDTH = isSingleCat ? 750 : 340;
+            const subGap = isSingleCat ? 160 : 135;
 
             filteredCats.forEach((cat, catIdx) => {
                 const byDepth = {};
@@ -17713,7 +17820,7 @@ function getCalisthenicsExpertResponse(query) {
                 : categories;
 
             const isSingleCat = filteredCats.length === 1;
-            const canvasWidth = isSingleCat ? 900 : 2920;
+            const canvasWidth = isSingleCat ? 1000 : 3400;
             const canvasHeight = 1400;
 
             if (canvasEl) {
@@ -17796,6 +17903,68 @@ function getCalisthenicsExpertResponse(query) {
             treeZoom = newZoom;
             applyTreeTransform();
         }
+
+        let isTreeFullscreen = false;
+
+        function toggleSkillTreeFullscreen() {
+            isTreeFullscreen = !isTreeFullscreen;
+            const wrapper = document.getElementById('skill-tree-viewport-wrapper');
+            const btn = document.getElementById('btn-tree-fullscreen');
+            if (!wrapper) return;
+
+            wrapper.classList.toggle('tree-fullscreen-mode', isTreeFullscreen);
+            document.body.classList.toggle('tree-fullscreen-active', isTreeFullscreen);
+
+            if (btn) {
+                btn.innerText = isTreeFullscreen ? '🗗' : '⛶';
+                btn.title = isTreeFullscreen ? 'Esci da Schermo Intero (Esc)' : 'Schermo Intero / Ingrandisci Albero';
+            }
+
+            if (isTreeFullscreen) {
+                try {
+                    if (wrapper.requestFullscreen) {
+                        wrapper.requestFullscreen().catch(() => {});
+                    } else if (wrapper.webkitRequestFullscreen) {
+                        wrapper.webkitRequestFullscreen();
+                    }
+                } catch (e) {}
+            } else {
+                try {
+                    if (document.fullscreenElement) {
+                        document.exitFullscreen().catch(() => {});
+                    }
+                } catch (e) {}
+            }
+
+            setTimeout(() => {
+                resetSkillTreeZoom();
+                renderSkillTreeGraph();
+            }, 120);
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && isTreeFullscreen) {
+                toggleSkillTreeFullscreen();
+            }
+        });
+
+        document.addEventListener('fullscreenchange', () => {
+            if (!document.fullscreenElement && isTreeFullscreen) {
+                isTreeFullscreen = false;
+                const wrapper = document.getElementById('skill-tree-viewport-wrapper');
+                const btn = document.getElementById('btn-tree-fullscreen');
+                if (wrapper) wrapper.classList.remove('tree-fullscreen-mode');
+                document.body.classList.remove('tree-fullscreen-active');
+                if (btn) {
+                    btn.innerText = '⛶';
+                    btn.title = 'Schermo Intero / Ingrandisci Albero';
+                }
+                setTimeout(() => {
+                    resetSkillTreeZoom();
+                    renderSkillTreeGraph();
+                }, 120);
+            }
+        });
 
         function resetSkillTreeZoom() {
             const viewport = document.getElementById('skill-tree-viewport');
