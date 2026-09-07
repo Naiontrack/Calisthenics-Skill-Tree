@@ -762,12 +762,15 @@
             top: 0;
             left: 0;
             width: 100%;
-            height: 100%;
+            bottom: 64px; /* Lascia libera la barra di navigazione inferiore */
+            height: auto;
             background: rgba(0, 0, 0, 0.75);
             backdrop-filter: blur(4px);
             display: flex;
             justify-content: center;
             align-items: center;
+            padding: 16px;
+            box-sizing: border-box;
             z-index: 100;
             opacity: 0;
             pointer-events: none;
@@ -1733,6 +1736,8 @@
         .chat-tabs {
             display: flex;
             border-bottom: 1px solid var(--line-color);
+            background: rgba(255, 255, 255, 0.02);
+            overflow-x: auto;
         }
 
         .chat-tab-btn {
@@ -1741,21 +1746,24 @@
             background: none;
             border: none;
             border-radius: 0;
-            padding: 10px 8px;
-            font-size: 0.82rem;
+            padding: 12px 8px;
+            font-size: 0.85rem;
+            min-height: 44px;
             color: var(--subtext);
             cursor: pointer;
             border-bottom: 2px solid transparent;
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            gap: 4px;
+            gap: 5px;
+            white-space: nowrap;
         }
 
         .chat-tab-btn.active {
             color: var(--accent);
             border-bottom: 2px solid var(--accent);
             font-weight: bold;
+            background: rgba(56, 189, 248, 0.05);
         }
 
         .chat-thread-header {
@@ -4505,7 +4513,11 @@
          TAB 4: CHAT (COMMUNITY, PRIVATE & AI COACH)
          ==================================================================== -->
     <div class="main-tab-view" id="tab-view-chat">
-        <div class="chat-panel active" id="chat-panel" style="position:relative; width:100%; max-width:100%; height:calc(100vh - 170px); right:auto; top:auto; box-shadow:none; border-radius:18px; border:1px solid var(--line-color); z-index:10;">
+        <div class="tab-header-banner" style="margin-bottom: 14px;">
+            <h2>💬 Chat & Community</h2>
+            <p>Confrontati con la community, invia messaggi privati o chiedi consiglio al Coach AI.</p>
+        </div>
+        <div class="chat-panel active" id="chat-panel" style="position:relative; width:100%; max-width:920px; height:calc(100vh - 275px); min-height:480px; max-height:calc(100vh - 250px); right:auto; top:auto; box-shadow:none; border-radius:18px; border:1px solid var(--line-color); z-index:10; margin:0 auto;">
             <div class="chat-panel-header">
                 <span id="chat-panel-title">💬 Chat Generale</span>
                 <span class="chat-badge" id="chat-badge" style="display:none;">0</span>
@@ -8035,14 +8047,15 @@ let currentUser = null;
             if (!error) return "Si è verificato un errore.";
             const code = error.code || "";
             const msg = error.message || "";
-            if (code === "auth/invalid-credential" || msg.includes("userinfo") || msg.includes("401") || code === "auth/internal-error" || msg.includes("500") || msg.includes("Server Error")) {
-                return "⚠️ <strong>Errore autenticazione Google (500 Server Error):</strong><br>I server OAuth di Google hanno riscontrato un problema di sincronizzazione o configurazione.<br>💡 <strong>Soluzione immediata:</strong> Accedi o registrati subito usando <strong>Email e Password</strong> nel modulo qui sotto (funziona istantaneamente!).";
-            }
+
             if (code === "auth/popup-closed-by-user") {
                 return "Finestra di accesso Google chiusa prima del completamento.";
             }
             if (code === "auth/popup-blocked") {
                 return "⚠️ Finestra popup bloccata dal browser. Consenti i popup per questo sito e riprova.";
+            }
+            if (code === "auth/unauthorized-domain") {
+                return "⚠️ <strong>Dominio non autorizzato per Google OAuth:</strong><br>Stai aprendo l'app da file locale (<code>file:///</code>). Google blocca i popup OAuth locali.<br>💡 Usa <strong>Email e Password</strong> qui sotto per accedere o registrarti subito!";
             }
             if (code === "auth/user-not-found") {
                 return "❌ Nessun account trovato con questa email. Clicca su 'Registrati qui' in basso per crearlo!";
@@ -8053,21 +8066,19 @@ let currentUser = null;
             if (code === "auth/email-already-in-use") {
                 return "⚠️ Questa email è già registrata. Clicca su 'Accedi qui' in basso per entrare.";
             }
-            if (code === "auth/unauthorized-domain") {
-                return "⚠️ Questo dominio web non è ancora presente nei 'Domini autorizzati' in Firebase Authentication.";
+            if (code === "auth/invalid-credential" || msg.includes("userinfo") || msg.includes("401") || code === "auth/internal-error" || msg.includes("500") || msg.includes("Server Error")) {
+                return "⚠️ <strong>Accesso Google non riuscito (" + (code || '500 Server Error') + "):</strong><br>Google Cloud o Firebase richiede configurazione per il provider Google.<br>💡 <strong>Accesso Immediato:</strong> Usa <strong>Email e Password</strong> qui sotto (funziona al 100% istantaneamente).";
             }
             if (code === "auth/operation-not-allowed") {
                 return "⚠️ Questo metodo di accesso non è abilitato nella console Firebase Authentication.";
             }
-            return msg;
+            return msg || "Errore di autenticazione.";
         }
 
         // ACCESSO TRAMITE GOOGLE
         function loginWithGoogle() {
             const provider = new firebase.auth.GoogleAuthProvider();
             provider.setCustomParameters({ prompt: 'select_account' });
-            provider.addScope('profile');
-            provider.addScope('email');
 
             const errorEl = document.getElementById('auth-error-msg');
             if (errorEl) errorEl.innerHTML = '<span style="color:var(--accent); font-size:0.84rem;">⏳ Apertura Google Sign-In in corso...</span>';
@@ -17555,6 +17566,14 @@ function getCalisthenicsExpertResponse(query) {
         let lastTouchDist = 0;
 
         function switchMainTab(tabName) {
+            // Se un popup/modal è aperto (es. Nuovo Allenamento), chiudilo automaticamente al cambio sezione
+            const activeModal = document.getElementById('custom-modal');
+            if (activeModal && activeModal.classList.contains('active')) {
+                const mb = activeModal.querySelector('.modal-box');
+                if (mb) mb.classList.remove('modal-compact');
+                activeModal.classList.remove('active');
+            }
+
             currentMainTab = tabName;
             try { localStorage.setItem('naiontrackActiveTab', tabName); } catch (e) {}
 
