@@ -3211,109 +3211,1297 @@
             border: none;
             margin-top: 10px;
         }
+    
+        /* ==========================================================================
+           5-TAB NAVIGATION & RPG SKILL TREE GRAPH UPGRADE
+           ========================================================================== */
+        
+        :root {
+            --tree-bg: #0b1120;
+            --tree-grid: rgba(255, 255, 255, 0.035);
+            --tree-line-locked: rgba(148, 163, 184, 0.22);
+            --tree-line-active: #38bdf8;
+            --tree-node-bg: #1e293b;
+            --tree-node-glow: #38bdf8;
+            --tree-node-unlocked: #22c55e;
+            --tree-node-mastered: #f59e0b;
+        }
+
+        body.theme-light {
+            --tree-bg: #f8fafc;
+            --tree-grid: rgba(0, 0, 0, 0.04);
+            --tree-line-locked: rgba(148, 163, 184, 0.35);
+            --tree-line-active: #0284c7;
+            --tree-node-bg: #ffffff;
+            --tree-node-glow: #0284c7;
+            --tree-node-unlocked: #16a34a;
+            --tree-node-mastered: #d97706;
+        }
+
+        body.theme-dark {
+            --tree-bg: #0d0d12;
+            --tree-grid: rgba(255, 255, 255, 0.025);
+            --tree-line-locked: rgba(100, 116, 139, 0.3);
+            --tree-line-active: #bb86fc;
+            --tree-node-bg: #1a1a24;
+            --tree-node-glow: #bb86fc;
+            --tree-node-unlocked: #03dac6;
+            --tree-node-mastered: #f59e0b;
+        }
+
+        /* 5 TAB VIEWS */
+        .main-tab-view {
+            display: none;
+            opacity: 0;
+            transition: opacity 0.2s ease-in-out;
+            padding-bottom: 95px; /* Spazio per bottom nav */
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .main-tab-view.active {
+            display: block;
+            opacity: 1;
+            animation: tabFadeIn 0.22s ease-out forwards;
+        }
+
+        @keyframes tabFadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .tab-header-banner {
+            padding: 16px 20px;
+            background: linear-gradient(135deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
+            border: 1px solid var(--line-color);
+            border-radius: 16px;
+            margin-bottom: 16px;
+            text-align: center;
+        }
+
+        .tab-header-banner h2 {
+            margin: 0;
+            font-size: 1.35rem;
+            color: var(--text);
+        }
+
+        .tab-header-banner p {
+            margin: 6px 0 0 0;
+            font-size: 0.88rem;
+            color: var(--subtext);
+        }
+
+        /* FIXED BOTTOM NAVIGATION BAR */
+        .bottom-nav-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 64px;
+            background: rgba(15, 23, 42, 0.94);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-top: 1px solid var(--line-color);
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            z-index: 9999;
+            padding-bottom: env(safe-area-inset-bottom, 0px);
+            box-shadow: 0 -4px 25px rgba(0, 0, 0, 0.35);
+        }
+
+        body.theme-light .bottom-nav-bar {
+            background: rgba(255, 255, 255, 0.94);
+            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.08);
+        }
+
+        body.theme-dark .bottom-nav-bar {
+            background: rgba(18, 18, 24, 0.96);
+        }
+
+        .bottom-nav-item {
+            position: relative;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 3px;
+            background: none;
+            border: none;
+            color: var(--subtext);
+            cursor: pointer;
+            padding: 6px 0;
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+            user-select: none;
+        }
+
+        .bottom-nav-icon {
+            font-size: 1.35rem;
+            line-height: 1;
+            transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .bottom-nav-label {
+            font-size: 0.68rem;
+            font-weight: 700;
+            letter-spacing: 0.2px;
+            transition: color 0.2s;
+        }
+
+        .bottom-nav-item:hover {
+            color: var(--text);
+        }
+
+        .bottom-nav-item:hover .bottom-nav-icon {
+            transform: translateY(-2px);
+        }
+
+        .bottom-nav-item.active {
+            color: var(--accent);
+        }
+
+        .bottom-nav-item.active .bottom-nav-icon {
+            transform: scale(1.18) translateY(-2px);
+            filter: drop-shadow(0 2px 8px var(--accent-subtle));
+        }
+
+        .bottom-nav-badge {
+            position: absolute;
+            top: 4px;
+            right: calc(50% - 18px);
+            background: #ef4444;
+            color: #ffffff;
+            font-size: 0.65rem;
+            font-weight: 800;
+            padding: 1px 5px;
+            border-radius: 999px;
+            box-shadow: 0 0 6px rgba(239, 68, 68, 0.6);
+            line-height: 1.2;
+        }
+
+        /* VIEW SWITCHER & TREE CONTROLS */
+        .tree-view-header-controls {
+            margin-bottom: 12px;
+        }
+
+        .tree-view-toggle-bar {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+
+        .tree-view-toggle-btn {
+            padding: 8px 18px;
+            border-radius: 999px;
+            border: 1px solid var(--line-color);
+            background: var(--card-bg);
+            color: var(--subtext);
+            font-size: 0.84rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+        }
+
+        .tree-view-toggle-btn:hover {
+            color: var(--text);
+            border-color: var(--accent);
+        }
+
+        .tree-view-toggle-btn.active {
+            background: var(--accent);
+            color: #ffffff;
+            border-color: var(--accent);
+            box-shadow: 0 3px 12px rgba(56, 189, 248, 0.4);
+        }
+
+        /* RPG SKILL TREE GRAPH VIEWPORT */
+        .skill-tree-viewport-wrapper {
+            width: 100%;
+            margin: 10px 0 20px 0;
+            border-radius: 20px;
+            overflow: hidden;
+            border: 1px solid var(--line-color);
+            background: var(--tree-bg);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35);
+        }
+
+        .skill-tree-viewport {
+            position: relative;
+            width: 100%;
+            height: calc(100vh - 270px);
+            min-height: 540px;
+            overflow: hidden;
+            cursor: grab;
+            user-select: none;
+            touch-action: none;
+            background-image: 
+                radial-gradient(circle at 50% 50%, rgba(56, 189, 248, 0.04) 0%, transparent 60%),
+                radial-gradient(var(--tree-grid) 1px, transparent 1px);
+            background-size: 100% 100%, 32px 32px;
+        }
+
+        .skill-tree-viewport:active {
+            cursor: grabbing;
+        }
+
+        .skill-tree-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 2920px;
+            height: 1400px;
+            transform-origin: 0 0;
+        }
+
+        .skill-tree-svg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 2920px;
+            height: 1400px;
+            pointer-events: none;
+        }
+
+        /* SVG BÉZIER CONNECTOR LINES */
+        .tree-branch-line {
+            fill: none;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            transition: stroke 0.3s ease, stroke-width 0.3s ease;
+        }
+
+        .tree-branch-line.locked {
+            stroke: var(--tree-line-locked);
+            stroke-width: 2px;
+            stroke-dasharray: 5 5;
+            opacity: 0.6;
+        }
+
+        .tree-branch-line.active {
+            stroke: var(--tree-line-active);
+            stroke-width: 3.5px;
+            filter: drop-shadow(0 0 6px var(--tree-line-active));
+            opacity: 0.95;
+        }
+
+        .tree-category-banner {
+            position: absolute;
+            top: 24px;
+            text-align: center;
+            width: 240px;
+            font-weight: 800;
+            font-size: 0.88rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--accent);
+            background: rgba(15, 23, 42, 0.65);
+            backdrop-filter: blur(8px);
+            border: 1px solid var(--line-color);
+            border-radius: 999px;
+            padding: 6px 14px;
+            pointer-events: none;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.25);
+        }
+
+        /* CIRCULAR SKILL NODES */
+        .tree-node {
+            position: absolute;
+            width: 62px;
+            height: 62px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--tree-node-bg);
+            box-sizing: border-box;
+            user-select: none;
+        }
+
+        .tree-node:hover {
+            transform: scale(1.15);
+            z-index: 50;
+        }
+
+        .tree-node.locked {
+            border: 2px solid rgba(148, 163, 184, 0.3);
+            opacity: 0.55;
+            filter: grayscale(0.65);
+        }
+
+        .tree-node.available {
+            border: 2.5px solid var(--accent);
+            box-shadow: 0 0 14px rgba(56, 189, 248, 0.45);
+            animation: nodePulsing 2.5s infinite ease-in-out;
+        }
+
+        .tree-node.unlocked {
+            border: 2.5px solid var(--tree-node-unlocked);
+            box-shadow: 0 0 16px rgba(34, 197, 94, 0.55);
+        }
+
+        .tree-node.mastered {
+            border: 2.5px solid var(--tree-node-mastered);
+            box-shadow: 0 0 20px rgba(245, 158, 11, 0.7);
+        }
+
+        @keyframes nodePulsing {
+            0%, 100% { box-shadow: 0 0 10px rgba(56, 189, 248, 0.3); }
+            50% { box-shadow: 0 0 22px rgba(56, 189, 248, 0.8); }
+        }
+
+        .tree-node-inner {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            padding: 7px;
+            box-sizing: border-box;
+        }
+
+        .tree-node-svg {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+        }
+
+        .tree-node-svg svg {
+            width: 100%;
+            height: 100%;
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        .tree-node-label {
+            position: absolute;
+            top: 66px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            text-align: center;
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: var(--text);
+            pointer-events: none;
+            line-height: 1.2;
+            text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9);
+            white-space: normal;
+            word-break: break-word;
+        }
+
+        .tree-node-lock-badge {
+            position: absolute;
+            top: -3px;
+            right: -3px;
+            background: rgba(15, 23, 42, 0.92);
+            border: 1px solid rgba(239, 68, 68, 0.6);
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            font-size: 0.65rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+        }
+
+        .tree-node-check-badge {
+            position: absolute;
+            top: -3px;
+            right: -3px;
+            background: rgba(34, 197, 94, 0.9);
+            border: 1px solid #ffffff;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            font-size: 0.62rem;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+        }
+
+        /* ZOOM HUD */
+        .tree-zoom-hud {
+            position: absolute;
+            bottom: 16px;
+            right: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            z-index: 20;
+        }
+
+        .tree-hud-btn {
+            width: 38px;
+            height: 38px;
+            border-radius: 12px;
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--line-color);
+            color: var(--text);
+            font-size: 1.15rem;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.3);
+            transition: all 0.2s ease;
+        }
+
+        .tree-hud-btn:hover {
+            background: var(--accent);
+            color: #ffffff;
+            transform: scale(1.08);
+        }
+
+        /* TREE LEGEND HUD */
+        .tree-legend-hud {
+            position: absolute;
+            bottom: 16px;
+            left: 16px;
+            display: flex;
+            gap: 12px;
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--line-color);
+            border-radius: 12px;
+            padding: 6px 14px;
+            font-size: 0.72rem;
+            color: var(--subtext);
+            font-weight: 600;
+            z-index: 20;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.3);
+        }
+
+        .tree-legend-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .legend-dot {
+            width: 9px;
+            height: 9px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .legend-dot.locked { background: #64748b; }
+        .legend-dot.available { background: var(--accent); box-shadow: 0 0 6px var(--accent); }
+        .legend-dot.unlocked { background: #22c55e; box-shadow: 0 0 6px #22c55e; }
+
+        /* SKILL DETAIL DRAWER */
+        .skill-detail-drawer-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.65);
+            backdrop-filter: blur(5px);
+            z-index: 10000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.25s ease;
+        }
+
+        .skill-detail-drawer-backdrop.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .skill-detail-drawer {
+            position: fixed;
+            bottom: 0;
+            left: 50%;
+            transform: translate(-50%, 100%);
+            width: 100%;
+            max-width: 520px;
+            max-height: 85vh;
+            background: var(--card-bg);
+            border-top-left-radius: 24px;
+            border-top-right-radius: 24px;
+            border: 1px solid var(--line-color);
+            box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.45);
+            z-index: 10001;
+            overflow-y: auto;
+            padding: 22px;
+            box-sizing: border-box;
+            transition: transform 0.32s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .skill-detail-drawer.active {
+            transform: translate(-50%, 0);
+        }
+
+        .drawer-handle-bar {
+            width: 44px;
+            height: 4px;
+            background: var(--line-color);
+            border-radius: 999px;
+            margin: 0 auto 16px auto;
+        }
+
+        .drawer-header {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        .drawer-avatar-box {
+            width: 68px;
+            height: 68px;
+            border-radius: 50%;
+            background: var(--img-bg);
+            border: 2px solid var(--accent);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 8px;
+            box-sizing: border-box;
+            flex-shrink: 0;
+        }
+
+        .drawer-avatar-box svg {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .drawer-title-box {
+            flex: 1;
+        }
+
+        .drawer-title {
+            margin: 0;
+            font-size: 1.25rem;
+            color: var(--text);
+            font-weight: 800;
+        }
+
+        .drawer-meta {
+            margin-top: 4px;
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            font-size: 0.8rem;
+            color: var(--subtext);
+        }
+
+        .drawer-tier-badge {
+            background: var(--accent-subtle);
+            color: var(--accent);
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 999px;
+            font-size: 0.75rem;
+        }
+
+        .drawer-section-title {
+            font-size: 0.88rem;
+            font-weight: 800;
+            color: var(--text);
+            margin: 14px 0 8px 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .drawer-prereq-list {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--line-color);
+            border-radius: 12px;
+            padding: 10px 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .drawer-prereq-item {
+            font-size: 0.84rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .drawer-prereq-item.met {
+            color: #22c55e;
+        }
+
+        .drawer-prereq-item.missing {
+            color: #ef4444;
+            font-weight: 700;
+        }
+
+        .drawer-actions-box {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        /* PROFILE BENTO GRID */
+        .profile-bento-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+            gap: 14px;
+            margin-top: 14px;
+        }
+
+        .bento-card {
+            background: var(--card-bg);
+            border: 1px solid var(--line-color);
+            border-radius: 18px;
+            padding: 18px;
+            box-shadow: var(--card-shadow);
+        }
+
+        .bento-hero {
+            grid-column: 1 / -1;
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            background: linear-gradient(135deg, rgba(56, 189, 248, 0.12), rgba(30, 41, 59, 0.5));
+            border-color: rgba(56, 189, 248, 0.25);
+        }
+
+        .bento-hero-avatar {
+            width: 72px;
+            height: 72px;
+            border-radius: 50%;
+            background: var(--img-bg);
+            border: 2px solid var(--accent);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 8px;
+            flex-shrink: 0;
+        }
+
+        .bento-hero-avatar svg {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .bento-rank-tag {
+            display: inline-block;
+            background: var(--accent);
+            color: #ffffff;
+            font-weight: 800;
+            font-size: 0.72rem;
+            padding: 2px 10px;
+            border-radius: 999px;
+            margin-top: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .bento-card-title {
+            font-size: 0.95rem;
+            font-weight: 800;
+            color: var(--text);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .bento-stats-row {
+            display: flex;
+            gap: 8px;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+
+        .bento-stat-pill {
+            flex: 1;
+            text-align: center;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--line-color);
+            border-radius: 12px;
+            padding: 10px 4px;
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+
+        .bento-stat-pill .stat-num {
+            font-size: 1.25rem;
+            font-weight: 800;
+            line-height: 1.1;
+        }
+
+        .bento-stat-pill .stat-lbl {
+            font-size: 0.7rem;
+            color: var(--subtext);
+            font-weight: 600;
+        }
+
+        .bento-winrate-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 999px;
+            overflow: hidden;
+        }
+
+        .bento-winrate-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #22c55e, #10b981);
+            border-radius: 999px;
+            transition: width 0.4s ease;
+        }
+
+        .bento-body-inputs {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .bento-input-group label {
+            display: block;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--subtext);
+            margin-bottom: 4px;
+        }
+
+        .bento-input-group input {
+            width: 100%;
+            padding: 8px 10px;
+            border-radius: 10px;
+            border: 1px solid var(--line-color);
+            background: var(--input-bg);
+            color: var(--text);
+            font-size: 0.88rem;
+            box-sizing: border-box;
+        }
+
+        .bento-bmi-display {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--line-color);
+            border-radius: 12px;
+            padding: 10px 14px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .bento-bmi-val {
+            font-size: 1.3rem;
+            font-weight: 800;
+            color: var(--accent);
+        }
+
+        .bento-bmi-status {
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: var(--subtext);
+        }
+
+        .bento-theme-swatches {
+            display: flex;
+            gap: 8px;
+        }
+
+        .bento-theme-chip {
+            flex: 1;
+            padding: 10px 8px;
+            border-radius: 12px;
+            border: 1px solid var(--line-color);
+            background: rgba(255,255,255,0.03);
+            color: var(--text);
+            font-size: 0.82rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            transition: all 0.2s ease;
+        }
+
+        .bento-theme-chip .swatch {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .bento-theme-chip.active {
+            border-color: var(--accent);
+            background: var(--accent-subtle);
+            color: var(--accent);
+        }
+
+        /* ARENA SUBTABS */
+        .arena-subtabs-nav {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            padding-bottom: 6px;
+            margin-bottom: 14px;
+        }
+
+        .arena-subtab-btn {
+            padding: 8px 18px;
+            border-radius: 999px;
+            border: 1px solid var(--line-color);
+            background: var(--card-bg);
+            color: var(--subtext);
+            font-size: 0.84rem;
+            font-weight: 700;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.2s ease;
+        }
+
+        .arena-subtab-btn.active {
+            background: var(--accent);
+            color: #ffffff;
+            border-color: var(--accent);
+            box-shadow: 0 3px 12px rgba(56, 189, 248, 0.35);
+        }
+
+        .arena-subtab-pane {
+            display: none;
+        }
+
+        .arena-subtab-pane.active {
+            display: block;
+            animation: tabFadeIn 0.2s ease-out forwards;
+        }
+
+        .arena-card-box {
+            background: var(--card-bg);
+            border: 1px solid var(--line-color);
+            border-radius: 18px;
+            padding: 18px;
+            box-shadow: var(--card-shadow);
+            margin-bottom: 16px;
+        }
+
+        .arena-card-box-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 14px;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .arena-card-box-header h3 {
+            margin: 0;
+            font-size: 1.1rem;
+            color: var(--text);
+        }
+
+        /* MOBILE ADJUSTMENTS */
+        @media (max-width: 640px) {
+            .skill-tree-viewport {
+                height: calc(100vh - 290px);
+                min-height: 460px;
+            }
+            .bento-hero {
+                flex-direction: column;
+                text-align: center;
+            }
+            .bento-stats-row {
+                flex-wrap: wrap;
+            }
+            .bento-stat-pill {
+                min-width: 45%;
+            }
+        }
+    
     </style>
 </head>
 <body>
 
-    <div class="header">
-        <div class="auth-bar" id="auth-bar">
-            <span id="user-status-text">👤 Non autenticato (Salvataggio locale)</span>
-            <div class="auth-actions" id="auth-actions-container">
-                <button class="btn-auth-secondary" onclick="openAuthModal('login')">Accedi</button>
-                <button class="btn-auth" onclick="openAuthModal('signup')">Registrati</button>
-            </div>
-        </div>
-
-        <div class="top-bar">
-            <h1>Occhionero's Calisthenics Tree</h1>
-            <div class="controls-group">
-                <div class="selector-box">
-                    <label for="categorySelect">📁 Sezione:</label>
-                    <select id="categorySelect" class="custom-select" onchange="changeCategory(this.value)">
-                        <option value="all">Tutte (Tutto)</option>
-                    </select>
-                </div>
-                <div class="selector-box">
-                    <label for="themeSelect">🎨 Tema:</label>
-                    <select id="themeSelect" class="custom-select" onchange="changeTheme(this.value)">
-                        <option value="default">Predefinito</option>
-                        <option value="light">Chiaro</option>
-                        <option value="dark">Scuro</option>
-                    </select>
+    <!-- ====================================================================
+         TAB 1: ALBERO DELLE SKILL (RPG SKILL TREE & SCHEDE)
+         ==================================================================== -->
+    <div class="main-tab-view active" id="tab-view-tree">
+        <div class="header">
+            <div class="auth-bar" id="auth-bar">
+                <span id="user-status-text">👤 Non autenticato (Salvataggio locale)</span>
+                <div class="auth-actions" id="auth-actions-container">
+                    <button class="btn-auth-secondary" onclick="openAuthModal('login')">Accedi</button>
+                    <button class="btn-auth" onclick="openAuthModal('signup')">Registrati</button>
                 </div>
             </div>
-        </div>
 
-        <div class="rank-card">
-            <div id="rank-icon-box" class="rank-badge-box"></div>
-            <h2 id="user-rank" style="margin:0; color: var(--accent); font-size: 1.1rem;">GRADO: Unranked</h2>
-            <p id="total-xp" style="margin: 4px 0 0 0; font-weight: 600; font-size: 0.9rem;">XP Totali: 0</p>
-            <div class="progress-bar">
-                <div class="progress-fill" id="rank-progress"></div>
+            <div class="top-bar">
+                <h1>Occhionero's Calisthenics Tree</h1>
+                <div class="controls-group">
+                    <div class="selector-box">
+                        <label for="categorySelect">📁 Sezione:</label>
+                        <select id="categorySelect" class="custom-select" onchange="changeCategory(this.value)">
+                            <option value="all">Tutte (Tutto)</option>
+                        </select>
+                    </div>
+                    <div class="selector-box">
+                        <label for="themeSelect">🎨 Tema:</label>
+                        <select id="themeSelect" class="custom-select" onchange="changeTheme(this.value)">
+                            <option value="default">Predefinito</option>
+                            <option value="light">Chiaro</option>
+                            <option value="dark">Scuro</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="rank-card">
+                <div id="rank-icon-box" class="rank-badge-box"></div>
+                <h2 id="user-rank" style="margin:0; color: var(--accent); font-size: 1.1rem;">GRADO: Unranked</h2>
+                <p id="total-xp" style="margin: 4px 0 0 0; font-weight: 600; font-size: 0.9rem;">XP Totali: 0</p>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="rank-progress"></div>
+                </div>
             </div>
         </div>
 
-        <!-- CLASSIFICA GLOBALE SPOSTATA SOTTO AL RANK -->
-        <div class="leaderboard-section">
-            <h3 class="leaderboard-title">🏆 Classifica Globale</h3>
-            <div class="leaderboard-list" id="leaderboard-container">
-                <p style="color: var(--subtext); text-align: center; font-size: 0.9rem;">Caricamento classifica...</p>
+        <!-- VIEW SWITCHER & SEARCH TOOLBAR -->
+        <div class="tree-view-header-controls">
+            <div class="tree-view-toggle-bar">
+                <button type="button" class="tree-view-toggle-btn active" id="btn-view-graph" onclick="toggleSkillTreeView('graph')">
+                    🕸️ Albero RPG (Grafo)
+                </button>
+                <button type="button" class="tree-view-toggle-btn" id="btn-view-cards" onclick="toggleSkillTreeView('cards')">
+                    📋 Schede Classiche
+                </button>
+            </div>
+
+            <div class="skill-search-wrapper">
+                <div class="skill-search-box">
+                    <span class="skill-search-icon">🔍</span>
+                    <input type="text" id="skill-search-input" placeholder="Cerca skill (es. Planche, Pull Ups, Dip...)" oninput="handleSkillSearch(this.value)" autocomplete="off">
+                    <button type="button" id="skill-search-clear" onclick="clearSkillSearch()" title="Cancella ricerca">✕</button>
+                </div>
+                <div id="skill-search-count" class="skill-search-count"></div>
+            </div>
+        </div>
+
+        <!-- RPG SKILL TREE GRAPH VIEWPORT -->
+        <div class="skill-tree-viewport-wrapper" id="skill-tree-viewport-wrapper">
+            <div class="skill-tree-viewport" id="skill-tree-viewport">
+                <div class="skill-tree-canvas" id="skill-tree-canvas">
+                    <svg class="skill-tree-svg" id="skill-tree-svg"></svg>
+                    <div class="skill-tree-nodes-layer" id="skill-tree-nodes-layer"></div>
+                </div>
+                <div class="tree-zoom-hud">
+                    <button type="button" class="tree-hud-btn" onclick="zoomSkillTree(1.2)" title="Ingrandisci">+</button>
+                    <button type="button" class="tree-hud-btn" onclick="zoomSkillTree(0.8)" title="Rimpicciolisci">−</button>
+                    <button type="button" class="tree-hud-btn" onclick="resetSkillTreeZoom()" title="Centra / Reset">🎯</button>
+                </div>
+                <div class="tree-legend-hud">
+                    <span class="tree-legend-item"><span class="legend-dot locked"></span> Bloccata</span>
+                    <span class="tree-legend-item"><span class="legend-dot available"></span> Sbloccabile</span>
+                    <span class="tree-legend-item"><span class="legend-dot unlocked"></span> Padroneggiata</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- CLASSIC CARDS CONTAINER (TOGGLEABLE) -->
+        <div class="tree-container" id="tree" style="display:none;"></div>
+    </div>
+
+    <!-- ====================================================================
+         TAB 2: ALLENAMENTI (WORKOUT LOGS & VOLUME)
+         ==================================================================== -->
+    <div class="main-tab-view" id="tab-view-workouts">
+        <div class="tab-header-banner">
+            <h2>🏋️ Registro Allenamenti</h2>
+            <p>Traccia i tuoi volumi, ripetizioni e storici delle sessioni di Calisthenics.</p>
+        </div>
+        <div class="workouts-section full-tab-card" id="workouts-section">
+            <div class="workouts-section-header">
+                <div class="workouts-toggle-title" onclick="toggleWorkoutsSection()">
+                    <h3 class="leaderboard-title" style="margin:0; border-bottom:none; padding-bottom:0;">
+                        📋 I Miei Allenamenti <span id="workouts-count-badge" class="workouts-count-badge">(0)</span>
+                    </h3>
+                    <span class="collapsible-icon" id="workouts-toggle-icon">▼ Espandi</span>
+                </div>
+                <button class="btn-confirm" id="new-workout-btn" onclick="openNewWorkoutModal()">➕ Nuovo Allenamento</button>
+            </div>
+            <div id="workouts-collapsible-content" style="display: block; margin-top: 14px; border-top: 1px solid var(--line-color); padding-top: 14px;">
+                <div id="workouts-list-container" style="max-height: calc(100vh - 270px); overflow-y: auto; padding-right: 4px;">
+                    <p style="color: var(--subtext); text-align:center; font-size:0.85rem;">Caricamento allenamenti...</p>
+                </div>
             </div>
         </div>
     </div>
 
-    <div class="profile-settings-section" id="profile-settings-section">
-        <div class="section-collapsible-header" onclick="toggleProfileSection()">
-            <h3 class="leaderboard-title" style="margin:0; border-bottom:none; padding-bottom:0;">📋 Il Mio Profilo</h3>
-            <span class="collapsible-icon" id="profile-toggle-icon">▼ Espandi</span>
+    <!-- ====================================================================
+         TAB 3: ARENA (DUELLI 1VS1, CLASSIFICA, SONDAGGI, RUOTA)
+         ==================================================================== -->
+    <div class="main-tab-view" id="tab-view-arena">
+        <div class="tab-header-banner">
+            <h2>⚔️ Arena Calisthenica</h2>
+            <p>Sfida gli altri atleti in duelli 1vs1, scala la Classifica Globale e partecipa ai Sondaggi.</p>
         </div>
-        <div id="profile-collapsible-content" style="display: none; margin-top: 12px; border-top: 1px solid var(--line-color); padding-top: 12px;">
-            <div id="profile-settings-body"></div>
+
+        <div class="arena-subtabs-nav">
+            <button type="button" class="arena-subtab-btn active" id="btn-subtab-challenges" onclick="switchArenaSubTab('challenges')">🏹 Duelli & Sfide</button>
+            <button type="button" class="arena-subtab-btn" id="btn-subtab-leaderboard" onclick="switchArenaSubTab('leaderboard')">🏆 Classifica Globale</button>
+            <button type="button" class="arena-subtab-btn" id="btn-subtab-events" onclick="switchArenaSubTab('events')">📅 Sondaggi & Ritrovi</button>
+            <button type="button" class="arena-subtab-btn" id="btn-subtab-wheel" onclick="switchArenaSubTab('wheel')">🎡 Ruota Fortuna</button>
+        </div>
+
+        <!-- Subtab 1: Challenges -->
+        <div class="arena-subtab-pane active" id="arena-subtab-challenges">
+            <div class="arena-card-box">
+                <div class="arena-card-box-header">
+                    <h3>🏹 Sfide tra Atleti</h3>
+                    <div style="display:flex; gap:8px; align-items:center;">
+                        <span class="challenges-badge-dot" id="challenges-badge-dot" style="display:none;"></span>
+                        <button class="btn-auth-secondary" style="font-size:0.8rem; padding:6px 12px;" onclick="openSoloChallengeModal()">🎯 Sfida Solitaria</button>
+                        <button class="chat-new-btn" onclick="openCreateChallengeModal()">➕ Nuova Sfida</button>
+                    </div>
+                </div>
+                <div class="challenges-panel active" id="challenges-panel" style="position:static; width:100%; height:auto; box-shadow:none; border:none; background:transparent;">
+                    <div class="challenges-list" id="challenges-list">
+                        <p style="color: var(--subtext); text-align:center; font-size:0.85rem;">Caricamento sfide...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Subtab 2: Leaderboard -->
+        <div class="arena-subtab-pane" id="arena-subtab-leaderboard">
+            <div class="arena-card-box">
+                <div class="leaderboard-section" style="margin-top:0;">
+                    <h3 class="leaderboard-title">🏆 Classifica Globale Atleti</h3>
+                    <div class="leaderboard-list" id="leaderboard-container">
+                        <p style="color: var(--subtext); text-align: center; font-size: 0.9rem;">Caricamento classifica...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Subtab 3: Events & Polls -->
+        <div class="arena-subtab-pane" id="arena-subtab-events">
+            <div class="arena-card-box">
+                <div class="arena-card-box-header">
+                    <h3>📅 Eventi & Sondaggi Allenamento</h3>
+                    <div style="display:flex; gap:8px; align-items:center;">
+                        <span class="events-badge-dot" id="events-badge-dot" style="display:none;"></span>
+                        <button class="chat-new-btn" onclick="openCreateEventModal()">➕ Nuovo Sondaggio</button>
+                    </div>
+                </div>
+                <div class="events-panel active" id="events-panel" style="position:static; width:100%; height:auto; box-shadow:none; border:none; background:transparent;">
+                    <div class="events-list" id="events-list">
+                        <p style="color: var(--subtext); text-align:center; font-size:0.85rem;">Caricamento sondaggi...</p>
+                    </div>
+                    <div class="events-footer" id="events-footer" style="margin-top:12px;">
+                        <p style="color: var(--subtext); font-size: 0.85rem; text-align:center; margin:0; padding:8px; width:100%;">🔒 Accedi per creare o votare i sondaggi.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Subtab 4: Wheel of Fortune -->
+        <div class="arena-subtab-pane" id="arena-subtab-wheel">
+            <div class="arena-card-box" style="text-align:center; padding:30px 20px;">
+                <div style="font-size:3rem; margin-bottom:8px;">🎡</div>
+                <h3 style="margin:0; font-size:1.3rem; color:var(--text);">Ruota della Fortuna</h3>
+                <p style="color:var(--subtext); font-size:0.9rem; max-width:440px; margin:10px auto 20px auto;">
+                    Gira la Ruota della Fortuna dopo una vittoria per moltiplicare i tuoi XP guadagnati da 1.1x fino a 2.0x!
+                </p>
+                <button type="button" class="wheel-spin-btn" style="max-width:240px; margin:0 auto;" onclick="openWheelModal()">🎡 APRI LA RUOTA</button>
+            </div>
         </div>
     </div>
 
-    <!-- SEZIONE CONDIVIDI & INVITA AMICI (+3000 XP) -->
-    <div class="share-section" id="share-section">
-        <div class="section-collapsible-header" onclick="toggleShareSection()">
-            <div class="share-header-left">
-                <h3 class="leaderboard-title" style="margin:0; border-bottom:none; padding-bottom:0;">🎁 Condividi l'App</h3>
-                <span class="share-bonus-badge">+3.000 XP</span>
+    <!-- ====================================================================
+         TAB 4: CHAT (COMMUNITY, PRIVATE & AI COACH)
+         ==================================================================== -->
+    <div class="main-tab-view" id="tab-view-chat">
+        <div class="chat-panel active" id="chat-panel" style="position:relative; width:100%; max-width:100%; height:calc(100vh - 170px); right:auto; top:auto; box-shadow:none; border-radius:18px; border:1px solid var(--line-color); z-index:10;">
+            <div class="chat-panel-header">
+                <span id="chat-panel-title">💬 Chat Generale</span>
+                <span class="chat-badge" id="chat-badge" style="display:none;">0</span>
             </div>
-            <span class="collapsible-icon" id="share-toggle-icon">▼ Espandi</span>
-        </div>
-        <div id="share-collapsible-content" style="display: none; margin-top: 12px; border-top: 1px solid var(--line-color); padding-top: 14px;">
-            <div id="share-section-body">
-                <!-- Popolato dinamicamente da renderShareSection() -->
+            <div class="chat-tabs" id="chat-tabs">
+                <button class="chat-tab-btn active" id="chat-tab-general" onclick="switchChatTab('general')">💬 Generale <span id="chat-general-dot" class="tab-badge-dot" style="display:none;"></span></button>
+                <button class="chat-tab-btn" id="chat-tab-private" onclick="switchChatTab('private')">👤 Private <span id="chat-private-dot" class="tab-badge-dot" style="display:none;"></span></button>
+                <button class="chat-tab-btn" id="chat-tab-ai" onclick="switchChatTab('ai')">🤖 AI Helper</button>
+            </div>
+            <div class="chat-thread-header" id="chat-thread-header" style="display:none;">
+                <button class="chat-back-btn" onclick="backToPrivateList()">←</button>
+                <span id="chat-thread-title"></span>
+                <button class="chat-thread-poll-btn" id="chat-thread-poll-btn" onclick="openGroupPollsModal()" title="Sondaggi del gruppo" style="display:none; background:none; border:none; color:var(--text); font-size:1.15rem; cursor:pointer; padding:4px 8px; border-radius:8px; margin-right:4px;">📊</button>
+                <button class="chat-thread-menu-btn" id="chat-thread-menu-btn" onclick="openConversationOptionsModal()" title="Opzioni chat">⋮</button>
+            </div>
+            <div class="ai-helper-header-bar" id="ai-helper-header-bar" style="display:none;">
+                <button type="button" class="ai-helper-chip-btn" onclick="openPoseScannerModal({ mode: 'analysis' })">
+                    📷 Scanner Movimenti
+                </button>
+                <button type="button" class="ai-helper-chip-btn ai-helper-chip-clear" onclick="clearAiChatHistory()">
+                    🗑️ Pulisci Chat
+                </button>
+            </div>
+            <div class="chat-messages" id="chat-messages" style="flex:1;">
+                <p style="color: var(--subtext); text-align:center; font-size:0.85rem;">Apri la chat per vedere i messaggi...</p>
+            </div>
+            <div class="chat-input-box" id="chat-input-box">
+                <p style="color: var(--subtext); font-size: 0.85rem; text-align:center; margin:0; padding:8px; width:100%;">🔒 Accedi per scrivere in chat.</p>
             </div>
         </div>
     </div>
 
-    <div class="workouts-section" id="workouts-section">
-        <div class="workouts-section-header">
-            <div class="workouts-toggle-title" onclick="toggleWorkoutsSection()">
-                <h3 class="leaderboard-title" style="margin:0; border-bottom:none; padding-bottom:0;">🏋️ I Miei Allenamenti <span id="workouts-count-badge" class="workouts-count-badge">(0)</span></h3>
-                <span class="collapsible-icon" id="workouts-toggle-icon">▼ Espandi</span>
-            </div>
-            <button class="btn-confirm" id="new-workout-btn" onclick="openNewWorkoutModal()">➕ Nuovo Allenamento</button>
+    <!-- ====================================================================
+         TAB 5: PROFILO ATLETA (BENTO GRID & IMPOSTAZIONI)
+         ==================================================================== -->
+    <div class="main-tab-view" id="tab-view-profile">
+        <div class="tab-header-banner">
+            <h2>👤 Profilo & Scheda Atleta</h2>
+            <p>Panoramica completa del tuo grado, statistiche duelli, composizione corporea e impostazioni.</p>
         </div>
-        <div id="workouts-collapsible-content" style="display: none; margin-top: 12px; border-top: 1px solid var(--line-color); padding-top: 12px;">
-            <div id="workouts-list-container" style="max-height: 420px; overflow-y: auto; padding-right: 4px;">
-                <p style="color: var(--subtext); text-align:center; font-size:0.85rem;">Caricamento allenamenti...</p>
+
+        <div class="profile-bento-grid">
+            <!-- Bento Hero -->
+            <div class="bento-card bento-hero">
+                <div class="bento-hero-avatar" id="bento-avatar-box"></div>
+                <div class="bento-hero-info">
+                    <h3 id="bento-nickname" style="margin:0; font-size:1.35rem; color:var(--text);">Atleta</h3>
+                    <span id="bento-rank-badge" class="bento-rank-tag">Unranked</span>
+                    <p id="bento-email" style="margin:4px 0 0 0; color:var(--subtext); font-size:0.85rem;">Locale</p>
+                    <p id="bento-total-xp" style="margin:6px 0 0 0; font-weight:700; color:var(--accent);">XP: 0</p>
+                </div>
+            </div>
+
+            <!-- Bento Duelli 1vs1 -->
+            <div class="bento-card bento-duels">
+                <div class="bento-card-title">⚔️ Statistiche Duelli 1vs1</div>
+                <div class="bento-stats-row">
+                    <div class="bento-stat-pill">
+                        <span class="stat-num" id="bento-stat-total" style="color:var(--text);">0</span>
+                        <span class="stat-lbl">Totali</span>
+                    </div>
+                    <div class="bento-stat-pill">
+                        <span class="stat-num" id="bento-stat-wins" style="color:#22c55e;">0</span>
+                        <span class="stat-lbl">Vinti 🏆</span>
+                    </div>
+                    <div class="bento-stat-pill">
+                        <span class="stat-num" id="bento-stat-losses" style="color:#ef4444;">0</span>
+                        <span class="stat-lbl">Persi ❌</span>
+                    </div>
+                    <div class="bento-stat-pill">
+                        <span class="stat-num" id="bento-stat-ties" style="color:#f59e0b;">0</span>
+                        <span class="stat-lbl">Pari 🤝</span>
+                    </div>
+                </div>
+                <div class="bento-winrate-bar">
+                    <div class="bento-winrate-fill" id="bento-winrate-fill" style="width:0%;"></div>
+                </div>
+                <span id="bento-winrate-label" style="font-size:0.78rem; color:var(--subtext); font-weight:600; margin-top:5px; display:block; text-align:right;">Win Rate: 0%</span>
+            </div>
+
+            <!-- Bento Composizione Corporea & BMI -->
+            <div class="bento-card bento-body">
+                <div class="bento-card-title">⚖️ Composizione Corporea & BMI</div>
+                <div class="bento-body-inputs">
+                    <div class="bento-input-group">
+                        <label for="bento-body-weight">Peso (kg):</label>
+                        <input type="number" id="bento-body-weight" placeholder="es. 72" step="0.5" oninput="calculateBentoBMI()">
+                    </div>
+                    <div class="bento-input-group">
+                        <label for="bento-body-height">Altezza (cm):</label>
+                        <input type="number" id="bento-body-height" placeholder="es. 178" step="1" oninput="calculateBentoBMI()">
+                    </div>
+                </div>
+                <div class="bento-bmi-display">
+                    <span class="bento-bmi-val" id="bento-bmi-val">--</span>
+                    <span class="bento-bmi-status" id="bento-bmi-status">Inserisci peso e altezza</span>
+                </div>
+                <button type="button" class="btn-auth-secondary" style="width:100%; margin-top:8px; font-size:0.82rem;" onclick="saveBentoBodyStats()">💾 Salva Dati Corporei</button>
+            </div>
+
+            <!-- Bento Invita Amici -->
+            <div class="bento-card bento-share" id="share-section">
+                <div class="share-header-left" style="display:flex; justify-content:space-between; align-items:center;">
+                    <div class="bento-card-title" style="margin:0;">🎁 Invita Amici & Guadagna XP</div>
+                    <span class="share-bonus-badge">+3.000 XP</span>
+                </div>
+                <span class="collapsible-icon" id="share-toggle-icon" style="display:none;">▼ Espandi</span>
+                <div id="share-collapsible-content" style="display:block; margin-top:10px;">
+                    <div id="share-section-body"></div>
+                </div>
+            </div>
+
+            <!-- Bento Tema Grafico -->
+            <div class="bento-card bento-theme">
+                <div class="bento-card-title">🎨 Tema Grafico</div>
+                <div class="bento-theme-swatches">
+                    <button type="button" class="bento-theme-chip active" id="theme-chip-default" onclick="changeTheme('default'); syncBentoThemeChips();">
+                        <span class="swatch" style="background:#38bdf8;"></span> Predefinito
+                    </button>
+                    <button type="button" class="bento-theme-chip" id="theme-chip-light" onclick="changeTheme('light'); syncBentoThemeChips();">
+                        <span class="swatch" style="background:#0284c7;"></span> Chiaro
+                    </button>
+                    <button type="button" class="bento-theme-chip" id="theme-chip-dark" onclick="changeTheme('dark'); syncBentoThemeChips();">
+                        <span class="swatch" style="background:#bb86fc;"></span> Scuro
+                    </button>
+                </div>
+            </div>
+
+            <!-- Bento Impostazioni Profilo -->
+            <div class="bento-card bento-settings" id="profile-settings-section">
+                <div class="section-collapsible-header" onclick="toggleProfileSection()" style="display:flex; justify-content:space-between; align-items:center;">
+                    <div class="bento-card-title" style="margin:0;">⚙️ Impostazioni Account & Privacy</div>
+                    <span class="collapsible-icon" id="profile-toggle-icon">▲ Riduci</span>
+                </div>
+                <div id="profile-collapsible-content" style="display:block; margin-top:12px;">
+                    <div id="profile-settings-body"></div>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- BARRA DI RICERCA SKILLS -->
-    <div class="skill-search-wrapper">
-        <div class="skill-search-box">
-            <span class="skill-search-icon">🔍</span>
-            <input type="text" id="skill-search-input" placeholder="Cerca skill (es. Planche, Pull Ups, Dip...)" oninput="handleSkillSearch(this.value)" autocomplete="off">
-            <button type="button" id="skill-search-clear" onclick="clearSkillSearch()" title="Cancella ricerca">✕</button>
-        </div>
-    </div>
+    <!-- SKILL DETAIL DRAWER & BACKDROP -->
+    <div class="skill-detail-drawer-backdrop" id="skill-detail-drawer-backdrop" onclick="closeSkillDetailDrawer()"></div>
+    <div class="skill-detail-drawer" id="skill-detail-drawer"></div>
 
-    <div class="tree-container" id="tree"></div>
-
+    <!-- FIXED BOTTOM NAVIGATION BAR -->
+    <nav class="bottom-nav-bar" id="bottom-nav-bar">
+        <button type="button" class="bottom-nav-item active" data-tab="tree" onclick="switchMainTab('tree')">
+            <span class="bottom-nav-icon">🌳</span>
+            <span class="bottom-nav-label">Albero</span>
+        </button>
+        <button type="button" class="bottom-nav-item" data-tab="workouts" onclick="switchMainTab('workouts')">
+            <span class="bottom-nav-icon">🏋️</span>
+            <span class="bottom-nav-label">Allenamenti</span>
+        </button>
+        <button type="button" class="bottom-nav-item" data-tab="arena" onclick="switchMainTab('arena')">
+            <span class="bottom-nav-icon">⚔️</span>
+            <span class="bottom-nav-label">Arena</span>
+        </button>
+        <button type="button" class="bottom-nav-item" data-tab="chat" onclick="switchMainTab('chat')">
+            <span class="bottom-nav-icon">💬</span>
+            <span class="bottom-nav-label">Chat</span>
+            <span class="bottom-nav-badge" id="bottom-nav-chat-badge" style="display:none;">0</span>
+        </button>
+        <button type="button" class="bottom-nav-item" data-tab="profile" onclick="switchMainTab('profile')">
+            <span class="bottom-nav-icon">👤</span>
+            <span class="bottom-nav-label">Profilo</span>
+        </button>
+    </nav>
 
     <!-- MODALE POSE SCANNER VIDEOCAMERA & AI REFEREE -->
     <div class="pose-scanner-modal-overlay" id="pose-scanner-modal">
@@ -3386,24 +4574,6 @@
         </div>
     </div>
 
-    <!-- SFIDE & GARE XP (solo utenti loggati) -->
-    <button class="challenges-fab" id="challenges-fab" onclick="toggleChallengesPanel()" title="Sfide tra Atleti">
-        🏹
-        <span class="challenges-badge-dot" id="challenges-badge-dot" style="display:none;"></span>
-    </button>
-    <div class="challenges-panel" id="challenges-panel">
-        <div class="chat-panel-header">
-            <span>🏹 Sfide tra Atleti</span>
-            <button class="chat-close-btn" onclick="toggleChallengesPanel()">✕</button>
-        </div>
-        <div class="challenges-list" id="challenges-list">
-            <p style="color: var(--subtext); text-align:center; font-size:0.85rem;">Caricamento sfide...</p>
-        </div>
-        <div class="events-footer" id="challenges-footer">
-            <button class="chat-new-btn" onclick="openCreateChallengeModal()">➕ Nuova Sfida</button>
-        </div>
-    </div>
-
     <!-- MODAL RUOTA DELLA FORTUNA -->
     <div class="wheel-modal-overlay" id="wheel-modal">
         <div class="wheel-modal-box">
@@ -3422,60 +4592,6 @@
         </div>
     </div>
 
-    <!-- EVENTI & SONDAGGI ALLENAMENTI (solo utenti loggati) -->
-    <button class="events-fab" id="events-fab" onclick="toggleEventsPanel()" title="Eventi & Sondaggi Allenamenti">
-        📅
-        <span class="events-badge-dot" id="events-badge-dot" style="display:none;"></span>
-    </button>
-    <div class="events-panel" id="events-panel">
-        <div class="chat-panel-header">
-            <span>📅 Eventi Allenamento</span>
-            <button class="chat-close-btn" onclick="toggleEventsPanel()">✕</button>
-        </div>
-        <div class="events-list" id="events-list">
-            <p style="color: var(--subtext); text-align:center; font-size:0.85rem;">Apri per vedere i sondaggi degli allenamenti...</p>
-        </div>
-        <div class="events-footer" id="events-footer">
-            <p style="color: var(--subtext); font-size: 0.85rem; text-align:center; margin:0; padding:8px; width:100%;">🔒 Accedi per creare o votare i sondaggi.</p>
-        </div>
-    </div>
-
-    <!-- CHAT GENERALE (solo utenti loggati) -->
-    <button class="chat-fab" id="chat-fab" onclick="toggleChatPanel()" title="Chat Generale">
-        💬
-        <span class="chat-badge" id="chat-badge" style="display:none;">0</span>
-    </button>
-    <div class="chat-panel" id="chat-panel">
-        <div class="chat-panel-header">
-            <span id="chat-panel-title">💬 Chat Generale</span>
-            <button class="chat-close-btn" onclick="toggleChatPanel()">✕</button>
-        </div>
-        <div class="chat-tabs" id="chat-tabs">
-            <button class="chat-tab-btn active" id="chat-tab-general" onclick="switchChatTab('general')">💬 Generale <span id="chat-general-dot" class="tab-badge-dot" style="display:none;"></span></button>
-            <button class="chat-tab-btn" id="chat-tab-private" onclick="switchChatTab('private')">👤 Private <span id="chat-private-dot" class="tab-badge-dot" style="display:none;"></span></button>
-            <button class="chat-tab-btn" id="chat-tab-ai" onclick="switchChatTab('ai')">🤖 AI Helper</button>
-        </div>
-        <div class="chat-thread-header" id="chat-thread-header" style="display:none;">
-            <button class="chat-back-btn" onclick="backToPrivateList()">←</button>
-            <span id="chat-thread-title"></span>
-            <button class="chat-thread-poll-btn" id="chat-thread-poll-btn" onclick="openGroupPollsModal()" title="Sondaggi del gruppo" style="display:none; background:none; border:none; color:var(--text); font-size:1.15rem; cursor:pointer; padding:4px 8px; border-radius:8px; margin-right:4px;">📊</button>
-            <button class="chat-thread-menu-btn" id="chat-thread-menu-btn" onclick="openConversationOptionsModal()" title="Opzioni chat">⋮</button>
-        </div>
-        <div class="ai-helper-header-bar" id="ai-helper-header-bar" style="display:none;">
-            <button type="button" class="ai-helper-chip-btn" onclick="openPoseScannerModal({ mode: 'analysis' })">
-                📷 Scanner Movimenti
-            </button>
-            <button type="button" class="ai-helper-chip-btn ai-helper-chip-clear" onclick="clearAiChatHistory()">
-                🗑️ Pulisci Chat
-            </button>
-        </div>
-        <div class="chat-messages" id="chat-messages">
-            <p style="color: var(--subtext); text-align:center; font-size:0.85rem;">Apri la chat per vedere i messaggi...</p>
-        </div>
-        <div class="chat-input-box" id="chat-input-box">
-            <p style="color: var(--subtext); font-size: 0.85rem; text-align:center; margin:0; padding:8px; width:100%;">🔒 Accedi per scrivere in chat.</p>
-        </div>
-    </div>
 
     <script>
         // ==========================================
@@ -4306,148 +5422,1084 @@ let currentUser = null;
         }
 
         const categories = [
+    {
+        "id": "cat_push",
+        "title": "1. Push & Planche Tree",
+        "skills": [
             {
-                id: 'cat_push',
-                title: "1. Push & Planche Tree",
-                skills: [
-                    { id: 'planche_lean', name: 'Planche Lean', type: 'sec', baseTarget: 20, step: 5, xpPerUnit: 2, unlockXp: 100, goalBonusXp: 150 },
-                    { id: 'pushups_knee', name: 'Knee Push Ups', type: 'rep', baseTarget: 10, step: 5, xpPerUnit: 3, unlockXp: 50, goalBonusXp: 100 },
-                    { id: 'pushups', name: 'Regular Push Ups', type: 'rep', baseTarget: 15, step: 5, xpPerUnit: 6, unlockXp: 150, goalBonusXp: 200 },
-                    { id: 'diamond_pushups', name: 'Diamond Push Ups', type: 'rep', baseTarget: 12, step: 4, xpPerUnit: 10, unlockXp: 250, goalBonusXp: 300 },
-                    { id: 'clap_pushups', name: 'Clap Push Ups', type: 'rep', baseTarget: 10, step: 3, xpPerUnit: 12, unlockXp: 300, goalBonusXp: 400 },
-                    { id: 'pseudo_pushups', name: 'PPPU (Pseudo Push Ups)', type: 'rep', baseTarget: 10, step: 3, xpPerUnit: 18, unlockXp: 400, goalBonusXp: 500 },
-                    { id: 'frog_stand', name: 'Frog Stand Hold', type: 'sec', baseTarget: 15, step: 5, xpPerUnit: 5, unlockXp: 150, goalBonusXp: 200 },
-                    { id: 'elbow_lever', name: 'Elbow Lever Hold', type: 'sec', baseTarget: 10, step: 5, xpPerUnit: 15, unlockXp: 400, goalBonusXp: 600 },
-                    { id: 'double_clap_pushups', name: 'Double Clap Push Ups', type: 'rep', baseTarget: 6, step: 2, xpPerUnit: 25, unlockXp: 600, goalBonusXp: 800 },
-                    { id: 'behind_back_clap', name: 'Behind-the-Back Clap Push Ups', type: 'rep', baseTarget: 4, step: 2, xpPerUnit: 40, unlockXp: 900, goalBonusXp: 1200 },
-                    { id: 'one_arm_pushup', name: 'One Arm Push Up', type: 'rep', baseTarget: 5, step: 2, xpPerUnit: 45, unlockXp: 1000, goalBonusXp: 1300 },
-                    { id: 'one_arm_russian', name: 'One Arm Russian Push Up', type: 'rep', baseTarget: 3, step: 2, xpPerUnit: 70, unlockXp: 1400, goalBonusXp: 1800 },
-                    { id: 'tuck_planche', name: 'Tuck Planche Hold', type: 'sec', baseTarget: 10, step: 5, xpPerUnit: 30, unlockXp: 800, goalBonusXp: 1000 },
-                    { id: 'adv_tuck_planche', name: 'Advanced Tuck Planche', type: 'sec', baseTarget: 8, step: 4, xpPerUnit: 55, unlockXp: 1500, goalBonusXp: 2000 },
-                    { id: 'straddle_planche', name: 'Straddle Planche', type: 'sec', baseTarget: 5, step: 3, xpPerUnit: 140, unlockXp: 3500, goalBonusXp: 4500 },
-                    { id: 'full_planche', name: 'Full Planche Hold', type: 'sec', baseTarget: 3, step: 2, xpPerUnit: 350, unlockXp: 8000, goalBonusXp: 10000 },
-                    { id: 'maltese', name: 'Maltese Hold', type: 'sec', baseTarget: 2, step: 1, xpPerUnit: 800, unlockXp: 20000, goalBonusXp: 25000 }
+                "id": "planche_lean",
+                "name": "Planche Lean",
+                "type": "sec",
+                "baseTarget": 20,
+                "step": 5,
+                "xpPerUnit": 2,
+                "unlockXp": 100,
+                "goalBonusXp": 150,
+                "prerequisites": [
+                    "pseudo_pushups"
                 ]
             },
             {
-                id: 'cat_pull',
-                title: "2. Pull & Front Lever Tree",
-                skills: [
-                    { id: 'australian', name: 'Australian Pull Ups', type: 'rep', baseTarget: 12, step: 5, xpPerUnit: 4, unlockXp: 80, goalBonusXp: 120 },
-                    { id: 'pullups', name: 'Pull Ups', type: 'rep', baseTarget: 8, step: 3, xpPerUnit: 12, unlockXp: 200, goalBonusXp: 250 },
-                    { id: 'chest_to_bar', name: 'Chest to Bar Pull Ups', type: 'rep', baseTarget: 6, step: 3, xpPerUnit: 22, unlockXp: 450, goalBonusXp: 600 },
-                    { id: 'muscle_up', name: 'Bar Muscle Up', type: 'rep', baseTarget: 3, step: 2, xpPerUnit: 75, unlockXp: 1200, goalBonusXp: 1500 },
-                    { id: 'tuck_fl', name: 'Tuck Front Lever', type: 'sec', baseTarget: 12, step: 5, xpPerUnit: 20, unlockXp: 600, goalBonusXp: 800 },
-                    { id: 'adv_tuck_fl', name: 'Adv. Tuck Front Lever', type: 'sec', baseTarget: 8, step: 4, xpPerUnit: 45, unlockXp: 1200, goalBonusXp: 1600 },
-                    { id: 'straddle_fl', name: 'Straddle Front Lever', type: 'sec', baseTarget: 5, step: 3, xpPerUnit: 110, unlockXp: 2800, goalBonusXp: 3500 },
-                    { id: 'full_fl', name: 'Full Front Lever', type: 'sec', baseTarget: 4, step: 2, xpPerUnit: 220, unlockXp: 5500, goalBonusXp: 7000 },
-                    { id: 'one_arm_pullup', name: 'One Arm Pull Up', type: 'rep', baseTarget: 1, step: 1, xpPerUnit: 400, unlockXp: 10000, goalBonusXp: 12000 }
+                "id": "pushups_knee",
+                "name": "Knee Push Ups",
+                "type": "rep",
+                "baseTarget": 10,
+                "step": 5,
+                "xpPerUnit": 3,
+                "unlockXp": 50,
+                "goalBonusXp": 100,
+                "prerequisites": []
+            },
+            {
+                "id": "pushups",
+                "name": "Regular Push Ups",
+                "type": "rep",
+                "baseTarget": 15,
+                "step": 5,
+                "xpPerUnit": 6,
+                "unlockXp": 150,
+                "goalBonusXp": 200,
+                "prerequisites": [
+                    "pushups_knee"
                 ]
             },
             {
-                id: 'cat_rings',
-                title: "3. Ring Skills",
-                skills: [
-                    { id: 'ring_support', name: 'Ring Support Hold', type: 'sec', baseTarget: 20, step: 5, xpPerUnit: 5, unlockXp: 120, goalBonusXp: 180 },
-                    { id: 'ring_dips', name: 'Ring Dips', type: 'rep', baseTarget: 8, step: 3, xpPerUnit: 15, unlockXp: 300, goalBonusXp: 400 },
-                    { id: 'ring_muscle_up', name: 'Ring Muscle Up', type: 'rep', baseTarget: 2, step: 2, xpPerUnit: 90, unlockXp: 1500, goalBonusXp: 2000 },
-                    { id: 'iron_cross', name: 'Iron Cross Hold', type: 'sec', baseTarget: 3, step: 2, xpPerUnit: 400, unlockXp: 12000, goalBonusXp: 15000 },
-                    { id: 'victorian', name: 'Victorian Cross on Rings', type: 'sec', baseTarget: 2, step: 1, xpPerUnit: 1200, unlockXp: 30000, goalBonusXp: 40000 }
+                "id": "diamond_pushups",
+                "name": "Diamond Push Ups",
+                "type": "rep",
+                "baseTarget": 12,
+                "step": 4,
+                "xpPerUnit": 10,
+                "unlockXp": 250,
+                "goalBonusXp": 300,
+                "prerequisites": [
+                    "pushups"
                 ]
             },
             {
-                id: 'cat_freestyle',
-                title: "4. Freestyle & Dynamic Skills",
-                skills: [
-                    { id: 'pullover', name: 'Bar Pull Over', type: 'rep', baseTarget: 5, step: 2, xpPerUnit: 20, unlockXp: 350, goalBonusXp: 500 },
-                    { id: 'spin_360', name: '360 Spin / Bar Hop', type: 'rep', baseTarget: 2, step: 1, xpPerUnit: 150, unlockXp: 2500, goalBonusXp: 3500 },
-                    { id: 'freestyle_combo', name: 'Freestyle Flow Combo', type: 'sec', baseTarget: 15, step: 5, xpPerUnit: 80, unlockXp: 4500, goalBonusXp: 6000 }
+                "id": "clap_pushups",
+                "name": "Clap Push Ups",
+                "type": "rep",
+                "baseTarget": 10,
+                "step": 3,
+                "xpPerUnit": 12,
+                "unlockXp": 300,
+                "goalBonusXp": 400,
+                "prerequisites": [
+                    "pushups"
                 ]
             },
             {
-                id: 'cat_handstand',
-                title: "5. Handstands, Dips & Core Compression",
-                skills: [
-                    { id: 'bench_dips', name: 'Bench Dips', type: 'rep', baseTarget: 15, step: 5, xpPerUnit: 3, unlockXp: 60, goalBonusXp: 100 },
-                    { id: 'classic_dip', name: 'Classic Dip (Parallel Bars)', type: 'rep', baseTarget: 10, step: 5, xpPerUnit: 7, unlockXp: 180, goalBonusXp: 250 },
-                    { id: 'bar_dips', name: 'Parallel Bar Dips', type: 'rep', baseTarget: 10, step: 4, xpPerUnit: 10, unlockXp: 200, goalBonusXp: 300 },
-                    { id: 'l_sit_dip', name: 'L-Sit Dip', type: 'rep', baseTarget: 5, step: 2, xpPerUnit: 50, unlockXp: 1100, goalBonusXp: 1400 },
-                    { id: 'korean_dip', name: 'Korean Dips', type: 'rep', baseTarget: 6, step: 3, xpPerUnit: 35, unlockXp: 800, goalBonusXp: 1000 },
-                    { id: 'russian_dip', name: 'Russian Dips', type: 'rep', baseTarget: 3, step: 2, xpPerUnit: 120, unlockXp: 3000, goalBonusXp: 4000 },
-                    { id: 'l_sit', name: 'L-Sit Hold', type: 'sec', baseTarget: 15, step: 5, xpPerUnit: 12, unlockXp: 300, goalBonusXp: 400 },
-                    { id: 'v_sit', name: 'V-Sit Hold', type: 'sec', baseTarget: 8, step: 3, xpPerUnit: 50, unlockXp: 1200, goalBonusXp: 1500 },
-                    { id: 'wall_handstand', name: 'Wall Handstand', type: 'sec', baseTarget: 30, step: 10, xpPerUnit: 5, unlockXp: 150, goalBonusXp: 200 },
-                    { id: 'freestanding_hs', name: 'Freestanding Handstand', type: 'sec', baseTarget: 15, step: 5, xpPerUnit: 20, unlockXp: 500, goalBonusXp: 700 },
-                    { id: 'hspu_wall', name: 'Wall HSPU', type: 'rep', baseTarget: 6, step: 2, xpPerUnit: 55, unlockXp: 1300, goalBonusXp: 1800 },
-                    { id: 'freestanding_hspu', name: 'Freestanding HSPU', type: 'rep', baseTarget: 2, step: 2, xpPerUnit: 280, unlockXp: 6500, goalBonusXp: 8500 },
-                    { id: 'impossible_dip', name: 'Impossible Dip', type: 'rep', baseTarget: 1, step: 1, xpPerUnit: 600, unlockXp: 15000, goalBonusXp: 20000 }
+                "id": "pseudo_pushups",
+                "name": "PPPU (Pseudo Push Ups)",
+                "type": "rep",
+                "baseTarget": 10,
+                "step": 3,
+                "xpPerUnit": 18,
+                "unlockXp": 400,
+                "goalBonusXp": 500,
+                "prerequisites": [
+                    "diamond_pushups"
                 ]
             },
             {
-                id: 'cat_core',
-                title: "6. Human Flag & Core Special",
-                skills: [
-                    { id: 'plank', name: 'Plank Hold', type: 'sec', baseTarget: 30, step: 15, xpPerUnit: 2, unlockXp: 30, goalBonusXp: 50 },
-                    { id: 'crunch', name: 'Ab Crunches', type: 'rep', baseTarget: 20, step: 10, xpPerUnit: 2, unlockXp: 40, goalBonusXp: 70 },
-                    { id: 'hollow_body', name: 'Hollow Body Hold', type: 'sec', baseTarget: 30, step: 10, xpPerUnit: 3, unlockXp: 60, goalBonusXp: 90 },
-                    { id: 'side_plank', name: 'Side Plank Hold', type: 'sec', baseTarget: 30, step: 10, xpPerUnit: 2, unlockXp: 50, goalBonusXp: 80 },
-                    { id: 'dragon_flag', name: 'Dragon Flag Hold', type: 'sec', baseTarget: 10, step: 4, xpPerUnit: 35, unlockXp: 900, goalBonusXp: 1200 },
-                    { id: 'human_flag_tuck', name: 'Tuck Human Flag', type: 'sec', baseTarget: 8, step: 3, xpPerUnit: 65, unlockXp: 1600, goalBonusXp: 2200 },
-                    { id: 'human_flag_straddle', name: 'Straddle Human Flag', type: 'sec', baseTarget: 5, step: 2, xpPerUnit: 160, unlockXp: 4000, goalBonusXp: 5000 },
-                    { id: 'human_flag', name: 'Full Human Flag', type: 'sec', baseTarget: 4, step: 2, xpPerUnit: 260, unlockXp: 7000, goalBonusXp: 9000 }
+                "id": "frog_stand",
+                "name": "Frog Stand Hold",
+                "type": "sec",
+                "baseTarget": 15,
+                "step": 5,
+                "xpPerUnit": 5,
+                "unlockXp": 150,
+                "goalBonusXp": 200,
+                "prerequisites": []
+            },
+            {
+                "id": "elbow_lever",
+                "name": "Elbow Lever Hold",
+                "type": "sec",
+                "baseTarget": 10,
+                "step": 5,
+                "xpPerUnit": 15,
+                "unlockXp": 400,
+                "goalBonusXp": 600,
+                "prerequisites": [
+                    "frog_stand"
                 ]
             },
             {
-                id: 'cat_legs',
-                title: "7. Legs & Lower Body",
-                skills: [
-                    { id: 'squat', name: 'Air Squats', type: 'rep', baseTarget: 20, step: 10, xpPerUnit: 2, unlockXp: 50, goalBonusXp: 80 },
-                    { id: 'lunges', name: 'Lunges', type: 'rep', baseTarget: 20, step: 10, xpPerUnit: 3, unlockXp: 60, goalBonusXp: 90 },
-                    { id: 'calf_raises', name: 'Calf Raises', type: 'rep', baseTarget: 20, step: 10, xpPerUnit: 2, unlockXp: 40, goalBonusXp: 60 },
-                    { id: 'glute_bridge', name: 'Glute Bridge', type: 'rep', baseTarget: 15, step: 10, xpPerUnit: 3, unlockXp: 50, goalBonusXp: 80 },
-                    { id: 'wall_sit', name: 'Wall Sit', type: 'sec', baseTarget: 30, step: 15, xpPerUnit: 3, unlockXp: 50, goalBonusXp: 80 },
-                    { id: 'bulgarian_split_squat', name: 'Bulgarian Split Squat', type: 'rep', baseTarget: 10, step: 5, xpPerUnit: 8, unlockXp: 250, goalBonusXp: 350 },
-                    { id: 'box_jump', name: 'Box Jump', type: 'rep', baseTarget: 8, step: 4, xpPerUnit: 10, unlockXp: 200, goalBonusXp: 300 },
-                    { id: 'pistol_squat', name: 'Pistol Squats', type: 'rep', baseTarget: 5, step: 3, xpPerUnit: 25, unlockXp: 600, goalBonusXp: 800 },
-                    { id: 'cossack_squat', name: 'Cossack Squat', type: 'rep', baseTarget: 8, step: 4, xpPerUnit: 15, unlockXp: 400, goalBonusXp: 500 },
-                    { id: 'nordic_curl', name: 'Nordic Hamstring Curl', type: 'rep', baseTarget: 3, step: 2, xpPerUnit: 80, unlockXp: 2000, goalBonusXp: 2500 },
-                    { id: 'shrimp_squat', name: 'Shrimp Squat', type: 'rep', baseTarget: 5, step: 3, xpPerUnit: 60, unlockXp: 1600, goalBonusXp: 2000 }
+                "id": "double_clap_pushups",
+                "name": "Double Clap Push Ups",
+                "type": "rep",
+                "baseTarget": 6,
+                "step": 2,
+                "xpPerUnit": 25,
+                "unlockXp": 600,
+                "goalBonusXp": 800,
+                "prerequisites": [
+                    "clap_pushups"
                 ]
             },
             {
-                id: 'cat_grip',
-                title: "8. Grip, Forearms & Hangs",
-                skills: [
-                    { id: 'dead_hang', name: 'Dead Hang (Passive Hang)', type: 'sec', baseTarget: 30, step: 10, xpPerUnit: 3, unlockXp: 40, goalBonusXp: 60 },
-                    { id: 'towel_hang', name: 'Towel Hang', type: 'sec', baseTarget: 20, step: 5, xpPerUnit: 8, unlockXp: 300, goalBonusXp: 400 },
-                    { id: 'fingertip_hang', name: 'Fingertip Hang', type: 'sec', baseTarget: 10, step: 3, xpPerUnit: 20, unlockXp: 700, goalBonusXp: 900 },
-                    { id: 'towel_pullup', name: 'Towel Pull Ups', type: 'rep', baseTarget: 5, step: 2, xpPerUnit: 18, unlockXp: 500, goalBonusXp: 700 },
-                    { id: 'one_arm_hang', name: 'One Arm Hang', type: 'sec', baseTarget: 10, step: 3, xpPerUnit: 25, unlockXp: 900, goalBonusXp: 1200 }
+                "id": "behind_back_clap",
+                "name": "Behind-the-Back Clap Push Ups",
+                "type": "rep",
+                "baseTarget": 4,
+                "step": 2,
+                "xpPerUnit": 40,
+                "unlockXp": 900,
+                "goalBonusXp": 1200,
+                "prerequisites": [
+                    "double_clap_pushups"
                 ]
             },
             {
-                id: 'cat_core2',
-                title: "9. Advanced Core & Rotations",
-                skills: [
-                    { id: 'russian_twist', name: 'Russian Twist', type: 'rep', baseTarget: 20, step: 10, xpPerUnit: 2, unlockXp: 40, goalBonusXp: 70 },
-                    { id: 'superman_hold', name: 'Superman Hold', type: 'sec', baseTarget: 20, step: 10, xpPerUnit: 3, unlockXp: 50, goalBonusXp: 80 },
-                    { id: 'leg_raises', name: 'Hanging Leg Raises', type: 'rep', baseTarget: 10, step: 5, xpPerUnit: 8, unlockXp: 200, goalBonusXp: 300 },
-                    { id: 'ab_wheel', name: 'Ab Wheel Rollout', type: 'rep', baseTarget: 5, step: 3, xpPerUnit: 30, unlockXp: 700, goalBonusXp: 900 },
-                    { id: 'windshield_wipers', name: 'Windshield Wipers', type: 'rep', baseTarget: 5, step: 3, xpPerUnit: 90, unlockXp: 2500, goalBonusXp: 3000 }
+                "id": "one_arm_pushup",
+                "name": "One Arm Push Up",
+                "type": "rep",
+                "baseTarget": 5,
+                "step": 2,
+                "xpPerUnit": 45,
+                "unlockXp": 1000,
+                "goalBonusXp": 1300,
+                "prerequisites": [
+                    "diamond_pushups"
                 ]
             },
             {
-                id: 'cat_explosive',
-                title: "10. Explosiveness & Conditioning",
-                skills: [
-                    { id: 'jump_squat', name: 'Jump Squat', type: 'rep', baseTarget: 15, step: 8, xpPerUnit: 4, unlockXp: 80, goalBonusXp: 120 },
-                    { id: 'mountain_climbers', name: 'Mountain Climbers', type: 'rep', baseTarget: 20, step: 10, xpPerUnit: 2, unlockXp: 40, goalBonusXp: 70 },
-                    { id: 'burpees', name: 'Burpees', type: 'rep', baseTarget: 10, step: 5, xpPerUnit: 4, unlockXp: 60, goalBonusXp: 100 },
-                    { id: 'broad_jump', name: 'Standing Broad Jump', type: 'rep', baseTarget: 5, step: 2, xpPerUnit: 15, unlockXp: 300, goalBonusXp: 400 },
-                    { id: 'explosive_pullup', name: 'Kipping Pull Ups', type: 'rep', baseTarget: 5, step: 3, xpPerUnit: 30, unlockXp: 600, goalBonusXp: 800 }
+                "id": "one_arm_russian",
+                "name": "One Arm Russian Push Up",
+                "type": "rep",
+                "baseTarget": 3,
+                "step": 2,
+                "xpPerUnit": 70,
+                "unlockXp": 1400,
+                "goalBonusXp": 1800,
+                "prerequisites": [
+                    "one_arm_pushup"
+                ]
+            },
+            {
+                "id": "tuck_planche",
+                "name": "Tuck Planche Hold",
+                "type": "sec",
+                "baseTarget": 10,
+                "step": 5,
+                "xpPerUnit": 30,
+                "unlockXp": 800,
+                "goalBonusXp": 1000,
+                "prerequisites": [
+                    "planche_lean",
+                    "pseudo_pushups"
+                ]
+            },
+            {
+                "id": "adv_tuck_planche",
+                "name": "Advanced Tuck Planche",
+                "type": "sec",
+                "baseTarget": 8,
+                "step": 4,
+                "xpPerUnit": 55,
+                "unlockXp": 1500,
+                "goalBonusXp": 2000,
+                "prerequisites": [
+                    "tuck_planche"
+                ]
+            },
+            {
+                "id": "straddle_planche",
+                "name": "Straddle Planche",
+                "type": "sec",
+                "baseTarget": 5,
+                "step": 3,
+                "xpPerUnit": 140,
+                "unlockXp": 3500,
+                "goalBonusXp": 4500,
+                "prerequisites": [
+                    "adv_tuck_planche"
+                ]
+            },
+            {
+                "id": "full_planche",
+                "name": "Full Planche Hold",
+                "type": "sec",
+                "baseTarget": 3,
+                "step": 2,
+                "xpPerUnit": 350,
+                "unlockXp": 8000,
+                "goalBonusXp": 10000,
+                "prerequisites": [
+                    "straddle_planche"
+                ]
+            },
+            {
+                "id": "maltese",
+                "name": "Maltese Hold",
+                "type": "sec",
+                "baseTarget": 2,
+                "step": 1,
+                "xpPerUnit": 800,
+                "unlockXp": 20000,
+                "goalBonusXp": 25000,
+                "prerequisites": [
+                    "full_planche"
                 ]
             }
-        ];
+        ]
+    },
+    {
+        "id": "cat_pull",
+        "title": "2. Pull & Front Lever Tree",
+        "skills": [
+            {
+                "id": "australian",
+                "name": "Australian Pull Ups",
+                "type": "rep",
+                "baseTarget": 12,
+                "step": 5,
+                "xpPerUnit": 4,
+                "unlockXp": 80,
+                "goalBonusXp": 120,
+                "prerequisites": []
+            },
+            {
+                "id": "pullups",
+                "name": "Pull Ups",
+                "type": "rep",
+                "baseTarget": 8,
+                "step": 3,
+                "xpPerUnit": 12,
+                "unlockXp": 200,
+                "goalBonusXp": 250,
+                "prerequisites": [
+                    "australian"
+                ]
+            },
+            {
+                "id": "chest_to_bar",
+                "name": "Chest to Bar Pull Ups",
+                "type": "rep",
+                "baseTarget": 6,
+                "step": 3,
+                "xpPerUnit": 22,
+                "unlockXp": 450,
+                "goalBonusXp": 600,
+                "prerequisites": [
+                    "pullups"
+                ]
+            },
+            {
+                "id": "muscle_up",
+                "name": "Bar Muscle Up",
+                "type": "rep",
+                "baseTarget": 3,
+                "step": 2,
+                "xpPerUnit": 75,
+                "unlockXp": 1200,
+                "goalBonusXp": 1500,
+                "prerequisites": [
+                    "chest_to_bar"
+                ]
+            },
+            {
+                "id": "tuck_fl",
+                "name": "Tuck Front Lever",
+                "type": "sec",
+                "baseTarget": 12,
+                "step": 5,
+                "xpPerUnit": 20,
+                "unlockXp": 600,
+                "goalBonusXp": 800,
+                "prerequisites": [
+                    "pullups"
+                ]
+            },
+            {
+                "id": "adv_tuck_fl",
+                "name": "Adv. Tuck Front Lever",
+                "type": "sec",
+                "baseTarget": 8,
+                "step": 4,
+                "xpPerUnit": 45,
+                "unlockXp": 1200,
+                "goalBonusXp": 1600,
+                "prerequisites": [
+                    "tuck_fl"
+                ]
+            },
+            {
+                "id": "straddle_fl",
+                "name": "Straddle Front Lever",
+                "type": "sec",
+                "baseTarget": 5,
+                "step": 3,
+                "xpPerUnit": 110,
+                "unlockXp": 2800,
+                "goalBonusXp": 3500,
+                "prerequisites": [
+                    "adv_tuck_fl"
+                ]
+            },
+            {
+                "id": "full_fl",
+                "name": "Full Front Lever",
+                "type": "sec",
+                "baseTarget": 4,
+                "step": 2,
+                "xpPerUnit": 220,
+                "unlockXp": 5500,
+                "goalBonusXp": 7000,
+                "prerequisites": [
+                    "straddle_fl"
+                ]
+            },
+            {
+                "id": "one_arm_pullup",
+                "name": "One Arm Pull Up",
+                "type": "rep",
+                "baseTarget": 1,
+                "step": 1,
+                "xpPerUnit": 400,
+                "unlockXp": 10000,
+                "goalBonusXp": 12000,
+                "prerequisites": [
+                    "chest_to_bar"
+                ]
+            }
+        ]
+    },
+    {
+        "id": "cat_rings",
+        "title": "3. Ring Skills",
+        "skills": [
+            {
+                "id": "ring_support",
+                "name": "Ring Support Hold",
+                "type": "sec",
+                "baseTarget": 20,
+                "step": 5,
+                "xpPerUnit": 5,
+                "unlockXp": 120,
+                "goalBonusXp": 180,
+                "prerequisites": []
+            },
+            {
+                "id": "ring_dips",
+                "name": "Ring Dips",
+                "type": "rep",
+                "baseTarget": 8,
+                "step": 3,
+                "xpPerUnit": 15,
+                "unlockXp": 300,
+                "goalBonusXp": 400,
+                "prerequisites": [
+                    "ring_support"
+                ]
+            },
+            {
+                "id": "ring_muscle_up",
+                "name": "Ring Muscle Up",
+                "type": "rep",
+                "baseTarget": 2,
+                "step": 2,
+                "xpPerUnit": 90,
+                "unlockXp": 1500,
+                "goalBonusXp": 2000,
+                "prerequisites": [
+                    "ring_dips"
+                ]
+            },
+            {
+                "id": "iron_cross",
+                "name": "Iron Cross Hold",
+                "type": "sec",
+                "baseTarget": 3,
+                "step": 2,
+                "xpPerUnit": 400,
+                "unlockXp": 12000,
+                "goalBonusXp": 15000,
+                "prerequisites": [
+                    "ring_dips"
+                ]
+            },
+            {
+                "id": "victorian",
+                "name": "Victorian Cross on Rings",
+                "type": "sec",
+                "baseTarget": 2,
+                "step": 1,
+                "xpPerUnit": 1200,
+                "unlockXp": 30000,
+                "goalBonusXp": 40000,
+                "prerequisites": [
+                    "iron_cross"
+                ]
+            }
+        ]
+    },
+    {
+        "id": "cat_freestyle",
+        "title": "4. Freestyle & Dynamic Skills",
+        "skills": [
+            {
+                "id": "pullover",
+                "name": "Bar Pull Over",
+                "type": "rep",
+                "baseTarget": 5,
+                "step": 2,
+                "xpPerUnit": 20,
+                "unlockXp": 350,
+                "goalBonusXp": 500,
+                "prerequisites": []
+            },
+            {
+                "id": "spin_360",
+                "name": "360 Spin / Bar Hop",
+                "type": "rep",
+                "baseTarget": 2,
+                "step": 1,
+                "xpPerUnit": 150,
+                "unlockXp": 2500,
+                "goalBonusXp": 3500,
+                "prerequisites": [
+                    "pullover"
+                ]
+            },
+            {
+                "id": "freestyle_combo",
+                "name": "Freestyle Flow Combo",
+                "type": "sec",
+                "baseTarget": 15,
+                "step": 5,
+                "xpPerUnit": 80,
+                "unlockXp": 4500,
+                "goalBonusXp": 6000,
+                "prerequisites": [
+                    "spin_360"
+                ]
+            }
+        ]
+    },
+    {
+        "id": "cat_handstand",
+        "title": "5. Handstands, Dips & Core Compression",
+        "skills": [
+            {
+                "id": "bench_dips",
+                "name": "Bench Dips",
+                "type": "rep",
+                "baseTarget": 15,
+                "step": 5,
+                "xpPerUnit": 3,
+                "unlockXp": 60,
+                "goalBonusXp": 100,
+                "prerequisites": []
+            },
+            {
+                "id": "classic_dip",
+                "name": "Classic Dip (Parallel Bars)",
+                "type": "rep",
+                "baseTarget": 10,
+                "step": 5,
+                "xpPerUnit": 7,
+                "unlockXp": 180,
+                "goalBonusXp": 250,
+                "prerequisites": [
+                    "bench_dips"
+                ]
+            },
+            {
+                "id": "bar_dips",
+                "name": "Parallel Bar Dips",
+                "type": "rep",
+                "baseTarget": 10,
+                "step": 4,
+                "xpPerUnit": 10,
+                "unlockXp": 200,
+                "goalBonusXp": 300,
+                "prerequisites": [
+                    "classic_dip"
+                ]
+            },
+            {
+                "id": "l_sit_dip",
+                "name": "L-Sit Dip",
+                "type": "rep",
+                "baseTarget": 5,
+                "step": 2,
+                "xpPerUnit": 50,
+                "unlockXp": 1100,
+                "goalBonusXp": 1400,
+                "prerequisites": [
+                    "bar_dips",
+                    "l_sit"
+                ]
+            },
+            {
+                "id": "korean_dip",
+                "name": "Korean Dips",
+                "type": "rep",
+                "baseTarget": 6,
+                "step": 3,
+                "xpPerUnit": 35,
+                "unlockXp": 800,
+                "goalBonusXp": 1000,
+                "prerequisites": [
+                    "bar_dips"
+                ]
+            },
+            {
+                "id": "russian_dip",
+                "name": "Russian Dips",
+                "type": "rep",
+                "baseTarget": 3,
+                "step": 2,
+                "xpPerUnit": 120,
+                "unlockXp": 3000,
+                "goalBonusXp": 4000,
+                "prerequisites": [
+                    "bar_dips"
+                ]
+            },
+            {
+                "id": "l_sit",
+                "name": "L-Sit Hold",
+                "type": "sec",
+                "baseTarget": 15,
+                "step": 5,
+                "xpPerUnit": 12,
+                "unlockXp": 300,
+                "goalBonusXp": 400,
+                "prerequisites": []
+            },
+            {
+                "id": "v_sit",
+                "name": "V-Sit Hold",
+                "type": "sec",
+                "baseTarget": 8,
+                "step": 3,
+                "xpPerUnit": 50,
+                "unlockXp": 1200,
+                "goalBonusXp": 1500,
+                "prerequisites": [
+                    "l_sit"
+                ]
+            },
+            {
+                "id": "wall_handstand",
+                "name": "Wall Handstand",
+                "type": "sec",
+                "baseTarget": 30,
+                "step": 10,
+                "xpPerUnit": 5,
+                "unlockXp": 150,
+                "goalBonusXp": 200,
+                "prerequisites": []
+            },
+            {
+                "id": "freestanding_hs",
+                "name": "Freestanding Handstand",
+                "type": "sec",
+                "baseTarget": 15,
+                "step": 5,
+                "xpPerUnit": 20,
+                "unlockXp": 500,
+                "goalBonusXp": 700,
+                "prerequisites": [
+                    "wall_handstand"
+                ]
+            },
+            {
+                "id": "hspu_wall",
+                "name": "Wall HSPU",
+                "type": "rep",
+                "baseTarget": 6,
+                "step": 2,
+                "xpPerUnit": 55,
+                "unlockXp": 1300,
+                "goalBonusXp": 1800,
+                "prerequisites": [
+                    "wall_handstand"
+                ]
+            },
+            {
+                "id": "freestanding_hspu",
+                "name": "Freestanding HSPU",
+                "type": "rep",
+                "baseTarget": 2,
+                "step": 2,
+                "xpPerUnit": 280,
+                "unlockXp": 6500,
+                "goalBonusXp": 8500,
+                "prerequisites": [
+                    "freestanding_hs",
+                    "hspu_wall"
+                ]
+            },
+            {
+                "id": "impossible_dip",
+                "name": "Impossible Dip",
+                "type": "rep",
+                "baseTarget": 1,
+                "step": 1,
+                "xpPerUnit": 600,
+                "unlockXp": 15000,
+                "goalBonusXp": 20000,
+                "prerequisites": [
+                    "russian_dip"
+                ]
+            }
+        ]
+    },
+    {
+        "id": "cat_core",
+        "title": "6. Human Flag & Core Special",
+        "skills": [
+            {
+                "id": "plank",
+                "name": "Plank Hold",
+                "type": "sec",
+                "baseTarget": 30,
+                "step": 15,
+                "xpPerUnit": 2,
+                "unlockXp": 30,
+                "goalBonusXp": 50,
+                "prerequisites": []
+            },
+            {
+                "id": "crunch",
+                "name": "Ab Crunches",
+                "type": "rep",
+                "baseTarget": 20,
+                "step": 10,
+                "xpPerUnit": 2,
+                "unlockXp": 40,
+                "goalBonusXp": 70,
+                "prerequisites": []
+            },
+            {
+                "id": "hollow_body",
+                "name": "Hollow Body Hold",
+                "type": "sec",
+                "baseTarget": 30,
+                "step": 10,
+                "xpPerUnit": 3,
+                "unlockXp": 60,
+                "goalBonusXp": 90,
+                "prerequisites": [
+                    "plank"
+                ]
+            },
+            {
+                "id": "side_plank",
+                "name": "Side Plank Hold",
+                "type": "sec",
+                "baseTarget": 30,
+                "step": 10,
+                "xpPerUnit": 2,
+                "unlockXp": 50,
+                "goalBonusXp": 80,
+                "prerequisites": [
+                    "plank"
+                ]
+            },
+            {
+                "id": "dragon_flag",
+                "name": "Dragon Flag Hold",
+                "type": "sec",
+                "baseTarget": 10,
+                "step": 4,
+                "xpPerUnit": 35,
+                "unlockXp": 900,
+                "goalBonusXp": 1200,
+                "prerequisites": [
+                    "hollow_body"
+                ]
+            },
+            {
+                "id": "human_flag_tuck",
+                "name": "Tuck Human Flag",
+                "type": "sec",
+                "baseTarget": 8,
+                "step": 3,
+                "xpPerUnit": 65,
+                "unlockXp": 1600,
+                "goalBonusXp": 2200,
+                "prerequisites": [
+                    "side_plank",
+                    "hollow_body"
+                ]
+            },
+            {
+                "id": "human_flag_straddle",
+                "name": "Straddle Human Flag",
+                "type": "sec",
+                "baseTarget": 5,
+                "step": 2,
+                "xpPerUnit": 160,
+                "unlockXp": 4000,
+                "goalBonusXp": 5000,
+                "prerequisites": [
+                    "human_flag_tuck"
+                ]
+            },
+            {
+                "id": "human_flag",
+                "name": "Full Human Flag",
+                "type": "sec",
+                "baseTarget": 4,
+                "step": 2,
+                "xpPerUnit": 260,
+                "unlockXp": 7000,
+                "goalBonusXp": 9000,
+                "prerequisites": [
+                    "human_flag_straddle"
+                ]
+            }
+        ]
+    },
+    {
+        "id": "cat_legs",
+        "title": "7. Legs & Lower Body",
+        "skills": [
+            {
+                "id": "squat",
+                "name": "Air Squats",
+                "type": "rep",
+                "baseTarget": 20,
+                "step": 10,
+                "xpPerUnit": 2,
+                "unlockXp": 50,
+                "goalBonusXp": 80,
+                "prerequisites": []
+            },
+            {
+                "id": "lunges",
+                "name": "Lunges",
+                "type": "rep",
+                "baseTarget": 20,
+                "step": 10,
+                "xpPerUnit": 3,
+                "unlockXp": 60,
+                "goalBonusXp": 90,
+                "prerequisites": [
+                    "squat"
+                ]
+            },
+            {
+                "id": "calf_raises",
+                "name": "Calf Raises",
+                "type": "rep",
+                "baseTarget": 20,
+                "step": 10,
+                "xpPerUnit": 2,
+                "unlockXp": 40,
+                "goalBonusXp": 60,
+                "prerequisites": []
+            },
+            {
+                "id": "glute_bridge",
+                "name": "Glute Bridge",
+                "type": "rep",
+                "baseTarget": 15,
+                "step": 10,
+                "xpPerUnit": 3,
+                "unlockXp": 50,
+                "goalBonusXp": 80,
+                "prerequisites": []
+            },
+            {
+                "id": "wall_sit",
+                "name": "Wall Sit",
+                "type": "sec",
+                "baseTarget": 30,
+                "step": 15,
+                "xpPerUnit": 3,
+                "unlockXp": 50,
+                "goalBonusXp": 80,
+                "prerequisites": []
+            },
+            {
+                "id": "bulgarian_split_squat",
+                "name": "Bulgarian Split Squat",
+                "type": "rep",
+                "baseTarget": 10,
+                "step": 5,
+                "xpPerUnit": 8,
+                "unlockXp": 250,
+                "goalBonusXp": 350,
+                "prerequisites": [
+                    "lunges"
+                ]
+            },
+            {
+                "id": "box_jump",
+                "name": "Box Jump",
+                "type": "rep",
+                "baseTarget": 8,
+                "step": 4,
+                "xpPerUnit": 10,
+                "unlockXp": 200,
+                "goalBonusXp": 300,
+                "prerequisites": [
+                    "squat"
+                ]
+            },
+            {
+                "id": "pistol_squat",
+                "name": "Pistol Squats",
+                "type": "rep",
+                "baseTarget": 5,
+                "step": 3,
+                "xpPerUnit": 25,
+                "unlockXp": 600,
+                "goalBonusXp": 800,
+                "prerequisites": [
+                    "bulgarian_split_squat"
+                ]
+            },
+            {
+                "id": "cossack_squat",
+                "name": "Cossack Squat",
+                "type": "rep",
+                "baseTarget": 8,
+                "step": 4,
+                "xpPerUnit": 15,
+                "unlockXp": 400,
+                "goalBonusXp": 500,
+                "prerequisites": [
+                    "squat"
+                ]
+            },
+            {
+                "id": "nordic_curl",
+                "name": "Nordic Hamstring Curl",
+                "type": "rep",
+                "baseTarget": 3,
+                "step": 2,
+                "xpPerUnit": 80,
+                "unlockXp": 2000,
+                "goalBonusXp": 2500,
+                "prerequisites": [
+                    "glute_bridge"
+                ]
+            },
+            {
+                "id": "shrimp_squat",
+                "name": "Shrimp Squat",
+                "type": "rep",
+                "baseTarget": 5,
+                "step": 3,
+                "xpPerUnit": 60,
+                "unlockXp": 1600,
+                "goalBonusXp": 2000,
+                "prerequisites": [
+                    "pistol_squat"
+                ]
+            }
+        ]
+    },
+    {
+        "id": "cat_grip",
+        "title": "8. Grip, Forearms & Hangs",
+        "skills": [
+            {
+                "id": "dead_hang",
+                "name": "Dead Hang (Passive Hang)",
+                "type": "sec",
+                "baseTarget": 30,
+                "step": 10,
+                "xpPerUnit": 3,
+                "unlockXp": 40,
+                "goalBonusXp": 60,
+                "prerequisites": []
+            },
+            {
+                "id": "towel_hang",
+                "name": "Towel Hang",
+                "type": "sec",
+                "baseTarget": 20,
+                "step": 5,
+                "xpPerUnit": 8,
+                "unlockXp": 300,
+                "goalBonusXp": 400,
+                "prerequisites": [
+                    "dead_hang"
+                ]
+            },
+            {
+                "id": "fingertip_hang",
+                "name": "Fingertip Hang",
+                "type": "sec",
+                "baseTarget": 10,
+                "step": 3,
+                "xpPerUnit": 20,
+                "unlockXp": 700,
+                "goalBonusXp": 900,
+                "prerequisites": [
+                    "dead_hang"
+                ]
+            },
+            {
+                "id": "towel_pullup",
+                "name": "Towel Pull Ups",
+                "type": "rep",
+                "baseTarget": 5,
+                "step": 2,
+                "xpPerUnit": 18,
+                "unlockXp": 500,
+                "goalBonusXp": 700,
+                "prerequisites": [
+                    "towel_hang"
+                ]
+            },
+            {
+                "id": "one_arm_hang",
+                "name": "One Arm Hang",
+                "type": "sec",
+                "baseTarget": 10,
+                "step": 3,
+                "xpPerUnit": 25,
+                "unlockXp": 900,
+                "goalBonusXp": 1200,
+                "prerequisites": [
+                    "fingertip_hang"
+                ]
+            }
+        ]
+    },
+    {
+        "id": "cat_core2",
+        "title": "9. Advanced Core & Rotations",
+        "skills": [
+            {
+                "id": "russian_twist",
+                "name": "Russian Twist",
+                "type": "rep",
+                "baseTarget": 20,
+                "step": 10,
+                "xpPerUnit": 2,
+                "unlockXp": 40,
+                "goalBonusXp": 70,
+                "prerequisites": []
+            },
+            {
+                "id": "superman_hold",
+                "name": "Superman Hold",
+                "type": "sec",
+                "baseTarget": 20,
+                "step": 10,
+                "xpPerUnit": 3,
+                "unlockXp": 50,
+                "goalBonusXp": 80,
+                "prerequisites": []
+            },
+            {
+                "id": "leg_raises",
+                "name": "Hanging Leg Raises",
+                "type": "rep",
+                "baseTarget": 10,
+                "step": 5,
+                "xpPerUnit": 8,
+                "unlockXp": 200,
+                "goalBonusXp": 300,
+                "prerequisites": [
+                    "russian_twist"
+                ]
+            },
+            {
+                "id": "ab_wheel",
+                "name": "Ab Wheel Rollout",
+                "type": "rep",
+                "baseTarget": 5,
+                "step": 3,
+                "xpPerUnit": 30,
+                "unlockXp": 700,
+                "goalBonusXp": 900,
+                "prerequisites": [
+                    "leg_raises"
+                ]
+            },
+            {
+                "id": "windshield_wipers",
+                "name": "Windshield Wipers",
+                "type": "rep",
+                "baseTarget": 5,
+                "step": 3,
+                "xpPerUnit": 90,
+                "unlockXp": 2500,
+                "goalBonusXp": 3000,
+                "prerequisites": [
+                    "leg_raises"
+                ]
+            }
+        ]
+    },
+    {
+        "id": "cat_explosive",
+        "title": "10. Explosiveness & Conditioning",
+        "skills": [
+            {
+                "id": "jump_squat",
+                "name": "Jump Squat",
+                "type": "rep",
+                "baseTarget": 15,
+                "step": 8,
+                "xpPerUnit": 4,
+                "unlockXp": 80,
+                "goalBonusXp": 120,
+                "prerequisites": []
+            },
+            {
+                "id": "mountain_climbers",
+                "name": "Mountain Climbers",
+                "type": "rep",
+                "baseTarget": 20,
+                "step": 10,
+                "xpPerUnit": 2,
+                "unlockXp": 40,
+                "goalBonusXp": 70,
+                "prerequisites": []
+            },
+            {
+                "id": "burpees",
+                "name": "Burpees",
+                "type": "rep",
+                "baseTarget": 10,
+                "step": 5,
+                "xpPerUnit": 4,
+                "unlockXp": 60,
+                "goalBonusXp": 100,
+                "prerequisites": [
+                    "mountain_climbers"
+                ]
+            },
+            {
+                "id": "broad_jump",
+                "name": "Standing Broad Jump",
+                "type": "rep",
+                "baseTarget": 5,
+                "step": 2,
+                "xpPerUnit": 15,
+                "unlockXp": 300,
+                "goalBonusXp": 400,
+                "prerequisites": [
+                    "jump_squat"
+                ]
+            },
+            {
+                "id": "explosive_pullup",
+                "name": "Kipping Pull Ups",
+                "type": "rep",
+                "baseTarget": 5,
+                "step": 3,
+                "xpPerUnit": 30,
+                "unlockXp": 600,
+                "goalBonusXp": 800,
+                "prerequisites": []
+            }
+        ]
+    }
+];
 
         let userState = {};
         let currentTheme = localStorage.getItem('naiontrackTheme') || 'default';
@@ -4486,6 +6538,7 @@ let currentUser = null;
             localStorage.setItem('naiontrackTheme', theme);
             applyTheme(theme);
             updateUI();
+            if (typeof syncBentoThemeChips === 'function') syncBentoThemeChips();
         }
 
         // SALVATAGGIO DATI (Locale o Firebase)
@@ -5628,6 +7681,13 @@ let currentUser = null;
                     </div>
                 `;
             }
+
+            if (typeof renderSkillTreeGraph === 'function') {
+                renderSkillTreeGraph();
+            }
+            if (typeof updateBentoProfileStats === 'function') {
+                updateBentoProfileStats();
+            }
         }
 
         function findSkillById(id) {
@@ -6093,9 +8153,51 @@ let currentUser = null;
             }
         }
 
+        
+        // Verifica se i prerequisiti di una skill sono soddisfatti
+        function isSkillPrerequisitesMet(skillId) {
+            const skill = findSkillById(skillId);
+            if (!skill || !skill.prerequisites || skill.prerequisites.length === 0) return true;
+            return skill.prerequisites.every(pId => {
+                const pData = userState[pId];
+                return pData && pData.unlocked;
+            });
+        }
+
+        // Restituisce l'elenco dei nomi delle skill propedeutiche mancanti
+        function getMissingPrerequisitesNames(skillId) {
+            const skill = findSkillById(skillId);
+            if (!skill || !skill.prerequisites || skill.prerequisites.length === 0) return [];
+            return skill.prerequisites
+                .filter(pId => {
+                    const pData = userState[pId];
+                    return !pData || !pData.unlocked;
+                })
+                .map(pId => {
+                    const pSkill = findSkillById(pId);
+                    return pSkill ? pSkill.name : pId;
+                });
+        }
+
         function askUnlock(id) {
             const skill = findSkillById(id);
             if (!skill) return;
+
+            if (!isSkillPrerequisitesMet(id)) {
+                const missing = getMissingPrerequisitesNames(id);
+                openCustomModal(
+                    "🔒 Prerequisiti Richiesti",
+                    `Per sbloccare la variante avanzata <strong>"${escapeHtml(skill.name)}"</strong> devi prima padroneggiare le skill di base propedeutiche:<br><br>` +
+                    `<div style="margin:10px 0; padding:10px 14px; background:rgba(239, 68, 68, 0.12); border:1px solid rgba(239, 68, 68, 0.35); border-radius:8px; color:#f87171; font-weight:700; text-align:left; font-size:0.85rem;">` +
+                    missing.map(m => `• ${escapeHtml(m)}`).join('<br>') +
+                    `</div>` +
+                    `Sblocca prima queste abilità per procedere nell'Albero Calisthenico!`,
+                    "Ho Capito",
+                    false,
+                    () => {}
+                );
+                return;
+            }
 
             openCustomModal(
                 "🎉 Sblocca Skill con AI Referee",
@@ -11032,11 +13134,34 @@ function getCalisthenicsExpertResponse(query) {
             lastRenderedConversationMsgs = [];
         }
 
+        // Notifica push e in-app al creatore del sondaggio quando viene votato
+        function notifyPollCreatorOfVote(pollId, value, convId) {
+            if (!currentUser || !pollId) return;
+            db.collection("events").doc(pollId).get().then(doc => {
+                if (!doc.exists) return;
+                const ev = doc.data() || {};
+                const creatorUid = ev.creatorUid;
+                if (!creatorUid || creatorUid === currentUser.uid) return;
+
+                const voterNick = userNickname || (currentUser.displayName || (currentUser.email ? currentUser.email.split('@')[0] : 'Un atleta'));
+                const voteLabel = value === 'yes' ? 'ha votato Sì ✅' : (value === 'no' ? 'ha votato No ❌' : 'ha votato Forse 🤔');
+                const pollInfo = (ev.day && ev.time) ? `per l'allenamento del ${ev.day} alle ${ev.time}` : (ev.place ? `per il ritrovo a ${ev.place}` : 'al tuo sondaggio');
+
+                dispatchBackgroundPush({
+                    targetUids: [creatorUid],
+                    title: "📊 Nuovo Voto al tuo Sondaggio!",
+                    body: `${voterNick} ${voteLabel} ${pollInfo}!`,
+                    data: { type: 'pollVote', pollId: pollId, convId: convId || ev.conversationId || activeConversationId || '' }
+                });
+            }).catch(err => console.warn("Errore notifica voto sondaggio:", err));
+        }
+
         function voteGroupEventFromChat(pollId, value) {
             if (!currentUser) return;
             db.collection("events").doc(pollId).update({
                 [`responses.${currentUser.uid}`]: value
             }).then(() => {
+                notifyPollCreatorOfVote(pollId, value, activeConversationId);
                 if (value === 'maybe') {
                     db.collection("events").doc(pollId).get().then(doc => {
                         if (doc.exists) {
@@ -12570,6 +14695,7 @@ function getCalisthenicsExpertResponse(query) {
             db.collection("events").doc(eventId).update({
                 [`responses.${currentUser.uid}`]: value
             }).then(() => {
+                notifyPollCreatorOfVote(eventId, value, convId);
                 openGroupPollsModal(convId);
             }).catch(e => {
                 console.error("Errore voto sondaggio gruppo:", e);
@@ -15184,10 +17310,593 @@ function getCalisthenicsExpertResponse(query) {
             initChatMobileTouchIsolation();
         }
 
+        // =========================================================================
+        // 5-TAB NAVIGATION & RPG SKILL TREE ENGINE (Unified Upgrade)
+        // =========================================================================
+        let currentMainTab = 'tree';
+        let treeViewMode = 'graph';
+        let treeZoom = 0.85;
+        let treePanX = -350;
+        let treePanY = -500;
+        let isTreePanning = false;
+        let startPanX = 0;
+        let startPanY = 0;
+        let lastTouchDist = 0;
+
+        function switchMainTab(tabName) {
+            currentMainTab = tabName;
+            try { localStorage.setItem('naiontrackActiveTab', tabName); } catch (e) {}
+
+            const tabViews = document.querySelectorAll('.main-tab-view');
+            tabViews.forEach(el => el.classList.remove('active'));
+            const target = document.getElementById('tab-view-' + tabName);
+            if (target) target.classList.add('active');
+
+            const navItems = document.querySelectorAll('.bottom-nav-item');
+            navItems.forEach(btn => {
+                btn.classList.toggle('active', btn.getAttribute('data-tab') === tabName);
+            });
+
+            if (tabName === 'tree') {
+                if (treeViewMode === 'graph') {
+                    renderSkillTreeGraph();
+                }
+            } else if (tabName === 'workouts') {
+                if (typeof renderWorkouts === 'function') renderWorkouts();
+            } else if (tabName === 'arena') {
+                if (typeof initChallengesListener === 'function') initChallengesListener();
+                if (typeof initEventsListener === 'function') initEventsListener();
+            } else if (tabName === 'chat') {
+                if (typeof initChatListener === 'function') initChatListener();
+                if (typeof scrollChatToBottom === 'function') setTimeout(scrollChatToBottom, 120);
+            } else if (tabName === 'profile') {
+                if (typeof renderProfileSettings === 'function') renderProfileSettings();
+                if (typeof renderShareSection === 'function') renderShareSection();
+                updateBentoProfileStats();
+            }
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function toggleSkillTreeView(mode) {
+            treeViewMode = mode;
+            try { localStorage.setItem('naiontrackTreeViewMode', mode); } catch (e) {}
+
+            const graphWrapper = document.getElementById('skill-tree-viewport-wrapper');
+            const cardsContainer = document.getElementById('tree');
+            const btnGraph = document.getElementById('btn-view-graph');
+            const btnCards = document.getElementById('btn-view-cards');
+
+            if (btnGraph) btnGraph.classList.toggle('active', mode === 'graph');
+            if (btnCards) btnCards.classList.toggle('active', mode === 'cards');
+
+            if (mode === 'graph') {
+                if (graphWrapper) graphWrapper.style.display = 'block';
+                if (cardsContainer) cardsContainer.style.display = 'none';
+                renderSkillTreeGraph();
+            } else {
+                if (graphWrapper) graphWrapper.style.display = 'none';
+                if (cardsContainer) cardsContainer.style.display = 'grid';
+            }
+        }
+
+        function getSkillDepth(id, visited = new Set()) {
+            if (visited.has(id)) return 0;
+            visited.add(id);
+            const skill = typeof findSkillById === 'function' ? findSkillById(id) : null;
+            const prereqs = (skill && skill.prerequisites) ? skill.prerequisites : [];
+            if (prereqs.length === 0) return 0;
+            return 1 + Math.max(...prereqs.map(p => getSkillDepth(p, new Set(visited))));
+        }
+
+        function computeSkillCoordinates() {
+            const coords = {};
+            const CANVAS_HEIGHT = 1400;
+            const NODE_Y_GAP = 125;
+            const CAT_WIDTH = 280;
+
+            if (typeof categories === 'undefined') return coords;
+
+            categories.forEach((cat, catIdx) => {
+                const byDepth = {};
+                cat.skills.forEach(skill => {
+                    const d = getSkillDepth(skill.id);
+                    byDepth[d] = byDepth[d] || [];
+                    byDepth[d].push(skill);
+                });
+
+                const catCenterX = catIdx * CAT_WIDTH + (CAT_WIDTH / 2) + 60;
+
+                Object.keys(byDepth).forEach(dStr => {
+                    const d = parseInt(dStr, 10);
+                    const skillsAtDepth = byDepth[d];
+                    const count = skillsAtDepth.length;
+                    const subGap = 85;
+
+                    skillsAtDepth.forEach((s, subIdx) => {
+                        const xOffset = (subIdx - (count - 1) / 2) * subGap;
+                        const x = Math.round(catCenterX + xOffset);
+                        const y = Math.round(CANVAS_HEIGHT - 120 - (d * NODE_Y_GAP));
+
+                        coords[s.id] = {
+                            id: s.id,
+                            name: s.name,
+                            tier: s.tier,
+                            category: cat.title,
+                            catId: cat.id,
+                            prerequisites: s.prerequisites || [],
+                            depth: d,
+                            x: x,
+                            y: y,
+                            catCenterX: catCenterX
+                        };
+                    });
+                });
+            });
+
+            return coords;
+        }
+
+        function renderSkillTreeGraph() {
+            const svgEl = document.getElementById('skill-tree-svg');
+            const nodesLayer = document.getElementById('skill-tree-nodes-layer');
+            if (!svgEl || !nodesLayer) return;
+
+            const coords = computeSkillCoordinates();
+
+            // SVG Bézier lines
+            let svgLines = '';
+            Object.values(coords).forEach(s => {
+                const isChildUnlocked = userState[s.id] && userState[s.id].unlocked;
+                s.prerequisites.forEach(pId => {
+                    const parent = coords[pId];
+                    if (!parent) return;
+                    const isParentUnlocked = userState[pId] && userState[pId].unlocked;
+                    const isPathActive = isParentUnlocked && isChildUnlocked;
+                    const midY = Math.round((parent.y + s.y) / 2);
+                    const pathD = `M ${parent.x} ${parent.y} C ${parent.x} ${midY}, ${s.x} ${midY}, ${s.x} ${s.y}`;
+                    svgLines += `<path d="${pathD}" class="tree-branch-line ${isPathActive ? 'active' : 'locked'}" />`;
+                });
+            });
+            svgEl.innerHTML = svgLines;
+
+            // HTML Nodes & Category Banners
+            let nodesHtml = '';
+            if (typeof categories !== 'undefined') {
+                categories.forEach((cat, cIdx) => {
+                    const catCenterX = cIdx * 280 + 140 + 60;
+                    nodesHtml += `<div class="tree-category-banner" style="left: ${catCenterX - 120}px;">${escapeHtml(cat.title)}</div>`;
+                });
+            }
+
+            Object.values(coords).forEach(s => {
+                const isUnlocked = userState[s.id] && userState[s.id].unlocked;
+                const isPrereqMet = isSkillPrerequisitesMet(s.id);
+                const reps = userState[s.id] ? (userState[s.id].reps || userState[s.id].seconds || 0) : 0;
+                const isMastered = isUnlocked && reps >= (s.tier === 'elite' ? 10 : 20);
+                const nodeClass = isMastered ? 'mastered' : (isUnlocked ? 'unlocked' : (isPrereqMet ? 'available' : 'locked'));
+
+                const stickman = (typeof skillStickmen !== 'undefined' && skillStickmen[s.id]) ||
+                    `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="8" fill="none"><circle cx="50" cy="30" r="14"/><line x1="50" y1="44" x2="50" y2="70"/><line x1="28" y1="52" x2="72" y2="52"/><line x1="50" y1="70" x2="35" y2="92"/><line x1="50" y1="70" x2="65" y2="92"/></svg>`;
+
+                nodesHtml += `
+                    <div class="tree-node ${nodeClass}" style="left: ${s.x - 31}px; top: ${s.y - 31}px;" onclick="openSkillDetailDrawer('${s.id}')" title="${escapeHtml(s.name)}">
+                        <div class="tree-node-inner">
+                            <div class="tree-node-svg">${stickman}</div>
+                        </div>
+                        ${!isUnlocked && !isPrereqMet ? '<div class="tree-node-lock-badge">🔒</div>' : ''}
+                        ${isUnlocked ? '<div class="tree-node-check-badge">✓</div>' : ''}
+                        <div class="tree-node-label">${escapeHtml(s.name)}</div>
+                    </div>
+                `;
+            });
+            nodesLayer.innerHTML = nodesHtml;
+        }
+
+        // =========================================================================
+        // PAN & PINCH-ZOOM ENGINE
+        // =========================================================================
+        function applyTreeTransform() {
+            const canvas = document.getElementById('skill-tree-canvas');
+            if (canvas) {
+                canvas.style.transform = `translate(${treePanX}px, ${treePanY}px) scale(${treeZoom})`;
+            }
+        }
+
+        function zoomSkillTree(factor) {
+            const newZoom = Math.max(0.35, Math.min(2.2, treeZoom * factor));
+            const viewport = document.getElementById('skill-tree-viewport');
+            if (viewport) {
+                const cx = viewport.clientWidth / 2;
+                const cy = viewport.clientHeight / 2;
+                treePanX = cx - (cx - treePanX) * (newZoom / treeZoom);
+                treePanY = cy - (cy - treePanY) * (newZoom / treeZoom);
+            }
+            treeZoom = newZoom;
+            applyTreeTransform();
+        }
+
+        function resetSkillTreeZoom() {
+            treeZoom = 0.85;
+            const viewport = document.getElementById('skill-tree-viewport');
+            if (viewport) {
+                treePanX = (viewport.clientWidth - 2920 * treeZoom) / 2;
+                treePanY = -480;
+            } else {
+                treePanX = -350;
+                treePanY = -480;
+            }
+            applyTreeTransform();
+        }
+
+        function initSkillTreePanZoom() {
+            const viewport = document.getElementById('skill-tree-viewport');
+            if (!viewport) return;
+
+            viewport.addEventListener('mousedown', e => {
+                if (e.target.closest('.tree-node') || e.target.closest('.tree-zoom-hud') || e.target.closest('.tree-legend-hud')) return;
+                isTreePanning = true;
+                startPanX = e.clientX - treePanX;
+                startPanY = e.clientY - treePanY;
+            });
+
+            window.addEventListener('mousemove', e => {
+                if (!isTreePanning) return;
+                treePanX = e.clientX - startPanX;
+                treePanY = e.clientY - startPanY;
+                applyTreeTransform();
+            });
+
+            window.addEventListener('mouseup', () => {
+                isTreePanning = false;
+            });
+
+            viewport.addEventListener('wheel', e => {
+                e.preventDefault();
+                const rect = viewport.getBoundingClientRect();
+                const mouseX = e.clientX - rect.left;
+                const mouseY = e.clientY - rect.top;
+
+                const factor = e.deltaY < 0 ? 1.12 : 0.89;
+                const newZoom = Math.max(0.35, Math.min(2.2, treeZoom * factor));
+
+                treePanX = mouseX - (mouseX - treePanX) * (newZoom / treeZoom);
+                treePanY = mouseY - (mouseY - treePanY) * (newZoom / treeZoom);
+                treeZoom = newZoom;
+                applyTreeTransform();
+            }, { passive: false });
+
+            // Touch support for Mobile
+            viewport.addEventListener('touchstart', e => {
+                if (e.target.closest('.tree-node') || e.target.closest('.tree-zoom-hud') || e.target.closest('.tree-legend-hud')) return;
+                if (e.touches.length === 1) {
+                    isTreePanning = true;
+                    startPanX = e.touches[0].clientX - treePanX;
+                    startPanY = e.touches[0].clientY - treePanY;
+                } else if (e.touches.length === 2) {
+                    isTreePanning = false;
+                    lastTouchDist = Math.hypot(
+                        e.touches[0].clientX - e.touches[1].clientX,
+                        e.touches[0].clientY - e.touches[1].clientY
+                    );
+                }
+            }, { passive: true });
+
+            viewport.addEventListener('touchmove', e => {
+                if (isTreePanning && e.touches.length === 1) {
+                    treePanX = e.touches[0].clientX - startPanX;
+                    treePanY = e.touches[0].clientY - startPanY;
+                    applyTreeTransform();
+                } else if (e.touches.length === 2) {
+                    const dist = Math.hypot(
+                        e.touches[0].clientX - e.touches[1].clientX,
+                        e.touches[0].clientY - e.touches[1].clientY
+                    );
+                    if (lastTouchDist > 0) {
+                        const factor = dist / lastTouchDist;
+                        const newZoom = Math.max(0.35, Math.min(2.2, treeZoom * factor));
+                        const midX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+                        const midY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+                        const rect = viewport.getBoundingClientRect();
+                        const cx = midX - rect.left;
+                        const cy = midY - rect.top;
+
+                        treePanX = cx - (cx - treePanX) * (newZoom / treeZoom);
+                        treePanY = cy - (cy - treePanY) * (newZoom / treeZoom);
+                        treeZoom = newZoom;
+                        applyTreeTransform();
+                    }
+                    lastTouchDist = dist;
+                }
+            }, { passive: true });
+
+            viewport.addEventListener('touchend', () => {
+                isTreePanning = false;
+                lastTouchDist = 0;
+            });
+
+            applyTreeTransform();
+        }
+
+        // =========================================================================
+        // SKILL DETAIL DRAWER
+        // =========================================================================
+        function openSkillDetailDrawer(skillId) {
+            const skill = typeof findSkillById === 'function' ? findSkillById(skillId) : null;
+            if (!skill) return;
+
+            const drawer = document.getElementById('skill-detail-drawer');
+            const backdrop = document.getElementById('skill-detail-drawer-backdrop');
+            if (!drawer || !backdrop) return;
+
+            const isUnlocked = userState[skillId] && userState[skillId].unlocked;
+            const isPrereqMet = isSkillPrerequisitesMet(skillId);
+            const missingPrereqs = getMissingPrerequisitesNames(skillId);
+            const userSkillData = userState[skillId] || {};
+            const reps = userSkillData.reps || userSkillData.seconds || 0;
+            const level = userSkillData.level || (isUnlocked ? 1 : 0);
+
+            const stickman = (typeof skillStickmen !== 'undefined' && skillStickmen[skillId]) ||
+                `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="8" fill="none"><circle cx="50" cy="30" r="14"/><line x1="50" y1="44" x2="50" y2="70"/><line x1="28" y1="52" x2="72" y2="52"/><line x1="50" y1="70" x2="35" y2="92"/><line x1="50" y1="70" x2="65" y2="92"/></svg>`;
+
+            let prereqHtml = '';
+            if (skill.prerequisites && skill.prerequisites.length > 0) {
+                prereqHtml = `
+                    <div class="drawer-section-title">
+                        <span>🔗 Prerequisiti Richiesti</span>
+                        <span style="font-size:0.75rem; color:var(--subtext);">${isPrereqMet ? '✅ Soddisfatti' : '🔒 Mancanti'}</span>
+                    </div>
+                    <div class="drawer-prereq-list">
+                `;
+                skill.prerequisites.forEach(pId => {
+                    const pSkill = findSkillById(pId);
+                    const pName = pSkill ? pSkill.name : pId;
+                    const pUnlocked = userState[pId] && userState[pId].unlocked;
+                    prereqHtml += `
+                        <div class="drawer-prereq-item ${pUnlocked ? 'met' : 'missing'}">
+                            <span>${pUnlocked ? '✅' : '🔒'}</span>
+                            <span>${escapeHtml(pName)}</span>
+                            <span style="margin-left:auto; font-size:0.75rem;">${pUnlocked ? 'Sbloccata' : 'Da completare'}</span>
+                        </div>
+                    `;
+                });
+                prereqHtml += '</div>';
+            } else {
+                prereqHtml = `
+                    <div class="drawer-section-title">
+                        <span>🌱 Livello Base</span>
+                    </div>
+                    <div class="drawer-prereq-list">
+                        <div class="drawer-prereq-item met">
+                            <span>✨</span>
+                            <span>Skill fondamentale di partenza (Nessun prerequisito richiesto)</span>
+                        </div>
+                    </div>
+                `;
+            }
+
+            let actionButtonsHtml = '';
+            if (!isUnlocked) {
+                if (!isPrereqMet) {
+                    actionButtonsHtml = `
+                        <div style="padding:12px; border-radius:12px; background:rgba(239, 68, 68, 0.1); border:1px solid rgba(239,68,68,0.3); color:#f87171; font-size:0.85rem; font-weight:600; text-align:center;">
+                            🔒 Devi prima completare tutte le skill propedeutiche indicate sopra per sbloccare questa variante avanzata!
+                        </div>
+                    `;
+                } else {
+                    actionButtonsHtml = `
+                        <button type="button" class="btn-confirm" style="width:100%; padding:14px; font-size:1rem;" onclick="closeSkillDetailDrawer(); askUnlock('${skill.id}');">
+                            🎉 Sblocca Skill con AI Referee
+                        </button>
+                    `;
+                }
+            } else {
+                actionButtonsHtml = `
+                    <div style="display:flex; gap:10px;">
+                        <button type="button" class="btn-confirm" style="flex:1; padding:12px;" onclick="closeSkillDetailDrawer(); openPoseScannerModal({ skillId: '${skill.id}', mode: 'test' });">
+                            📹 AI Referee Test
+                        </button>
+                    </div>
+                `;
+            }
+
+            drawer.innerHTML = `
+                <div class="drawer-handle-bar"></div>
+                <div class="drawer-header">
+                    <div class="drawer-avatar-box">${stickman}</div>
+                    <div class="drawer-title-box">
+                        <h3 class="drawer-title">${escapeHtml(skill.name)}</h3>
+                        <div class="drawer-meta">
+                            <span class="drawer-tier-badge">${(skill.tier || 'Base').toUpperCase()}</span>
+                            <span>⭐ Livello: ${level}</span>
+                            <span>🏆 Record: ${reps} ${skill.tier === 'core' || skill.name.toLowerCase().includes('plank') || skill.name.toLowerCase().includes('hold') ? 'sec' : 'rep'}</span>
+                        </div>
+                    </div>
+                </div>
+
+                ${prereqHtml}
+
+                <div class="drawer-actions-box">
+                    ${actionButtonsHtml}
+                    <button type="button" class="btn-auth-secondary" style="width:100%;" onclick="closeSkillDetailDrawer()">
+                        Chiudi Scheda
+                    </button>
+                </div>
+            `;
+
+            backdrop.classList.add('active');
+            drawer.classList.add('active');
+        }
+
+        function closeSkillDetailDrawer() {
+            const drawer = document.getElementById('skill-detail-drawer');
+            const backdrop = document.getElementById('skill-detail-drawer-backdrop');
+            if (drawer) drawer.classList.remove('active');
+            if (backdrop) backdrop.classList.remove('active');
+        }
+
+        // =========================================================================
+        // ARENA SUBTABS
+        // =========================================================================
+        function switchArenaSubTab(subTabName) {
+            const panes = document.querySelectorAll('.arena-subtab-pane');
+            panes.forEach(p => p.classList.remove('active'));
+            const targetPane = document.getElementById('arena-subtab-' + subTabName);
+            if (targetPane) targetPane.classList.add('active');
+
+            const btns = document.querySelectorAll('.arena-subtab-btn');
+            btns.forEach(b => b.classList.remove('active'));
+            const targetBtn = document.getElementById('btn-subtab-' + subTabName);
+            if (targetBtn) targetBtn.classList.add('active');
+        }
+
+        // =========================================================================
+        // PROFILE BENTO GRID HELPERS
+        // =========================================================================
+        function calculateBentoBMI() {
+            const wInput = document.getElementById('bento-body-weight');
+            const hInput = document.getElementById('bento-body-height');
+            const valEl = document.getElementById('bento-bmi-val');
+            const statusEl = document.getElementById('bento-bmi-status');
+            if (!wInput || !hInput || !valEl || !statusEl) return;
+
+            const weight = parseFloat(wInput.value);
+            const height = parseFloat(hInput.value);
+
+            if (!weight || !height || height <= 0 || weight <= 0) {
+                valEl.innerText = '--';
+                statusEl.innerText = 'Inserisci peso e altezza';
+                statusEl.style.color = 'var(--subtext)';
+                return;
+            }
+
+            const hM = height / 100;
+            const bmi = (weight / (hM * hM)).toFixed(1);
+            valEl.innerText = bmi;
+
+            if (bmi < 18.5) {
+                statusEl.innerText = 'Sottopeso';
+                statusEl.style.color = '#38bdf8';
+            } else if (bmi <= 24.9) {
+                statusEl.innerText = 'Normopeso ✅';
+                statusEl.style.color = '#22c55e';
+            } else if (bmi <= 29.9) {
+                statusEl.innerText = 'Sovrappeso';
+                statusEl.style.color = '#f59e0b';
+            } else {
+                statusEl.innerText = 'Obeso';
+                statusEl.style.color = '#ef4444';
+            }
+        }
+
+        function saveBentoBodyStats() {
+            const wInput = document.getElementById('bento-body-weight');
+            const hInput = document.getElementById('bento-body-height');
+            if (!wInput || !hInput) return;
+
+            const weight = parseFloat(wInput.value);
+            const height = parseFloat(hInput.value);
+
+            if (currentUser) {
+                db.collection("users").doc(currentUser.uid).set({
+                    weightKg: weight || null,
+                    heightCm: height || null
+                }, { merge: true }).then(() => {
+                    userProfileData.weightKg = weight;
+                    userProfileData.heightCm = height;
+                    if (typeof showInAppToast === 'function') showInAppToast("⚖️ Dati corporei salvati con successo!");
+                }).catch(err => console.warn("Errore salvataggio dati corporei:", err));
+            } else {
+                userProfileData.weightKg = weight;
+                userProfileData.heightCm = height;
+                try {
+                    localStorage.setItem('naiontrackUserProfileData', JSON.stringify(userProfileData));
+                } catch(e) {}
+                if (typeof showInAppToast === 'function') showInAppToast("⚖️ Dati corporei salvati in locale!");
+            }
+        }
+
+        function syncBentoThemeChips() {
+            ['default', 'light', 'dark'].forEach(t => {
+                const chip = document.getElementById('theme-chip-' + t);
+                if (chip) chip.classList.toggle('active', currentTheme === t);
+            });
+        }
+
+        function updateBentoProfileStats() {
+            const nickEl = document.getElementById('bento-nickname');
+            const rankEl = document.getElementById('bento-rank-badge');
+            const emailEl = document.getElementById('bento-email');
+            const xpEl = document.getElementById('bento-total-xp');
+            const avatarBox = document.getElementById('bento-avatar-box');
+
+            const currentXp = typeof getTotalXp === 'function' ? getTotalXp() : 0;
+            const currentRank = typeof calculateRank === 'function' ? calculateRank(currentXp) : { name: 'Unranked', iconSvg: '' };
+
+            if (nickEl) nickEl.innerText = userNickname || (currentUser ? (currentUser.displayName || (currentUser.email ? currentUser.email.split('@')[0] : 'Atleta')) : 'Atleta Calisthenico');
+            if (rankEl) rankEl.innerText = currentRank.name;
+            if (emailEl) emailEl.innerText = currentUser ? (currentUser.email || 'Utente Autenticato') : 'Salvataggio Locale (Offline)';
+            if (xpEl) xpEl.innerText = 'XP Totali: ' + currentXp;
+            if (avatarBox) avatarBox.innerHTML = currentRank.iconSvg || '👤';
+
+            // Dati corporei input sync
+            const wInput = document.getElementById('bento-body-weight');
+            const hInput = document.getElementById('bento-body-height');
+            if (wInput && userProfileData && userProfileData.weightKg) wInput.value = userProfileData.weightKg;
+            if (hInput && userProfileData && userProfileData.heightCm) hInput.value = userProfileData.heightCm;
+            calculateBentoBMI();
+
+            // Duels stats update
+            if (currentUser) {
+                db.collection("users").doc(currentUser.uid).get().then(doc => {
+                    if (!doc.exists) return;
+                    const data = doc.data() || {};
+                    const wins = (data.duelStats && data.duelStats.wins) || data.duelWins || 0;
+                    const losses = (data.duelStats && data.duelStats.losses) || data.duelLosses || 0;
+                    const ties = (data.duelStats && data.duelStats.ties) || data.duelTies || 0;
+                    const total = wins + losses + ties;
+                    const winRate = total > 0 ? Math.round((wins / total) * 100) : 0;
+
+                    const totalEl = document.getElementById('bento-stat-total');
+                    const winsEl = document.getElementById('bento-stat-wins');
+                    const lossesEl = document.getElementById('bento-stat-losses');
+                    const tiesEl = document.getElementById('bento-stat-ties');
+                    const fillEl = document.getElementById('bento-winrate-fill');
+                    const lblEl = document.getElementById('bento-winrate-label');
+
+                    if (totalEl) totalEl.innerText = total;
+                    if (winsEl) winsEl.innerText = wins;
+                    if (lossesEl) lossesEl.innerText = losses;
+                    if (tiesEl) tiesEl.innerText = ties;
+                    if (fillEl) fillEl.style.width = winRate + '%';
+                    if (lblEl) lblEl.innerText = 'Win Rate: ' + winRate + '%';
+                }).catch(err => console.warn("Errore fetch duel stats per bento:", err));
+            }
+
+            syncBentoThemeChips();
+        }
+
+        // =========================================================================
+        // INITIALIZATION
+        // =========================================================================
+        function initUnified5Tabs() {
+            try {
+                const savedTab = localStorage.getItem('naiontrackActiveTab') || 'tree';
+                const savedMode = localStorage.getItem('naiontrackTreeViewMode') || 'graph';
+                treeViewMode = savedMode;
+                toggleSkillTreeView(savedMode);
+                switchMainTab(savedTab);
+            } catch (e) {
+                switchMainTab('tree');
+            }
+        }
+
+
         initCategorySelect();
         applyTheme(currentTheme);
         renderProfileSettings();
         initWorkoutsSection();
+        initUnified5Tabs();
+        initSkillTreePanZoom();
     </script>
     <script>
       // Registrazione Service Worker per Notifiche Push e PWA Standalone
