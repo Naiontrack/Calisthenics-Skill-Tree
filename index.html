@@ -3637,7 +3637,7 @@
 
         .tree-category-banner {
             position: absolute;
-            top: 24px;
+            top: 30px;
             text-align: center;
             width: 260px;
             font-weight: 800;
@@ -3645,14 +3645,63 @@
             text-transform: uppercase;
             letter-spacing: 1px;
             color: var(--accent);
-            background: rgba(15, 23, 42, 0.78);
+            background: rgba(15, 23, 42, 0.88);
             backdrop-filter: blur(8px);
             -webkit-backdrop-filter: blur(8px);
-            border: 1px solid var(--line-color);
+            border: 1.5px solid var(--line-color);
             border-radius: 999px;
-            padding: 7px 16px;
+            padding: 8px 16px;
             pointer-events: none;
             box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+            z-index: 5;
+        }
+
+        .tree-exit-fullscreen-btn {
+            display: none;
+            position: absolute;
+            top: 14px;
+            right: 14px;
+            z-index: 50;
+            padding: 8px 16px;
+            background: rgba(15, 23, 42, 0.92);
+            border: 1.5px solid var(--accent);
+            color: #ffffff;
+            font-size: 0.85rem;
+            font-weight: 700;
+            border-radius: 999px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5), 0 0 12px rgba(56, 189, 248, 0.3);
+            cursor: pointer;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            transition: all 0.2s ease;
+            align-items: center;
+            gap: 6px;
+        }
+
+        body.theme-light .tree-exit-fullscreen-btn {
+            background: rgba(255, 255, 255, 0.95);
+            color: #0f172a;
+            border-color: var(--accent);
+        }
+
+        .tree-exit-fullscreen-btn:hover {
+            transform: scale(1.04);
+            background: var(--accent);
+            color: #000000;
+        }
+
+        .tree-fullscreen-mode .tree-exit-fullscreen-btn {
+            display: inline-flex;
+            animation: fadeIn 0.2s ease;
+        }
+
+        @media (max-width: 480px) {
+            .tree-exit-fullscreen-btn {
+                padding: 6px 12px;
+                font-size: 0.78rem;
+                top: 10px;
+                right: 10px;
+            }
         }
 
         body.theme-light .tree-category-banner {
@@ -4547,6 +4596,7 @@
                     <button type="button" class="tree-hud-btn" onclick="zoomSkillTree(0.8)" title="Rimpicciolisci">−</button>
                     <button type="button" class="tree-hud-btn" id="btn-tree-fullscreen" onclick="toggleSkillTreeFullscreen()" title="Schermo Intero / Ingrandisci Albero" aria-label="Schermo Intero">⛶</button>
                 </div>
+                <button type="button" class="tree-exit-fullscreen-btn" id="btn-tree-exit-fullscreen" onclick="toggleSkillTreeFullscreen()" title="Esci da Schermo Intero" aria-label="Esci da Schermo Intero">✕ Esci Schermo Intero</button>
                 <div class="tree-legend-hud">
                     <span class="tree-legend-item"><span class="legend-dot locked"></span> Bloccata</span>
                     <span class="tree-legend-item"><span class="legend-dot available"></span> Sbloccabile</span>
@@ -17823,10 +17873,11 @@ function getCalisthenicsExpertResponse(query) {
                 : categories;
 
             const isSingleCat = filteredCats.length === 1;
-            const CANVAS_HEIGHT = 1400;
-            const NODE_Y_GAP = 145;
-            const CAT_WIDTH = isSingleCat ? 750 : 340;
-            const subGap = isSingleCat ? 160 : 135;
+            const CANVAS_HEIGHT = 1750;
+            const NODE_Y_GAP = 150;
+            const BOTTOM_PAD = 170;
+            const CAT_WIDTH = isSingleCat ? 750 : 380;
+            const subGap = isSingleCat ? 160 : 140;
 
             filteredCats.forEach((cat, catIdx) => {
                 const byDepth = {};
@@ -17836,7 +17887,7 @@ function getCalisthenicsExpertResponse(query) {
                     byDepth[d].push(skill);
                 });
 
-                const catCenterX = isSingleCat ? 450 : (catIdx * CAT_WIDTH + (CAT_WIDTH / 2) + 60);
+                const catCenterX = isSingleCat ? 450 : (catIdx * CAT_WIDTH + (CAT_WIDTH / 2) + 80);
 
                 Object.keys(byDepth).forEach(dStr => {
                     const d = parseInt(dStr, 10);
@@ -17846,7 +17897,7 @@ function getCalisthenicsExpertResponse(query) {
                     skillsAtDepth.forEach((s, subIdx) => {
                         const xOffset = (subIdx - (count - 1) / 2) * subGap;
                         const x = Math.round(catCenterX + xOffset);
-                        const y = Math.round(CANVAS_HEIGHT - 130 - (d * NODE_Y_GAP));
+                        const y = Math.round(CANVAS_HEIGHT - BOTTOM_PAD - (d * NODE_Y_GAP));
 
                         coords[s.id] = {
                             id: s.id,
@@ -17878,8 +17929,8 @@ function getCalisthenicsExpertResponse(query) {
                 : categories;
 
             const isSingleCat = filteredCats.length === 1;
-            const canvasWidth = isSingleCat ? 1000 : 3400;
-            const canvasHeight = 1400;
+            const canvasWidth = isSingleCat ? 1000 : 4100;
+            const canvasHeight = 1750;
 
             if (canvasEl) {
                 canvasEl.style.width = canvasWidth + 'px';
@@ -17911,8 +17962,8 @@ function getCalisthenicsExpertResponse(query) {
             // HTML Nodes & Category Banners
             let nodesHtml = '';
             filteredCats.forEach((cat, cIdx) => {
-                const catCenterX = isSingleCat ? 450 : (cIdx * 280 + 140 + 60);
-                nodesHtml += `<div class="tree-category-banner" style="left: ${catCenterX - 130}px;">${escapeHtml(cat.title)}</div>`;
+                const catCenterX = isSingleCat ? 450 : (cIdx * 380 + 190 + 80);
+                nodesHtml += `<div class="tree-category-banner" style="left: ${catCenterX - 130}px; top: 30px;">${escapeHtml(cat.title)}</div>`;
             });
 
             Object.values(coords).forEach(s => {
@@ -17974,7 +18025,7 @@ function getCalisthenicsExpertResponse(query) {
             document.body.classList.toggle('tree-fullscreen-active', isTreeFullscreen);
 
             if (btn) {
-                btn.innerText = isTreeFullscreen ? '🗗' : '⛶';
+                btn.innerText = isTreeFullscreen ? '✕' : '⛶';
                 btn.title = isTreeFullscreen ? 'Esci da Schermo Intero (Esc)' : 'Schermo Intero / Ingrandisci Albero';
             }
 
@@ -18027,14 +18078,14 @@ function getCalisthenicsExpertResponse(query) {
         function resetSkillTreeZoom() {
             const viewport = document.getElementById('skill-tree-viewport');
             const isSingleCat = currentCategoryFilter && currentCategoryFilter !== 'all';
-            const canvasWidth = isSingleCat ? 900 : 2920;
-            treeZoom = isSingleCat ? 0.92 : 0.85;
+            const canvasWidth = isSingleCat ? 1000 : 4100;
+            treeZoom = isSingleCat ? 0.92 : 0.76;
             if (viewport) {
                 treePanX = Math.round((viewport.clientWidth - canvasWidth * treeZoom) / 2);
-                treePanY = isSingleCat ? -240 : -480;
+                treePanY = isSingleCat ? -320 : -560;
             } else {
                 treePanX = -350;
-                treePanY = -480;
+                treePanY = -560;
             }
             applyTreeTransform();
         }
