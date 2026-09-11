@@ -1556,6 +1556,21 @@
             background: rgba(241, 245, 249, 0.95);
         }
 
+        .chat-loading-spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: chatSpin 0.75s linear infinite;
+            flex-shrink: 0;
+        }
+
+        @keyframes chatSpin {
+            to { transform: rotate(360deg); }
+        }
+
         .chat-pending-thumb {
             width: 44px;
             height: 44px;
@@ -3908,13 +3923,42 @@
         }
 
         @media (max-width: 768px) {
+            body.in-chat-tab {
+                padding-top: max(4px, env(safe-area-inset-top, 4px)) !important;
+                padding-left: 6px !important;
+                padding-right: 6px !important;
+                padding-bottom: 0 !important;
+                height: 100dvh !important;
+                max-height: 100dvh !important;
+                overflow: hidden !important;
+            }
+
             #tab-view-chat:not(.active) {
                 display: none !important;
             }
+
             #tab-view-chat.active {
-                height: calc(100dvh - 64px) !important;
-                max-height: calc(100dvh - 64px) !important;
-                padding: 6px 8px 6px 8px !important;
+                display: flex !important;
+                flex-direction: column !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                height: calc(100dvh - 64px - env(safe-area-inset-bottom, 0px) - 10px) !important;
+                max-height: calc(100dvh - 64px - env(safe-area-inset-bottom, 0px) - 10px) !important;
+                padding: 0 !important;
+                margin: 0 auto !important;
+                overflow: hidden !important;
+                box-sizing: border-box !important;
+            }
+
+            #tab-view-chat .chat-banner-compact {
+                padding: 4px 10px !important;
+                margin: 0 0 4px 0 !important;
+                border-radius: 10px !important;
+                flex-shrink: 0 !important;
+            }
+
+            #tab-view-chat .chat-banner-compact h2 {
+                font-size: 0.95rem !important;
             }
 
             #tab-view-chat .chat-panel {
@@ -3924,29 +3968,64 @@
                 left: auto !important;
                 right: auto !important;
                 width: 100% !important;
-                flex: 1 1 auto !important;
-                height: auto !important;
+                flex: 1 1 0% !important;
+                height: 0 !important;
                 min-height: 0 !important;
-                max-height: none !important;
-                margin: 0 auto !important;
+                max-height: 100% !important;
+                display: flex !important;
+                flex-direction: column !important;
+                border-radius: 14px !important;
+                margin: 0 0 4px 0 !important;
+                overflow: hidden !important;
+                box-sizing: border-box !important;
                 transform: none !important;
             }
-        }
 
-        @media (max-width: 600px) {
-            #tab-view-chat .chat-panel {
-                position: relative !important;
-                top: auto !important;
-                bottom: auto !important;
-                left: auto !important;
-                right: auto !important;
-                width: 100% !important;
-                flex: 1 1 auto !important;
-                height: auto !important;
+            #tab-view-chat .chat-panel-header {
+                padding: 8px 12px !important;
+                font-size: 0.95rem !important;
+                flex-shrink: 0 !important;
+            }
+
+            #tab-view-chat .chat-tabs {
+                padding: 4px 6px !important;
+                gap: 4px !important;
+                flex-shrink: 0 !important;
+            }
+
+            #tab-view-chat .chat-tab-btn {
+                padding: 5px 8px !important;
+                font-size: 0.78rem !important;
+            }
+
+            #tab-view-chat .chat-thread-header {
+                padding: 6px 10px !important;
+                flex-shrink: 0 !important;
+            }
+
+            #tab-view-chat .chat-messages {
+                flex: 1 1 0% !important;
                 min-height: 0 !important;
-                max-height: none !important;
-                margin: 0 auto !important;
-                transform: none !important;
+                overflow-y: auto !important;
+                -webkit-overflow-scrolling: touch !important;
+                padding: 8px 10px !important;
+            }
+
+            #tab-view-chat .chat-input-box {
+                flex-shrink: 0 !important;
+                padding: 6px 8px !important;
+                background: var(--card-bg) !important;
+                border-top: 1px solid var(--line-color) !important;
+                box-sizing: border-box !important;
+            }
+
+            #tab-view-chat .chat-input-row {
+                gap: 6px !important;
+            }
+
+            #tab-view-chat .chat-input-row input#chat-input {
+                font-size: 0.88rem !important;
+                padding: 7px 10px !important;
             }
         }
 
@@ -13943,9 +14022,9 @@ function getCalisthenicsExpertResponse(query) {
             return `${m}:${s < 10 ? '0' : ''}${s}`;
         }
 
-        function compressImageClientSide(file, maxWidth = 1600, maxHeight = 1600, quality = 0.82) {
+        function compressImageClientSide(file, maxLandscapeW = 1280, maxLandscapeH = 720, quality = 0.80) {
             return new Promise((resolve) => {
-                if (!file || !file.type.startsWith('image/') || file.type === 'image/gif' || file.type === 'image/svg+xml') {
+                if (!file || !file.type || !file.type.startsWith('image/') || file.type === 'image/gif' || file.type === 'image/svg+xml') {
                     resolve(file);
                     return;
                 }
@@ -13955,14 +14034,14 @@ function getCalisthenicsExpertResponse(query) {
                     img.onload = () => {
                         let w = img.width;
                         let h = img.height;
-                        if (w > maxWidth || h > maxHeight) {
-                            if (w > h) {
-                                h = Math.round((h * maxWidth) / w);
-                                w = maxWidth;
-                            } else {
-                                w = Math.round((w * maxHeight) / h);
-                                h = maxHeight;
-                            }
+                        const isLandscape = w >= h;
+                        const targetMaxW = isLandscape ? maxLandscapeW : maxLandscapeH;
+                        const targetMaxH = isLandscape ? maxLandscapeH : maxLandscapeW;
+
+                        if (w > targetMaxW || h > targetMaxH) {
+                            const scale = Math.min(targetMaxW / w, targetMaxH / h);
+                            w = Math.round(w * scale);
+                            h = Math.round(h * scale);
                         }
                         const canvas = document.createElement('canvas');
                         canvas.width = w;
@@ -13982,7 +14061,6 @@ function getCalisthenicsExpertResponse(query) {
                                 });
                                 resolve(compressedFile);
                             } catch (err) {
-                                // Fallback per Safari / browser mobili
                                 try { blob.name = cleanName; } catch (e) {}
                                 resolve(blob);
                             }
@@ -13993,6 +14071,185 @@ function getCalisthenicsExpertResponse(query) {
                 };
                 reader.onerror = () => resolve(file);
                 reader.readAsDataURL(file);
+            });
+        }
+
+        function compressVideoClientSide(file, maxLandscapeW = 996, maxLandscapeH = 560) {
+            return new Promise((resolve) => {
+                if (!file || !file.type || !file.type.startsWith('video/') || typeof MediaRecorder === 'undefined' || !HTMLCanvasElement.prototype.captureStream) {
+                    resolve(file);
+                    return;
+                }
+
+                let finished = false;
+                let videoUrl = null;
+                try {
+                    videoUrl = URL.createObjectURL(file);
+                } catch (e) {
+                    resolve(file);
+                    return;
+                }
+
+                const video = document.createElement('video');
+                video.muted = true;
+                video.playsInline = true;
+                video.preload = 'metadata';
+                video.src = videoUrl;
+
+                const timeoutId = setTimeout(() => {
+                    if (!finished) {
+                        finished = true;
+                        cleanup();
+                        console.warn("Compressione video: timeout raggiunto, utilizzo file originale.");
+                        resolve(file);
+                    }
+                }, 25000);
+
+                function cleanup() {
+                    clearTimeout(timeoutId);
+                    if (videoUrl) {
+                        try { URL.revokeObjectURL(videoUrl); } catch (e) {}
+                        videoUrl = null;
+                    }
+                    try { video.pause(); } catch (e) {}
+                    video.src = '';
+                }
+
+                video.onloadedmetadata = () => {
+                    const w = video.videoWidth || 640;
+                    const h = video.videoHeight || 360;
+                    const isLandscape = w >= h;
+                    const targetMaxW = isLandscape ? maxLandscapeW : maxLandscapeH;
+                    const targetMaxH = isLandscape ? maxLandscapeH : maxLandscapeW;
+
+                    if (w <= targetMaxW && h <= targetMaxH && file.size <= 10 * 1024 * 1024) {
+                        finished = true;
+                        cleanup();
+                        resolve(file);
+                        return;
+                    }
+
+                    const scale = Math.min(targetMaxW / w, targetMaxH / h, 1);
+                    const targetW = Math.max(2, Math.round((w * scale) / 2) * 2);
+                    const targetH = Math.max(2, Math.round((h * scale) / 2) * 2);
+
+                    const canvas = document.createElement('canvas');
+                    canvas.width = targetW;
+                    canvas.height = targetH;
+                    const ctx = canvas.getContext('2d');
+
+                    let canvasStream;
+                    try {
+                        canvasStream = canvas.captureStream(24);
+                    } catch (err) {
+                        finished = true;
+                        cleanup();
+                        resolve(file);
+                        return;
+                    }
+
+                    let combinedStream = canvasStream;
+                    try {
+                        if (typeof video.captureStream === 'function') {
+                            const vStream = video.captureStream();
+                            const audioTracks = vStream.getAudioTracks();
+                            if (audioTracks && audioTracks.length > 0) {
+                                combinedStream = new MediaStream([
+                                    ...canvasStream.getVideoTracks(),
+                                    audioTracks[0]
+                                ]);
+                            }
+                        }
+                    } catch (e) {}
+
+                    let mimeType = 'video/webm;codecs=vp8';
+                    if (!MediaRecorder.isTypeSupported(mimeType)) {
+                        if (MediaRecorder.isTypeSupported('video/mp4')) mimeType = 'video/mp4';
+                        else if (MediaRecorder.isTypeSupported('video/webm')) mimeType = 'video/webm';
+                        else mimeType = '';
+                    }
+
+                    let recorder;
+                    try {
+                        const options = { videoBitsPerSecond: 1000000 };
+                        if (mimeType) options.mimeType = mimeType;
+                        recorder = new MediaRecorder(combinedStream, options);
+                    } catch (e) {
+                        finished = true;
+                        cleanup();
+                        resolve(file);
+                        return;
+                    }
+
+                    const chunks = [];
+                    recorder.ondataavailable = (e) => {
+                        if (e.data && e.data.size > 0) chunks.push(e.data);
+                    };
+
+                    let animId;
+                    function step() {
+                        if (finished || video.ended || video.paused) return;
+                        ctx.drawImage(video, 0, 0, targetW, targetH);
+                        animId = requestAnimationFrame(step);
+                    }
+
+                    recorder.onstop = () => {
+                        cancelAnimationFrame(animId);
+                        if (finished) return;
+                        finished = true;
+                        cleanup();
+
+                        if (chunks.length === 0) {
+                            resolve(file);
+                            return;
+                        }
+
+                        const outBlob = new Blob(chunks, { type: recorder.mimeType || 'video/webm' });
+                        const ext = (recorder.mimeType && recorder.mimeType.includes('mp4')) ? 'mp4' : 'webm';
+                        const cleanName = (file.name || 'video').replace(/\.[^/.]+$/, "") + `_560p.${ext}`;
+                        try {
+                            const compressedFile = new File([outBlob], cleanName, {
+                                type: outBlob.type,
+                                lastModified: Date.now()
+                            });
+                            if (compressedFile.size < file.size || file.size > 10 * 1024 * 1024) {
+                                resolve(compressedFile);
+                            } else {
+                                resolve(file);
+                            }
+                        } catch (e) {
+                            resolve(file);
+                        }
+                    };
+
+                    try {
+                        recorder.start(100);
+                        video.playbackRate = 2.0;
+                        video.play().then(() => {
+                            step();
+                        }).catch(() => {
+                            finished = true;
+                            cleanup();
+                            resolve(file);
+                        });
+                    } catch (err) {
+                        finished = true;
+                        cleanup();
+                        resolve(file);
+                    }
+
+                    video.onended = () => {
+                        if (recorder.state !== 'inactive') {
+                            try { recorder.stop(); } catch (e) {}
+                        }
+                    };
+                };
+
+                video.onerror = () => {
+                    finished = true;
+                    cleanup();
+                    resolve(file);
+                };
             });
         }
 
@@ -14014,12 +14271,17 @@ function getCalisthenicsExpertResponse(query) {
                 return;
             }
 
-            if (type === 'video') {
-                const maxVideoBytes = 25 * 1024 * 1024; // 25 MB
-                if (file.size > maxVideoBytes) {
-                    showAppToast("Il video supera il limite massimo di 25 MB. Scegline uno più breve.", "warning");
-                    return;
-                }
+            // Mostra stato di compressione/ottimizzazione nella barra anteprima
+            const container = document.getElementById('chat-pending-media-container');
+            if (container) {
+                container.innerHTML = `
+                    <div class="chat-pending-media-bar" style="justify-content:center; gap:8px;">
+                        <span class="chat-loading-spinner"></span>
+                        <span style="font-size:0.85rem; color:var(--accent); font-weight:600;">
+                            ${type === 'image' ? '⏳ Ottimizzazione foto (max 720p)...' : '⏳ Compressione video (max 560p)...'}
+                        </span>
+                    </div>
+                `;
             }
 
             let processedFile = file;
@@ -14027,8 +14289,24 @@ function getCalisthenicsExpertResponse(query) {
                 try {
                     processedFile = await compressImageClientSide(file);
                 } catch (e) {
-                    console.warn("Compressione immagine non riuscita, uso file originale:", e);
+                    console.warn("Compressione foto non riuscita, uso file originale:", e);
                 }
+            } else if (type === 'video') {
+                try {
+                    processedFile = await compressVideoClientSide(file);
+                } catch (e) {
+                    console.warn("Compressione video non riuscita, uso file originale:", e);
+                }
+            }
+
+            // CONTROLLO LIMITE 10 MB POST-COMPRESSIONE:
+            // Il sistema prima comprime foto/video e verifica se supera i 10 MB solo dopo la compressione
+            const MAX_CHAT_MEDIA_BYTES = 10 * 1024 * 1024; // 10 MB
+            if (processedFile.size > MAX_CHAT_MEDIA_BYTES) {
+                const sizeStr = formatFileSize(processedFile.size);
+                showAppToast(`L'allegato supera il limite di 10 MB anche dopo la compressione (${sizeStr}). Non può essere inviato.`, "warning");
+                removePendingChatMedia();
+                return;
             }
 
             if (pendingChatMedia && pendingChatMedia.previewUrl) {
@@ -14083,13 +14361,36 @@ function getCalisthenicsExpertResponse(query) {
 
         async function uploadMediaToCloudinary(fileOrBlob, mediaType) {
             const formData = new FormData();
-            const fallbackFileName = mediaType === 'audio' ? 'voice.webm' : (mediaType === 'video' ? 'video.mp4' : 'photo.jpg');
-            const uploadName = fileOrBlob.name || fallbackFileName;
-            formData.append('file', fileOrBlob, uploadName);
-            formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
-            formData.append('folder', CLOUDINARY_FOLDER);
+            let uploadUrl;
 
-            const res = await fetch(CLOUDINARY_UPLOAD_URL, {
+            if (mediaType === 'audio') {
+                // Per le note vocali utilizziamo l'endpoint 'raw' per evitare che Cloudinary tenti la decodifica video
+                // su file audio mobili (es. WebM opus o MP4/M4A da Safari iOS), evitando l'errore "unsupported video format or file".
+                uploadUrl = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/raw/upload`;
+                let ext = 'webm';
+                const fName = (fileOrBlob.name || '').toLowerCase();
+                if (fName.includes('.')) {
+                    ext = fName.split('.').pop();
+                } else if (fileOrBlob.type) {
+                    const t = fileOrBlob.type.toLowerCase();
+                    if (t.includes('mp4') || t.includes('m4a') || t.includes('aac')) ext = 'm4a';
+                    else if (t.includes('ogg')) ext = 'ogg';
+                    else if (t.includes('wav')) ext = 'wav';
+                }
+                const uploadName = `voice_${Date.now()}.${ext}`;
+                formData.append('file', fileOrBlob, uploadName);
+                formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+                formData.append('public_id', `${CLOUDINARY_FOLDER}/${uploadName}`);
+            } else {
+                uploadUrl = CLOUDINARY_UPLOAD_URL;
+                const fallbackFileName = mediaType === 'video' ? 'video.mp4' : 'photo.jpg';
+                const uploadName = fileOrBlob.name || fallbackFileName;
+                formData.append('file', fileOrBlob, uploadName);
+                formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+                formData.append('folder', CLOUDINARY_FOLDER);
+            }
+
+            const res = await fetch(uploadUrl, {
                 method: 'POST',
                 body: formData
             });
@@ -14106,8 +14407,19 @@ function getCalisthenicsExpertResponse(query) {
             }
 
             const data = await res.json();
+            let finalUrl = data.secure_url || data.url;
+
+            // Trasformazioni Cloudinary per garantire foto max 720p e video max 560p lato delivery e storage
+            if (finalUrl && typeof finalUrl === 'string') {
+                if (mediaType === 'image') {
+                    finalUrl = finalUrl.replace('/image/upload/', '/image/upload/c_limit,w_1280,h_720,q_auto/');
+                } else if (mediaType === 'video') {
+                    finalUrl = finalUrl.replace('/video/upload/', '/video/upload/c_limit,w_996,h_560,q_auto/');
+                }
+            }
+
             return {
-                url: data.secure_url || data.url,
+                url: finalUrl,
                 publicId: data.public_id,
                 duration: data.duration ? Math.round(data.duration) : null,
                 format: data.format
@@ -14228,7 +14540,10 @@ function getCalisthenicsExpertResponse(query) {
 
                 const mime = voiceMediaRecorder.mimeType || 'audio/webm';
                 const audioBlob = new Blob(voiceAudioChunks, { type: mime });
-                const ext = mime.includes('mp4') ? 'mp4' : (mime.includes('ogg') ? 'ogg' : 'webm');
+                let ext = 'webm';
+                if (mime.includes('mp4') || mime.includes('m4a') || mime.includes('aac')) ext = 'm4a';
+                else if (mime.includes('ogg')) ext = 'ogg';
+                else if (mime.includes('wav')) ext = 'wav';
                 const cleanAudioName = `voice_${Date.now()}.${ext}`;
                 let audioFile;
                 try {
@@ -14236,6 +14551,13 @@ function getCalisthenicsExpertResponse(query) {
                 } catch (e) {
                     try { audioBlob.name = cleanAudioName; } catch (err) {}
                     audioFile = audioBlob;
+                }
+
+                const MAX_CHAT_MEDIA_BYTES = 10 * 1024 * 1024;
+                if (audioFile.size > MAX_CHAT_MEDIA_BYTES) {
+                    showAppToast("La nota vocale supera il limite di 10 MB.", "warning");
+                    renderChatInputState();
+                    return;
                 }
 
                 try {
@@ -14502,11 +14824,41 @@ function getCalisthenicsExpertResponse(query) {
             lastSeenGeneralAtMillis = Date.now();
             const key = getLastSeenGeneralStorageKey();
             if (key) localStorage.setItem(key, String(lastSeenGeneralAtMillis));
-            recomputeGeneralUnread();
+            unreadGeneralCount = 0;
+            renderChatBadge();
+        }
+
+        // Da chiamare quando l'utente visualizza o riceve messaggi in una conversazione privata o gruppo
+        function markConversationAsRead(convId) {
+            if (!currentUser || !convId) return;
+            dismissAppNotification(convId);
+            dismissAppNotification();
+
+            // Aggiorna subito la cache locale per azzerare immediatamente il badge / pallino rosso
+            if (unreadConversationsCache && unreadConversationsCache.length > 0) {
+                const item = unreadConversationsCache.find(c => c.id === convId);
+                if (item) {
+                    if (!item.lastRead) item.lastRead = {};
+                    item.lastRead[currentUser.uid] = { toMillis: () => Date.now() };
+                }
+            }
+            recomputePrivateUnread();
+
+            db.collection("conversations").doc(convId).update({
+                [`lastRead.${currentUser.uid}`]: firebase.firestore.FieldValue.serverTimestamp()
+            }).catch((e) => console.warn("Errore aggiornamento lastRead:", e));
         }
 
         function recomputeGeneralUnread() {
             if (!currentUser) { unreadGeneralCount = 0; renderChatBadge(); return; }
+            if (chatPanelOpen && activeChatView === 'general' && !document.hidden) {
+                lastSeenGeneralAtMillis = Date.now();
+                const key = getLastSeenGeneralStorageKey();
+                if (key) localStorage.setItem(key, String(lastSeenGeneralAtMillis));
+                unreadGeneralCount = 0;
+                renderChatBadge();
+                return;
+            }
             unreadGeneralCount = unreadGeneralMessagesCache.filter(m => {
                 if (m.uid === currentUser.uid) return false; // i propri messaggi non contano
                 const ts = (m.createdAt && m.createdAt.toMillis) ? m.createdAt.toMillis() : 0;
@@ -14520,6 +14872,10 @@ function getCalisthenicsExpertResponse(query) {
             unreadPrivateCount = unreadConversationsCache.filter(c => {
                 if (!c.lastMessageAt || !c.lastMessageAt.toMillis) return false;
                 if (c.lastMessageSenderUid === currentUser.uid) return false; // i propri messaggi non contano
+                // Se l'utente sta attualmente visualizzando questa specifica chat in primo piano, non considerarla non letta
+                if (chatPanelOpen && activeChatView === 'private-thread' && activeConversationId === c.id && !document.hidden) {
+                    return false;
+                }
                 const lastMsgMillis = c.lastMessageAt.toMillis();
                 const readTs = c.lastRead && c.lastRead[currentUser.uid];
                 const readMillis = (readTs && readTs.toMillis) ? readTs.toMillis() : 0;
@@ -14548,6 +14904,11 @@ function getCalisthenicsExpertResponse(query) {
                         const data = doc.data();
                         unreadGeneralMessagesCache.push({ uid: data.uid, createdAt: data.createdAt });
                     });
+                    if (chatPanelOpen && activeChatView === 'general' && !document.hidden) {
+                        lastSeenGeneralAtMillis = Date.now();
+                        const key = getLastSeenGeneralStorageKey();
+                        if (key) localStorage.setItem(key, String(lastSeenGeneralAtMillis));
+                    }
                     recomputeGeneralUnread();
 
                     // TRIGGER 2: Messaggio in chat pubblica generale
@@ -14586,11 +14947,19 @@ function getCalisthenicsExpertResponse(query) {
                     snapshot.forEach(doc => {
                         const data = doc.data();
                         unreadConversationsCache.push({
+                            id: doc.id,
                             lastMessageAt: data.lastMessageAt,
                             lastMessageSenderUid: data.lastMessageSenderUid,
                             lastRead: data.lastRead
                         });
                     });
+                    if (chatPanelOpen && activeChatView === 'private-thread' && activeConversationId && !document.hidden) {
+                        const currentConv = unreadConversationsCache.find(c => c.id === activeConversationId);
+                        if (currentConv) {
+                            if (!currentConv.lastRead) currentConv.lastRead = {};
+                            currentConv.lastRead[currentUser.uid] = { toMillis: () => Date.now() };
+                        }
+                    }
                     recomputePrivateUnread();
 
                     // TRIGGER 1: Messaggio in chat privata o gruppo
@@ -15214,6 +15583,11 @@ function getCalisthenicsExpertResponse(query) {
                     });
                     msgs.reverse();
                     renderMessagesIntoContainer(msgs, container);
+                    if (chatPanelOpen && activeChatView === 'general' && !document.hidden) {
+                        if (typeof markGeneralChatAsRead === 'function') {
+                            markGeneralChatAsRead();
+                        }
+                    }
                 }, (error) => {
                     console.error("Errore nel caricamento della chat:", error);
                     container.innerHTML = `<p style="color: var(--subtext); text-align:center; font-size:0.85rem;">Errore nel caricamento della chat.</p>`;
@@ -15335,6 +15709,12 @@ function getCalisthenicsExpertResponse(query) {
             const text = input ? input.value.trim() : '';
 
             if (!text && !pendingChatMedia) return;
+
+            const MAX_CHAT_MEDIA_BYTES = 10 * 1024 * 1024;
+            if (pendingChatMedia && pendingChatMedia.file && pendingChatMedia.file.size > MAX_CHAT_MEDIA_BYTES) {
+                showAppToast("L'allegato supera il limite massimo di 10 MB e non può essere inviato.", "warning");
+                return;
+            }
 
             const isPrivateThread = activeChatView === 'private-thread' && activeConversationId;
             if (isPrivateThread && activeConversationData && activeConversationData.participants) {
@@ -15591,9 +15971,12 @@ function getCalisthenicsExpertResponse(query) {
                             dismissAppNotification(convId);
                         }
                     });
-                    // Se la chat è aperta e visibile, elimina all'istante qualsiasi notifica sovrapposta
+                    // Se la chat è aperta e visibile, elimina all'istante qualsiasi notifica sovrapposta e segna come letto
                     if (activeChatView === 'private-thread' && activeConversationId === convId && !document.hidden) {
                         dismissAppNotification(convId);
+                        if (typeof markConversationAsRead === 'function') {
+                            markConversationAsRead(convId);
+                        }
                     }
                     lastRenderedConversationMsgs = msgs;
                     renderMessagesIntoContainer(msgs, container);
@@ -15728,9 +16111,9 @@ function getCalisthenicsExpertResponse(query) {
             }).catch((error) => console.error("Errore nel recupero della conversazione:", error));
 
             // Segna la conversazione come letta
-            db.collection("conversations").doc(convId).update({
-                [`lastRead.${currentUser.uid}`]: firebase.firestore.FieldValue.serverTimestamp()
-            }).catch((error) => console.error("Errore aggiornamento stato letto:", error));
+            if (typeof markConversationAsRead === 'function') {
+                markConversationAsRead(convId);
+            }
 
             stopConversationsListener();
             renderChatInputState();
@@ -15738,7 +16121,10 @@ function getCalisthenicsExpertResponse(query) {
         }
 
         function backToPrivateList() {
-            if (activeConversationId) updateActiveChatPresence(activeConversationId, false);
+            if (activeConversationId) {
+                if (typeof markConversationAsRead === 'function') markConversationAsRead(activeConversationId);
+                updateActiveChatPresence(activeConversationId, false);
+            }
             stopConversationMessagesListener();
             activeChatView = 'private-list';
             activeConversationId = null;
@@ -19832,6 +20218,8 @@ function getCalisthenicsExpertResponse(query) {
                 btn.classList.toggle('active', btn.getAttribute('data-tab') === tabName);
             });
 
+            document.body.classList.toggle('in-chat-tab', tabName === 'chat');
+
             if (tabName === 'tree') {
                 if (treeViewMode === 'graph') {
                     renderSkillTreeGraph();
@@ -19849,6 +20237,8 @@ function getCalisthenicsExpertResponse(query) {
                 else if (typeof initChatListener === 'function') initChatListener();
                 if (activeChatView === 'general' && typeof markGeneralChatAsRead === 'function') {
                     markGeneralChatAsRead();
+                } else if (activeChatView === 'private-thread' && activeConversationId && typeof markConversationAsRead === 'function') {
+                    markConversationAsRead(activeConversationId);
                 }
                 if (typeof scrollChatToBottom === 'function') setTimeout(scrollChatToBottom, 120);
             } else if (tabName === 'profile') {
@@ -19859,6 +20249,11 @@ function getCalisthenicsExpertResponse(query) {
 
             if (tabName !== 'chat') {
                 chatPanelOpen = false;
+                if (typeof activeConversationId !== 'undefined' && activeConversationId && typeof markConversationAsRead === 'function') {
+                    markConversationAsRead(activeConversationId);
+                } else if (typeof activeChatView !== 'undefined' && activeChatView === 'general' && typeof markGeneralChatAsRead === 'function') {
+                    markGeneralChatAsRead();
+                }
             }
 
             window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -20897,7 +21292,10 @@ function getCalisthenicsExpertResponse(query) {
       document.addEventListener('visibilitychange', () => {
         if (document.hidden) {
           if (typeof activeConversationId !== 'undefined' && activeConversationId) {
+            if (typeof markConversationAsRead === 'function') markConversationAsRead(activeConversationId);
             updateActiveChatPresence(activeConversationId, false);
+          } else if (typeof activeChatView !== 'undefined' && activeChatView === 'general' && typeof markGeneralChatAsRead === 'function') {
+            markGeneralChatAsRead();
           }
           if (typeof updateGeneralChatPresence === 'function') {
             updateGeneralChatPresence(false);
@@ -20909,6 +21307,13 @@ function getCalisthenicsExpertResponse(query) {
           // App ritornata in primo piano: pulisci subito le notifiche
           if (typeof updateAppPresence === 'function') {
             updateAppPresence(true);
+          }
+          if (typeof chatPanelOpen !== 'undefined' && chatPanelOpen) {
+            if (typeof activeConversationId !== 'undefined' && activeConversationId && typeof markConversationAsRead === 'function') {
+              markConversationAsRead(activeConversationId);
+            } else if (typeof activeChatView !== 'undefined' && activeChatView === 'general' && typeof markGeneralChatAsRead === 'function') {
+              markGeneralChatAsRead();
+            }
           }
           if (typeof dismissAppNotification === 'function') {
             if (typeof activeConversationId !== 'undefined' && activeConversationId) {
