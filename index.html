@@ -10193,9 +10193,11 @@ let currentUser = null;
         }
 
         let authInitialized = false;
+        let isAuthSubmitting = false;
 
         auth.onAuthStateChanged((user) => {
             authInitialized = true;
+            if (isAuthSubmitting) return;
             // Se l'utente è registrato con email e password ma non ha ancora verificato la mail, disconnettilo immediatamente
             if (user && isEmailPasswordUser(user) && !user.emailVerified) {
                 auth.signOut().then(() => {
@@ -11231,7 +11233,7 @@ let currentUser = null;
 
             document.getElementById('modal-btn-cancel').onclick = () => modal.classList.remove('active');
 
-            document.getElementById('auth-submit-btn').onclick = () => {
+            document.getElementById('auth-submit-btn').onclick = async () => {
                 const email = document.getElementById('auth-email').value.trim();
                 const password = document.getElementById('auth-password').value;
                 const errorEl = document.getElementById('auth-error-msg');
@@ -11254,69 +11256,110 @@ let currentUser = null;
                     }
                 }
 
-                const authPromise = isLogin 
-                    ? auth.signInWithEmailAndPassword(email, password)
-                    : auth.createUserWithEmailAndPassword(email, password);
+                const submitBtn = document.getElementById('auth-submit-btn');
+                if (submitBtn) {
+                    submitBtn.disabled = true;
+                    submitBtn.innerText = isLogin ? "Accesso in corso..." : "Registrazione in corso...";
+                }
 
-                authPromise
-                    .then((userCred) => {
-                        if (!userCred || !userCred.user) return;
-                        const user = userCred.user;
+                isAuthSubmitting = true;
 
-                        // SE L'ACCOUNT È STATO CREATO O ACCEDE CON EMAIL & PASSWORD:
-                        // L'ACCESSO NON DEVE FUNZIONARE FINCHÉ L'EMAIL NON È VERIFICATA!
-                        if (isEmailPasswordUser(user) && !user.emailVerified) {
-                            // 1. Invia subito la mail di verifica (o reinviala)
-                            user.sendEmailVerification().catch((verErr) => {
-                                if (verErr && verErr.code !== 'auth/too-many-requests') {
-                                    console.warn("Invio email verifica:", verErr);
-                                }
-                            });
+                try {
+                    const userCred = isLogin 
+                        ? await auth.signInWithEmailAndPassword(email, password)
+                        : await auth.createUserWithEmailAndPassword(email, password);
 
-                            // 2. Disconnetti immediatamente l'utente: accesso bloccato!
-                            auth.signOut().then(() => {
-                                currentUser = null;
-                                renderUserAuthBar();
-                            });
+                    if (!userCred || !userCred.user) {
+                        isAuthSubmitting = false;
+                        if (submitBtn) { submitBtn.disabled = false; submitBtn.innerText = isLogin ? "Accedi" : "Registrati"; }
+                        return;
+                    }
+                    const user = userCred.user;
 
-                            if (!isLogin) {
-                                // Caso REGISTRAZIONE: messaggio di successo + blocco accesso fino a verifica
-                                alert("🎉 Registrazione completata con successo!\n\nAbbiamo inviato un'email di verifica a " + email + ".\n\n⚠️ L'accesso è bloccato finché non confermi l'indirizzo. Apri la tua casella di posta (controlla anche nella cartella Spam), clicca sul link di verifica e poi effettua il login.");
-                                openAuthModal('login');
-                                const errElPost = document.getElementById('auth-error-msg');
-                                if (errElPost) {
-                                    errElPost.innerHTML = `<div style="background:rgba(34,197,94,0.12); border:1px solid #22c55e; border-radius:10px; padding:10px 12px; color:#22c55e; font-size:0.82rem; font-weight:700; text-align:left;">✅ Registrazione effettuata! Clicca sul link inviato a <strong>${escapeHtml(email)}</strong> prima di accedere.</div>`;
-                                }
-                            } else {
-                                // Caso LOGIN: accesso rifiutato, mostra banner rosso con pulsante reinvio
-                                errorEl.innerHTML = `
-                                    <div style="background:rgba(239,68,68,0.12); border:1px solid #ef4444; border-radius:10px; padding:12px; margin-top:6px; text-align:left;">
-                                        <div style="color:#ef4444; font-weight:800; font-size:0.88rem; margin-bottom:4px; display:flex; align-items:center; gap:6px;">
-                                            🚫 Accesso Bloccato: Email Non Verificata
-                                        </div>
-                                        <div style="color:var(--text); font-size:0.8rem; line-height:1.4;">
-                                            Devi confermare il tuo indirizzo email prima di poter accedere. Clicca sul link inviato a <strong>${escapeHtml(email)}</strong> (controlla anche nella cartella Spam).
-                                        </div>
-                                        <div style="margin-top:10px; display:flex; justify-content:flex-end;">
-                                            <button type="button" onclick="resendVerificationFromAuthModal('${encodeURIComponent(email)}', '${encodeURIComponent(password)}')" style="background:#ef4444; color:#ffffff; font-weight:800; font-size:0.76rem; border:none; padding:6px 12px; border-radius:6px; cursor:pointer;">
-                                                ✉️ Invia di nuovo link di verifica
-                                            </button>
-                                        </div>
-                                    </div>
-                                `;
+                    // SE L'ACCOUNT È STATO CREATO O ACCEDE CON EMAIL & PASSWORD:
+                    // L'ACCESSO NON DEVE FUNZIONARE FINCHÉ L'EMAIL NON È VERIFICATA!
+                    if (isEmailPasswordUser(user) && !user.emailVerified) {
+                        // 1. Invia subito la mail di verifica e ATTENDI la conferma di invio prima di disconnettere
+                        try {
+                            await user.sendEmailVerification();
+                            console.log("Email di verifica inviata con successo a:", email);
+                        } catch (verErr) {
+                            if (verErr && verErr.code !== 'auth/too-many-requests') {
+                                console.warn("Invio email verifica:", verErr);
                             }
-                            return;
                         }
 
-                        // Se l'email è verificata (o se è accesso Google): consenti l'accesso
-                        modal.classList.remove('active');
-                        currentUser = user;
-                        renderProfileSettings();
-                        autoRegisterOneSignalPush(user.uid);
-                    })
-                    .catch((error) => {
-                        errorEl.innerText = formatAuthErrorMessage(error);
-                    });
+                        // 2. Disconnetti immediatamente l'utente: accesso bloccato finché non conferma!
+                        try {
+                            await auth.signOut();
+                        } catch (soErr) {
+                            console.warn("SignOut:", soErr);
+                        }
+                        currentUser = null;
+                        renderUserAuthBar();
+                        isAuthSubmitting = false;
+
+                        if (!isLogin) {
+                            // Caso REGISTRAZIONE: mostra schermata di conferma invio email chiara nel modal, SENZA chiuderlo!
+                            titleEl.innerText = "✉️ Verifica la tua Email";
+                            bodyContent.innerHTML = `
+                                <div style="text-align:center; padding:10px 4px;">
+                                    <div style="font-size:3.2rem; margin-bottom:10px; line-height:1;">📬</div>
+                                    <h4 style="margin:0 0 8px 0; font-size:1.15rem; color:var(--text); font-weight:800;">Registrazione completata con successo!</h4>
+                                    <p style="color:var(--subtext); font-size:0.88rem; line-height:1.5; margin-bottom:14px;">
+                                        Abbiamo inviato un'email di verifica a:<br>
+                                        <strong style="color:var(--accent); font-size:0.95rem; word-break:break-all;">${escapeHtml(email)}</strong>
+                                    </p>
+                                    <div style="background:rgba(56,189,248,0.1); border:1px solid rgba(56,189,248,0.3); border-radius:10px; padding:12px; font-size:0.82rem; color:var(--text); text-align:left; margin-bottom:14px; line-height:1.45;">
+                                        ⚠️ <strong>L'accesso è bloccato finché non confermi l'indirizzo.</strong><br>
+                                        1. Apri la tua casella di posta (controlla anche in <strong>Spam</strong> o <strong>Posta Indesiderata</strong>).<br>
+                                        2. Clicca sul link di verifica per attivare il profilo.<br>
+                                        3. Torna qui e premi <strong>"Vai al Login"</strong> per accedere!
+                                    </div>
+                                </div>
+                            `;
+                            actionsBox.innerHTML = `
+                                <button class="btn-confirm" onclick="openAuthModal('login')" style="width:100%; padding:10px 14px; font-size:0.9rem; font-weight:700; border-radius:10px;">
+                                    🔑 Vai al Login
+                                </button>
+                            `;
+                        } else {
+                            // Caso LOGIN: accesso rifiutato, mostra banner rosso con pulsante reinvio
+                            if (submitBtn) { submitBtn.disabled = false; submitBtn.innerText = "Accedi"; }
+                            errorEl.innerHTML = `
+                                <div style="background:rgba(239,68,68,0.12); border:1px solid #ef4444; border-radius:10px; padding:12px; margin-top:6px; text-align:left;">
+                                    <div style="color:#ef4444; font-weight:800; font-size:0.88rem; margin-bottom:4px; display:flex; align-items:center; gap:6px;">
+                                        🚫 Accesso Bloccato: Email Non Verificata
+                                    </div>
+                                    <div style="color:var(--text); font-size:0.8rem; line-height:1.4;">
+                                        Devi confermare il tuo indirizzo email prima di poter accedere. Clicca sul link inviato a <strong>${escapeHtml(email)}</strong> (controlla anche nella cartella Spam).
+                                    </div>
+                                    <div style="margin-top:10px; display:flex; justify-content:flex-end;">
+                                        <button type="button" onclick="resendVerificationFromAuthModal('${encodeURIComponent(email)}', '${encodeURIComponent(password)}')" style="background:#ef4444; color:#ffffff; font-weight:800; font-size:0.76rem; border:none; padding:6px 12px; border-radius:6px; cursor:pointer;">
+                                            ✉️ Invia di nuovo link di verifica
+                                        </button>
+                                    </div>
+                                </div>
+                            `;
+                        }
+                        return;
+                    }
+
+                    // Se l'email è verificata (o se è accesso Google): consenti l'accesso
+                    isAuthSubmitting = false;
+                    modal.classList.remove('active');
+                    currentUser = user;
+                    loadUserData(user);
+                    renderProfileSettings();
+                    autoRegisterOneSignalPush(user.uid);
+                } catch (error) {
+                    isAuthSubmitting = false;
+                    if (submitBtn) {
+                        submitBtn.disabled = false;
+                        submitBtn.innerText = isLogin ? "Accedi" : "Registrati";
+                    }
+                    errorEl.innerText = formatAuthErrorMessage(error);
+                }
             };
         }
 
@@ -11768,23 +11811,39 @@ let currentUser = null;
             const password = decodeURIComponent(encodedPassword);
             const errorEl = document.getElementById('auth-error-msg');
             if (!email || !password) return;
+            isAuthSubmitting = true;
+            if (errorEl) errorEl.innerHTML = '<span style="color:var(--accent); font-size:0.84rem;">⏳ Invio nuova email di verifica in corso...</span>';
             auth.signInWithEmailAndPassword(email, password)
-                .then((cred) => {
+                .then(async (cred) => {
                     if (cred.user) {
-                        return cred.user.sendEmailVerification().then(() => {
-                            auth.signOut();
-                            currentUser = null;
-                            if (errorEl) {
-                                errorEl.innerHTML = `<div style="background:rgba(34,197,94,0.12); border:1px solid #22c55e; border-radius:10px; padding:10px 12px; color:#22c55e; font-size:0.82rem; font-weight:700; text-align:left;">✉️ Nuova email di verifica inviata con successo a <strong>${escapeHtml(email)}</strong>! Controlla la tua posta (inclusa la cartella Spam).</div>`;
+                        try {
+                            await cred.user.sendEmailVerification();
+                        } catch (err) {
+                            if (err && err.code === 'auth/too-many-requests') {
+                                if (errorEl) errorEl.innerHTML = '<div style="background:rgba(239,68,68,0.12); border:1px solid #ef4444; border-radius:10px; padding:10px 12px; color:#ef4444; font-size:0.82rem; font-weight:700;">⚠️ Troppe richieste inviate. Attendi qualche minuto prima di richiedere un nuovo link.</div>';
+                                await auth.signOut();
+                                currentUser = null;
+                                isAuthSubmitting = false;
+                                return;
                             }
-                        });
+                            console.warn("Reinvio verifica err:", err);
+                        }
+                        await auth.signOut();
+                        currentUser = null;
+                        isAuthSubmitting = false;
+                        if (errorEl) {
+                            errorEl.innerHTML = `<div style="background:rgba(34,197,94,0.12); border:1px solid #22c55e; border-radius:10px; padding:10px 12px; color:#22c55e; font-size:0.82rem; font-weight:700; text-align:left;">✉️ Nuova email di verifica inviata con successo a <strong>${escapeHtml(email)}</strong>! Controlla la tua posta (inclusa la cartella Spam).</div>`;
+                        }
                     }
                 })
                 .catch((err) => {
-                    if (err && err.code === 'auth/too-many-requests') {
-                        if (errorEl) errorEl.innerText = "⚠️ Troppe richieste inviate. Attendi qualche minuto prima di richiedere un nuovo link.";
-                    } else {
-                        if (errorEl) errorEl.innerText = "Errore: " + (err.message || err);
+                    isAuthSubmitting = false;
+                    if (errorEl) {
+                        if (err && err.code === 'auth/too-many-requests') {
+                            errorEl.innerText = "⚠️ Troppe richieste inviate. Attendi qualche minuto prima di richiedere un nuovo link.";
+                        } else {
+                            errorEl.innerText = "Errore: " + (err.message || err);
+                        }
                     }
                 });
         };
@@ -11809,8 +11868,8 @@ let currentUser = null;
         }
         window.sendVerificationEmailToCurrentUser = sendVerificationEmailToCurrentUser;
 
-        function isEmailPasswordUser() {
-            const user = (typeof firebase !== 'undefined' && firebase.auth) ? (firebase.auth().currentUser || currentUser) : currentUser;
+        function isEmailPasswordUser(targetUser) {
+            const user = targetUser || ((typeof firebase !== 'undefined' && firebase.auth) ? firebase.auth().currentUser : null) || currentUser;
             if (!user) return false;
             if (Array.isArray(user.providerData) && user.providerData.some(p => p && p.providerId && p.providerId.includes('google'))) {
                 return false;
