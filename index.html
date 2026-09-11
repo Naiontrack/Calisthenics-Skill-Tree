@@ -28,9 +28,6 @@
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-messaging-compat.js"></script>
     <!-- OneSignal Web Push SDK (per notifiche a schermo spento / app chiusa) -->
     <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
-    <!-- Google MediaPipe Pose & Camera Utils per AI Helper & AI Referee -->
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js" crossorigin="anonymous"></script>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -5261,9 +5258,6 @@
                 <button class="chat-thread-menu-btn" id="chat-thread-menu-btn" onclick="openConversationOptionsModal()" title="Opzioni chat">⋮</button>
             </div>
             <div class="ai-helper-header-bar" id="ai-helper-header-bar" style="display:none;">
-                <button type="button" class="ai-helper-chip-btn" onclick="openPoseScannerModal({ mode: 'analysis' })">
-                    📷 Scanner Movimenti
-                </button>
                 <button type="button" class="ai-helper-chip-btn ai-helper-chip-clear" onclick="clearAiChatHistory()">
                     🗑️ Pulisci Chat
                 </button>
@@ -8421,8 +8415,7 @@ let currentUser = null;
                             ${isUnlocked ? `
                                 <input type="number" id="input-${skill.id}" value="${val}" min="0" onclick="event.stopPropagation()">
                                 <button onclick="event.stopPropagation(); updateSkill('${skill.id}')">Salva</button>
-                                <button class="ai-verify-btn" title="Verifica record con AI Referee (anti-cheat)" onclick="event.stopPropagation(); startSkillRecordAiReferee('${skill.id}')" style="background:rgba(56,189,248,0.15); border:1px solid var(--accent); color:var(--accent); padding:4px 8px; border-radius:6px; font-size:0.75rem; font-weight:bold; cursor:pointer;">📹 AI</button>
-                                
+                                <button class="relock-btn" title="Riblocca skill se sbloccata per errore (risottrae XP)" onclick="event.stopPropagation(); askRelock('${skill.id}')" style="background:rgba(239,68,68,0.15); border:1px solid var(--danger); color:var(--danger); padding:4px 8px; border-radius:6px; font-size:0.75rem; font-weight:bold; cursor:pointer;">🔒 Riblocca</button>
                             ` : `
                                 <button class="unlock-btn" onclick="event.stopPropagation(); askUnlock('${skill.id}')">🔓 Sblocca (+${skill.unlockXp || 100} XP)</button>
                             `}
@@ -8984,14 +8977,22 @@ let currentUser = null;
             }
 
             openCustomModal(
-                `🎉 Sblocca Skill con AI Referee (+${xpReward} XP)`,
-                `Vuoi sbloccare <strong>"${escapeHtml(skill.name)}"</strong> per guadagnare subito <span style="color: var(--accent); font-size: 1.25rem; font-weight: 900;">+${xpReward} XP</span>?<br><br>` +
-                `🎯 <strong>Obiettivo</strong>: esegui almeno <strong>${minTarget} ${unitLabel}</strong> con forma impeccabile.<br><br>` +
-                `🛡️ <strong>Anti-Cheat AI Referee</strong>: posizionati davanti alla videocamera. L'AI analizzerà le tue articolazioni in tempo reale e convaliderà il ROM completo per sbloccare la skill!`,
-                `📹 Avvia AI Referee (+${xpReward} XP)`,
-                false,
+                `🎉 Sblocca Skill (+${xpReward} XP)`,
+                `Vuoi confermare di aver padroneggiato la skill <strong>"${escapeHtml(skill.name)}"</strong>?<br><br>` +
+                `🎯 <strong>Obiettivo base</strong>: ${minTarget} ${unitLabel}.<br><br>` +
+                `Guadagnerai subito <span style="color: var(--accent); font-size: 1.25rem; font-weight: 900;">+${xpReward} XP</span> sul tuo profilo!`,
+                `🔓 Conferma Sblocco (+${xpReward} XP)`,
+                true,
                 () => {
-                    startSkillUnlockAiReferee(id);
+                    if (!userState[id]) {
+                        userState[id] = { unlocked: true, val: minTarget };
+                    } else {
+                        userState[id].unlocked = true;
+                        if (!userState[id].val || userState[id].val < minTarget) userState[id].val = minTarget;
+                    }
+                    saveState();
+                    if (typeof closeSkillDetailDrawer === 'function') closeSkillDetailDrawer();
+                    showAppToast(`🎉 Skill "${skill.name}" sbloccata! +${xpReward} XP`, "success");
                 }
             );
         }
@@ -9000,14 +9001,55 @@ let currentUser = null;
             const skill = findSkillById(id);
             if (!skill) return;
 
+            // Controllo se ci sono skill successive già sbloccate che dipendono da questa
+            const dependentSkills = [];
+            categories.forEach(c => {
+                c.skills.forEach(s => {
+                    if (s.prerequisites && s.prerequisites.includes(id) && userState[s.id] && userState[s.id].unlocked) {
+                        dependentSkills.push(s.name);
+                    }
+                });
+            });
+
+            if (dependentSkills.length > 0) {
+                openCustomModal(
+                    "⚠️ Impossibile Ribloccare",
+                    `Non puoi ribloccare la skill <strong>"${escapeHtml(skill.name)}"</strong> perché hai già sbloccato delle varianti successive che dipendono da essa:<br><br>` +
+                    `<div style="margin:10px 0; padding:10px 14px; background:rgba(239, 68, 68, 0.12); border:1px solid rgba(239, 68, 68, 0.35); border-radius:8px; color:#f87171; font-weight:700; text-align:left; font-size:0.85rem;">` +
+                    dependentSkills.map(d => `• ${escapeHtml(d)}`).join('<br>') +
+                    `</div>` +
+                    `Riblocca prima queste varianti successive per poter ribloccare "${escapeHtml(skill.name)}".`,
+                    "Ho Capito",
+                    false,
+                    () => {}
+                );
+                return;
+            }
+
+            const skillData = userState[id] || {};
+            let xpToDeduct = skill.unlockXp || 100;
+            const val = skillData.val || 0;
+            xpToDeduct += val * (skill.xpPerUnit || 0);
+            let dynamicTarget = skill.baseTarget || 1;
+            let completedGoalsCount = 0;
+            while (val >= dynamicTarget) {
+                completedGoalsCount++;
+                dynamicTarget += (skill.step || 1);
+            }
+            xpToDeduct += completedGoalsCount * (skill.goalBonusXp || 0);
+
             openCustomModal(
                 "🔒 Riblocca Skill",
-                `Vuoi bloccare di nuovo <strong>"${skill.name}"</strong>?<br><br>⚠️ La skill verrà bloccata, il punteggio azzerato e <strong>perderai tutti gli XP</strong> accumulati da essa.`,
-                "Sì, Riblocca",
+                `Sei sicuro di voler ribloccare <strong>"${escapeHtml(skill.name)}"</strong>?<br><br>` +
+                `⚠️ La skill tornerà nello stato <strong>Bloccata</strong>, il record verrà azzerato e ti verranno sottratti <strong>-${xpToDeduct} XP</strong>.<br><br>` +
+                `Usa questa opzione se hai sbloccato la skill per sbaglio.`,
+                "Sì, Riblocca Skill",
                 true,
                 () => {
                     userState[id] = { unlocked: false, val: 0 };
                     saveState();
+                    if (typeof closeSkillDetailDrawer === 'function') closeSkillDetailDrawer();
+                    showAppToast(`🔒 Skill "${skill.name}" ribloccata (-${xpToDeduct} XP)`, "info");
                 }
             );
         }
@@ -9020,21 +9062,8 @@ let currentUser = null;
             const currentVal = (userState[id] && userState[id].val) || 0;
             const newVal = parseInt(input.value) || 0;
 
-            if (newVal > currentVal) {
+            if (newVal < 0) {
                 input.value = currentVal;
-                const unit = skill.type === 'sec' ? 'secondi' : 'ripetizioni';
-
-                openCustomModal(
-                    "🛡️ AI Referee: Verifica Nuovo Massimale",
-                    `Vuoi incrementare il tuo massimale su <strong>"${escapeHtml(skill.name)}"</strong> da <strong>${currentVal} ${unit}</strong> a <strong>${newVal} ${unit}</strong>?<br><br>` +
-                    `⚠️ Per preservare l'integrità della classifica globale, ogni incremento del massimale richiede la convalida dal vivo dell'<strong>AI Referee</strong> con la fotocamera.<br><br>` +
-                    `Posizionati davanti alla fotocamera ed esegui la prestazione: l'AI conterà solo le ripetizioni valide a ROM completo!`,
-                    "📹 Avvia Verifica Massimale",
-                    false,
-                    () => {
-                        startSkillRecordAiReferee(id, newVal);
-                    }
-                );
                 return;
             }
 
@@ -9044,7 +9073,8 @@ let currentUser = null;
                 userState[id].val = newVal;
             }
             saveState();
-            showAppToast(`Record aggiornato a ${newVal}`, 'success');
+            const unit = skill.type === 'sec' ? 's' : 'rep';
+            showAppToast(`Record "${skill.name}" aggiornato a ${newVal} ${unit}!`, 'success');
         }
 
         // ==========================================
@@ -10018,7 +10048,7 @@ let currentUser = null;
                     aiChatMessages = [{
                         id: "msg_welcome",
                         sender: "ai",
-                        text: "Ciao atleta! 👋 Sono il tuo **Coach AI di Calisthenics**.\n\nChiedimi qualsiasi dubbio su progressioni (*Planche, Front Lever, Muscle-up, Handstand*), correzione di dolori articolari (*polsi, gomiti, spalle*) o routine di riscaldamento!\n\nPuoi anche usare il pulsante in alto **📷 Scanner Movimenti** per farmi analizzare la tua forma dal vivo tramite fotocamera!",
+                        text: "Ciao atleta! 👋 Sono il tuo **Coach AI di Calisthenics**.\n\nChiedimi qualsiasi dubbio su progressioni (*Planche, Front Lever, Muscle-up, Handstand*), correzione di dolori articolari (*polsi, gomiti, spalle*) o routine di riscaldamento!\n\nPuoi anche chiedermi come sbloccare le skill, consigli sulle progressioni o come ribloccarle se le hai segnate per errore!",
                         timestamp: Date.now()
                     }];
                 }
@@ -10539,7 +10569,7 @@ function getCalisthenicsExpertResponse(query) {
         "1. **Range di Movimento (ROM) Completo**: Scendi sempre fino a rompere i 90° articolari ed esegui un lockout controllato. Le mezze ripetizioni rallentano i guadagni tendinei.\n" +
         "2. **Costanza & Sovraccarico Progressivo**: Aumenta una ripetizione, un secondo di tenuta o riduci di 5 gradi la leva ogni 1-2 settimane.\n" +
         "3. **Recupero Articolare**: Se avverti fastidi a polsi o gomiti, dedicati al lavoro eccentrico controllato o fai una sessione di sola mobilità.\n\n" +
-        "💡 *Hai una domanda specifica?* Chiedimi pure dettagli su una skill (es. *'Come fare il Muscle-up?'* o *'Progressioni Planche'*) oppure apri lo **📷 Scanner Movimenti** per testare la tua postura dal vivo!";
+        "💡 *Hai una domanda specifica?* Chiedimi pure dettagli su una skill (es. *'Come fare il Muscle-up?'* o *'Progressioni Planche'*) oppure chiedimi come sbloccare o ribloccare le skill dell'albero!";
 }
 
         async function sendAiHelperMessage() {
@@ -12152,89 +12182,20 @@ function getCalisthenicsExpertResponse(query) {
         }
 
         async function openPoseScannerModal(options = {}) {
-            poseScannerActiveMode = options.mode || 'analysis';
-            poseRefereeTargetReps = options.targetReps || 0;
-            poseRefereeCallback = options.onComplete || null;
-            const isLocked = !!options.isLocked || (poseScannerActiveMode === 'referee');
-
-            const skillProfile = getSkillBiomechanicsProfile(options.skillId || options.exercise, options.skillName || options.exercise);
-            poseTrackedExercise = skillProfile.id;
-            poseRepCounter = new PoseRepCounterEngine(skillProfile);
-
-            // Reset stato vocale per la nuova sessione
-            poseLastHoldSecondAnnounced = 0;
-            poseLastFeedbackCuesTime = 0;
-            poseLastFeedbackCueText = "";
-            clearPoseSpeechQueue();
-            unlockPoseAudioSynthesis();
-            updateCameraMirroring();
-
-            const titleEl = document.getElementById('pose-scanner-title');
-            const badgeEl = document.getElementById('pose-scanner-badge');
-            const finishBtn = document.getElementById('pose-scanner-finish-btn');
-            const voiceBtn = document.getElementById('pose-voice-toggle-btn');
-            const selectEl = document.getElementById('pose-exercise-select');
-            const lockedBanner = document.getElementById('pose-exercise-locked-banner');
-            const lockedNameEl = document.getElementById('pose-exercise-locked-name');
-            const lockedModeEl = document.getElementById('pose-exercise-locked-mode');
-
-            if (voiceBtn) {
-                voiceBtn.innerText = poseVoiceFeedbackEnabled ? "🔊 Voce: ON" : "🔇 Voce: OFF";
+            showAppToast("L'AI Referee e lo Scanner sono stati disattivati. Puoi gestire le skill e i massimali direttamente nell'Albero!", "info");
+            if (typeof options.onComplete === 'function') {
+                options.onComplete(options.targetReps || 1);
             }
-
-            if (isLocked) {
-                if (titleEl) titleEl.innerText = "⚖️ AI Referee";
-                if (badgeEl) {
-                    badgeEl.innerText = "Verifica Anti-Cheat";
-                    badgeEl.style.background = "rgba(16,185,129,0.15)";
-                    badgeEl.style.color = "#10b981";
-                    badgeEl.style.borderColor = "#10b981";
-                }
-                if (lockedBanner) {
-                    lockedBanner.style.display = 'flex';
-                    if (lockedNameEl) lockedNameEl.innerText = skillProfile.name;
-                    if (lockedModeEl) lockedModeEl.innerText = skillProfile.mode === 'hold' ? '⏱️ Tenuta' : '🔢 Ripetizioni';
-                }
-                if (selectEl) selectEl.style.display = 'none';
-                if (finishBtn) finishBtn.innerText = "✅ Valida e Conferma Punteggio";
-            } else {
-                if (titleEl) titleEl.innerText = "📷 Scanner Movimenti";
-                if (badgeEl) {
-                    badgeEl.innerText = "Analisi Forma";
-                    badgeEl.style.background = "rgba(56,189,248,0.15)";
-                    badgeEl.style.color = "var(--accent)";
-                    badgeEl.style.borderColor = "var(--accent)";
-                }
-                if (lockedBanner) lockedBanner.style.display = 'none';
-                if (selectEl) {
-                    selectEl.style.display = 'block';
-                    populatePoseExerciseSelect(skillProfile.id);
-                }
-                if (finishBtn) finishBtn.innerText = "⏹️ Termina & Analizza nel Coach";
-            }
-
-            const banner = document.getElementById('pose-hud-banner');
-            if (banner) {
-                if (isLocked) {
-                    banner.innerText = "Inquadra il corpo intero per verificare: " + skillProfile.name + " (" + (skillProfile.mode === 'hold' ? 'Tenuta isometrica' : 'Ripetizioni ROM 90°') + ")";
-                } else {
-                    banner.innerText = "Inquadra il corpo intero per iniziare l'analisi...";
-                }
-            }
-
-            const modal = document.getElementById('pose-scanner-modal');
-            if (modal) modal.classList.add('active');
-
-            try { await startPoseCamera(); } catch(camErr) { console.error("Errore apertura videocamera:", camErr); }
         }
-
         function closePoseScannerModal() {
-            clearPoseSpeechQueue();
-            stopPoseCamera();
             const modal = document.getElementById('pose-scanner-modal');
             if (modal) modal.classList.remove('active');
         }
-
+        function startPoseCamera() {}
+        function stopPoseCamera() {}
+        function clearPoseSpeechQueue() {}
+        function unlockPoseAudioSynthesis() {}
+        function updateCameraMirroring() {}
         function changePoseTrackedExercise(val) {
             poseTrackedExercise = val;
             const profile = getSkillBiomechanicsProfile(val);
@@ -13120,9 +13081,6 @@ function getCalisthenicsExpertResponse(query) {
             if (activeChatView === 'ai') {
                 box.innerHTML = `
                     <div class="chat-input-row" style="display:flex; align-items:center; gap:8px; width:100%; box-sizing:border-box;">
-                        <button type="button" class="chat-poll-circle-btn" onclick="openPoseScannerModal({ mode: 'analysis' })" title="Scanner Videocamera Postura & Movimento" style="background:rgba(56,189,248,0.15); color:var(--accent); flex-shrink:0;">
-                            📷
-                        </button>
                         <input type="text" id="ai-chat-input" placeholder="Chiedi al Coach (es. come imparare la Planche?)..." maxlength="350" style="flex:1; min-width:0; padding:8px 12px; border-radius:8px; border:1px solid var(--line-color); background:var(--bg-color); color:var(--text); font-size:0.88rem;">
                         <button class="chat-send-btn" onclick="sendAiHelperMessage()" id="ai-chat-send-btn" style="flex-shrink:0;">➤</button>
                     </div>
@@ -16453,12 +16411,12 @@ function getCalisthenicsExpertResponse(query) {
                                 </div>
                                 <div>
                                     ${isDone ? `
-                                        <span style="font-size:0.7rem; background:rgba(16,185,129,0.15); color:#10b981; border:1px solid rgba(16,185,129,0.3); padding:2px 7px; border-radius:10px; font-weight:bold;">
-                                            🛡️ ${isAi ? 'Verificato AI' : 'Completato'}
+                                        <span style="font-size:0.75rem; background:rgba(16,185,129,0.15); color:#10b981; border:1px solid rgba(16,185,129,0.3); padding:3px 8px; border-radius:8px; font-weight:bold;">
+                                            ✅ Completato
                                         </span>
                                     ` : `
-                                        <button type="button" class="solo-ai-ref-btn" onclick="event.stopPropagation(); startSoloExerciseAiReferee('${c.id}', '${ex.id}', '${escapeHtml(ex.name)}', ${ex.target}, '${ex.unit || 'reps'}')" style="background:rgba(56,189,248,0.15); border:1px solid var(--accent); color:var(--accent); padding:3px 8px; border-radius:6px; font-size:0.75rem; font-weight:bold; cursor:pointer; display:flex; align-items:center; gap:4px;">
-                                            📹 Verifica AI
+                                        <button type="button" class="btn-confirm" onclick="event.stopPropagation(); completeSoloExerciseDirect('${c.id}', '${ex.id}')" style="padding:4px 10px; font-size:0.78rem; font-weight:bold; border-radius:6px; cursor:pointer; background:linear-gradient(135deg, #10b981, #059669); border:none; color:white;">
+                                            ✓ Segna fatto
                                         </button>
                                     `}
                                 </div>
@@ -16601,39 +16559,19 @@ function getCalisthenicsExpertResponse(query) {
                                 `;
                             } else if (isCurrent) {
                                 if (myReps == null) {
-                                    const verifiedData = duelAiVerifiedScores[`${c.id}_${r}`];
-                                    if (verifiedData && verifiedData.verifiedReps != null) {
-                                        rStatusText = `
-                                            <div style="margin-top:8px; padding:10px 12px; background:rgba(16,185,129,0.12); border:1px solid #10b981; border-radius:10px;">
-                                                <div style="display:flex; justify-content:space-between; align-items:center;">
-                                                    <span style="font-size:0.8rem; font-weight:bold; color:#10b981;">🛡️ Certificato AI Referee: <strong>${verifiedData.verifiedReps} reps</strong> (${escapeHtml(rExName)})</span>
-                                                    <span style="font-size:0.7rem; color:var(--subtext);">Appena verificato</span>
-                                                </div>
-                                                <div style="display:flex; gap:8px; margin-top:8px;">
-                                                    <button class="btn-confirm" onclick="submitDuelRoundScore('${c.id}', ${r})" style="flex:1; padding:8px 12px; font-weight:700; background:#10b981; border-color:#10b981; font-size:0.84rem;">
-                                                        ⚔️ Invia Punteggio Ufficiale (${verifiedData.verifiedReps} reps)
-                                                    </button>
-                                                    <button class="btn-cancel" onclick="startDuelRoundAiReferee('${c.id}', ${r})" style="padding:8px 10px; font-size:0.78rem;" title="Ripeti la prova per migliorare">
-                                                        🔄 Rifai
-                                                    </button>
-                                                </div>
+                                    rStatusText = `
+                                        <div style="margin-top:8px; padding:10px 12px; background:rgba(255,255,255,0.03); border:1px solid var(--line-color); border-radius:10px;">
+                                            <div style="font-size:0.82rem; color:#facc15; font-weight:700; margin-bottom:6px;">
+                                                ⚡ Round ${r} — ${escapeHtml(rExName)}
                                             </div>
-                                        `;
-                                    } else {
-                                        rStatusText = `
-                                            <div style="margin-top:8px; padding:10px 12px; background:rgba(255,255,255,0.03); border:1px dashed var(--line-color); border-radius:10px;">
-                                                <div style="font-size:0.8rem; color:#facc15; font-weight:700; margin-bottom:4px;">
-                                                    ⚡ Round ${r} — ${escapeHtml(rExName)}
-                                                </div>
-                                                <div style="font-size:0.75rem; color:var(--subtext); margin-bottom:8px; line-height:1.35;">
-                                                    🔒 <strong>Verifica AI Obbligatoria</strong>: per prevenire il cheating nei duelli, devi convalidare il tuo massimale davanti alla fotocamera prima di poter inviare il punteggio.
-                                                </div>
-                                                <button class="btn-confirm" onclick="startDuelRoundAiReferee('${c.id}', ${r})" style="width:100%; padding:10px 14px; font-size:0.88rem; font-weight:800; background:linear-gradient(135deg, #10b981, #059669); border:none; border-radius:8px; display:flex; align-items:center; justify-content:center; gap:6px; cursor:pointer;">
-                                                    📷 Avvia Verifica con AI Referee
+                                            <div style="display:flex; gap:8px; align-items:center;">
+                                                <input type="number" id="duel-input-${c.id}-${r}" min="1" placeholder="Reps fatte" style="width:105px; background:var(--card-bg); border:1px solid var(--line-color); color:var(--text); padding:8px 10px; border-radius:8px; font-size:0.88rem; font-weight:bold; box-sizing:border-box;">
+                                                <button class="btn-confirm" onclick="submitDuelRoundScore('${c.id}', ${r})" style="flex:1; padding:8px 12px; font-weight:700; background:linear-gradient(135deg, #10b981, #059669); border:none; border-radius:8px; font-size:0.85rem; cursor:pointer;">
+                                                    ⚔️ Invia Risultato
                                                 </button>
                                             </div>
-                                        `;
-                                    }
+                                        </div>
+                                    `;
                                 } else {
                                     rStatusText = `
                                         <div style="margin-top:6px; font-size:0.8rem; color:var(--accent);">
@@ -17349,6 +17287,10 @@ function getCalisthenicsExpertResponse(query) {
             }
         }
 
+        async function completeSoloExerciseDirect(challengeId, exId) {
+            return toggleSoloExercise(challengeId, exId, true);
+        }
+
         async function toggleSoloExercise(challengeId, exId, isChecked) {
             if (!currentUser) return;
             const c = activeChallengesList.find(x => x.id === challengeId);
@@ -17357,19 +17299,6 @@ function getCalisthenicsExpertResponse(query) {
             const exercises = c.exercises || [];
             const targetEx = exercises.find(e => e.id === exId);
             if (!targetEx) return;
-
-            if (isChecked && !targetEx.verifiedByAi) {
-                openCustomModal(
-                    "🛡️ Verifica AI Richiesta",
-                    `Per convalidare <strong>"${escapeHtml(targetEx.name)}"</strong> ed evitare trucchi sul punteggio, verifica la tua esecuzione davanti alla fotocamera con l'AI Referee!`,
-                    "📹 Avvia Verifica AI",
-                    false,
-                    () => {
-                        startSoloExerciseAiReferee(challengeId, exId, targetEx.name, targetEx.target, targetEx.unit || 'reps');
-                    }
-                );
-                return;
-            }
 
             targetEx.completed = !!isChecked;
             const newCompletedCount = exercises.filter(e => e.completed).length;
@@ -17541,22 +17470,21 @@ function getCalisthenicsExpertResponse(query) {
             }
         }
 
-        async function submitDuelRoundScore(challengeId, roundNum) {
+        async function submitDuelRoundScore(challengeId, roundNum, directReps = null) {
             if (!currentUser) return;
 
-            const verifiedData = duelAiVerifiedScores[`${challengeId}_${roundNum}`];
-            if (!verifiedData || verifiedData.verifiedReps == null) {
-                openCustomModal(
-                    "🛡️ Verifica AI Obbligatoria",
-                    "Nei duelli ufficiali non è consentito inserire punteggi manuali.<br><br>Per garantire l'onestà della sfida ed evitare il cheating, posizionati davanti alla videocamera ed esegui le ripetizioni con l'arbitraggio dell'<strong>AI Referee</strong>.",
-                    "📷 Avvia Verifica Ora",
-                    false,
-                    () => startDuelRoundAiReferee(challengeId, roundNum)
-                );
-                return;
+            let inputReps = directReps;
+            if (inputReps == null) {
+                const inputEl = document.getElementById(`duel-input-${challengeId}-${roundNum}`);
+                if (inputEl) {
+                    inputReps = parseInt(inputEl.value, 10);
+                }
             }
 
-            const inputReps = verifiedData.verifiedReps;
+            if (inputReps == null || isNaN(inputReps) || inputReps <= 0) {
+                showAppToast("Inserisci un numero valido di ripetizioni (minimo 1)", "warning");
+                return;
+            }
 
             try {
                 const docRef = db.collection("challenges").doc(challengeId);
@@ -18919,8 +18847,8 @@ function getCalisthenicsExpertResponse(query) {
 
                 actionButtonsHtml = `
                     <div style="display:flex; flex-direction:column; gap:10px; width:100%;">
-                        <button type="button" class="btn-confirm" style="width:100%; padding:13px; font-size:0.95rem; font-weight:800; display:flex; align-items:center; justify-content:center; gap:8px;" onclick="closeSkillDetailDrawer(); openPoseScannerModal({ skillId: '${skill.id}', mode: 'test' });">
-                            📹 Migliora Record con AI Referee
+                        <button type="button" class="btn-cancel" style="width:100%; padding:13px; font-size:0.95rem; font-weight:800; display:flex; align-items:center; justify-content:center; gap:8px; background:rgba(239,68,68,0.14); border:1.5px solid var(--danger); color:var(--danger); border-radius:12px; cursor:pointer;" onclick="askRelock('${skill.id}');">
+                            🔒 Riblocca Skill (-${xpReward} XP)
                         </button>
                     </div>
                 `;
@@ -18950,8 +18878,8 @@ function getCalisthenicsExpertResponse(query) {
                     `;
                 } else {
                     actionButtonsHtml = `
-                        <button type="button" class="btn-confirm" style="width:100%; padding:14px; font-size:1rem; font-weight:800; display:flex; align-items:center; justify-content:center; gap:8px;" onclick="closeSkillDetailDrawer(); askUnlock('${skill.id}');">
-                            <span>📹 Sblocca con AI Referee</span>
+                        <button type="button" class="btn-confirm" style="width:100%; padding:14px; font-size:1rem; font-weight:800; display:flex; align-items:center; justify-content:center; gap:8px; cursor:pointer;" onclick="askUnlock('${skill.id}');">
+                            <span>🔓 Sblocca Skill</span>
                             <span style="background:rgba(0,0,0,0.28); padding:3px 10px; border-radius:999px; font-size:0.85rem; border:1px solid rgba(255,255,255,0.35); font-weight:900;">+${xpReward} XP</span>
                         </button>
                     `;
