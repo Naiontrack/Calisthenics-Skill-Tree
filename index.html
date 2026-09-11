@@ -8414,7 +8414,7 @@ let currentUser = null;
                         </div>
                         <div class="actions">
                             ${isUnlocked ? `
-                                <input type="number" id="input-${skill.id}" value="${val}" min="0" onclick="event.stopPropagation()">
+                                <input type="number" id="input-${skill.id}" value="${val}" min="${skill.type === 'sec' ? 3 : 1}" onchange="if(parseInt(this.value)<${skill.type === 'sec' ? 3 : 1}) this.value=${skill.type === 'sec' ? 3 : 1};" onclick="event.stopPropagation()">
                                 <button onclick="event.stopPropagation(); updateSkill('${skill.id}')">Salva</button>
                                 <button class="relock-btn" title="Riblocca skill se sbloccata per errore (risottrae XP)" onclick="event.stopPropagation(); askRelock('${skill.id}')" style="background:rgba(239,68,68,0.15); border:1px solid var(--danger); color:var(--danger); padding:4px 8px; border-radius:6px; font-size:0.75rem; font-weight:bold; cursor:pointer;">🔒 Riblocca</button>
                             ` : `
@@ -8966,7 +8966,7 @@ let currentUser = null;
             const unitLabel = isHold ? 'secondi di tenuta' : 'ripetizione';
             const unitPlural = isHold ? 'secondi' : 'ripetizioni';
             const unitShort = isHold ? 'sec' : 'rep';
-            // Nelle reps l'obiettivo minimo di sblocco è sempre 1 (non il baseTarget del bonus)
+            // Nelle reps l'obiettivo minimo di sblocco è 1 rep; nelle isometrie è tassativamente 3s
             const minTarget = isHold ? 3 : 1;
             const xpReward = skill.unlockXp || (skill.goalBonusXp || 100);
 
@@ -9005,7 +9005,7 @@ let currentUser = null;
                     `<div style="font-size:0.82rem; color:var(--subtext); margin-bottom:8px;">🎯 Minimo per lo sblocco: <strong>${minTarget} ${unitLabel}</strong></div>` +
                     `<div style="display:flex; align-items:center; justify-content:center; gap:8px;">` +
                         `<label for="unlock-custom-val" style="font-size:0.88rem; font-weight:700; color:var(--text);">${isHold ? 'Secondi completati:' : 'Ripetizioni completate:'}</label>` +
-                        `<input type="number" id="unlock-custom-val" value="${minTarget}" min="1" style="width:75px; text-align:center; padding:7px 10px; border-radius:8px; border:1.5px solid var(--accent); background:var(--card-bg); color:var(--text); font-weight:bold; font-size:1.05rem; box-sizing:border-box;">` +
+                        `<input type="number" id="unlock-custom-val" value="${minTarget}" min="${minTarget}" oninput="if(this.value && parseInt(this.value)<${minTarget}) this.style.borderColor='var(--danger)'; else this.style.borderColor='var(--accent)';" onchange="if(parseInt(this.value)<${minTarget}) this.value=${minTarget};" style="width:75px; text-align:center; padding:7px 10px; border-radius:8px; border:1.5px solid var(--accent); background:var(--card-bg); color:var(--text); font-weight:bold; font-size:1.05rem; box-sizing:border-box;">` +
                         `<span style="font-size:0.88rem; font-weight:800; color:var(--accent);">${unitShort}</span>` +
                     `</div>` +
                 `</div>` +
@@ -9015,11 +9015,17 @@ let currentUser = null;
                 () => {
                     const inputEl = document.getElementById('unlock-custom-val');
                     const inputVal = inputEl ? parseInt(inputEl.value) : minTarget;
-                    const finalVal = (!isNaN(inputVal) && inputVal >= 1) ? inputVal : minTarget;
+                    if (isNaN(inputVal) || inputVal < minTarget) {
+                        if (inputEl) inputEl.value = minTarget;
+                        throw new Error(isHold
+                            ? "⚠️ Per convalidare una tenuta isometrica devi inserire almeno 3 secondi! Non è consentito inserire 1 o 2 secondi."
+                            : "⚠️ Per convalidare lo sblocco devi inserire almeno 1 ripetizione valida!"
+                        );
+                    }
 
-                    userState[id] = { unlocked: true, val: finalVal };
+                    userState[id] = { unlocked: true, val: inputVal };
                     saveState();
-                    showAppToast(`🎉 Skill "${skill.name}" sbloccata con ${finalVal} ${unitShort}! +${xpReward} XP`, "success");
+                    showAppToast(`🎉 Skill "${skill.name}" sbloccata con ${inputVal} ${unitShort}! +${xpReward} XP`, "success");
                 },
                 null,
                 () => {
@@ -9107,9 +9113,15 @@ let currentUser = null;
 
             const currentVal = (userState[id] && userState[id].val) || 0;
             const newVal = parseInt(input.value) || 0;
+            const minAllowed = (skill.type === 'sec') ? 3 : 1;
 
-            if (newVal < 0) {
-                input.value = currentVal;
+            if (isNaN(newVal) || newVal < minAllowed) {
+                input.value = Math.max(currentVal, minAllowed);
+                showAppToast(skill.type === 'sec'
+                    ? "⚠️ Per le tenute isometriche il record minimo consentito è di 3 secondi!"
+                    : "⚠️ Inserisci almeno 1 ripetizione valida!",
+                    'warning'
+                );
                 return;
             }
 
@@ -18896,7 +18908,7 @@ function getCalisthenicsExpertResponse(query) {
                                 ⚡ Aggiorna Record Massimale:
                             </div>
                             <div style="display:flex; gap:8px; align-items:center;">
-                                <input type="number" id="drawer-input-${skill.id}" value="${currentVal}" min="1" style="width:80px; text-align:center; padding:8px 10px; border-radius:8px; border:1px solid var(--line-color); background:var(--bg-color); color:var(--text); font-weight:bold; font-size:1rem; box-sizing:border-box;">
+                                <input type="number" id="drawer-input-${skill.id}" value="${currentVal}" min="${minTarget}" oninput="if(this.value && parseInt(this.value)<${minTarget}) this.style.borderColor='var(--danger)'; else this.style.borderColor='var(--line-color)';" onchange="if(parseInt(this.value)<${minTarget}) this.value=${minTarget};" style="width:80px; text-align:center; padding:8px 10px; border-radius:8px; border:1px solid var(--line-color); background:var(--bg-color); color:var(--text); font-weight:bold; font-size:1rem; box-sizing:border-box;">
                                 <span style="font-size:0.85rem; font-weight:700; color:var(--text);">${unitShort}</span>
                                 <button type="button" onclick="updateSkillFromDrawer('${skill.id}')" style="flex:1; padding:8px 14px; font-weight:800; font-size:0.85rem; background:linear-gradient(135deg, #10b981, #059669); border:none; border-radius:8px; color:white; cursor:pointer;">
                                     💾 Salva Record
@@ -18981,9 +18993,15 @@ function getCalisthenicsExpertResponse(query) {
 
             const currentVal = (userState[id] && userState[id].val) || 0;
             const newVal = parseInt(input.value) || 0;
-            if (newVal < 1) {
-                input.value = currentVal;
-                showAppToast("Inserisci almeno 1 " + (skill.type === 'sec' ? 'secondo' : 'ripetizione') + "!", "warning");
+            const minAllowed = (skill.type === 'sec') ? 3 : 1;
+
+            if (isNaN(newVal) || newVal < minAllowed) {
+                input.value = Math.max(currentVal, minAllowed);
+                showAppToast(skill.type === 'sec'
+                    ? "⚠️ Per le tenute isometriche il record minimo consentito è di 3 secondi!"
+                    : "⚠️ Inserisci almeno 1 ripetizione valida!",
+                    "warning"
+                );
                 return;
             }
 
