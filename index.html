@@ -5860,10 +5860,72 @@ let currentUser = null;
         let eventsUnsubscribe = null;
         let eventsAllowMaybeDraft = false; // stato del checkbox "opzione forse" nel form di creazione sondaggio
 
-        // ---- Allenamenti personali ----
+        // ---- Storage isolato per Allenamenti, Streak e Workout XP (Guest vs Logged-In User) ----
+        function getWorkoutsStorageKey() {
+            return (currentUser && currentUser.uid) ? ('naiontrackWorkouts_' + currentUser.uid) : 'naiontrackWorkouts_guest';
+        }
+        function getStreakStorageKey() {
+            return (currentUser && currentUser.uid) ? ('naiontrackStreak_' + currentUser.uid) : 'naiontrackStreak_guest';
+        }
+        function getLastWorkoutDateStorageKey() {
+            return (currentUser && currentUser.uid) ? ('naiontrackLastWorkoutDate_' + currentUser.uid) : 'naiontrackLastWorkoutDate_guest';
+        }
+        function getWorkoutXpStorageKey() {
+            return (currentUser && currentUser.uid) ? ('naiontrackWorkoutXp_' + currentUser.uid) : 'naiontrackWorkoutXp_guest';
+        }
+
+        function saveStreakLocally() {
+            const sKey = getStreakStorageKey();
+            const dKey = getLastWorkoutDateStorageKey();
+            localStorage.setItem(sKey, String(userStreak || 0));
+            localStorage.setItem(dKey, lastWorkoutDate || '');
+            if (!currentUser || !currentUser.uid) {
+                localStorage.setItem('naiontrackStreak', String(userStreak || 0));
+                localStorage.setItem('naiontrackLastWorkoutDate', lastWorkoutDate || '');
+            }
+        }
+
+        function loadStreakLocally() {
+            const sKey = getStreakStorageKey();
+            const dKey = getLastWorkoutDateStorageKey();
+            let sVal = localStorage.getItem(sKey);
+            let dVal = localStorage.getItem(dKey);
+            if (sVal === null && (!currentUser || !currentUser.uid)) {
+                sVal = localStorage.getItem('naiontrackStreak');
+            }
+            if (dVal === null && (!currentUser || !currentUser.uid)) {
+                dVal = localStorage.getItem('naiontrackLastWorkoutDate');
+            }
+            userStreak = parseInt(sVal) || 0;
+            lastWorkoutDate = dVal || '';
+        }
+
+        function getLocalWorkouts() {
+            const key = getWorkoutsStorageKey();
+            let raw = localStorage.getItem(key);
+            if (raw === null && (!currentUser || !currentUser.uid)) {
+                raw = localStorage.getItem('naiontrackWorkouts');
+            }
+            try {
+                return JSON.parse(raw) || [];
+            } catch (e) {
+                return [];
+            }
+        }
+
+        function saveLocalWorkouts(list) {
+            const key = getWorkoutsStorageKey();
+            localStorage.setItem(key, JSON.stringify(list));
+            if (!currentUser || !currentUser.uid) {
+                localStorage.setItem('naiontrackWorkouts', JSON.stringify(list));
+            }
+        }
+
         let userWorkoutXp = 0;
-        let userStreak = parseInt(localStorage.getItem('naiontrackStreak')) || 0;
-        let lastWorkoutDate = localStorage.getItem('naiontrackLastWorkoutDate') || '';
+        let userStreak = 0;
+        let lastWorkoutDate = '';
+        loadStreakLocally();
+        userWorkoutXp = parseFloat(localStorage.getItem(getWorkoutXpStorageKey())) || 0;
 
         function getDaysDiff(d1Str, d2Str) {
             try {
@@ -5883,7 +5945,7 @@ let currentUser = null;
                 if (days > 7) {
                     const lost = userStreak;
                     userStreak = 0;
-                    localStorage.setItem('naiontrackStreak', '0');
+                    saveStreakLocally();
                     if (currentUser) {
                         db.collection("users").doc(currentUser.uid).update({ streak: 0 }).catch(() => {});
                     }
@@ -5922,8 +5984,7 @@ let currentUser = null;
                     lastWorkoutDate = wDate;
                 }
             }
-            localStorage.setItem('naiontrackStreak', String(userStreak));
-            localStorage.setItem('naiontrackLastWorkoutDate', lastWorkoutDate);
+            saveStreakLocally();
 
             if (currentUser) {
                 db.collection("users").doc(currentUser.uid).update({
@@ -7366,7 +7427,7 @@ let currentUser = null;
             if (typeof syncBentoThemeChips === 'function') syncBentoThemeChips();
         }
 
-        // SALVATAGGIO DATI (Locale o Firebase)
+        // SALVATAGGIO DATI (Locale o Firebase con isolamento account)
         function saveState() {
             const currentXp = getTotalXp();
             if (currentUser) {
@@ -7382,11 +7443,13 @@ let currentUser = null;
                     console.error("Errore di salvataggio su Firebase: ", error);
                 });
                 syncUserChallengeProgress(currentXp);
+                localStorage.setItem(getWorkoutXpStorageKey(), String(userWorkoutXp || 0));
+                saveStreakLocally();
             } else {
                 localStorage.setItem('naiontrackState', JSON.stringify(userState));
-                localStorage.setItem('naiontrackWorkoutXp', userWorkoutXp || 0);
-            localStorage.setItem('naiontrackStreak', userStreak || 0);
-            localStorage.setItem('naiontrackLastWorkoutDate', lastWorkoutDate || '');
+                localStorage.setItem(getWorkoutXpStorageKey(), String(userWorkoutXp || 0));
+                localStorage.setItem('naiontrackWorkoutXp', String(userWorkoutXp || 0));
+                saveStreakLocally();
             }
             updateUI();
         }
@@ -8109,6 +8172,11 @@ let currentUser = null;
         function loadUserData(user) {
             if (user) {
                 currentUser = user;
+                // Carica subito lo stato cache separato dell'utente autenticato
+                loadStreakLocally();
+                userWorkoutXp = parseFloat(localStorage.getItem(getWorkoutXpStorageKey())) || 0;
+                renderAllStreakBadges();
+
                 renderProfileSettings();
                 startUnreadListeners();
                 startEventsBadgeListener();
@@ -8130,21 +8198,24 @@ let currentUser = null;
                             isPublic: data.isPublic !== false
                         };
                         userWorkoutXp = data.workoutXp || 0;
-                if (data.streak !== undefined) {
-                    userStreak = data.streak || 0;
-                    localStorage.setItem('naiontrackStreak', String(userStreak));
-                }
-                if (data.lastWorkoutDate) {
-                    lastWorkoutDate = data.lastWorkoutDate;
-                    localStorage.setItem('naiontrackLastWorkoutDate', lastWorkoutDate);
-                }
-                checkStreakInactivity();
+                        localStorage.setItem(getWorkoutXpStorageKey(), String(userWorkoutXp));
+
+                        // Streak e data ultimo allenamento sono isolati per questo account
+                        userStreak = (data.streak !== undefined) ? (data.streak || 0) : 0;
+                        lastWorkoutDate = data.lastWorkoutDate || '';
+                        saveStreakLocally();
+                        checkStreakInactivity();
                     } else {
                         userState = {};
                         userNickname = user.displayName || "";
                         userProfileData = { heightCm: null, weightKg: null, isPublic: true };
                         userWorkoutXp = 0;
+                        localStorage.setItem(getWorkoutXpStorageKey(), '0');
+                        userStreak = 0;
+                        lastWorkoutDate = '';
+                        saveStreakLocally();
                     }
+                    renderAllStreakBadges();
 
                     if (!userNickname) {
                         openNicknameModal();
@@ -8226,14 +8297,20 @@ let currentUser = null;
                     userProfileListenerUnsubscribe();
                     userProfileListenerUnsubscribe = null;
                 }
+
+                // Ripristina lo stato isolato del profilo guest
+                loadStreakLocally();
+                userState = JSON.parse(localStorage.getItem('naiontrackState')) || {};
+                userWorkoutXp = parseFloat(localStorage.getItem(getWorkoutXpStorageKey())) || 0;
+                checkStreakInactivity();
+                renderAllStreakBadges();
+
                 document.getElementById('user-status-text').innerHTML = `👤 Non autenticato (Salvataggio locale) <span id="tree-streak-badge" class="streak-badge" style="background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.35); color:#f87171; border-radius:999px; padding:2px 8px; font-size:0.75rem; font-weight:800; margin-left:6px; display:${(userStreak || 0) > 0 ? 'inline-flex' : 'none'}; align-items:center; gap:3px;">🔥 ${userStreak || 0}</span>`;
                 document.getElementById('auth-actions-container').innerHTML = `
                     <button class="btn-auth-secondary" onclick="openAuthModal('login')">Accedi</button>
                     <button class="btn-auth" onclick="openAuthModal('signup')">Registrati</button>
                 `;
 
-                userState = JSON.parse(localStorage.getItem('naiontrackState')) || {};
-                userWorkoutXp = parseFloat(localStorage.getItem('naiontrackWorkoutXp')) || 0;
                 updateUI();
                 renderProfileSettings();
                 initRealtimeLeaderboard();
@@ -8262,9 +8339,13 @@ let currentUser = null;
 
         function logoutUser() {
             auth.signOut().then(() => {
-                userState = JSON.parse(localStorage.getItem('naiontrackState')) || {};
-                userWorkoutXp = parseFloat(localStorage.getItem('naiontrackWorkoutXp')) || 0;
+                currentUser = null;
+                userNickname = "";
                 userProfileData = {};
+                loadStreakLocally();
+                userState = JSON.parse(localStorage.getItem('naiontrackState')) || {};
+                userWorkoutXp = parseFloat(localStorage.getItem(getWorkoutXpStorageKey())) || 0;
+                renderAllStreakBadges();
                 stopWorkoutsListener();
                 stopChallengesListeners();
                 stopChatInvitesListener();
@@ -9716,6 +9797,11 @@ let currentUser = null;
             const countBadge = document.getElementById('workouts-count-badge');
 
             if (currentUser) {
+                // Mostra immediatamente la cache di questo specifico utente
+                const cached = getLocalWorkouts();
+                if (countBadge) countBadge.innerText = `(${cached.length})`;
+                renderWorkoutsList(cached);
+
                 workoutsUnsubscribe = db.collection("users").doc(currentUser.uid).collection("workouts")
                     .orderBy("createdAt", "desc")
                     .limit(50)
@@ -9723,14 +9809,12 @@ let currentUser = null;
                         const workouts = [];
                         snapshot.forEach(doc => workouts.push(Object.assign({ id: doc.id }, doc.data())));
                         if (countBadge) countBadge.innerText = `(${snapshot.size})`;
-                        if (workouts.length > 0) {
-                            saveLocalWorkouts(workouts);
-                        }
+                        // Salva incondizionatamente la lista per questo specifico account (anche se vuota)
+                        saveLocalWorkouts(workouts);
                         renderWorkoutsList(workouts);
                     }, (error) => {
                         console.error("Errore nel caricamento degli allenamenti da Firestore:", error);
                         workoutsUnsubscribe = null;
-                        // Fallback trasparente: mostra gli allenamenti salvati in locale senza bloccare l'interfaccia
                         const local = getLocalWorkouts();
                         if (countBadge) countBadge.innerText = `(${local.length})`;
                         renderWorkoutsList(local);
@@ -9744,14 +9828,6 @@ let currentUser = null;
 
         function stopWorkoutsListener() {
             if (workoutsUnsubscribe) { workoutsUnsubscribe(); workoutsUnsubscribe = null; }
-        }
-
-        function getLocalWorkouts() {
-            return JSON.parse(localStorage.getItem('naiontrackWorkouts')) || [];
-        }
-
-        function saveLocalWorkouts(list) {
-            localStorage.setItem('naiontrackWorkouts', JSON.stringify(list));
         }
 
         function renderLocalWorkoutsList() {
@@ -9802,17 +9878,28 @@ let currentUser = null;
             const todayStr = new Date().toISOString().slice(0, 10);
             const existingToday = getLocalWorkouts().find(w => (w.date || '').slice(0, 10) === todayStr);
             if (existingToday) {
-                openCustomModal(
-                    "⚠️ Limite Giornaliero Raggiunto",
-                    `Hai già registrato l'allenamento di oggi <strong>"${escapeHtml(existingToday.name || 'Allenamento')}"</strong>!<br><br>` +
+                const modal = document.getElementById('custom-modal');
+                const modalBox = modal ? modal.querySelector('.modal-box') : null;
+                if (modalBox) modalBox.classList.remove('modal-compact');
+                const titleEl = document.getElementById('modal-title');
+                const bodyContent = document.getElementById('modal-body-content');
+                const actionsBox = document.getElementById('modal-actions-box');
+
+                titleEl.innerText = "⚠️ Limite Giornaliero Raggiunto";
+                bodyContent.innerHTML = `<p id="modal-desc">Hai già registrato l'allenamento di oggi <strong>"${escapeHtml(existingToday.name || 'Allenamento')}"</strong>!<br><br>` +
                     `Per garantire un tracciamento equo e bilanciato, è consentito creare al massimo <strong>1 allenamento al giorno</strong> (+500 XP).<br><br>` +
-                    `Se vuoi aggiungere altri esercizi o correggere la sessione odierna, puoi modificarla toccando l'icona <strong>✏️ Modifica</strong> nel tuo diario.`,
-                    "✏️ Modifica Sessione di Oggi",
-                    false,
-                    () => {
-                        openEditWorkoutModal(existingToday.id);
-                    }
-                );
+                    `Se vuoi aggiungere altri esercizi o correggere la sessione odierna, puoi modificarla toccando il pulsante qui sotto o l'icona <strong>✏️ Modifica</strong> nel tuo diario.</p>`;
+                actionsBox.innerHTML = `
+                    <button class="btn-cancel" id="modal-btn-cancel">Chiudi</button>
+                    <button class="btn-confirm" id="btn-edit-today-shortcut">✏️ Modifica Sessione di Oggi</button>
+                `;
+                modal.classList.add('active');
+                document.getElementById('modal-btn-cancel').onclick = () => {
+                    modal.classList.remove('active');
+                };
+                document.getElementById('btn-edit-today-shortcut').onclick = () => {
+                    openEditWorkoutModal(existingToday.id);
+                };
                 return;
             }
 
@@ -9981,10 +10068,23 @@ let currentUser = null;
             // Accredita i 500 XP
             userWorkoutXp = (userWorkoutXp || 0) + 500;
             saveState();
-            localStorage.setItem('naiontrackWorkoutXp', String(userWorkoutXp));
 
             // Aggiorna la streak
             updateStreakOnNewWorkout(date);
+
+            // Salva sempre e immediatamente nel registro locale per massima reattività (Offline-first)
+            const local = getLocalWorkouts();
+            workoutData.id = (currentUser ? 'cloud_' : 'local_') + Date.now();
+            workoutData.createdAt = Date.now();
+            local.unshift(workoutData);
+            saveLocalWorkouts(local);
+
+            const mBox = document.querySelector('#custom-modal .modal-box');
+            if (mBox) mBox.classList.remove('modal-compact');
+            document.getElementById('custom-modal').classList.remove('active');
+            openWorkoutsSection();
+            renderLocalWorkoutsList();
+            showWorkoutSavedModal();
 
             if (currentUser) {
                 const userRef = db.collection("users").doc(currentUser.uid);
@@ -9998,42 +10098,17 @@ let currentUser = null;
                 userRef.collection("workouts").add(Object.assign({}, workoutData, {
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 })).then((docRef) => {
-                    const local = getLocalWorkouts();
-                    workoutData.id = docRef ? docRef.id : ('cloud_' + Date.now());
-                    workoutData.createdAt = Date.now();
-                    local.unshift(workoutData);
-                    saveLocalWorkouts(local);
-
-                    const mBox = document.querySelector('#custom-modal .modal-box');
-                    if (mBox) mBox.classList.remove('modal-compact');
-                    document.getElementById('custom-modal').classList.remove('active');
-                    openWorkoutsSection();
-                    renderLocalWorkoutsList();
-                    showWorkoutSavedModal();
+                    if (docRef && docRef.id) {
+                        const currentList = getLocalWorkouts();
+                        const item = currentList.find(x => x.id === workoutData.id);
+                        if (item) {
+                            item.id = docRef.id;
+                            saveLocalWorkouts(currentList);
+                        }
+                    }
                 }).catch((error) => {
-                    console.warn("Salvataggio su cloud non riuscito, fallback istantaneo su locale:", error);
-                    const list = getLocalWorkouts();
-                    workoutData.id = 'local_' + Date.now();
-                    workoutData.createdAt = Date.now();
-                    list.unshift(workoutData);
-                    saveLocalWorkouts(list);
-
-                    document.getElementById('custom-modal').classList.remove('active');
-                    openWorkoutsSection();
-                    renderLocalWorkoutsList();
-                    showWorkoutSavedModal();
+                    console.warn("Salvataggio asincrono su cloud non riuscito (già salvato in locale):", error);
                 });
-            } else {
-                const list = getLocalWorkouts();
-                workoutData.id = 'local_' + Date.now();
-                workoutData.createdAt = Date.now();
-                list.unshift(workoutData);
-                saveLocalWorkouts(list);
-
-                document.getElementById('custom-modal').classList.remove('active');
-                openWorkoutsSection();
-                renderLocalWorkoutsList();
-                showWorkoutSavedModal();
             }
         }
 
@@ -10254,7 +10329,6 @@ let currentUser = null;
 
             userWorkoutXp = Math.max(0, (userWorkoutXp || 0) - 500);
             saveState();
-            localStorage.setItem('naiontrackWorkoutXp', String(userWorkoutXp));
             if (currentUser) {
                 db.collection("users").doc(currentUser.uid).update({
                     workoutXp: userWorkoutXp,
