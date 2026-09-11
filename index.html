@@ -8963,8 +8963,11 @@ let currentUser = null;
             if (!skill) return;
 
             const isHold = (skill.type === 'sec');
-            const unitLabel = isHold ? 'secondi di tenuta' : 'ripetizioni';
-            const minTarget = skill.baseTarget || (isHold ? 3 : 1);
+            const unitLabel = isHold ? 'secondi di tenuta' : 'ripetizione';
+            const unitPlural = isHold ? 'secondi' : 'ripetizioni';
+            const unitShort = isHold ? 'sec' : 'rep';
+            // Nelle reps l'obiettivo minimo di sblocco è sempre 1 (non il baseTarget del bonus)
+            const minTarget = isHold ? 3 : 1;
             const xpReward = skill.unlockXp || (skill.goalBonusXp || 100);
 
             const drawer = document.getElementById('skill-detail-drawer');
@@ -8998,19 +9001,25 @@ let currentUser = null;
             openCustomModal(
                 `🎉 Sblocca Skill (+${xpReward} XP)`,
                 `Vuoi confermare di aver padroneggiato la skill <strong>"${escapeHtml(skill.name)}"</strong>?<br><br>` +
-                `🎯 <strong>Obiettivo base</strong>: ${minTarget} ${unitLabel}.<br><br>` +
-                `Guadagnerai subito <span style="color: var(--accent); font-size: 1.25rem; font-weight: 900;">+${xpReward} XP</span> sul tuo profilo!`,
+                `<div style="margin:12px 0 16px 0; padding:12px 14px; background:rgba(56, 189, 248, 0.08); border:1px solid var(--line-color); border-radius:12px;">` +
+                    `<div style="font-size:0.82rem; color:var(--subtext); margin-bottom:8px;">🎯 Minimo per lo sblocco: <strong>${minTarget} ${unitLabel}</strong></div>` +
+                    `<div style="display:flex; align-items:center; justify-content:center; gap:8px;">` +
+                        `<label for="unlock-custom-val" style="font-size:0.88rem; font-weight:700; color:var(--text);">${isHold ? 'Secondi completati:' : 'Ripetizioni completate:'}</label>` +
+                        `<input type="number" id="unlock-custom-val" value="${minTarget}" min="1" style="width:75px; text-align:center; padding:7px 10px; border-radius:8px; border:1.5px solid var(--accent); background:var(--card-bg); color:var(--text); font-weight:bold; font-size:1.05rem; box-sizing:border-box;">` +
+                        `<span style="font-size:0.88rem; font-weight:800; color:var(--accent);">${unitShort}</span>` +
+                    `</div>` +
+                `</div>` +
+                `Guadagnerai subito <span style="color: var(--accent); font-size: 1.15rem; font-weight: 900;">+${xpReward} XP</span> sul tuo profilo!`,
                 `🔓 Conferma Sblocco (+${xpReward} XP)`,
                 true,
                 () => {
-                    if (!userState[id]) {
-                        userState[id] = { unlocked: true, val: minTarget };
-                    } else {
-                        userState[id].unlocked = true;
-                        if (!userState[id].val || userState[id].val < minTarget) userState[id].val = minTarget;
-                    }
+                    const inputEl = document.getElementById('unlock-custom-val');
+                    const inputVal = inputEl ? parseInt(inputEl.value) : minTarget;
+                    const finalVal = (!isNaN(inputVal) && inputVal >= 1) ? inputVal : minTarget;
+
+                    userState[id] = { unlocked: true, val: finalVal };
                     saveState();
-                    showAppToast(`🎉 Skill "${skill.name}" sbloccata! +${xpReward} XP`, "success");
+                    showAppToast(`🎉 Skill "${skill.name}" sbloccata con ${finalVal} ${unitShort}! +${xpReward} XP`, "success");
                 },
                 null,
                 () => {
@@ -18810,12 +18819,10 @@ function getCalisthenicsExpertResponse(query) {
             const isHold = (skill.type === 'sec');
             const unitLabel = isHold ? 'secondi di hold' : 'ripetizioni';
             const unitShort = isHold ? 'sec' : 'reps';
-            const currentVal = (userSkillData.val !== undefined)
-                ? userSkillData.val
-                : (isUnlocked ? (skill.baseTarget || 1) : 0);
+            const currentVal = (userSkillData.val !== undefined) ? userSkillData.val : (isUnlocked ? 1 : 0);
             const level = userSkillData.level || (isUnlocked ? 1 : 0);
             const xpReward = skill.unlockXp || (skill.goalBonusXp || 100);
-            const minTarget = skill.baseTarget || (isHold ? 3 : 1);
+            const minTarget = isHold ? 3 : 1;
 
             const stickman = (typeof skillStickmen !== 'undefined' && skillStickmen[skillId]) ||
                 `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="8" fill="none"><circle cx="50" cy="30" r="14"/><line x1="50" y1="44" x2="50" y2="70"/><line x1="28" y1="52" x2="72" y2="52"/><line x1="50" y1="70" x2="35" y2="92"/><line x1="50" y1="70" x2="65" y2="92"/></svg>`;
@@ -18876,15 +18883,27 @@ function getCalisthenicsExpertResponse(query) {
                                 ✅ Padroneggiata
                             </span>
                             <div style="font-size: 0.74rem; color: var(--subtext); margin-top: 4px;">
-                                Minimo base: ${minTarget} ${unitShort}
+                                Minimo sblocco: ${minTarget} ${unitShort}
                             </div>
                         </div>
                     </div>
                 `;
 
                 actionButtonsHtml = `
-                    <div style="display:flex; flex-direction:column; gap:10px; width:100%;">
-                        <button type="button" class="btn-cancel" style="width:100%; padding:13px; font-size:0.95rem; font-weight:800; display:flex; align-items:center; justify-content:center; gap:8px; background:rgba(239,68,68,0.14); border:1.5px solid var(--danger); color:var(--danger); border-radius:12px; cursor:pointer;" onclick="askRelock('${skill.id}');">
+                    <div style="display:flex; flex-direction:column; gap:12px; width:100%;">
+                        <div style="background:rgba(255,255,255,0.03); border:1px solid var(--line-color); border-radius:14px; padding:12px 14px; box-sizing:border-box;">
+                            <div style="font-size:0.8rem; font-weight:700; color:var(--subtext); margin-bottom:8px;">
+                                ⚡ Aggiorna Record Massimale:
+                            </div>
+                            <div style="display:flex; gap:8px; align-items:center;">
+                                <input type="number" id="drawer-input-${skill.id}" value="${currentVal}" min="1" style="width:80px; text-align:center; padding:8px 10px; border-radius:8px; border:1px solid var(--line-color); background:var(--bg-color); color:var(--text); font-weight:bold; font-size:1rem; box-sizing:border-box;">
+                                <span style="font-size:0.85rem; font-weight:700; color:var(--text);">${unitShort}</span>
+                                <button type="button" onclick="updateSkillFromDrawer('${skill.id}')" style="flex:1; padding:8px 14px; font-weight:800; font-size:0.85rem; background:linear-gradient(135deg, #10b981, #059669); border:none; border-radius:8px; color:white; cursor:pointer;">
+                                    💾 Salva Record
+                                </button>
+                            </div>
+                        </div>
+                        <button type="button" class="btn-cancel" style="width:100%; padding:12px; font-size:0.92rem; font-weight:800; display:flex; align-items:center; justify-content:center; gap:8px; background:rgba(239,68,68,0.14); border:1.5px solid var(--danger); color:var(--danger); border-radius:12px; cursor:pointer;" onclick="askRelock('${skill.id}');">
                             🔒 Riblocca Skill (-${xpReward} XP)
                         </button>
                     </div>
@@ -18953,6 +18972,30 @@ function getCalisthenicsExpertResponse(query) {
 
             backdrop.classList.add('active');
             drawer.classList.add('active');
+        }
+
+        function updateSkillFromDrawer(id) {
+            const skill = findSkillById(id);
+            const input = document.getElementById('drawer-input-' + id);
+            if (!input || !skill) return;
+
+            const currentVal = (userState[id] && userState[id].val) || 0;
+            const newVal = parseInt(input.value) || 0;
+            if (newVal < 1) {
+                input.value = currentVal;
+                showAppToast("Inserisci almeno 1 " + (skill.type === 'sec' ? 'secondo' : 'ripetizione') + "!", "warning");
+                return;
+            }
+
+            if (!userState[id]) {
+                userState[id] = { unlocked: true, val: newVal };
+            } else {
+                userState[id].val = newVal;
+            }
+            saveState();
+            const unit = skill.type === 'sec' ? 's' : 'rep';
+            showAppToast("Record " + skill.name + " aggiornato a " + newVal + " " + unit + "!", "success");
+            openSkillDetailDrawer(id);
         }
 
         function closeSkillDetailDrawer() {
