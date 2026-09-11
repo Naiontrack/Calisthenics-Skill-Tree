@@ -4973,6 +4973,16 @@
             transform: translateX(20px);
         }
 
+        body.theme-light .galaxy-slider {
+            background-color: #cbd5e1;
+            border-color: #94a3b8;
+        }
+
+        body.theme-light .galaxy-switch input:checked + .galaxy-slider {
+            background-color: #0284c7;
+            border-color: #0284c7;
+        }
+
         /* RETENTION & SCADENZA MEDIA CHAT (90 GIORNI) */
         .chat-media-expired-notice {
             display: flex;
@@ -6703,9 +6713,7 @@
                             <button type="button" class="btn-edit-nickname" id="btn-edit-nickname" onclick="openEditNicknameModal()" style="background:rgba(56,189,248,0.12); border:1px solid var(--accent); color:var(--accent); padding:4px 10px; border-radius:8px; font-size:0.78rem; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; gap:5px; transition:all 0.2s;">
                                 ✏️ Modifica
                             </button>
-                            <button type="button" class="btn-setup-wizard" id="btn-setup-wizard" onclick="openProfileSetupWizard()" style="background:rgba(168,85,247,0.15); border:1px solid #c084fc; color:#e9d5ff; padding:4px 10px; border-radius:8px; font-size:0.78rem; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; gap:5px; transition:all 0.2s;">
-                                🧙 Setup Profilo
-                            </button>
+
                         </div>
                         <span id="bento-rank-badge" class="bento-rank-tag">Unranked</span>
                     </div>
@@ -10188,6 +10196,14 @@ let currentUser = null;
 
         auth.onAuthStateChanged((user) => {
             authInitialized = true;
+            // Se l'utente è registrato con email e password ma non ha ancora verificato la mail, disconnettilo immediatamente
+            if (user && isEmailPasswordUser(user) && !user.emailVerified) {
+                auth.signOut().then(() => {
+                    currentUser = null;
+                    renderUserAuthBar();
+                });
+                return;
+            }
             currentUser = user;
             if (user) {
                 renderUserAuthBar();
@@ -10757,11 +10773,11 @@ let currentUser = null;
                     <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;">
                         <div class="auth-form-group" style="text-align:left;">
                             <label style="font-size:0.8rem; font-weight:700; color:var(--text); margin-bottom:4px; display:block;">Altezza (cm)</label>
-                            <input type="number" id="wizard-height-input" placeholder="175" min="100" max="230" step="1" value="${wizardState.heightCm || ''}" oninput="updateWizardBMI()" style="width:100%; box-sizing:border-box; padding:10px 12px; border-radius:10px; border:1.5px solid var(--line-color); background:var(--input-bg); color:var(--text); font-size:1rem; font-weight:700;">
+                            <input type="number" id="wizard-height-input" placeholder="175" min="120" max="220" step="1" value="${wizardState.heightCm || ''}" oninput="updateWizardBMI()" style="width:100%; box-sizing:border-box; padding:10px 12px; border-radius:10px; border:1.5px solid var(--line-color); background:var(--input-bg); color:var(--text); font-size:1rem; font-weight:700;">
                         </div>
                         <div class="auth-form-group" style="text-align:left;">
                             <label style="font-size:0.8rem; font-weight:700; color:var(--text); margin-bottom:4px; display:block;">Peso (kg)</label>
-                            <input type="number" id="wizard-weight-input" placeholder="70" min="30" max="200" step="0.5" value="${wizardState.weightKg || ''}" oninput="updateWizardBMI()" style="width:100%; box-sizing:border-box; padding:10px 12px; border-radius:10px; border:1.5px solid var(--line-color); background:var(--input-bg); color:var(--text); font-size:1rem; font-weight:700;">
+                            <input type="number" id="wizard-weight-input" placeholder="70" min="40" max="140" step="0.5" value="${wizardState.weightKg || ''}" oninput="updateWizardBMI()" style="width:100%; box-sizing:border-box; padding:10px 12px; border-radius:10px; border:1.5px solid var(--line-color); background:var(--input-bg); color:var(--text); font-size:1rem; font-weight:700;">
                         </div>
                     </div>
                     <div id="wizard-bmi-box" class="wizard-bmi-preview" style="margin-bottom:14px;"></div>
@@ -10834,9 +10850,9 @@ let currentUser = null;
                                 Compatibile con tutti e 3 i temi. Aggiunge particelle stellari fluide e nebulosa a 60 FPS.
                             </div>
                         </div>
-                        <label class="theme-switch" style="position:relative; display:inline-block; width:44px; height:24px; margin:0; flex-shrink:0;">
-                            <input type="checkbox" id="wizard-galaxy-toggle" ${wizardState.galaxyBg ? 'checked' : ''} onchange="toggleWizardGalaxy(this.checked)" style="opacity:0; width:0; height:0;">
-                            <span class="theme-slider" style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background:rgba(255,255,255,0.2); border-radius:24px; transition:0.3s;"></span>
+                        <label class="galaxy-switch" title="Attiva/disattiva lo sfondo galattico animato" style="margin:0; flex-shrink:0;">
+                            <input type="checkbox" id="wizard-galaxy-toggle" ${wizardState.galaxyBg ? 'checked' : ''} onchange="toggleWizardGalaxy(this.checked)">
+                            <span class="galaxy-slider"></span>
                         </label>
                     </div>
                     <div class="auth-error" id="wizard-step3-error" style="color:var(--danger); font-size:0.82rem; margin-top:10px; min-height:16px;"></div>
@@ -10924,7 +10940,7 @@ let currentUser = null;
             const h = parseFloat(hEl ? hEl.value : wizardState.heightCm);
             const w = parseFloat(wEl ? wEl.value : wizardState.weightKg);
 
-            if (h && w && h >= 100 && h <= 230 && w >= 30 && w <= 200) {
+            if (h && w && h >= 120 && h <= 220 && w >= 40 && w <= 140) {
                 const hM = h / 100;
                 const bmi = (w / (hM * hM)).toFixed(1);
                 let label = "Normopeso";
@@ -10977,8 +10993,8 @@ let currentUser = null;
 
             if (hEl && hEl.value.trim() !== '') {
                 const h = parseFloat(hEl.value);
-                if (isNaN(h) || h < 100 || h > 230) {
-                    if (errEl) errEl.innerText = "❌ L'altezza deve essere compresa tra 100 e 230 cm.";
+                if (isNaN(h) || h < 120 || h > 220) {
+                    if (errEl) errEl.innerText = "❌ L'altezza deve essere compresa tra 120 e 220 cm.";
                     return;
                 }
                 wizardState.heightCm = h;
@@ -10988,8 +11004,8 @@ let currentUser = null;
 
             if (wEl && wEl.value.trim() !== '') {
                 const w = parseFloat(wEl.value);
-                if (isNaN(w) || w < 30 || w > 200) {
-                    if (errEl) errEl.innerText = "❌ Il peso deve essere compreso tra 30 e 200 kg.";
+                if (isNaN(w) || w < 40 || w > 140) {
+                    if (errEl) errEl.innerText = "❌ Il peso deve essere compreso tra 40 e 140 kg.";
                     return;
                 }
                 wizardState.weightKg = w;
@@ -11244,37 +11260,59 @@ let currentUser = null;
 
                 authPromise
                     .then((userCred) => {
-                        modal.classList.remove('active');
-                        if (userCred && userCred.user) {
-                            currentUser = userCred.user;
-                            renderProfileSettings();
-                            autoRegisterOneSignalPush(userCred.user.uid);
+                        if (!userCred || !userCred.user) return;
+                        const user = userCred.user;
 
-                            // GESTIONE VERIFICA EMAIL CON FIREBASE AUTH
-                            if (!userCred.user.emailVerified) {
-                                if (!isLogin) {
-                                    // Nuova registrazione: invia subito la mail di verifica
-                                    userCred.user.sendEmailVerification()
-                                        .then(() => {
-                                            alert("🎉 Registrazione completata con successo!\n\nAbbiamo inviato un'email di verifica a " + email + ".\nApri la tua casella di posta (controlla anche nella cartella Spam) e clicca sul link per confermare l'account.");
-                                        })
-                                        .catch((verErr) => {
-                                            console.warn("Invio email di verifica:", verErr);
-                                        });
-                                } else {
-                                    // Login: se l'email non è ancora verificata, invia il link di verifica
-                                    userCred.user.sendEmailVerification()
-                                        .then(() => {
-                                            alert("👋 Bentornato!\n\nNota: il tuo indirizzo email non risulta ancora verificato. Ti abbiamo inviato una nuova email con il link di verifica a " + email + " (controlla anche nello Spam).");
-                                        })
-                                        .catch((verErr) => {
-                                            if (verErr && verErr.code !== 'auth/too-many-requests') {
-                                                console.warn("Invio email verifica:", verErr);
-                                            }
-                                        });
+                        // SE L'ACCOUNT È STATO CREATO O ACCEDE CON EMAIL & PASSWORD:
+                        // L'ACCESSO NON DEVE FUNZIONARE FINCHÉ L'EMAIL NON È VERIFICATA!
+                        if (isEmailPasswordUser(user) && !user.emailVerified) {
+                            // 1. Invia subito la mail di verifica (o reinviala)
+                            user.sendEmailVerification().catch((verErr) => {
+                                if (verErr && verErr.code !== 'auth/too-many-requests') {
+                                    console.warn("Invio email verifica:", verErr);
                                 }
+                            });
+
+                            // 2. Disconnetti immediatamente l'utente: accesso bloccato!
+                            auth.signOut().then(() => {
+                                currentUser = null;
+                                renderUserAuthBar();
+                            });
+
+                            if (!isLogin) {
+                                // Caso REGISTRAZIONE: messaggio di successo + blocco accesso fino a verifica
+                                alert("🎉 Registrazione completata con successo!\n\nAbbiamo inviato un'email di verifica a " + email + ".\n\n⚠️ L'accesso è bloccato finché non confermi l'indirizzo. Apri la tua casella di posta (controlla anche nella cartella Spam), clicca sul link di verifica e poi effettua il login.");
+                                openAuthModal('login');
+                                const errElPost = document.getElementById('auth-error-msg');
+                                if (errElPost) {
+                                    errElPost.innerHTML = `<div style="background:rgba(34,197,94,0.12); border:1px solid #22c55e; border-radius:10px; padding:10px 12px; color:#22c55e; font-size:0.82rem; font-weight:700; text-align:left;">✅ Registrazione effettuata! Clicca sul link inviato a <strong>${escapeHtml(email)}</strong> prima di accedere.</div>`;
+                                }
+                            } else {
+                                // Caso LOGIN: accesso rifiutato, mostra banner rosso con pulsante reinvio
+                                errorEl.innerHTML = `
+                                    <div style="background:rgba(239,68,68,0.12); border:1px solid #ef4444; border-radius:10px; padding:12px; margin-top:6px; text-align:left;">
+                                        <div style="color:#ef4444; font-weight:800; font-size:0.88rem; margin-bottom:4px; display:flex; align-items:center; gap:6px;">
+                                            🚫 Accesso Bloccato: Email Non Verificata
+                                        </div>
+                                        <div style="color:var(--text); font-size:0.8rem; line-height:1.4;">
+                                            Devi confermare il tuo indirizzo email prima di poter accedere. Clicca sul link inviato a <strong>${escapeHtml(email)}</strong> (controlla anche nella cartella Spam).
+                                        </div>
+                                        <div style="margin-top:10px; display:flex; justify-content:flex-end;">
+                                            <button type="button" onclick="resendVerificationFromAuthModal('${encodeURIComponent(email)}', '${encodeURIComponent(password)}')" style="background:#ef4444; color:#ffffff; font-weight:800; font-size:0.76rem; border:none; padding:6px 12px; border-radius:6px; cursor:pointer;">
+                                                ✉️ Invia di nuovo link di verifica
+                                            </button>
+                                        </div>
+                                    </div>
+                                `;
                             }
+                            return;
                         }
+
+                        // Se l'email è verificata (o se è accesso Google): consenti l'accesso
+                        modal.classList.remove('active');
+                        currentUser = user;
+                        renderProfileSettings();
+                        autoRegisterOneSignalPush(user.uid);
                     })
                     .catch((error) => {
                         errorEl.innerText = formatAuthErrorMessage(error);
@@ -11725,6 +11763,32 @@ let currentUser = null;
         // ==========================================
         // RILEVAZIONE UTENTE EMAIL & PASSWORD
         // ==========================================
+        window.resendVerificationFromAuthModal = function(encodedEmail, encodedPassword) {
+            const email = decodeURIComponent(encodedEmail);
+            const password = decodeURIComponent(encodedPassword);
+            const errorEl = document.getElementById('auth-error-msg');
+            if (!email || !password) return;
+            auth.signInWithEmailAndPassword(email, password)
+                .then((cred) => {
+                    if (cred.user) {
+                        return cred.user.sendEmailVerification().then(() => {
+                            auth.signOut();
+                            currentUser = null;
+                            if (errorEl) {
+                                errorEl.innerHTML = `<div style="background:rgba(34,197,94,0.12); border:1px solid #22c55e; border-radius:10px; padding:10px 12px; color:#22c55e; font-size:0.82rem; font-weight:700; text-align:left;">✉️ Nuova email di verifica inviata con successo a <strong>${escapeHtml(email)}</strong>! Controlla la tua posta (inclusa la cartella Spam).</div>`;
+                            }
+                        });
+                    }
+                })
+                .catch((err) => {
+                    if (err && err.code === 'auth/too-many-requests') {
+                        if (errorEl) errorEl.innerText = "⚠️ Troppe richieste inviate. Attendi qualche minuto prima di richiedere un nuovo link.";
+                    } else {
+                        if (errorEl) errorEl.innerText = "Errore: " + (err.message || err);
+                    }
+                });
+        };
+
         function sendVerificationEmailToCurrentUser() {
             const user = (typeof firebase !== 'undefined' && firebase.auth) ? (firebase.auth().currentUser || currentUser) : currentUser;
             if (!user) {
@@ -11987,7 +12051,7 @@ let currentUser = null;
                     </div>
                     <div class="auth-form-group">
                         <label>⚖️ Peso in kg (facoltativo, 40-130)</label>
-                        <input type="number" id="profile-weight-input" min="40" max="130" placeholder="es. 70" value="${weight}">
+                        <input type="number" id="profile-weight-input" min="40" max="140" placeholder="es. 70" value="${weight}">
                     </div>
                 </div>
                 <div id="bmi-display-box"></div>
@@ -12066,8 +12130,8 @@ let currentUser = null;
 
             if (weightRaw !== '') {
                 const w = parseFloat(weightRaw);
-                if (isNaN(w) || w < 40 || w > 130) {
-                    if (errEl) errEl.innerText = "❌ Il peso deve essere un numero tra 40 e 130 kg.";
+                if (isNaN(w) || w < 40 || w > 140) {
+                    if (errEl) errEl.innerText = "❌ Il peso deve essere un numero tra 40 e 140 kg.";
                     return;
                 }
                 weightKg = w;
@@ -12126,13 +12190,13 @@ let currentUser = null;
             const h = parseFloat(hInput.value);
             const w = parseFloat(wInput.value);
 
-            if (h && w && h >= 120 && h <= 220 && w >= 40 && w <= 130) {
+            if (h && w && h >= 120 && h <= 220 && w >= 40 && w <= 140) {
                 const info = computeBmi(h, w);
                 box.innerHTML = `<p>📊 Il tuo BMI: <strong>${info.value}</strong> — <strong style="color: var(--accent);">${info.label}</strong></p>`;
             } else if (hInput.value.trim() === '' && wInput.value.trim() === '') {
                 box.innerHTML = `<p style="color: var(--subtext); font-size: 0.85rem;">Inserisci altezza e peso per calcolare il tuo BMI.</p>`;
             } else {
-                box.innerHTML = `<p style="color: var(--subtext); font-size: 0.85rem;">Inserisci altezza (120-220 cm) e peso (40-130 kg) validi per calcolare il BMI.</p>`;
+                box.innerHTML = `<p style="color: var(--subtext); font-size: 0.85rem;">Inserisci altezza (120-220 cm) e peso (40-140 kg) validi per calcolare il BMI.</p>`;
             }
         }
 
