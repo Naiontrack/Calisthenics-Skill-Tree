@@ -1152,21 +1152,7 @@
         }
 
         .chat-badge {
-            position: absolute;
-            top: -3px;
-            right: -3px;
-            min-width: 20px;
-            height: 20px;
-            padding: 0 5px;
-            border-radius: 999px;
-            background: var(--danger);
-            color: #fff;
-            font-size: 0.7rem;
-            font-weight: bold;
-            line-height: 20px;
-            text-align: center;
-            box-shadow: 0 0 0 2px var(--bg-color);
-            z-index: 91;
+            display: none !important;
         }
 
         .chat-panel {
@@ -3824,16 +3810,24 @@
 
         .bottom-nav-badge {
             position: absolute;
-            top: 4px;
-            right: calc(50% - 18px);
+            top: 2px;
+            right: calc(50% - 20px);
             background: #ef4444;
             color: #ffffff;
             font-size: 0.65rem;
             font-weight: 800;
-            padding: 1px 5px;
+            min-width: 16px;
+            height: 16px;
+            padding: 0 4px;
+            box-sizing: border-box;
             border-radius: 999px;
-            box-shadow: 0 0 6px rgba(239, 68, 68, 0.6);
-            line-height: 1.2;
+            box-shadow: 0 2px 6px rgba(239, 68, 68, 0.55);
+            line-height: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+            z-index: 10;
         }
 
         /* VIEW SWITCHER & TREE CONTROLS (PERFECTLY CENTERED) */
@@ -14460,18 +14454,27 @@ function getCalisthenicsExpertResponse(query) {
 
         function renderChatBadge() {
             const badge = document.getElementById('chat-badge');
+            const bottomBadge = document.getElementById('bottom-nav-chat-badge');
             const privateDot = document.getElementById('chat-private-dot');
             const generalDot = document.getElementById('chat-general-dot');
             const pendingCount = (typeof pendingChatInvites !== 'undefined' && pendingChatInvites) ? pendingChatInvites.length : 0;
             const total = unreadGeneralCount + unreadPrivateCount + pendingCount;
+
+            // Disabilitato il numeretto in alto a destra
             if (badge) {
+                badge.style.display = 'none';
+            }
+
+            // Mostra il numeretto sul pulsante "Chat" in basso (bottom navigation bar)
+            if (bottomBadge) {
                 if (total > 0) {
-                    badge.innerText = total > 99 ? '99+' : String(total);
-                    badge.style.display = 'block';
+                    bottomBadge.innerText = total > 99 ? '99+' : String(total);
+                    bottomBadge.style.display = 'flex';
                 } else {
-                    badge.style.display = 'none';
+                    bottomBadge.style.display = 'none';
                 }
             }
+
             if (privateDot) {
                 privateDot.style.display = (unreadPrivateCount > 0 || pendingCount > 0) ? 'block' : 'none';
             }
