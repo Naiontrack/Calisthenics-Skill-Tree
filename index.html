@@ -1705,8 +1705,12 @@
             border-radius: 10px;
             overflow: hidden;
             max-width: 280px;
+            min-height: 120px;
             background: rgba(0, 0, 0, 0.25);
             border: 1px solid rgba(255, 255, 255, 0.08);
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .chat-media-img {
@@ -13938,9 +13942,10 @@ function getCalisthenicsExpertResponse(query) {
         }
 
         function formatAudioTime(seconds) {
-            if (!seconds || isNaN(seconds) || seconds < 0) return '0:00';
-            const m = Math.floor(seconds / 60);
-            const s = Math.floor(seconds % 60);
+            const num = Number(seconds);
+            if (!num || !Number.isFinite(num) || isNaN(num) || num <= 0) return '0:00';
+            const m = Math.floor(num / 60);
+            const s = Math.floor(num % 60);
             return `${m}:${s < 10 ? '0' : ''}${s}`;
         }
 
@@ -13976,11 +13981,17 @@ function getCalisthenicsExpertResponse(query) {
                                 return;
                             }
                             const cleanName = (file.name || 'photo').replace(/\.[^/.]+$/, "") + ".jpg";
-                            const compressedFile = new File([blob], cleanName, {
-                                type: 'image/jpeg',
-                                lastModified: Date.now()
-                            });
-                            resolve(compressedFile);
+                            try {
+                                const compressedFile = new File([blob], cleanName, {
+                                    type: 'image/jpeg',
+                                    lastModified: Date.now()
+                                });
+                                resolve(compressedFile);
+                            } catch (err) {
+                                // Fallback per Safari / browser mobili
+                                try { blob.name = cleanName; } catch (e) {}
+                                resolve(blob);
+                            }
                         }, 'image/jpeg', quality);
                     };
                     img.onerror = () => resolve(file);
@@ -13997,9 +14008,12 @@ function getCalisthenicsExpertResponse(query) {
             event.target.value = '';
 
             let type = null;
-            if (file.type.startsWith('image/')) {
+            const fileMime = (file.type || '').toLowerCase();
+            const fileName = (file.name || '').toLowerCase();
+
+            if (fileMime.startsWith('image/') || /\.(jpg|jpeg|png|webp|gif|heic|heif|bmp|svg)$/i.test(fileName)) {
                 type = 'image';
-            } else if (file.type.startsWith('video/')) {
+            } else if (fileMime.startsWith('video/') || /\.(mp4|mov|webm|m4v|3gp)$/i.test(fileName)) {
                 type = 'video';
             } else {
                 showAppToast("Formato non supportato. Seleziona una foto o un video.", "warning");
@@ -14075,7 +14089,9 @@ function getCalisthenicsExpertResponse(query) {
 
         async function uploadMediaToCloudinary(fileOrBlob, mediaType) {
             const formData = new FormData();
-            formData.append('file', fileOrBlob);
+            const fallbackFileName = mediaType === 'audio' ? 'voice.webm' : (mediaType === 'video' ? 'video.mp4' : 'photo.jpg');
+            const uploadName = fileOrBlob.name || fallbackFileName;
+            formData.append('file', fileOrBlob, uploadName);
             formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
             formData.append('folder', CLOUDINARY_FOLDER);
 
@@ -14219,7 +14235,14 @@ function getCalisthenicsExpertResponse(query) {
                 const mime = voiceMediaRecorder.mimeType || 'audio/webm';
                 const audioBlob = new Blob(voiceAudioChunks, { type: mime });
                 const ext = mime.includes('mp4') ? 'mp4' : (mime.includes('ogg') ? 'ogg' : 'webm');
-                const audioFile = new File([audioBlob], `voice_${Date.now()}.${ext}`, { type: mime });
+                const cleanAudioName = `voice_${Date.now()}.${ext}`;
+                let audioFile;
+                try {
+                    audioFile = new File([audioBlob], cleanAudioName, { type: mime });
+                } catch (e) {
+                    try { audioBlob.name = cleanAudioName; } catch (err) {}
+                    audioFile = audioBlob;
+                }
 
                 try {
                     const uploadRes = await uploadMediaToCloudinary(audioFile, 'audio');
@@ -14297,16 +14320,21 @@ function getCalisthenicsExpertResponse(query) {
             const audio = document.getElementById(`voice-audio-${msgId}`);
             const fill = document.getElementById(`voice-fill-${msgId}`);
             const timeEl = document.getElementById(`voice-time-${msgId}`);
+            const totalEl = document.getElementById(`voice-total-${msgId}`);
             if (!audio) return;
             const cur = audio.currentTime || 0;
-            const dur = (audio.duration && !isNaN(audio.duration) && audio.duration > 0)
+            const fallbackDur = parseFloat(audio.getAttribute('data-duration')) || 0;
+            const dur = (audio.duration && Number.isFinite(audio.duration) && audio.duration > 0)
                 ? audio.duration
-                : (parseFloat(audio.getAttribute('data-duration')) || 0);
+                : (fallbackDur > 0 && Number.isFinite(fallbackDur) ? fallbackDur : 0);
             if (fill && dur > 0) {
                 fill.style.width = `${Math.min(100, (cur / dur) * 100)}%`;
             }
             if (timeEl) {
                 timeEl.innerText = formatAudioTime(cur);
+            }
+            if (totalEl && dur > 0 && (totalEl.innerText === '0:00' || totalEl.innerText.includes('NaN') || totalEl.innerText.includes('Infinity'))) {
+                totalEl.innerText = formatAudioTime(dur);
             }
         }
 
@@ -14323,8 +14351,12 @@ function getCalisthenicsExpertResponse(query) {
         function onVoiceAudioLoaded(msgId) {
             const audio = document.getElementById(`voice-audio-${msgId}`);
             const totalEl = document.getElementById(`voice-total-${msgId}`);
-            if (audio && totalEl && audio.duration && !isNaN(audio.duration)) {
+            if (!audio || !totalEl) return;
+            const fallbackDur = parseFloat(audio.getAttribute('data-duration')) || 0;
+            if (audio.duration && Number.isFinite(audio.duration) && audio.duration > 0) {
                 totalEl.innerText = formatAudioTime(audio.duration);
+            } else if (fallbackDur > 0 && Number.isFinite(fallbackDur)) {
+                totalEl.innerText = formatAudioTime(fallbackDur);
             }
         }
 
@@ -14335,9 +14367,10 @@ function getCalisthenicsExpertResponse(query) {
             const rect = track.getBoundingClientRect();
             const clickX = event.clientX - rect.left;
             const ratio = Math.max(0, Math.min(1, clickX / rect.width));
-            const dur = (audio.duration && !isNaN(audio.duration) && audio.duration > 0)
+            const fallbackDur = parseFloat(audio.getAttribute('data-duration')) || 0;
+            const dur = (audio.duration && Number.isFinite(audio.duration) && audio.duration > 0)
                 ? audio.duration
-                : (parseFloat(audio.getAttribute('data-duration')) || 0);
+                : (fallbackDur > 0 && Number.isFinite(fallbackDur) ? fallbackDur : 0);
             if (dur > 0) {
                 audio.currentTime = ratio * dur;
                 onVoiceAudioUpdate(msgId);
@@ -15051,21 +15084,48 @@ function getCalisthenicsExpertResponse(query) {
                     }).catch(err => console.error("Errore recupero rank utente:", err));
                 }
 
+                // Risoluzione robusta del tipo di media (anche se mediaType è assente, 'image/jpeg', ecc.)
+                let resolvedMediaType = (m.mediaType || '').toLowerCase();
+                const mediaUrl = (m.mediaUrl || '').trim();
+
+                if (mediaUrl) {
+                    if (!resolvedMediaType || resolvedMediaType === 'media' || resolvedMediaType === 'file') {
+                        if (/\.(webm|mp3|m4a|ogg|wav|aac)(\?.*)?$/i.test(mediaUrl) || mediaUrl.includes('voice_')) {
+                            resolvedMediaType = 'audio';
+                        } else if (/\.(mp4|mov|m4v|3gp)(\?.*)?$/i.test(mediaUrl)) {
+                            resolvedMediaType = 'video';
+                        } else if (/\/image\/upload\//i.test(mediaUrl) || /\.(jpe?g|png|webp|gif|svg)(\?.*)?$/i.test(mediaUrl)) {
+                            resolvedMediaType = 'image';
+                        } else if (/\/video\/upload\//i.test(mediaUrl)) {
+                            resolvedMediaType = m.mediaDuration ? 'audio' : 'video';
+                        } else {
+                            resolvedMediaType = 'image';
+                        }
+                    } else if (resolvedMediaType.startsWith('image/')) {
+                        resolvedMediaType = 'image';
+                    } else if (resolvedMediaType.startsWith('video/')) {
+                        resolvedMediaType = 'video';
+                    } else if (resolvedMediaType.startsWith('audio/')) {
+                        resolvedMediaType = 'audio';
+                    }
+                }
+
                 let mediaHtml = '';
-                if (m.mediaUrl && m.mediaType === 'image') {
+                if (mediaUrl && resolvedMediaType === 'image') {
                     mediaHtml = `
                         <div class="chat-media-wrap">
-                            <img src="${escapeHtml(m.mediaUrl)}" class="chat-media-img" loading="lazy" alt="Foto chat" onclick="openChatMediaLightbox('${escapeHtml(m.mediaUrl)}')">
+                            <img src="${escapeHtml(mediaUrl)}" class="chat-media-img" loading="lazy" alt="Foto chat" onclick="openChatMediaLightbox('${escapeHtml(mediaUrl)}')" onerror="this.onerror=null; this.parentElement.innerHTML='<div style=\\'padding:12px; font-size:12px; color:var(--subtext); text-align:center;\\'>📷 Impossibile caricare l\\'immagine.<br><a href=\\'${escapeHtml(mediaUrl)}\\' target=\\'_blank\\' rel=\\'noopener noreferrer\\' style=\\'color:var(--primary); text-decoration:underline; font-weight:600; display:inline-block; margin-top:4px;\\'>Apri foto</a></div>';">
                         </div>
                     `;
-                } else if (m.mediaUrl && m.mediaType === 'video') {
+                } else if (mediaUrl && resolvedMediaType === 'video') {
                     mediaHtml = `
                         <div class="chat-media-wrap">
-                            <video src="${escapeHtml(m.mediaUrl)}" class="chat-media-video" controls playsinline preload="metadata"></video>
+                            <video src="${escapeHtml(mediaUrl)}" class="chat-media-video" controls playsinline preload="metadata" onerror="this.onerror=null; this.parentElement.innerHTML='<div style=\\'padding:12px; font-size:12px; color:var(--subtext); text-align:center;\\'>🎬 Impossibile riprodurre il video.<br><a href=\\'${escapeHtml(mediaUrl)}\\' target=\\'_blank\\' rel=\\'noopener noreferrer\\' style=\\'color:var(--primary); text-decoration:underline; font-weight:600; display:inline-block; margin-top:4px;\\'>Apri video</a></div>';"></video>
                         </div>
                     `;
-                } else if (m.mediaUrl && m.mediaType === 'audio') {
-                    const durLabel = m.mediaDuration ? formatAudioTime(m.mediaDuration) : '🎤 Vocale';
+                } else if (mediaUrl && resolvedMediaType === 'audio') {
+                    const durNum = parseFloat(m.mediaDuration);
+                    const durLabel = (durNum && Number.isFinite(durNum) && durNum > 0) ? formatAudioTime(durNum) : '0:00';
                     mediaHtml = `
                         <div class="chat-voice-player" id="voice-player-${m.id}">
                             <button type="button" class="voice-play-btn" id="voice-btn-${m.id}" onclick="toggleVoicePlay('${m.id}')" aria-label="Riproduci audio">▶</button>
@@ -15078,13 +15138,18 @@ function getCalisthenicsExpertResponse(query) {
                                     <span class="voice-time-total" id="voice-total-${m.id}">${durLabel}</span>
                                 </div>
                             </div>
-                            <audio id="voice-audio-${m.id}" src="${escapeHtml(m.mediaUrl)}" preload="metadata" data-duration="${m.mediaDuration || 0}" ontimeupdate="onVoiceAudioUpdate('${m.id}')" onended="onVoiceAudioEnded('${m.id}')" onloadedmetadata="onVoiceAudioLoaded('${m.id}')"></audio>
+                            <audio id="voice-audio-${m.id}" src="${escapeHtml(mediaUrl)}" preload="metadata" data-duration="${durNum || 0}" ontimeupdate="onVoiceAudioUpdate('${m.id}')" onended="onVoiceAudioEnded('${m.id}')" onloadedmetadata="onVoiceAudioLoaded('${m.id}')"></audio>
                         </div>
                     `;
                 }
 
-                const textHtml = m.text ? `<span class="chat-msg-text">${formatChatTextWithLinks(m.text)}</span>` : '';
+                let textHtml = m.text ? `<span class="chat-msg-text">${formatChatTextWithLinks(m.text)}</span>` : '';
                 const previewsHtml = m.text ? getChatMessagePreviewsHtml(m.text) : '';
+
+                // Fallback di sicurezza: se sia il testo che i media risultano vuoti
+                if (!textHtml && !mediaHtml) {
+                    textHtml = `<span class="chat-msg-text" style="color:var(--subtext); font-style:italic; font-size:12px;">[Messaggio non disponibile o formato multimediale - aggiorna la pagina se non compare]</span>`;
+                }
                 const sentTime = formatChatTime(m.createdAt);
                 const editedTime = m.edited ? formatChatTime(m.editedAt) : '';
                 const editedHtml = m.edited
@@ -15092,9 +15157,10 @@ function getCalisthenicsExpertResponse(query) {
                     : '';
                 const timeHtml = sentTime ? `<span class="chat-msg-time">${sentTime}</span>` : '';
 
+                const isVoice = resolvedMediaType === 'audio' || m.mediaType === 'audio';
                 const actionsHtml = isMe ? `
                     <div class="chat-msg-actions">
-                        <button class="chat-msg-action-btn" title="Modifica" onclick="openEditMessageModal('${m.id}')">✏️</button>
+                        ${!isVoice ? `<button class="chat-msg-action-btn" title="Modifica" onclick="openEditMessageModal('${m.id}')">✏️</button>` : ''}
                         <button class="chat-msg-action-btn" title="Elimina" onclick="askDeleteChatMessage('${m.id}')">🗑️</button>
                     </div>
                 ` : '';
@@ -16457,6 +16523,12 @@ function getCalisthenicsExpertResponse(query) {
         function openEditMessageModal(msgId) {
             const data = chatMessagesCache[msgId];
             if (!data) return;
+
+            // I messaggi vocali non possono essere modificati
+            if (data.mediaType === 'audio' || (data.mediaUrl && (/\.(webm|mp3|m4a|ogg|wav|aac)(\?.*)?$/i.test(data.mediaUrl) || data.mediaUrl.includes('voice_')))) {
+                showAppToast("I messaggi vocali non possono essere modificati.", "warning");
+                return;
+            }
 
             const modal = document.getElementById('custom-modal');
             const titleEl = document.getElementById('modal-title');
