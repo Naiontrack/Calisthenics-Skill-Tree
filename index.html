@@ -3924,13 +3924,14 @@
 
         @media (max-width: 768px) {
             body.in-chat-tab {
-                padding-top: max(4px, env(safe-area-inset-top, 4px)) !important;
-                padding-left: 6px !important;
-                padding-right: 6px !important;
-                padding-bottom: 0 !important;
+                position: fixed !important;
+                inset: 0 !important;
+                width: 100vw !important;
                 height: 100dvh !important;
                 max-height: 100dvh !important;
                 overflow: hidden !important;
+                padding: 0 !important;
+                margin: 0 !important;
             }
 
             #tab-view-chat:not(.active) {
@@ -3938,16 +3939,25 @@
             }
 
             #tab-view-chat.active {
+                position: fixed !important;
+                top: max(6px, env(safe-area-inset-top, 6px)) !important;
+                left: 6px !important;
+                right: 6px !important;
+                /* Sopraelevazione interfaccia chat: la bottom navigation bar misura 64px + safe-area-inset-bottom.
+                   Aggiungiamo 14px di margine superiore per garantire che la barra di digitazione e i pulsanti
+                   non siano mai coperti e siano facilmente cliccabili con il pollice senza toccare la navbar in basso. */
+                bottom: calc(64px + env(safe-area-inset-bottom, 0px) + 14px) !important;
+                height: auto !important;
+                max-height: none !important;
+                width: auto !important;
+                max-width: none !important;
+                margin: 0 !important;
+                padding: 0 !important;
                 display: flex !important;
                 flex-direction: column !important;
-                width: 100% !important;
-                max-width: 100% !important;
-                height: calc(100dvh - 64px - env(safe-area-inset-bottom, 0px) - 10px) !important;
-                max-height: calc(100dvh - 64px - env(safe-area-inset-bottom, 0px) - 10px) !important;
-                padding: 0 !important;
-                margin: 0 auto !important;
                 overflow: hidden !important;
                 box-sizing: border-box !important;
+                z-index: 50 !important;
             }
 
             #tab-view-chat .chat-banner-compact {
@@ -3975,27 +3985,31 @@
                 display: flex !important;
                 flex-direction: column !important;
                 border-radius: 14px !important;
-                margin: 0 0 4px 0 !important;
+                margin: 0 !important;
                 overflow: hidden !important;
                 box-sizing: border-box !important;
                 transform: none !important;
+                box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25) !important;
             }
 
             #tab-view-chat .chat-panel-header {
-                padding: 8px 12px !important;
-                font-size: 0.95rem !important;
+                padding: 6px 12px !important;
+                font-size: 0.92rem !important;
+                min-height: 36px !important;
                 flex-shrink: 0 !important;
             }
 
             #tab-view-chat .chat-tabs {
-                padding: 4px 6px !important;
+                padding: 3px 6px !important;
                 gap: 4px !important;
+                min-height: 34px !important;
                 flex-shrink: 0 !important;
             }
 
             #tab-view-chat .chat-tab-btn {
                 padding: 5px 8px !important;
                 font-size: 0.78rem !important;
+                min-height: 32px !important;
             }
 
             #tab-view-chat .chat-thread-header {
@@ -4009,23 +4023,65 @@
                 overflow-y: auto !important;
                 -webkit-overflow-scrolling: touch !important;
                 padding: 8px 10px !important;
+                overscroll-behavior: contain !important;
             }
 
             #tab-view-chat .chat-input-box {
                 flex-shrink: 0 !important;
-                padding: 6px 8px !important;
+                padding: 8px 10px !important;
                 background: var(--card-bg) !important;
                 border-top: 1px solid var(--line-color) !important;
                 box-sizing: border-box !important;
+                min-height: 54px !important;
+                z-index: 100 !important;
             }
 
             #tab-view-chat .chat-input-row {
-                gap: 6px !important;
+                display: flex !important;
+                align-items: center !important;
+                gap: 8px !important;
+                width: 100% !important;
+            }
+
+            #tab-view-chat .chat-icon-action-btn {
+                width: 42px !important;
+                height: 42px !important;
+                min-width: 42px !important;
+                min-height: 42px !important;
+                font-size: 1.2rem !important;
+                touch-action: manipulation !important;
+                border-radius: 50% !important;
+                display: inline-flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+            }
+
+            #tab-view-chat .chat-poll-circle-btn {
+                width: 42px !important;
+                height: 42px !important;
+                min-width: 42px !important;
+                min-height: 42px !important;
+                font-size: 1.2rem !important;
+                touch-action: manipulation !important;
             }
 
             #tab-view-chat .chat-input-row input#chat-input {
-                font-size: 0.88rem !important;
-                padding: 7px 10px !important;
+                font-size: 0.95rem !important;
+                padding: 9px 12px !important;
+                min-height: 42px !important;
+                border-radius: 10px !important;
+                box-sizing: border-box !important;
+                flex: 1 !important;
+                min-width: 0 !important;
+            }
+
+            #tab-view-chat .chat-send-btn {
+                min-height: 42px !important;
+                padding: 0 16px !important;
+                font-size: 0.95rem !important;
+                font-weight: 700 !important;
+                border-radius: 10px !important;
+                touch-action: manipulation !important;
             }
         }
 
@@ -5213,104 +5269,106 @@
             overscroll-behavior: none !important;
         }
 
-        #tab-view-chat:not(.active) {
-            display: none !important;
-        }
+        @media (min-width: 769px) {
+            #tab-view-chat:not(.active) {
+                display: none !important;
+            }
 
-        #tab-view-chat.active {
-            height: calc(100dvh - 64px) !important;
-            max-height: calc(100dvh - 64px) !important;
-            min-height: 0 !important;
-            overflow: hidden !important;
-            padding-top: 8px !important;
-            padding-bottom: 8px !important;
-            padding-left: 12px !important;
-            padding-right: 12px !important;
-            display: flex !important;
-            flex-direction: column !important;
-            align-items: center !important;
-            box-sizing: border-box !important;
-        }
+            #tab-view-chat.active {
+                height: calc(100dvh - 64px) !important;
+                max-height: calc(100dvh - 64px) !important;
+                min-height: 0 !important;
+                overflow: hidden !important;
+                padding-top: 8px !important;
+                padding-bottom: 8px !important;
+                padding-left: 12px !important;
+                padding-right: 12px !important;
+                display: flex !important;
+                flex-direction: column !important;
+                align-items: center !important;
+                box-sizing: border-box !important;
+            }
 
-        #tab-view-chat .tab-header-banner {
-            margin: 0 auto 6px auto !important;
-            padding: 6px 14px !important;
-            width: 100% !important;
-            max-width: 920px !important;
-            flex-shrink: 0 !important;
-            border-radius: 12px !important;
-            display: flex !important;
-            align-items: center !important;
-            justify-content: space-between !important;
-        }
+            #tab-view-chat .tab-header-banner {
+                margin: 0 auto 6px auto !important;
+                padding: 6px 14px !important;
+                width: 100% !important;
+                max-width: 920px !important;
+                flex-shrink: 0 !important;
+                border-radius: 12px !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: space-between !important;
+            }
 
-        #tab-view-chat .chat-panel {
-            position: relative !important;
-            top: auto !important;
-            bottom: auto !important;
-            left: auto !important;
-            right: auto !important;
-            width: 100% !important;
-            max-width: 920px !important;
-            flex: 1 1 auto !important;
-            height: auto !important;
-            min-height: 0 !important;
-            max-height: none !important;
-            margin: 0 auto !important;
-            transform: none !important;
-            opacity: 1 !important;
-            pointer-events: auto !important;
-            border-radius: 16px !important;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25) !important;
-            border: 1px solid var(--line-color) !important;
-            overflow: hidden !important;
-            display: flex !important;
-            flex-direction: column !important;
-            z-index: 10 !important;
-        }
+            #tab-view-chat .chat-panel {
+                position: relative !important;
+                top: auto !important;
+                bottom: auto !important;
+                left: auto !important;
+                right: auto !important;
+                width: 100% !important;
+                max-width: 920px !important;
+                flex: 1 1 auto !important;
+                height: auto !important;
+                min-height: 0 !important;
+                max-height: none !important;
+                margin: 0 auto !important;
+                transform: none !important;
+                opacity: 1 !important;
+                pointer-events: auto !important;
+                border-radius: 16px !important;
+                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25) !important;
+                border: 1px solid var(--line-color) !important;
+                overflow: hidden !important;
+                display: flex !important;
+                flex-direction: column !important;
+                z-index: 10 !important;
+            }
 
-        #tab-view-chat .chat-panel-header {
-            padding: 8px 14px !important;
-            font-size: 0.92rem !important;
-            min-height: 38px !important;
-        }
+            #tab-view-chat .chat-panel-header {
+                padding: 8px 14px !important;
+                font-size: 0.92rem !important;
+                min-height: 38px !important;
+            }
 
-        #tab-view-chat .chat-tabs {
-            min-height: 38px !important;
-        }
+            #tab-view-chat .chat-tabs {
+                min-height: 38px !important;
+            }
 
-        #tab-view-chat .chat-tab-btn {
-            padding: 8px 8px !important;
-            min-height: 38px !important;
-            font-size: 0.82rem !important;
-        }
+            #tab-view-chat .chat-tab-btn {
+                padding: 8px 8px !important;
+                min-height: 38px !important;
+                font-size: 0.82rem !important;
+            }
 
-        #tab-view-chat .chat-messages {
-            flex: 1 1 auto !important;
-            min-height: 0 !important;
-            overflow-y: auto !important;
-            overscroll-behavior: contain !important;
-            padding: 10px !important;
-            display: flex !important;
-            flex-direction: column !important;
-            gap: 6px !important;
-        }
+            #tab-view-chat .chat-messages {
+                flex: 1 1 auto !important;
+                min-height: 0 !important;
+                overflow-y: auto !important;
+                overscroll-behavior: contain !important;
+                padding: 10px !important;
+                display: flex !important;
+                flex-direction: column !important;
+                gap: 6px !important;
+            }
 
-        #tab-view-chat .chat-list-item {
-            padding: 8px 12px !important;
-            margin-bottom: 5px !important;
-            border-radius: 10px !important;
-        }
+            #tab-view-chat .chat-list-item {
+                padding: 8px 12px !important;
+                margin-bottom: 5px !important;
+                border-radius: 10px !important;
+            }
 
-        #tab-view-chat .chat-message {
-            padding: 6px 10px !important;
-            font-size: 0.85rem !important;
-        }
+            #tab-view-chat .chat-message {
+                padding: 6px 10px !important;
+                font-size: 0.85rem !important;
+            }
 
-        #tab-view-chat .chat-input-box {
-            padding: 8px 10px !important;
-            min-height: 48px !important;
-            flex-shrink: 0 !important;
+            #tab-view-chat .chat-input-box {
+                padding: 8px 10px !important;
+                min-height: 48px !important;
+                flex-shrink: 0 !important;
+            }
         }
 
     </style>
@@ -14426,6 +14484,75 @@ function getCalisthenicsExpertResponse(query) {
             };
         }
 
+        // Helper di transcodifica audio PCM WAV mono a 16kHz per massima compatibilità cross-device (iOS Safari, Android Chrome, Desktop)
+        function audioBufferToWavBlob(audioBuffer) {
+            const numChannels = 1;
+            const sampleRate = 16000;
+            const inputSampleRate = audioBuffer.sampleRate;
+            const inputChannels = audioBuffer.numberOfChannels;
+            const inputLength = audioBuffer.length;
+            const outputLength = Math.max(1, Math.round(inputLength * (sampleRate / inputSampleRate)));
+            const outputBuffer = new Float32Array(outputLength);
+            const ratio = (inputLength - 1) / Math.max(1, outputLength - 1);
+            for (let i = 0; i < outputLength; i++) {
+                const srcPos = i * ratio;
+                const srcIndex = Math.floor(srcPos);
+                const nextIndex = Math.min(srcIndex + 1, inputLength - 1);
+                const frac = srcPos - srcIndex;
+                let sample = 0;
+                for (let ch = 0; ch < inputChannels; ch++) {
+                    const chData = audioBuffer.getChannelData(ch);
+                    const val = chData[srcIndex] * (1 - frac) + chData[nextIndex] * frac;
+                    sample += val;
+                }
+                outputBuffer[i] = sample / inputChannels;
+            }
+            const dataByteLength = outputLength * 2;
+            const wavBuffer = new ArrayBuffer(44 + dataByteLength);
+            const view = new DataView(wavBuffer);
+            function writeString(offset, str) {
+                for (let j = 0; j < str.length; j++) {
+                    view.setUint8(offset + j, str.charCodeAt(j));
+                }
+            }
+            writeString(0, 'RIFF');
+            view.setUint32(4, 36 + dataByteLength, true);
+            writeString(8, 'WAVE');
+            writeString(12, 'fmt ');
+            view.setUint32(16, 16, true);
+            view.setUint16(20, 1, true); // PCM
+            view.setUint16(22, 1, true); // Mono
+            view.setUint32(24, sampleRate, true);
+            view.setUint32(28, sampleRate * 2, true);
+            view.setUint16(32, 2, true);
+            view.setUint16(34, 16, true);
+            writeString(36, 'data');
+            view.setUint32(40, dataByteLength, true);
+            let offset = 44;
+            for (let i = 0; i < outputLength; i++) {
+                let s = Math.max(-1, Math.min(1, outputBuffer[i]));
+                view.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7FFF, true);
+                offset += 2;
+            }
+            return new Blob([wavBuffer], { type: 'audio/wav' });
+        }
+
+        async function convertAudioBlobToWav(blob) {
+            try {
+                const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                if (!AudioCtx) return blob;
+                const ctx = new AudioCtx();
+                const arrayBuffer = await blob.arrayBuffer();
+                const audioBuffer = await ctx.decodeAudioData(arrayBuffer);
+                const wav = audioBufferToWavBlob(audioBuffer);
+                try { ctx.close(); } catch (e) {}
+                if (wav && wav.size > 100) return wav;
+            } catch (err) {
+                console.warn("Conversione WAV automatica non riuscita, uso blob originale:", err);
+            }
+            return blob;
+        }
+
         async function startVoiceRecording() {
             if (!currentUser) {
                 showAppToast("Accedi per inviare messaggi vocali.", "warning");
@@ -14437,16 +14564,28 @@ function getCalisthenicsExpertResponse(query) {
             }
 
             try {
-                voiceMediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                voiceMediaStream = await navigator.mediaDevices.getUserMedia({
+                    audio: {
+                        echoCancellation: true,
+                        noiseSuppression: true,
+                        autoGainControl: true
+                    }
+                });
             } catch (err) {
-                console.error("Accesso microfono negato:", err);
-                showAppToast("Accesso al microfono non consentito. Verifica i permessi del browser.", "warning");
-                return;
+                console.warn("Richiesta microfono con vincoli avanzati non riuscita, riprovo fallback:", err);
+                try {
+                    voiceMediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                } catch (err2) {
+                    console.error("Accesso microfono negato:", err2);
+                    showAppToast("Accesso al microfono non consentito. Verifica i permessi del browser.", "warning");
+                    return;
+                }
             }
 
-            let mimeType = 'audio/webm';
-            if (!MediaRecorder.isTypeSupported('audio/webm')) {
-                if (MediaRecorder.isTypeSupported('audio/mp4')) mimeType = 'audio/mp4';
+            let mimeType = 'audio/webm;codecs=opus';
+            if (!MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
+                if (MediaRecorder.isTypeSupported('audio/webm')) mimeType = 'audio/webm';
+                else if (MediaRecorder.isTypeSupported('audio/mp4')) mimeType = 'audio/mp4';
                 else if (MediaRecorder.isTypeSupported('audio/ogg')) mimeType = 'audio/ogg';
                 else mimeType = '';
             }
@@ -14485,7 +14624,8 @@ function getCalisthenicsExpertResponse(query) {
                 }
             }, 1000);
 
-            voiceMediaRecorder.start(250);
+            // Avvio senza timeslice per generare un container integro e ben formato (previene audio muto su Safari/WebKit e Android)
+            voiceMediaRecorder.start();
         }
 
         function cancelVoiceRecording() {
@@ -14539,18 +14679,30 @@ function getCalisthenicsExpertResponse(query) {
                 }
 
                 const mime = voiceMediaRecorder.mimeType || 'audio/webm';
-                const audioBlob = new Blob(voiceAudioChunks, { type: mime });
-                let ext = 'webm';
-                if (mime.includes('mp4') || mime.includes('m4a') || mime.includes('aac')) ext = 'm4a';
-                else if (mime.includes('ogg')) ext = 'ogg';
-                else if (mime.includes('wav')) ext = 'wav';
+                const rawBlob = new Blob(voiceAudioChunks, { type: mime });
+
+                // Transcodifica automatica a WAV PCM mono 16kHz universale per riproduzione perfetta e immediata su iOS, Android e Desktop
+                let finalAudioBlob = rawBlob;
+                try {
+                    finalAudioBlob = await convertAudioBlobToWav(rawBlob);
+                } catch (e) {
+                    console.warn("Uso blob audio grezzo:", e);
+                }
+
+                let ext = 'wav';
+                const finalMime = (finalAudioBlob.type || '').toLowerCase();
+                if (finalMime.includes('wav')) ext = 'wav';
+                else if (finalMime.includes('mp4') || finalMime.includes('m4a') || finalMime.includes('aac')) ext = 'm4a';
+                else if (finalMime.includes('ogg')) ext = 'ogg';
+                else if (finalMime.includes('webm')) ext = 'webm';
+
                 const cleanAudioName = `voice_${Date.now()}.${ext}`;
                 let audioFile;
                 try {
-                    audioFile = new File([audioBlob], cleanAudioName, { type: mime });
+                    audioFile = new File([finalAudioBlob], cleanAudioName, { type: finalAudioBlob.type || 'audio/wav' });
                 } catch (e) {
-                    try { audioBlob.name = cleanAudioName; } catch (err) {}
-                    audioFile = audioBlob;
+                    try { finalAudioBlob.name = cleanAudioName; } catch (err) {}
+                    audioFile = finalAudioBlob;
                 }
 
                 const MAX_CHAT_MEDIA_BYTES = 10 * 1024 * 1024;
@@ -14619,16 +14771,34 @@ function getCalisthenicsExpertResponse(query) {
                 if (currentlyPlayingVoiceId && currentlyPlayingVoiceId !== msgId) {
                     const prevAudio = document.getElementById(`voice-audio-${currentlyPlayingVoiceId}`);
                     const prevBtn = document.getElementById(`voice-btn-${currentlyPlayingVoiceId}`);
-                    if (prevAudio) prevAudio.pause();
+                    if (prevAudio) {
+                        try { prevAudio.pause(); } catch (e) {}
+                    }
                     if (prevBtn) prevBtn.innerHTML = '▶';
                 }
+
+                // Riavvolgimento all'inizio se la riproduzione era giunta al termine
+                const fallbackDur = parseFloat(audio.getAttribute('data-duration')) || 0;
+                const effectiveDur = (audio.duration && Number.isFinite(audio.duration) && audio.duration > 0 && audio.duration !== Infinity)
+                    ? audio.duration
+                    : (fallbackDur > 0 ? fallbackDur : 0);
+                if (effectiveDur > 0 && audio.currentTime >= (effectiveDur - 0.2)) {
+                    audio.currentTime = 0;
+                }
+
                 currentlyPlayingVoiceId = msgId;
-                audio.play().then(() => {
+                const playPromise = audio.play();
+                if (playPromise !== undefined) {
+                    playPromise.then(() => {
+                        btn.innerHTML = '⏸';
+                    }).catch(err => {
+                        console.error("Errore riproduzione audio:", err);
+                        btn.innerHTML = '▶';
+                        if (currentlyPlayingVoiceId === msgId) currentlyPlayingVoiceId = null;
+                    });
+                } else {
                     btn.innerHTML = '⏸';
-                }).catch(err => {
-                    console.error("Errore riproduzione audio:", err);
-                    btn.innerHTML = '▶';
-                });
+                }
             }
         }
 
@@ -14640,9 +14810,18 @@ function getCalisthenicsExpertResponse(query) {
             if (!audio) return;
             const cur = audio.currentTime || 0;
             const fallbackDur = parseFloat(audio.getAttribute('data-duration')) || 0;
-            const dur = (audio.duration && Number.isFinite(audio.duration) && audio.duration > 0)
+            const dur = (audio.duration && Number.isFinite(audio.duration) && audio.duration > 0 && audio.duration !== Infinity)
                 ? audio.duration
                 : (fallbackDur > 0 && Number.isFinite(fallbackDur) ? fallbackDur : 0);
+
+            // STOP AUTOMATICO: se raggiunge la fine della traccia, ferma e resetta immediatamente per prevenire loop infiniti
+            if (dur > 0 && cur >= dur) {
+                try { audio.pause(); } catch (e) {}
+                audio.currentTime = 0;
+                onVoiceAudioEnded(msgId);
+                return;
+            }
+
             if (fill && dur > 0) {
                 fill.style.width = `${Math.min(100, (cur / dur) * 100)}%`;
             }
@@ -14655,13 +14834,23 @@ function getCalisthenicsExpertResponse(query) {
         }
 
         function onVoiceAudioEnded(msgId) {
+            const audio = document.getElementById(`voice-audio-${msgId}`);
             const btn = document.getElementById(`voice-btn-${msgId}`);
             const fill = document.getElementById(`voice-fill-${msgId}`);
             const timeEl = document.getElementById(`voice-time-${msgId}`);
+            if (audio) {
+                try { audio.pause(); } catch (e) {}
+                audio.currentTime = 0;
+            }
             if (btn) btn.innerHTML = '▶';
             if (fill) fill.style.width = '0%';
             if (timeEl) timeEl.innerText = '0:00';
             if (currentlyPlayingVoiceId === msgId) currentlyPlayingVoiceId = null;
+        }
+
+        function onVoiceAudioError(msgId) {
+            console.warn("Errore elemento audio messaggio:", msgId);
+            onVoiceAudioEnded(msgId);
         }
 
         function onVoiceAudioLoaded(msgId) {
@@ -14669,7 +14858,7 @@ function getCalisthenicsExpertResponse(query) {
             const totalEl = document.getElementById(`voice-total-${msgId}`);
             if (!audio || !totalEl) return;
             const fallbackDur = parseFloat(audio.getAttribute('data-duration')) || 0;
-            if (audio.duration && Number.isFinite(audio.duration) && audio.duration > 0) {
+            if (audio.duration && Number.isFinite(audio.duration) && audio.duration > 0 && audio.duration !== Infinity) {
                 totalEl.innerText = formatAudioTime(audio.duration);
             } else if (fallbackDur > 0 && Number.isFinite(fallbackDur)) {
                 totalEl.innerText = formatAudioTime(fallbackDur);
@@ -14684,7 +14873,7 @@ function getCalisthenicsExpertResponse(query) {
             const clickX = event.clientX - rect.left;
             const ratio = Math.max(0, Math.min(1, clickX / rect.width));
             const fallbackDur = parseFloat(audio.getAttribute('data-duration')) || 0;
-            const dur = (audio.duration && Number.isFinite(audio.duration) && audio.duration > 0)
+            const dur = (audio.duration && Number.isFinite(audio.duration) && audio.duration > 0 && audio.duration !== Infinity)
                 ? audio.duration
                 : (fallbackDur > 0 && Number.isFinite(fallbackDur) ? fallbackDur : 0);
             if (dur > 0) {
@@ -15510,7 +15699,7 @@ function getCalisthenicsExpertResponse(query) {
                                     <span class="voice-time-total" id="voice-total-${m.id}">${durLabel}</span>
                                 </div>
                             </div>
-                            <audio id="voice-audio-${m.id}" src="${escapeHtml(mediaUrl)}" preload="metadata" data-duration="${durNum || 0}" ontimeupdate="onVoiceAudioUpdate('${m.id}')" onended="onVoiceAudioEnded('${m.id}')" onloadedmetadata="onVoiceAudioLoaded('${m.id}')"></audio>
+                            <audio id="voice-audio-${m.id}" src="${escapeHtml(mediaUrl)}" preload="metadata" data-duration="${durNum || 0}" ontimeupdate="onVoiceAudioUpdate('${m.id}')" onended="onVoiceAudioEnded('${m.id}')" onloadedmetadata="onVoiceAudioLoaded('${m.id}')" onerror="onVoiceAudioError('${m.id}')"></audio>
                         </div>
                     `;
                 }
