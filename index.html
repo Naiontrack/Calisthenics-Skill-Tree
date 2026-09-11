@@ -8493,7 +8493,8 @@ let currentUser = null;
                             <div class="leaderboard-left">
                                 <span class="leaderboard-rank-pos">#${index}</span>
                                 <div class="leaderboard-avatar rank-badge-wrap rank-tier-${rank.tierId || 'bronze'}">${rank.iconSvg}</div>
-                                ${data.streak > 0 ? `<span class="streak-badge" title="${data.streak} allenamenti consecutivi" style="background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.35); color:#f87171; border-radius:999px; padding:2px 7px; font-size:0.75rem; font-weight:800; margin-right:6px; display:inline-flex; align-items:center; gap:2px;">🔥 ${data.streak}</span>` : ''}<span class="leaderboard-name">${nick} ${isMe ? '(Tu)' : ''}</span>
+                                <span class="leaderboard-name">${nick} ${isMe ? '(Tu)' : ''}</span>
+                                ${data.streak > 0 ? `<span class="streak-badge" title="${data.streak} allenamenti consecutivi" style="background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.35); color:#f87171; border-radius:999px; padding:2px 7px; font-size:0.75rem; font-weight:800; margin-left:4px; display:inline-flex; align-items:center; gap:2px;">🔥 ${data.streak}</span>` : ''}
                             </div>
                             <span class="leaderboard-xp">${xp} XP</span>
                         </div>
@@ -15241,6 +15242,7 @@ function getCalisthenicsExpertResponse(query) {
                                 <span class="leaderboard-rank-pos" style="min-width:28px; font-weight:700;">${rankMedal}</span>
                                 <div class="leaderboard-avatar" style="width:28px; height:28px;">${rankObj.iconSvg}</div>
                                 <span class="leaderboard-name">${escapeHtml(m.nickname)} ${m.isMe ? '<strong style="color:var(--primary);">(Tu)</strong>' : ''}</span>
+                                ${(m.streak && m.streak > 0) ? `<span class="streak-badge" title="${m.streak} allenamenti consecutivi" style="background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.35); color:#f87171; border-radius:999px; padding:2px 7px; font-size:0.75rem; font-weight:800; margin-left:4px; display:inline-flex; align-items:center; gap:2px;">🔥 ${m.streak}</span>` : ''}
                             </div>
                             <div style="text-align:right;">
                                 <span class="leaderboard-xp">${m.totalXp} XP</span>
