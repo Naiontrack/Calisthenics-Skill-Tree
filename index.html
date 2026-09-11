@@ -4738,7 +4738,40 @@
             }
         }
 
-        /* FULLSCREEN EXPAND MODE PER ALBERO RPG (CLEAN 100dvh IMMERSIVE VIEW) */
+        /* FULLSCREEN EXPAND MODE PER ALBERO RPG (PERFETTO 100dvh IMMERSIVO ZERO DISTORSIONI) */
+        body.tree-fullscreen-active {
+            overflow: hidden !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            width: 100vw !important;
+            height: 100dvh !important;
+        }
+
+        /* In schermo intero nascondi navbar, header e controlli per dare spazio totale all'albero */
+        body.tree-fullscreen-active .bottom-nav-bar {
+            display: none !important;
+        }
+
+        body.tree-fullscreen-active .header,
+        body.tree-fullscreen-active .tree-view-header-controls {
+            display: none !important;
+        }
+
+        /* Rimuovi ogni stacking context e padding che causano distorsione o offset in alto e a sinistra */
+        body.tree-fullscreen-active .main-tab-view,
+        body.tree-fullscreen-active .main-tab-view.active {
+            animation: none !important;
+            transform: none !important;
+            filter: none !important;
+            contain: none !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            max-width: none !important;
+            width: 100vw !important;
+            height: 100dvh !important;
+            position: static !important;
+        }
+
         .skill-tree-viewport-wrapper.tree-fullscreen-mode {
             position: fixed !important;
             inset: 0 !important;
@@ -4747,13 +4780,15 @@
             right: 0 !important;
             bottom: 0 !important;
             width: 100vw !important;
+            width: 100dvw !important;
+            height: 100vh !important;
             height: 100dvh !important;
             max-width: 100vw !important;
             max-height: 100dvh !important;
             border-radius: 0 !important;
             margin: 0 !important;
             padding: 0 !important;
-            z-index: 999999 !important;
+            z-index: 9999999 !important;
             background: var(--tree-bg) !important;
             border: none !important;
             box-shadow: none !important;
@@ -4763,12 +4798,37 @@
 
         .skill-tree-viewport-wrapper.tree-fullscreen-mode .skill-tree-viewport {
             width: 100vw !important;
+            width: 100dvw !important;
+            height: 100vh !important;
             height: 100dvh !important;
             min-height: 100dvh !important;
             max-height: 100dvh !important;
             border-radius: 0 !important;
+            margin: 0 !important;
+            padding: 0 !important;
             transform: none !important;
             box-sizing: border-box !important;
+        }
+
+        /* TRASPARENZA TOTALE ALBERO IN MODALITÀ GALAXY (ELIMINA LA PATINA GRIGIA) */
+        body.galaxy-bg-active .skill-tree-viewport-wrapper,
+        body.galaxy-bg-active .skill-tree-viewport,
+        body.galaxy-bg-active .skill-tree-viewport-wrapper.tree-fullscreen-mode {
+            background: transparent !important;
+        }
+
+        body.galaxy-bg-active .skill-tree-viewport {
+            background-image: 
+                radial-gradient(circle at 50% 50%, rgba(56, 189, 248, 0.05) 0%, transparent 65%),
+                radial-gradient(rgba(255, 255, 255, 0.08) 1.5px, transparent 1.5px) !important;
+            background-size: 100% 100%, 36px 36px !important;
+        }
+
+        body.galaxy-bg-active.theme-light .skill-tree-viewport {
+            background-image: 
+                radial-gradient(circle at 50% 50%, rgba(2, 132, 199, 0.06) 0%, transparent 65%),
+                radial-gradient(rgba(2, 132, 199, 0.12) 1.5px, transparent 1.5px) !important;
+            background-size: 100% 100%, 36px 36px !important;
         }
 
         /* RPG SEARCH INTERACTION (BLUR & HIGHLIGHT) */
@@ -5200,9 +5260,7 @@
             gap: 12px;
         }
 
-        body.tree-fullscreen-active {
-            overflow: hidden !important;
-        }
+        /* body.tree-fullscreen-active handled in fullscreen block */
 
         .tree-legend-item {
             display: flex;
@@ -6727,7 +6785,7 @@
                                 <span style="font-size:1.15rem;">✨</span>
                                 <div>
                                     <div class="galaxy-toggle-title">Sfondo Galaxy</div>
-                                    <div class="galaxy-toggle-desc">Particelle stellari fluide e animate</div>
+                                    <div class="galaxy-toggle-desc">Particelle stellari fluide (compatibile con tutti i temi)</div>
                                 </div>
                             </div>
                             <label class="galaxy-switch" title="Attiva/disattiva lo sfondo galattico animato">
@@ -10747,19 +10805,19 @@ let currentUser = null;
                 bodyContent.innerHTML = `
                     ${stepperHtml}
                     <span class="wizard-badge">FASE 3 DI 3 • GRAFICA & ATMOSFERA</span>
-                    <h3 class="wizard-title">🌌 Tema & Sfondo Galaxy</h3>
+                    <h3 class="wizard-title">🎨 Tema & Sfondo Galaxy</h3>
                     <p class="wizard-desc">Scegli la combinazione visiva ideale: l'interfaccia si aggiornerà istantaneamente in anteprima!</p>
                     <label style="font-size:0.82rem; font-weight:700; color:var(--text); margin-bottom:6px; display:block;">Seleziona Tema</label>
                     <div class="wizard-theme-selector">
                         <div class="wizard-theme-card ${wizardState.theme === 'default' ? 'active' : ''}" id="wiz-theme-default" onclick="selectWizardTheme('default')">
-                            <div class="wizard-theme-icon">🌌</div>
-                            <div class="wizard-theme-name">Spazio</div>
-                            <div class="wizard-theme-sub">Cosmic Navy</div>
+                            <div class="wizard-theme-icon">🎨</div>
+                            <div class="wizard-theme-name">Predefinito</div>
+                            <div class="wizard-theme-sub">Slate Classico</div>
                         </div>
                         <div class="wizard-theme-card ${wizardState.theme === 'light' ? 'active' : ''}" id="wiz-theme-light" onclick="selectWizardTheme('light')">
                             <div class="wizard-theme-icon">☀️</div>
                             <div class="wizard-theme-name">Chiaro</div>
-                            <div class="wizard-theme-sub">Slate Modern</div>
+                            <div class="wizard-theme-sub">Bianco Satinato</div>
                         </div>
                         <div class="wizard-theme-card ${wizardState.theme === 'dark' ? 'active' : ''}" id="wiz-theme-dark" onclick="selectWizardTheme('dark')">
                             <div class="wizard-theme-icon">🌑</div>
@@ -10773,7 +10831,7 @@ let currentUser = null;
                                 ✨ Sfondo Galaxy Animato
                             </div>
                             <div style="font-size:0.74rem; color:var(--subtext); margin-top:2px;">
-                                Animazione spaziale dinamica a 60 FPS con particelle stellari e nebulosa reattiva
+                                Compatibile con tutti e 3 i temi. Aggiunge particelle stellari fluide e nebulosa a 60 FPS.
                             </div>
                         </div>
                         <label class="theme-switch" style="position:relative; display:inline-block; width:44px; height:24px; margin:0; flex-shrink:0;">
@@ -11191,6 +11249,31 @@ let currentUser = null;
                             currentUser = userCred.user;
                             renderProfileSettings();
                             autoRegisterOneSignalPush(userCred.user.uid);
+
+                            // GESTIONE VERIFICA EMAIL CON FIREBASE AUTH
+                            if (!userCred.user.emailVerified) {
+                                if (!isLogin) {
+                                    // Nuova registrazione: invia subito la mail di verifica
+                                    userCred.user.sendEmailVerification()
+                                        .then(() => {
+                                            alert("🎉 Registrazione completata con successo!\n\nAbbiamo inviato un'email di verifica a " + email + ".\nApri la tua casella di posta (controlla anche nella cartella Spam) e clicca sul link per confermare l'account.");
+                                        })
+                                        .catch((verErr) => {
+                                            console.warn("Invio email di verifica:", verErr);
+                                        });
+                                } else {
+                                    // Login: se l'email non è ancora verificata, invia il link di verifica
+                                    userCred.user.sendEmailVerification()
+                                        .then(() => {
+                                            alert("👋 Bentornato!\n\nNota: il tuo indirizzo email non risulta ancora verificato. Ti abbiamo inviato una nuova email con il link di verifica a " + email + " (controlla anche nello Spam).");
+                                        })
+                                        .catch((verErr) => {
+                                            if (verErr && verErr.code !== 'auth/too-many-requests') {
+                                                console.warn("Invio email verifica:", verErr);
+                                            }
+                                        });
+                                }
+                            }
                         }
                     })
                     .catch((error) => {
@@ -11642,6 +11725,26 @@ let currentUser = null;
         // ==========================================
         // RILEVAZIONE UTENTE EMAIL & PASSWORD
         // ==========================================
+        function sendVerificationEmailToCurrentUser() {
+            const user = (typeof firebase !== 'undefined' && firebase.auth) ? (firebase.auth().currentUser || currentUser) : currentUser;
+            if (!user) {
+                alert("Nessun utente autenticato.");
+                return;
+            }
+            user.sendEmailVerification()
+                .then(() => {
+                    alert("📧 Email di verifica inviata con successo a " + user.email + "!\nControlla la tua casella di posta (inclusa la cartella Spam o Promozioni) e clicca sul link di conferma.");
+                })
+                .catch((err) => {
+                    if (err && err.code === 'auth/too-many-requests') {
+                        alert("⚠️ Troppe richieste inviate di recente. Attendi qualche minuto prima di richiedere un nuovo link.");
+                    } else {
+                        alert("⚠️ Errore durante l'invio della verifica: " + (err.message || err));
+                    }
+                });
+        }
+        window.sendVerificationEmailToCurrentUser = sendVerificationEmailToCurrentUser;
+
         function isEmailPasswordUser() {
             const user = (typeof firebase !== 'undefined' && firebase.auth) ? (firebase.auth().currentUser || currentUser) : currentUser;
             if (!user) return false;
@@ -11786,12 +11889,32 @@ let currentUser = null;
             let passwordBoxHtml = '';
             if (currentUser && isEmailPasswordUser()) {
                 // Utente loggato con Email & Password standard
+                const isVerified = !!currentUser.emailVerified;
+                const verifyStatusBadge = isVerified 
+                    ? '<span style="font-size: 0.72rem; color: #22c55e; font-weight: 700; background: rgba(34,197,94,0.14); padding: 3px 10px; border-radius: 999px;">✓ Email Verificata</span>'
+                    : '<span style="font-size: 0.72rem; color: #f59e0b; font-weight: 700; background: rgba(245,158,11,0.14); padding: 3px 10px; border-radius: 999px;">⚠️ Email Non Verificata</span>';
+
+                const verifyBannerHtml = isVerified ? '' : `
+                    <div id="profile-email-verify-banner" style="margin: 10px 0 14px 0; padding: 10px 12px; border-radius: 10px; background: rgba(245, 158, 11, 0.09); border: 1px solid rgba(245, 158, 11, 0.32); display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap;">
+                        <div style="font-size: 0.78rem; color: #f59e0b; font-weight: 700; display: flex; align-items: center; gap: 5px;">
+                            ⚠️ Conferma ${currentUser.email || 'la tua email'}
+                        </div>
+                        <button type="button" onclick="sendVerificationEmailToCurrentUser()" style="background: #f59e0b; color: #000; font-weight: 800; font-size: 0.72rem; border: none; padding: 4px 10px; border-radius: 6px; cursor: pointer;">
+                            ✉️ Invia di nuovo link
+                        </button>
+                    </div>
+                `;
+
                 passwordBoxHtml = `
                 <div class="profile-password-change-box" id="profile-password-box" style="margin-top: 22px; padding: 18px; border-radius: 14px; background: rgba(56, 189, 248, 0.05); border: 1px solid rgba(56, 189, 248, 0.28); box-shadow: 0 4px 15px rgba(0,0,0,0.12);">
                     <div style="font-weight: 800; font-size: 0.96rem; color: var(--text); margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px;">
                         <span style="display:flex; align-items:center; gap:6px;">🔐 Sicurezza: Cambia Password</span>
-                        <span style="font-size: 0.72rem; color: var(--accent); font-weight: 700; background: rgba(56,189,248,0.14); padding: 3px 10px; border-radius: 999px;">Account Email</span>
+                        <div style="display:flex; align-items:center; gap:6px;">
+                            ${verifyStatusBadge}
+                            <span style="font-size: 0.72rem; color: var(--accent); font-weight: 700; background: rgba(56,189,248,0.14); padding: 3px 10px; border-radius: 999px;">Account Email</span>
+                        </div>
                     </div>
+                    ${verifyBannerHtml}
                     <p style="font-size: 0.78rem; color: var(--subtext); margin: 0 0 14px 0; line-height: 1.4;">
                         Inserisci la tua password attuale e imposta una nuova password (minimo 8 caratteri e almeno un carattere speciale).
                     </p>
@@ -22682,14 +22805,26 @@ function getCalisthenicsExpertResponse(query) {
 
         let isTreeFullscreen = false;
 
+        let preFullscreenScrollY = 0;
         function toggleSkillTreeFullscreen() {
             isTreeFullscreen = !isTreeFullscreen;
             const wrapper = document.getElementById('skill-tree-viewport-wrapper');
             const btn = document.getElementById('btn-tree-fullscreen');
             if (!wrapper) return;
 
+            if (isTreeFullscreen) {
+                preFullscreenScrollY = window.scrollY || window.pageYOffset || 0;
+                window.scrollTo(0, 0);
+            }
+
             wrapper.classList.toggle('tree-fullscreen-mode', isTreeFullscreen);
             document.body.classList.toggle('tree-fullscreen-active', isTreeFullscreen);
+
+            if (!isTreeFullscreen) {
+                setTimeout(() => {
+                    window.scrollTo(0, preFullscreenScrollY);
+                }, 50);
+            }
 
             if (btn) {
                 btn.innerText = isTreeFullscreen ? '✕' : '⛶';
