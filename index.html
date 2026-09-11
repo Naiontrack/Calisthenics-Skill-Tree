@@ -788,16 +788,16 @@
             top: 0;
             left: 0;
             width: 100%;
-            bottom: 64px; /* Lascia libera la barra di navigazione inferiore */
-            height: auto;
-            background: rgba(0, 0, 0, 0.75);
-            backdrop-filter: blur(4px);
+            height: 100%;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.78);
+            backdrop-filter: blur(6px);
             display: flex;
             justify-content: center;
             align-items: center;
             padding: 16px;
             box-sizing: border-box;
-            z-index: 100;
+            z-index: 30000;
             opacity: 0;
             pointer-events: none;
             transition: opacity 0.2s ease;
@@ -3228,12 +3228,13 @@
             left: 0;
             width: 100%;
             height: 100%;
+            bottom: 0;
             background: rgba(10, 12, 16, 0.85);
             backdrop-filter: blur(8px);
             display: flex;
             justify-content: center;
             align-items: center;
-            z-index: 200;
+            z-index: 30000;
             opacity: 0;
             pointer-events: none;
             transition: opacity 0.3s ease;
@@ -8453,7 +8454,12 @@ let currentUser = null;
             return null;
         }
 
-        function openCustomModal(title, text, confirmText, isDanger, onConfirm, onSuccess) {
+        function closeCustomModal() {
+            const modal = document.getElementById('custom-modal');
+            if (modal) modal.classList.remove('active');
+        }
+
+        function openCustomModal(title, text, confirmText, isDanger, onConfirm, onSuccess, onCancel) {
             const _mBox = document.querySelector('#custom-modal .modal-box'); if (_mBox) _mBox.classList.remove('modal-compact');
             const modal = document.getElementById('custom-modal');
             const titleEl = document.getElementById('modal-title');
@@ -8473,7 +8479,10 @@ let currentUser = null;
                 modal.classList.remove('active');
             };
 
-            document.getElementById('modal-btn-cancel').onclick = close;
+            document.getElementById('modal-btn-cancel').onclick = () => {
+                close();
+                if (typeof onCancel === 'function') onCancel();
+            };
             document.getElementById('modal-btn-confirm').onclick = () => {
                 const confirmBtn = document.getElementById('modal-btn-confirm');
                 const cancelBtn = document.getElementById('modal-btn-cancel');
@@ -8488,8 +8497,6 @@ let currentUser = null;
                 if (cancelBtn) cancelBtn.disabled = true;
                 confirmBtn.innerText = '...';
 
-                // onConfirm può essere sincrona o restituire una Promise (operazione Firestore):
-                // aspettiamo l'esito reale prima di chiudere, così un eventuale errore è sempre visibile.
                 Promise.resolve()
                     .then(() => onConfirm())
                     .then((result) => {
@@ -8960,8 +8967,12 @@ let currentUser = null;
             const minTarget = skill.baseTarget || (isHold ? 3 : 1);
             const xpReward = skill.unlockXp || (skill.goalBonusXp || 100);
 
+            const drawer = document.getElementById('skill-detail-drawer');
+            const isDrawerOpen = drawer && drawer.classList.contains('active');
+
             if (!isSkillPrerequisitesMet(id)) {
                 const missing = getMissingPrerequisitesNames(id);
+                if (isDrawerOpen) closeSkillDetailDrawer();
                 openCustomModal(
                     "🔒 Prerequisiti Richiesti",
                     `Per sbloccare la variante avanzata <strong>"${escapeHtml(skill.name)}"</strong> devi prima padroneggiare le skill di base propedeutiche:<br><br>` +
@@ -8971,10 +8982,18 @@ let currentUser = null;
                     `Sblocca prima queste abilità per procedere nell'Albero Calisthenico!`,
                     "Ho Capito",
                     false,
-                    () => {}
+                    () => {
+                        if (isDrawerOpen) openSkillDetailDrawer(id);
+                    },
+                    null,
+                    () => {
+                        if (isDrawerOpen) openSkillDetailDrawer(id);
+                    }
                 );
                 return;
             }
+
+            if (isDrawerOpen) closeSkillDetailDrawer();
 
             openCustomModal(
                 `🎉 Sblocca Skill (+${xpReward} XP)`,
@@ -8991,8 +9010,11 @@ let currentUser = null;
                         if (!userState[id].val || userState[id].val < minTarget) userState[id].val = minTarget;
                     }
                     saveState();
-                    if (typeof closeSkillDetailDrawer === 'function') closeSkillDetailDrawer();
                     showAppToast(`🎉 Skill "${skill.name}" sbloccata! +${xpReward} XP`, "success");
+                },
+                null,
+                () => {
+                    if (isDrawerOpen) openSkillDetailDrawer(id);
                 }
             );
         }
@@ -9000,6 +9022,9 @@ let currentUser = null;
         function askRelock(id) {
             const skill = findSkillById(id);
             if (!skill) return;
+
+            const drawer = document.getElementById('skill-detail-drawer');
+            const isDrawerOpen = drawer && drawer.classList.contains('active');
 
             // Controllo se ci sono skill successive già sbloccate che dipendono da questa
             const dependentSkills = [];
@@ -9012,6 +9037,7 @@ let currentUser = null;
             });
 
             if (dependentSkills.length > 0) {
+                if (isDrawerOpen) closeSkillDetailDrawer();
                 openCustomModal(
                     "⚠️ Impossibile Ribloccare",
                     `Non puoi ribloccare la skill <strong>"${escapeHtml(skill.name)}"</strong> perché hai già sbloccato delle varianti successive che dipendono da essa:<br><br>` +
@@ -9021,7 +9047,13 @@ let currentUser = null;
                     `Riblocca prima queste varianti successive per poter ribloccare "${escapeHtml(skill.name)}".`,
                     "Ho Capito",
                     false,
-                    () => {}
+                    () => {
+                        if (isDrawerOpen) openSkillDetailDrawer(id);
+                    },
+                    null,
+                    () => {
+                        if (isDrawerOpen) openSkillDetailDrawer(id);
+                    }
                 );
                 return;
             }
@@ -9038,6 +9070,8 @@ let currentUser = null;
             }
             xpToDeduct += completedGoalsCount * (skill.goalBonusXp || 0);
 
+            if (isDrawerOpen) closeSkillDetailDrawer();
+
             openCustomModal(
                 "🔒 Riblocca Skill",
                 `Sei sicuro di voler ribloccare <strong>"${escapeHtml(skill.name)}"</strong>?<br><br>` +
@@ -9048,8 +9082,11 @@ let currentUser = null;
                 () => {
                     userState[id] = { unlocked: false, val: 0 };
                     saveState();
-                    if (typeof closeSkillDetailDrawer === 'function') closeSkillDetailDrawer();
                     showAppToast(`🔒 Skill "${skill.name}" ribloccata (-${xpToDeduct} XP)`, "info");
+                },
+                null,
+                () => {
+                    if (isDrawerOpen) openSkillDetailDrawer(id);
                 }
             );
         }
