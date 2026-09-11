@@ -5050,7 +5050,7 @@
     <div class="main-tab-view active" id="tab-view-tree">
         <div class="header">
             <div class="auth-bar" id="auth-bar">
-                <span id="user-status-text">👤 Non autenticato (Salvataggio locale)</span>
+                <span id="user-status-text">👤 Non autenticato (Salvataggio locale) <span id="tree-streak-badge" class="streak-badge" style="background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.35); color:#f87171; border-radius:999px; padding:2px 8px; font-size:0.75rem; font-weight:800; margin-left:6px; display:none; align-items:center; gap:3px;">🔥 0</span></span>
                 <div class="auth-actions" id="auth-actions-container">
                     <button class="btn-auth-secondary" onclick="openAuthModal('login')">Accedi</button>
                     <button class="btn-auth" onclick="openAuthModal('signup')">Registrati</button>
@@ -5289,6 +5289,7 @@
                     <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px;">
                         <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
                             <h3 id="bento-nickname" style="margin:0; font-size:1.35rem; color:var(--text); font-weight:800;">Atleta</h3>
+                            <span id="bento-streak-badge" class="streak-badge" style="background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.35); color:#f87171; border-radius:999px; padding:3px 10px; font-size:0.82rem; font-weight:800; display:none; align-items:center; gap:4px;">🔥 0</span>
                             <button type="button" class="btn-edit-nickname" id="btn-edit-nickname" onclick="openEditNicknameModal()" style="background:rgba(56,189,248,0.12); border:1px solid var(--accent); color:var(--accent); padding:4px 10px; border-radius:8px; font-size:0.78rem; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; gap:5px; transition:all 0.2s;">
                                 ✏️ Modifica
                             </button>
@@ -5860,7 +5861,95 @@ let currentUser = null;
         let eventsAllowMaybeDraft = false; // stato del checkbox "opzione forse" nel form di creazione sondaggio
 
         // ---- Allenamenti personali ----
-        let userWorkoutXp = 0; // XP totali guadagnati registrando allenamenti (si somma agli XP delle skill)
+        let userWorkoutXp = 0;
+        let userStreak = parseInt(localStorage.getItem('naiontrackStreak')) || 0;
+        let lastWorkoutDate = localStorage.getItem('naiontrackLastWorkoutDate') || '';
+
+        function getDaysDiff(d1Str, d2Str) {
+            try {
+                const d1 = new Date(d1Str.slice(0, 10));
+                const d2 = new Date(d2Str.slice(0, 10));
+                const diffTime = d2.getTime() - d1.getTime();
+                return Math.floor(diffTime / (1000 * 60 * 60 * 24));
+            } catch(e) {
+                return 0;
+            }
+        }
+
+        function checkStreakInactivity() {
+            if (userStreak > 0 && lastWorkoutDate) {
+                const todayStr = new Date().toISOString().slice(0, 10);
+                const days = getDaysDiff(lastWorkoutDate, todayStr);
+                if (days > 7) {
+                    const lost = userStreak;
+                    userStreak = 0;
+                    localStorage.setItem('naiontrackStreak', '0');
+                    if (currentUser) {
+                        db.collection("users").doc(currentUser.uid).update({ streak: 0 }).catch(() => {});
+                    }
+                    if (typeof showAppNotification === 'function') {
+                        showAppNotification(
+                            "⚠️ Streak di Allenamento Persa!",
+                            "Sono passati " + days + " giorni dal tuo ultimo allenamento. La tua serie di " + lost + " allenamenti è stata azzerata! Torna ad allenarti oggi per ripartire! 🔥",
+                            { tag: 'streak_loss' }
+                        );
+                    }
+                    if (typeof showAppToast === 'function') {
+                        showAppToast("⚠️ Sono passati più di 7 giorni: streak di " + lost + " allenamenti azzerata!", "warning");
+                    }
+                }
+            }
+            renderAllStreakBadges();
+        }
+
+        function updateStreakOnNewWorkout(workoutDateStr) {
+            const wDate = workoutDateStr || new Date().toISOString().slice(0, 10);
+            if (!lastWorkoutDate) {
+                userStreak = 1;
+                lastWorkoutDate = wDate;
+            } else {
+                const diffDays = getDaysDiff(lastWorkoutDate, wDate);
+                if (diffDays === 0) {
+                    // Stesso giorno, streak già aggiornata
+                    lastWorkoutDate = wDate;
+                } else if (diffDays > 7) {
+                    // Oltre la settimana di tolleranza, riparte da 1
+                    userStreak = 1;
+                    lastWorkoutDate = wDate;
+                } else if (diffDays > 0) {
+                    // Entro 1..7 giorni, continua la streak
+                    userStreak = (userStreak || 0) + 1;
+                    lastWorkoutDate = wDate;
+                }
+            }
+            localStorage.setItem('naiontrackStreak', String(userStreak));
+            localStorage.setItem('naiontrackLastWorkoutDate', lastWorkoutDate);
+
+            if (currentUser) {
+                db.collection("users").doc(currentUser.uid).update({
+                    streak: userStreak,
+                    lastWorkoutDate: lastWorkoutDate
+                }).catch(() => {});
+            }
+            renderAllStreakBadges();
+        }
+
+        function renderAllStreakBadges() {
+            const streak = userStreak || 0;
+            // 1. Albero
+            const treeBadge = document.getElementById('tree-streak-badge');
+            if (treeBadge) {
+                treeBadge.innerHTML = '🔥 ' + streak;
+                treeBadge.style.display = streak > 0 ? 'inline-flex' : 'none';
+            }
+            // 2. Profilo
+            const profileBadge = document.getElementById('bento-streak-badge');
+            if (profileBadge) {
+                profileBadge.innerHTML = '🔥 ' + streak + (streak === 1 ? ' giorno' : ' giorni');
+                profileBadge.style.display = streak > 0 ? 'inline-flex' : 'none';
+            }
+        }
+ // XP totali guadagnati registrando allenamenti (si somma agli XP delle skill)
         let workoutsUnsubscribe = null;
         let workoutRowCounter = 0; // contatore per generare id univoci alle righe esercizio nel form
 
@@ -7286,6 +7375,8 @@ let currentUser = null;
                     totalXp: currentXp,
                     skills: userState,
                     workoutXp: userWorkoutXp || 0,
+                    streak: userStreak || 0,
+                    lastWorkoutDate: lastWorkoutDate || '',
                     updatedAt: firebase.firestore.FieldValue.serverTimestamp()
                 }, { merge: true }).catch(error => {
                     console.error("Errore di salvataggio su Firebase: ", error);
@@ -7294,6 +7385,8 @@ let currentUser = null;
             } else {
                 localStorage.setItem('naiontrackState', JSON.stringify(userState));
                 localStorage.setItem('naiontrackWorkoutXp', userWorkoutXp || 0);
+            localStorage.setItem('naiontrackStreak', userStreak || 0);
+            localStorage.setItem('naiontrackLastWorkoutDate', lastWorkoutDate || '');
             }
             updateUI();
         }
@@ -8037,6 +8130,15 @@ let currentUser = null;
                             isPublic: data.isPublic !== false
                         };
                         userWorkoutXp = data.workoutXp || 0;
+                if (data.streak !== undefined) {
+                    userStreak = data.streak || 0;
+                    localStorage.setItem('naiontrackStreak', String(userStreak));
+                }
+                if (data.lastWorkoutDate) {
+                    lastWorkoutDate = data.lastWorkoutDate;
+                    localStorage.setItem('naiontrackLastWorkoutDate', lastWorkoutDate);
+                }
+                checkStreakInactivity();
                     } else {
                         userState = {};
                         userNickname = user.displayName || "";
@@ -8124,7 +8226,7 @@ let currentUser = null;
                     userProfileListenerUnsubscribe();
                     userProfileListenerUnsubscribe = null;
                 }
-                document.getElementById('user-status-text').innerHTML = `👤 Non autenticato (Salvataggio locale)`;
+                document.getElementById('user-status-text').innerHTML = `👤 Non autenticato (Salvataggio locale) <span id="tree-streak-badge" class="streak-badge" style="background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.35); color:#f87171; border-radius:999px; padding:2px 8px; font-size:0.75rem; font-weight:800; margin-left:6px; display:${(userStreak || 0) > 0 ? 'inline-flex' : 'none'}; align-items:center; gap:3px;">🔥 ${userStreak || 0}</span>`;
                 document.getElementById('auth-actions-container').innerHTML = `
                     <button class="btn-auth-secondary" onclick="openAuthModal('login')">Accedi</button>
                     <button class="btn-auth" onclick="openAuthModal('signup')">Registrati</button>
@@ -8147,7 +8249,7 @@ let currentUser = null;
 
         function renderUserAuthBar() {
             const displayName = userNickname || (currentUser ? (currentUser.displayName || currentUser.email) : "");
-            document.getElementById('user-status-text').innerHTML = `👤 <strong>${displayName}</strong>`;
+            document.getElementById('user-status-text').innerHTML = `👤 <strong>${displayName}</strong> <span id="tree-streak-badge" class="streak-badge" style="background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.35); color:#f87171; border-radius:999px; padding:2px 8px; font-size:0.75rem; font-weight:800; margin-left:6px; display:${(userStreak || 0) > 0 ? 'inline-flex' : 'none'}; align-items:center; gap:3px;">🔥 ${userStreak || 0}</span>`;
             document.getElementById('auth-actions-container').innerHTML = `
                 <button class="btn-auth-secondary" onclick="openNicknameModal()">✏️ Nickname</button>
                 <button class="btn-auth-secondary" onclick="logoutUser()">Esci</button>
@@ -8310,7 +8412,7 @@ let currentUser = null;
                             <div class="leaderboard-left">
                                 <span class="leaderboard-rank-pos">#${index}</span>
                                 <div class="leaderboard-avatar rank-badge-wrap rank-tier-${rank.tierId || 'bronze'}">${rank.iconSvg}</div>
-                                <span class="leaderboard-name">${nick} ${isMe ? '(Tu)' : ''}</span>
+                                ${data.streak > 0 ? `<span class="streak-badge" title="${data.streak} allenamenti consecutivi" style="background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.35); color:#f87171; border-radius:999px; padding:2px 7px; font-size:0.75rem; font-weight:800; margin-right:6px; display:inline-flex; align-items:center; gap:2px;">🔥 ${data.streak}</span>` : ''}<span class="leaderboard-name">${nick} ${isMe ? '(Tu)' : ''}</span>
                             </div>
                             <span class="leaderboard-xp">${xp} XP</span>
                         </div>
@@ -8414,7 +8516,7 @@ let currentUser = null;
                         </div>
                         <div class="actions">
                             ${isUnlocked ? `
-                                <input type="number" id="input-${skill.id}" value="${val}" min="${skill.type === 'sec' ? 3 : 1}" onchange="if(parseInt(this.value)<${skill.type === 'sec' ? 3 : 1}) this.value=${skill.type === 'sec' ? 3 : 1};" onclick="event.stopPropagation()">
+                                <input type="number" id="input-${skill.id}" value="${val}" min="${skill.type === 'sec' ? 3 : 1}" onkeydown="if('${skill.type}'==='sec' && (event.key==='1'||event.key==='2'||event.key==='0') && (!this.value || this.selectionStart===0)) { event.preventDefault(); }" oninput="if('${skill.type}'==='sec' && this.value && parseInt(this.value)<3){ this.value='3'; }" onchange="if('${skill.type}'==='sec' && parseInt(this.value)<3){ this.value='3'; }" onclick="event.stopPropagation()">
                                 <button onclick="event.stopPropagation(); updateSkill('${skill.id}')">Salva</button>
                                 <button class="relock-btn" title="Riblocca skill se sbloccata per errore (risottrae XP)" onclick="event.stopPropagation(); askRelock('${skill.id}')" style="background:rgba(239,68,68,0.15); border:1px solid var(--danger); color:var(--danger); padding:4px 8px; border-radius:6px; font-size:0.75rem; font-weight:bold; cursor:pointer;">🔒 Riblocca</button>
                             ` : `
@@ -9005,7 +9107,7 @@ let currentUser = null;
                     `<div style="font-size:0.82rem; color:var(--subtext); margin-bottom:8px;">🎯 Minimo per lo sblocco: <strong>${minTarget} ${unitLabel}</strong></div>` +
                     `<div style="display:flex; align-items:center; justify-content:center; gap:8px;">` +
                         `<label for="unlock-custom-val" style="font-size:0.88rem; font-weight:700; color:var(--text);">${isHold ? 'Secondi completati:' : 'Ripetizioni completate:'}</label>` +
-                        `<input type="number" id="unlock-custom-val" value="${minTarget}" min="${minTarget}" oninput="if(this.value && parseInt(this.value)<${minTarget}) this.style.borderColor='var(--danger)'; else this.style.borderColor='var(--accent)';" onchange="if(parseInt(this.value)<${minTarget}) this.value=${minTarget};" style="width:75px; text-align:center; padding:7px 10px; border-radius:8px; border:1.5px solid var(--accent); background:var(--card-bg); color:var(--text); font-weight:bold; font-size:1.05rem; box-sizing:border-box;">` +
+                        `<input type="number" id="unlock-custom-val" value="${minTarget}" min="${minTarget}" onkeydown="if(${isHold} && (event.key==='1'||event.key==='2'||event.key==='0') && (!this.value || this.selectionStart===0)) { event.preventDefault(); }" oninput="if(${isHold} && this.value && parseInt(this.value)<3){ this.value='3'; }" onchange="if(parseInt(this.value)<${minTarget}) this.value=${minTarget};" style="width:75px; text-align:center; padding:7px 10px; border-radius:8px; border:1.5px solid var(--accent); background:var(--card-bg); color:var(--text); font-weight:bold; font-size:1.05rem; box-sizing:border-box;">` +
                         `<span style="font-size:0.88rem; font-weight:800; color:var(--accent);">${unitShort}</span>` +
                     `</div>` +
                 `</div>` +
@@ -9676,7 +9778,10 @@ let currentUser = null;
                     <div class="workout-card">
                         <div class="workout-card-header">
                             <span class="workout-card-title">${escapeHtml(w.name || 'Allenamento')} <span class="workout-card-date">— ${escapeHtml(w.date || '')}</span></span>
-                            <button class="event-delete-btn" title="Elimina allenamento" onclick="askDeleteWorkout('${w.id}')">🗑️</button>
+                            <div style="display:flex; align-items:center; gap:4px;">
+                                <button class="event-edit-btn" title="Modifica allenamento" onclick="openEditWorkoutModal('${w.id}')" style="background:none; border:none; color:var(--text); font-size:1.05rem; cursor:pointer; padding:4px 6px;">✏️</button>
+                                <button class="event-delete-btn" title="Elimina allenamento" onclick="askDeleteWorkout('${w.id}')">🗑️</button>
+                            </div>
                         </div>
                         <div class="workout-card-meta">
                             ⏱️ ${w.durationMin || 0} min &nbsp;|&nbsp; 🔥 Intensità ${w.intensity || 5}/10
@@ -9685,7 +9790,7 @@ let currentUser = null;
                             ${exercisesHtml || '<span style="color:var(--subtext);">Nessun esercizio dettagliato.</span>'}
                         </div>
                         ${w.notes ? `<div class="workout-card-notes">📝 ${escapeHtml(w.notes)}</div>` : ''}
-                        <div class="workout-xp-badge" style="background:rgba(56,189,248,0.12); color:var(--accent); border:1px solid rgba(56,189,248,0.25);">📓 Sessione Registrata</div>
+                        <div class="workout-xp-badge" style="background:rgba(16,185,129,0.15); color:#10b981; border:1px solid rgba(16,185,129,0.3); font-weight:800;">+500 XP</div>
                     </div>
                 `;
             });
@@ -9694,6 +9799,23 @@ let currentUser = null;
         }
 
         function openNewWorkoutModal() {
+            const todayStr = new Date().toISOString().slice(0, 10);
+            const existingToday = getLocalWorkouts().find(w => (w.date || '').slice(0, 10) === todayStr);
+            if (existingToday) {
+                openCustomModal(
+                    "⚠️ Limite Giornaliero Raggiunto",
+                    `Hai già registrato l'allenamento di oggi <strong>"${escapeHtml(existingToday.name || 'Allenamento')}"</strong>!<br><br>` +
+                    `Per garantire un tracciamento equo e bilanciato, è consentito creare al massimo <strong>1 allenamento al giorno</strong> (+500 XP).<br><br>` +
+                    `Se vuoi aggiungere altri esercizi o correggere la sessione odierna, puoi modificarla toccando l'icona <strong>✏️ Modifica</strong> nel tuo diario.`,
+                    "✏️ Modifica Sessione di Oggi",
+                    false,
+                    () => {
+                        openEditWorkoutModal(existingToday.id);
+                    }
+                );
+                return;
+            }
+
             const modal = document.getElementById('custom-modal');
             const modalBox = modal ? modal.querySelector('.modal-box') : null;
             if (modalBox) modalBox.classList.add('modal-compact');
@@ -9701,8 +9823,6 @@ let currentUser = null;
             const titleEl = document.getElementById('modal-title');
             const bodyContent = document.getElementById('modal-body-content');
             const actionsBox = document.getElementById('modal-actions-box');
-
-            const todayStr = new Date().toISOString().slice(0, 10);
 
             titleEl.innerText = "🏋️ Nuovo Allenamento";
             bodyContent.innerHTML = `
@@ -9827,13 +9947,20 @@ let currentUser = null;
             const name = (nameInput.value || '').trim().slice(0, 60);
             const notes = (notesInput.value || '').trim().slice(0, 200);
 
+            // Controllo limite 1 allenamento al giorno per data
+            const existingForDate = getLocalWorkouts().find(w => (w.date || '').slice(0, 10) === date.slice(0, 10));
+            if (existingForDate) {
+                if (errEl) errEl.innerText = "Hai già registrato un allenamento in data " + date + "! Modifica quello esistente con l'icona ✏️.";
+                return;
+            }
+
             if (exercises.length === 0 && duration <= 0) {
                 if (errEl) errEl.innerText = "Aggiungi almeno un esercizio o indica la durata dell'allenamento.";
                 return;
             }
 
             const effort = calculateWorkoutEffort(exercises, duration, intensity);
-            const xpEarned = 0; // Diario tecnico personale senza XP per prevenire spam
+            const xpEarned = 500; // Ogni allenamento creato dà 500 XP indipendentemente da ciò che registri
 
             const workoutData = {
                 name: name || 'Allenamento',
@@ -9843,7 +9970,7 @@ let currentUser = null;
                 exercises: exercises,
                 notes: notes,
                 effortScore: effort,
-                xpEarned: 0
+                xpEarned: 500
             };
 
             const confirmBtn = document.getElementById('new-workout-confirm-btn');
@@ -9851,13 +9978,28 @@ let currentUser = null;
             if (confirmBtn) { confirmBtn.disabled = true; confirmBtn.innerText = '...'; }
             if (cancelBtn) cancelBtn.disabled = true;
 
+            // Accredita i 500 XP
+            userWorkoutXp = (userWorkoutXp || 0) + 500;
+            saveState();
+            localStorage.setItem('naiontrackWorkoutXp', String(userWorkoutXp));
+
+            // Aggiorna la streak
+            updateStreakOnNewWorkout(date);
+
             if (currentUser) {
                 const userRef = db.collection("users").doc(currentUser.uid);
+                userRef.update({
+                    workoutXp: userWorkoutXp,
+                    totalXp: getTotalXp(),
+                    streak: userStreak,
+                    lastWorkoutDate: lastWorkoutDate
+                }).catch(e => console.warn("Errore aggiornamento totalXp cloud:", e));
+
                 userRef.collection("workouts").add(Object.assign({}, workoutData, {
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                })).then(() => {
+                })).then((docRef) => {
                     const local = getLocalWorkouts();
-                    workoutData.id = 'cloud_' + Date.now();
+                    workoutData.id = docRef ? docRef.id : ('cloud_' + Date.now());
                     workoutData.createdAt = Date.now();
                     local.unshift(workoutData);
                     saveLocalWorkouts(local);
@@ -9901,12 +10043,199 @@ let currentUser = null;
             const bodyContent = document.getElementById('modal-body-content');
             const actionsBox = document.getElementById('modal-actions-box');
 
-            titleEl.innerText = "🎉 Allenamento salvato!";
-            bodyContent.innerHTML = `<p style="text-align:center; line-height:1.5;">La sessione è stata registrata con successo nel tuo <strong>Diario Personale</strong>!<br><span style="color:var(--subtext); font-size:0.85rem;">Ottimo lavoro! Continua ad annotare le tue sessioni per monitorare i progressi.</span></p>`;
+            titleEl.innerText = "🎉 Allenamento salvato! (+500 XP)";
+            bodyContent.innerHTML = `<p style="text-align:center; line-height:1.5;">La sessione è stata registrata con successo nel tuo <strong>Diario Personale</strong>!<br><br><span style="color:#10b981; font-size:1.25rem; font-weight:900;">+500 XP</span> accreditati sul tuo profilo!<br><br><span style="color:var(--accent); font-weight:700;">🔥 Streak attuale: ${userStreak} ${userStreak === 1 ? 'giorno' : 'giorni'}</span></p>`;
             actionsBox.innerHTML = `<button class="btn-confirm" id="modal-btn-cancel" style="flex:1;">Ottimo! 💪</button>`;
 
             modal.classList.add('active');
             document.getElementById('modal-btn-cancel').onclick = () => modal.classList.remove('active');
+        }
+
+        
+        function addWorkoutExerciseRowToContainer(containerId, exData = null) {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+            const id = ++workoutRowCounter;
+            const row = document.createElement('div');
+            row.className = 'workout-exercise-row';
+            row.dataset.rowId = id;
+            const nameVal = exData ? escapeHtml(exData.name || '') : '';
+            const typeVal = exData ? (exData.type || 'rep') : 'rep';
+            const setsVal = exData ? (exData.sets || 3) : 3;
+            const numVal = exData ? (exData.value || 10) : 10;
+
+            row.innerHTML = `
+                <input type="text" class="ex-name" placeholder="Esercizio" value="${nameVal}" maxlength="40">
+                <select class="ex-type">
+                    <option value="rep" ${typeVal === 'rep' ? 'selected' : ''}>Ripetizioni</option>
+                    <option value="time" ${typeVal === 'time' ? 'selected' : ''}>Secondi</option>
+                </select>
+                <input type="number" class="ex-sets" placeholder="Serie" min="1" max="50" value="${setsVal}">
+                <input type="number" class="ex-value" placeholder="Rip/Sec" min="0" max="2000" value="${numVal}">
+                <button type="button" class="ex-remove-btn" title="Rimuovi esercizio" onclick="removeWorkoutExerciseRow(${id})">✕</button>
+            `;
+            container.appendChild(row);
+        }
+
+        function readWorkoutExercisesFromContainer(containerId) {
+            const rows = document.querySelectorAll('#' + containerId + ' .workout-exercise-row');
+            const exercises = [];
+            rows.forEach(row => {
+                const nameInput = row.querySelector('.ex-name');
+                const typeInput = row.querySelector('.ex-type');
+                const setsInput = row.querySelector('.ex-sets');
+                const valueInput = row.querySelector('.ex-value');
+                if (!nameInput || !typeInput || !setsInput || !valueInput) return;
+
+                const name = nameInput.value.trim();
+                const type = typeInput.value;
+                const sets = parseInt(setsInput.value, 10) || 0;
+                const value = parseFloat(valueInput.value) || 0;
+
+                if (name && sets > 0 && value > 0) {
+                    exercises.push({ name: name.slice(0, 40), type, sets, value });
+                }
+            });
+            return exercises;
+        }
+
+        function openEditWorkoutModal(workoutId) {
+            const local = getLocalWorkouts();
+            const w = local.find(x => x.id === workoutId);
+            if (!w) {
+                showAppToast("Allenamento non trovato!", "error");
+                return;
+            }
+
+            const modal = document.getElementById('custom-modal');
+            const modalBox = modal ? modal.querySelector('.modal-box') : null;
+            if (modalBox) modalBox.classList.add('modal-compact');
+
+            const titleEl = document.getElementById('modal-title');
+            const bodyContent = document.getElementById('modal-body-content');
+            const actionsBox = document.getElementById('modal-actions-box');
+
+            titleEl.innerText = "✏️ Modifica Allenamento";
+            bodyContent.innerHTML = `
+                <div class="auth-error" id="edit-workout-error"></div>
+                <div class="workout-form-row">
+                    <div class="auth-form-group" style="flex:1.4; min-width:0;">
+                        <label>Nome allenamento</label>
+                        <input type="text" id="edit-workout-name" value="${escapeHtml(w.name || '')}" maxlength="60">
+                    </div>
+                    <div class="auth-form-group" style="flex:1; min-width:0;">
+                        <label>Data</label>
+                        <input type="date" id="edit-workout-date" value="${escapeHtml((w.date || '').slice(0, 10))}">
+                    </div>
+                </div>
+                <div class="workout-form-row">
+                    <div class="auth-form-group" style="flex:1; min-width:0;">
+                        <label>Durata (min)</label>
+                        <input type="number" id="edit-workout-duration" min="0" max="600" value="${w.durationMin || 0}">
+                    </div>
+                    <div class="auth-form-group" style="flex:1.2; min-width:0;">
+                        <label>Intensità: <strong id="edit-workout-intensity-value" style="color:var(--accent);">${w.intensity || 5}</strong>/10</label>
+                        <input type="range" id="edit-workout-intensity" min="1" max="10" value="${w.intensity || 5}" style="width:100%; margin-top:6px;" oninput="document.getElementById('edit-workout-intensity-value').innerText = this.value;">
+                    </div>
+                </div>
+                <div class="auth-form-group" style="margin-bottom:6px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                        <label style="margin:0;">Esercizi svolti</label>
+                        <button type="button" class="btn-auth-secondary" style="padding:3px 9px; font-size:0.75rem; border-radius:6px; cursor:pointer;" onclick="addWorkoutExerciseRowToContainer('edit-workout-exercises-list')">➕ Esercizio</button>
+                    </div>
+                    <div id="edit-workout-exercises-list" style="max-height:110px; overflow-y:auto; display:flex; flex-direction:column; gap:4px;"></div>
+                </div>
+                <div class="auth-form-group" style="margin-bottom:8px;">
+                    <label>Note (facoltative)</label>
+                    <input type="text" id="edit-workout-notes" value="${escapeHtml(w.notes || '')}" placeholder="Come ti sei sentito..." maxlength="200">
+                </div>
+            `;
+
+            actionsBox.innerHTML = `
+                <button class="btn-cancel" id="modal-btn-cancel">Annulla</button>
+                <button class="btn-confirm" id="edit-workout-confirm-btn">💾 Salva Modifiche</button>
+            `;
+
+            modal.classList.add('active');
+            document.getElementById('modal-btn-cancel').onclick = () => {
+                if (modalBox) modalBox.classList.remove('modal-compact');
+                modal.classList.remove('active');
+            };
+            document.getElementById('edit-workout-confirm-btn').onclick = () => {
+                confirmSaveEditedWorkout(workoutId);
+            };
+
+            const exList = document.getElementById('edit-workout-exercises-list');
+            exList.innerHTML = '';
+            if (w.exercises && w.exercises.length > 0) {
+                w.exercises.forEach(ex => {
+                    addWorkoutExerciseRowToContainer('edit-workout-exercises-list', ex);
+                });
+            } else {
+                addWorkoutExerciseRowToContainer('edit-workout-exercises-list');
+            }
+        }
+
+        function confirmSaveEditedWorkout(workoutId) {
+            const errEl = document.getElementById('edit-workout-error');
+            const nameInput = document.getElementById('edit-workout-name');
+            const dateInput = document.getElementById('edit-workout-date');
+            const durationInput = document.getElementById('edit-workout-duration');
+            const intensityInput = document.getElementById('edit-workout-intensity');
+            const notesInput = document.getElementById('edit-workout-notes');
+
+            const exercises = readWorkoutExercisesFromContainer('edit-workout-exercises-list');
+            const duration = parseFloat(durationInput.value) || 0;
+            const intensity = parseInt(intensityInput.value, 10) || 5;
+            const date = dateInput.value || new Date().toISOString().slice(0, 10);
+            const name = (nameInput.value || '').trim().slice(0, 60);
+            const notes = (notesInput.value || '').trim().slice(0, 200);
+
+            if (exercises.length === 0 && duration <= 0) {
+                if (errEl) errEl.innerText = "Aggiungi almeno un esercizio o indica la durata dell'allenamento.";
+                return;
+            }
+
+            const local = getLocalWorkouts();
+            const idx = local.findIndex(x => x.id === workoutId);
+            if (idx === -1) {
+                showAppToast("Allenamento non trovato!", "error");
+                return;
+            }
+
+            // Controllo che la nuova data non collida con un altro allenamento diverso da questo
+            const duplicateOther = local.find(x => x.id !== workoutId && (x.date || '').slice(0, 10) === date.slice(0, 10));
+            if (duplicateOther) {
+                if (errEl) errEl.innerText = "Hai già un altro allenamento registrato in data " + date + "!";
+                return;
+            }
+
+            local[idx].name = name || 'Allenamento';
+            local[idx].date = date;
+            local[idx].durationMin = duration;
+            local[idx].intensity = intensity;
+            local[idx].exercises = exercises;
+            local[idx].notes = notes;
+            saveLocalWorkouts(local);
+
+            if (currentUser) {
+                const cloudId = workoutId.startsWith('cloud_') ? workoutId.replace('cloud_', '') : workoutId;
+                db.collection("users").doc(currentUser.uid).collection("workouts").doc(cloudId).update({
+                    name: local[idx].name,
+                    date: local[idx].date,
+                    durationMin: local[idx].durationMin,
+                    intensity: local[idx].intensity,
+                    exercises: local[idx].exercises,
+                    notes: local[idx].notes
+                }).catch(err => console.warn("Errore aggiornamento cloud allenamento:", err));
+            }
+
+            const modalBox = document.querySelector('#custom-modal .modal-box');
+            if (modalBox) modalBox.classList.remove('modal-compact');
+            document.getElementById('custom-modal').classList.remove('active');
+
+            renderLocalWorkoutsList();
+            showAppToast("Allenamento modificato con successo!", "success");
         }
 
         function askDeleteWorkout(workoutId) {
@@ -9922,6 +10251,17 @@ let currentUser = null;
         function deleteWorkout(workoutId) {
             const list = getLocalWorkouts().filter(w => w.id !== workoutId);
             saveLocalWorkouts(list);
+
+            userWorkoutXp = Math.max(0, (userWorkoutXp || 0) - 500);
+            saveState();
+            localStorage.setItem('naiontrackWorkoutXp', String(userWorkoutXp));
+            if (currentUser) {
+                db.collection("users").doc(currentUser.uid).update({
+                    workoutXp: userWorkoutXp,
+                    totalXp: getTotalXp()
+                }).catch(() => {});
+            }
+            showAppToast("Sessione eliminata (-500 XP)", "info");
 
             if (currentUser) {
                 const userRef = db.collection("users").doc(currentUser.uid);
@@ -18908,7 +19248,7 @@ function getCalisthenicsExpertResponse(query) {
                                 ⚡ Aggiorna Record Massimale:
                             </div>
                             <div style="display:flex; gap:8px; align-items:center;">
-                                <input type="number" id="drawer-input-${skill.id}" value="${currentVal}" min="${minTarget}" oninput="if(this.value && parseInt(this.value)<${minTarget}) this.style.borderColor='var(--danger)'; else this.style.borderColor='var(--line-color)';" onchange="if(parseInt(this.value)<${minTarget}) this.value=${minTarget};" style="width:80px; text-align:center; padding:8px 10px; border-radius:8px; border:1px solid var(--line-color); background:var(--bg-color); color:var(--text); font-weight:bold; font-size:1rem; box-sizing:border-box;">
+                                <input type="number" id="drawer-input-${skill.id}" value="${currentVal}" min="${minTarget}" onkeydown="if(${isHold} && (event.key==='1'||event.key==='2'||event.key==='0') && (!this.value || this.selectionStart===0)) { event.preventDefault(); }" oninput="if(${isHold} && this.value && parseInt(this.value)<3){ this.value='3'; }" onchange="if(parseInt(this.value)<${minTarget}) this.value=${minTarget};" style="width:80px; text-align:center; padding:8px 10px; border-radius:8px; border:1px solid var(--line-color); background:var(--bg-color); color:var(--text); font-weight:bold; font-size:1rem; box-sizing:border-box;">
                                 <span style="font-size:0.85rem; font-weight:700; color:var(--text);">${unitShort}</span>
                                 <button type="button" onclick="updateSkillFromDrawer('${skill.id}')" style="flex:1; padding:8px 14px; font-weight:800; font-size:0.85rem; background:linear-gradient(135deg, #10b981, #059669); border:none; border-radius:8px; color:white; cursor:pointer;">
                                     💾 Salva Record
@@ -19378,6 +19718,11 @@ function getCalisthenicsExpertResponse(query) {
             const currentRank = typeof calculateRank === 'function' ? calculateRank(currentXp) : (typeof getCurrentRank === 'function' ? getCurrentRank(currentXp) : { name: 'Novizio', tierId: 'bronze', iconSvg: '' });
 
             if (nickEl) nickEl.innerText = userNickname || (currentUser ? (currentUser.displayName || (currentUser.email ? currentUser.email.split('@')[0] : 'Atleta')) : 'Atleta Calisthenico');
+            const profileStreakEl = document.getElementById('bento-streak-badge');
+            if (profileStreakEl) {
+                profileStreakEl.innerHTML = '🔥 ' + (userStreak || 0) + ((userStreak || 0) === 1 ? ' giorno' : ' giorni');
+                profileStreakEl.style.display = (userStreak || 0) > 0 ? 'inline-flex' : 'none';
+            }
             if (rankEl) {
                 rankEl.innerText = currentRank.name;
                 if (currentRank.tierColor) {
