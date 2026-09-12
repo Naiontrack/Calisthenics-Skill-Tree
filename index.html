@@ -4623,6 +4623,9 @@
             background: var(--tree-node-bg);
             box-sizing: border-box;
             user-select: none;
+            -webkit-user-select: none;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
             z-index: 10;
         }
 
@@ -4699,7 +4702,9 @@
             font-size: 0.8rem;
             font-weight: 800;
             color: var(--text);
-            pointer-events: none;
+            pointer-events: auto;
+            cursor: pointer;
+            touch-action: manipulation;
             line-height: 1.25;
             background: rgba(15, 23, 42, 0.88);
             backdrop-filter: blur(6px);
@@ -5412,6 +5417,22 @@
 
         .skill-detail-drawer.active {
             transform: translate(-50%, 0);
+        }
+
+        /* In fullscreen mode the viewport wrapper has z-index 9999999;
+           raise the drawer, backdrop, custom modals and toasts above it */
+        body.tree-fullscreen-active .skill-detail-drawer-backdrop {
+            z-index: 10000000 !important;
+        }
+        body.tree-fullscreen-active .skill-detail-drawer {
+            z-index: 10000001 !important;
+        }
+        body.tree-fullscreen-active .modal-overlay {
+            z-index: 10000010 !important;
+        }
+        body.tree-fullscreen-active #in-app-toast-container,
+        body.tree-fullscreen-active .toast-container {
+            z-index: 10000020 !important;
         }
 
         .drawer-handle-bar {
@@ -10641,11 +10662,18 @@ let currentUser = null;
         function closeCustomModal() {
             const modal = document.getElementById('custom-modal');
             if (modal) modal.classList.remove('active');
+            if (modal && modal.parentElement !== document.body && !document.fullscreenElement) {
+                document.body.appendChild(modal);
+            }
         }
 
         function openCustomModal(title, text, confirmText, isDanger, onConfirm, onSuccess, onCancel) {
             const _mBox = document.querySelector('#custom-modal .modal-box'); if (_mBox) _mBox.classList.remove('modal-compact');
             const modal = document.getElementById('custom-modal');
+            const fsEl = document.fullscreenElement;
+            if (fsEl && fsEl !== document.documentElement && modal && !fsEl.contains(modal)) {
+                fsEl.appendChild(modal);
+            }
             const titleEl = document.getElementById('modal-title');
             const bodyContent = document.getElementById('modal-body-content');
             const actionsBox = document.getElementById('modal-actions-box');
@@ -23031,7 +23059,7 @@ function getCalisthenicsExpertResponse(query) {
                     `<svg viewBox="0 0 100 100" stroke="var(--accent)" stroke-width="9" fill="none"><circle cx="50" cy="30" r="14"/><line x1="50" y1="44" x2="50" y2="70"/><line x1="28" y1="52" x2="72" y2="52"/><line x1="50" y1="70" x2="35" y2="92"/><line x1="50" y1="70" x2="65" y2="92"/></svg>`;
 
                 nodesHtml += `
-                    <div class="tree-node ${nodeClass}" style="left: ${s.x - 39}px; top: ${s.y - 39}px;" onclick="openSkillDetailDrawer('${s.id}')" title="${escapeHtml(s.name)}">
+                    <div class="tree-node ${nodeClass}" data-skill-id="${s.id}" style="left: ${s.x - 39}px; top: ${s.y - 39}px;" onclick="openSkillDetailDrawer('${s.id}')" title="${escapeHtml(s.name)}">
                         <div class="tree-node-inner">
                             <div class="tree-node-svg">${stickman}</div>
                         </div>
@@ -23096,15 +23124,17 @@ function getCalisthenicsExpertResponse(query) {
                 btn.title = isTreeFullscreen ? 'Esci da Schermo Intero (Esc)' : 'Schermo Intero / Ingrandisci Albero';
             }
 
-            // Su mobile / touch, usiamo esclusivamente il layout immersivo CSS 100dvh per evitare distorsioni o rotazioni forzate
+            // Su desktop utilizziamo document.documentElement.requestFullscreen() affinché tutti gli elementi
+            // (drawer, modal popup, toast) risiedano nel Top Layer nativo senza essere tagliati fuori
             const isMobile = window.innerWidth <= 768 || ('ontouchstart' in window);
             if (isTreeFullscreen) {
                 if (!isMobile) {
                     try {
-                        if (wrapper.requestFullscreen) {
-                            wrapper.requestFullscreen().catch(() => {});
-                        } else if (wrapper.webkitRequestFullscreen) {
-                            wrapper.webkitRequestFullscreen();
+                        const targetEl = document.documentElement;
+                        if (targetEl.requestFullscreen) {
+                            targetEl.requestFullscreen().catch(() => {});
+                        } else if (targetEl.webkitRequestFullscreen) {
+                            targetEl.webkitRequestFullscreen();
                         }
                     } catch (e) {}
                 }
@@ -23129,20 +23159,32 @@ function getCalisthenicsExpertResponse(query) {
         });
 
         document.addEventListener('fullscreenchange', () => {
-            if (!document.fullscreenElement && isTreeFullscreen) {
-                isTreeFullscreen = false;
-                const wrapper = document.getElementById('skill-tree-viewport-wrapper');
-                const btn = document.getElementById('btn-tree-fullscreen');
-                if (wrapper) wrapper.classList.remove('tree-fullscreen-mode');
-                document.body.classList.remove('tree-fullscreen-active');
-                if (btn) {
-                    btn.innerText = '⛶';
-                    btn.title = 'Schermo Intero / Ingrandisci Albero';
+            const drawer = document.getElementById('skill-detail-drawer');
+            const backdrop = document.getElementById('skill-detail-drawer-backdrop');
+            const modal = document.getElementById('custom-modal');
+            if (!document.fullscreenElement) {
+                if (drawer && drawer.parentElement !== document.body) {
+                    document.body.appendChild(backdrop);
+                    document.body.appendChild(drawer);
                 }
-                setTimeout(() => {
-                    resetSkillTreeZoom();
-                    renderSkillTreeGraph();
-                }, 80);
+                if (modal && modal.parentElement !== document.body) {
+                    document.body.appendChild(modal);
+                }
+                if (isTreeFullscreen) {
+                    isTreeFullscreen = false;
+                    const wrapper = document.getElementById('skill-tree-viewport-wrapper');
+                    const btn = document.getElementById('btn-tree-fullscreen');
+                    if (wrapper) wrapper.classList.remove('tree-fullscreen-mode');
+                    document.body.classList.remove('tree-fullscreen-active');
+                    if (btn) {
+                        btn.innerText = '⛶';
+                        btn.title = 'Schermo Intero / Ingrandisci Albero';
+                    }
+                    setTimeout(() => {
+                        resetSkillTreeZoom();
+                        renderSkillTreeGraph();
+                    }, 80);
+                }
             }
         });
 
@@ -23231,8 +23273,21 @@ function getCalisthenicsExpertResponse(query) {
             }, { passive: false });
 
             // Touch support for Mobile
+            let touchTargetNode = null;
+            let touchStartX = 0, touchStartY = 0, touchStartTime = 0;
+
             viewport.addEventListener('touchstart', e => {
-                if (e.target.closest('.tree-node') || e.target.closest('.tree-zoom-hud') || e.target.closest('.tree-legend-hud')) return;
+                const node = e.target.closest('.tree-node');
+                if (node) {
+                    touchTargetNode = node;
+                    touchStartX = e.touches[0].clientX;
+                    touchStartY = e.touches[0].clientY;
+                    touchStartTime = Date.now();
+                    isTreePanning = false;
+                    return;
+                }
+                touchTargetNode = null;
+                if (e.target.closest('.tree-zoom-hud') || e.target.closest('.tree-legend-hud') || e.target.closest('.tree-exit-fullscreen-btn')) return;
                 if (e.touches.length === 1) {
                     isTreePanning = true;
                     startPanX = e.touches[0].clientX - treePanX;
@@ -23247,6 +23302,16 @@ function getCalisthenicsExpertResponse(query) {
             }, { passive: true });
 
             viewport.addEventListener('touchmove', e => {
+                if (touchTargetNode && e.touches.length === 1) {
+                    const dist = Math.hypot(e.touches[0].clientX - touchStartX, e.touches[0].clientY - touchStartY);
+                    if (dist > 10) {
+                        // Il tocco si è mosso più di 10px: diventa un pan dell'albero
+                        isTreePanning = true;
+                        startPanX = e.touches[0].clientX - treePanX;
+                        startPanY = e.touches[0].clientY - treePanY;
+                        touchTargetNode = null;
+                    }
+                }
                 if (isTreePanning && e.touches.length === 1) {
                     treePanX = e.touches[0].clientX - startPanX;
                     treePanY = e.touches[0].clientY - startPanY;
@@ -23275,6 +23340,20 @@ function getCalisthenicsExpertResponse(query) {
             }, { passive: true });
 
             viewport.addEventListener('touchend', () => {
+                if (touchTargetNode) {
+                    const duration = Date.now() - touchStartTime;
+                    if (duration < 500) {
+                        const targetNode = touchTargetNode;
+                        touchTargetNode = null;
+                        const skillId = targetNode.dataset.skillId;
+                        if (skillId) {
+                            openSkillDetailDrawer(skillId);
+                        } else {
+                            targetNode.click();
+                        }
+                    }
+                    touchTargetNode = null;
+                }
                 isTreePanning = false;
                 lastTouchDist = 0;
             });
@@ -23292,6 +23371,14 @@ function getCalisthenicsExpertResponse(query) {
             const drawer = document.getElementById('skill-detail-drawer');
             const backdrop = document.getElementById('skill-detail-drawer-backdrop');
             if (!drawer || !backdrop) return;
+
+            // Se il browser è in fullscreen nativo su un elemento contenitore diverso da documentElement,
+            // spostiamo temporaneamente drawer e backdrop dentro tale elemento per garantirne la presenza nel Top Layer
+            const fsEl = document.fullscreenElement;
+            if (fsEl && fsEl !== document.documentElement && !fsEl.contains(drawer)) {
+                fsEl.appendChild(backdrop);
+                fsEl.appendChild(drawer);
+            }
 
             const rarity = getSkillRarity(skill);
             const userSkillData = userState[skillId] || {};
@@ -23491,6 +23578,10 @@ function getCalisthenicsExpertResponse(query) {
             const backdrop = document.getElementById('skill-detail-drawer-backdrop');
             if (drawer) drawer.classList.remove('active');
             if (backdrop) backdrop.classList.remove('active');
+            if (drawer && drawer.parentElement !== document.body && !document.fullscreenElement) {
+                document.body.appendChild(backdrop);
+                document.body.appendChild(drawer);
+            }
         }
 
         // =========================================================================
