@@ -5339,30 +5339,24 @@
         
         /* =========================================================
            MODALITÀ GALAXY: EFFETTO GLASS PANEL iPHONE (iOS GLASSMORPHISM)
-           Tutte le interfacce, schede, card, modali, chat e drawer
-           diventano traslucidi con sfocatura satinata ad alta fedeltà
-           facendo trasparire lo sciame stellare e le nebulose cosmiche!
+           Interfacce, schede, card principali, modali, chat e drawer
+           traslucidi con sfocatura satinata ad alta fedeltà.
+           I contenitori e le barre wrapper restano trasparenti
+           per evitare qualsiasi rettangolo/cornice indesiderata.
            ========================================================= */
         body.galaxy-bg-active .rank-card,
+        body.galaxy-bg-active .tab-header-banner,
         body.galaxy-bg-active .bento-card,
+        body.galaxy-bg-active .workouts-section,
+        body.galaxy-bg-active .arena-section,
+        body.galaxy-bg-active .chat-section,
         body.galaxy-bg-active .workout-card,
         body.galaxy-bg-active .workout-event-card,
         body.galaxy-bg-active .challenge-card,
         body.galaxy-bg-active .leaderboard-container,
         body.galaxy-bg-active .chat-container,
         body.galaxy-bg-active .chat-panel,
-        body.galaxy-bg-active .chat-input-bar,
-        body.galaxy-bg-active .chat-sidebar,
-        body.galaxy-bg-active .tree-view-header-controls,
-        body.galaxy-bg-active .tree-view-toggle-bar,
-        body.galaxy-bg-active .skill-search-box,
-        body.galaxy-bg-active .category-picker,
-        body.galaxy-bg-active .skill-card,
-        body.galaxy-bg-active .workouts-subtab-bar,
-        body.galaxy-bg-active .workouts-subtabs-nav,
-        body.galaxy-bg-active .arena-subtabs-nav,
         body.galaxy-bg-active .arena-card-box,
-        body.galaxy-bg-active .chat-tabs,
         body.galaxy-bg-active .modal-box,
         body.galaxy-bg-active .skill-detail-drawer,
         body.galaxy-bg-active .new-workout-panel,
@@ -5374,6 +5368,67 @@
             box-shadow: 0 16px 40px -8px rgba(0, 0, 0, 0.55),
                         0 0 20px rgba(56, 189, 248, 0.08),
                         inset 0 1px 1.5px rgba(255, 255, 255, 0.18) !important;
+        }
+
+        /* AZZERAMENTO CONTENITORI / BARRE TOOLBAR (NESSUN RETTANGOLO INDESIDERATO) */
+        body.galaxy-bg-active .tree-view-header-controls,
+        body.galaxy-bg-active .tree-view-toggle-bar,
+        body.galaxy-bg-active .skill-search-wrapper,
+        body.galaxy-bg-active .skill-search-box,
+        body.galaxy-bg-active .workouts-subtab-bar,
+        body.galaxy-bg-active .workouts-subtabs-nav,
+        body.galaxy-bg-active .arena-subtabs-nav {
+            background: transparent !important;
+            border: none !important;
+            box-shadow: none !important;
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
+            padding: 0 !important;
+        }
+
+        /* Search input reale con vetro satinato */
+        body.galaxy-bg-active #skill-search-input {
+            background: rgba(8, 14, 28, 0.48) !important;
+            backdrop-filter: blur(20px) saturate(190%) !important;
+            -webkit-backdrop-filter: blur(20px) saturate(190%) !important;
+            border: 1px solid rgba(255, 255, 255, 0.14) !important;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25),
+                        inset 0 1px 1px rgba(255, 255, 255, 0.15) !important;
+        }
+
+        body.galaxy-bg-active #skill-search-input:focus {
+            border-color: rgba(56, 189, 248, 0.6) !important;
+            box-shadow: 0 0 18px rgba(56, 189, 248, 0.3) !important;
+        }
+
+        /* Pulsanti toggle e subtab pills singoli con vetro satinato */
+        body.galaxy-bg-active .tree-view-toggle-btn,
+        body.galaxy-bg-active .workouts-subtab-btn,
+        body.galaxy-bg-active .arena-subtab-btn {
+            background: rgba(15, 23, 42, 0.45) !important;
+            backdrop-filter: blur(14px) saturate(180%) !important;
+            -webkit-backdrop-filter: blur(14px) saturate(180%) !important;
+            border: 1px solid rgba(255, 255, 255, 0.12) !important;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
+        }
+
+        body.galaxy-bg-active .tree-view-toggle-btn.active,
+        body.galaxy-bg-active .workouts-subtab-btn.active,
+        body.galaxy-bg-active .arena-subtab-btn.active {
+            background: var(--accent) !important;
+            color: #ffffff !important;
+            border-color: rgba(56, 189, 248, 0.7) !important;
+            box-shadow: 0 0 18px rgba(56, 189, 248, 0.4) !important;
+        }
+
+        /* Chat tabs interne pulite senza scatole doppie */
+        body.galaxy-bg-active .chat-tabs {
+            background: transparent !important;
+            border: none !important;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.10) !important;
+            box-shadow: none !important;
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
         }
 
         /* Hover states in galaxy glass mode */
@@ -5416,25 +5471,18 @@
 
         /* Light theme variant of Galaxy Glass */
         body.galaxy-bg-active.theme-light .rank-card,
+        body.galaxy-bg-active.theme-light .tab-header-banner,
         body.galaxy-bg-active.theme-light .bento-card,
+        body.galaxy-bg-active.theme-light .workouts-section,
+        body.galaxy-bg-active.theme-light .arena-section,
+        body.galaxy-bg-active.theme-light .chat-section,
         body.galaxy-bg-active.theme-light .workout-card,
         body.galaxy-bg-active.theme-light .workout-event-card,
         body.galaxy-bg-active.theme-light .challenge-card,
         body.galaxy-bg-active.theme-light .leaderboard-container,
         body.galaxy-bg-active.theme-light .chat-container,
         body.galaxy-bg-active.theme-light .chat-panel,
-        body.galaxy-bg-active.theme-light .chat-input-bar,
-        body.galaxy-bg-active.theme-light .chat-sidebar,
-        body.galaxy-bg-active.theme-light .tree-view-header-controls,
-        body.galaxy-bg-active.theme-light .tree-view-toggle-bar,
-        body.galaxy-bg-active.theme-light .skill-search-box,
-        body.galaxy-bg-active.theme-light .category-picker,
-        body.galaxy-bg-active.theme-light .skill-card,
-        body.galaxy-bg-active.theme-light .workouts-subtab-bar,
-        body.galaxy-bg-active.theme-light .workouts-subtabs-nav,
-        body.galaxy-bg-active.theme-light .arena-subtabs-nav,
         body.galaxy-bg-active.theme-light .arena-card-box,
-        body.galaxy-bg-active.theme-light .chat-tabs,
         body.galaxy-bg-active.theme-light .modal-box,
         body.galaxy-bg-active.theme-light .skill-detail-drawer,
         body.galaxy-bg-active.theme-light .new-workout-panel,
@@ -5448,6 +5496,56 @@
                         inset 0 1.5px 2px rgba(255, 255, 255, 1) !important;
         }
 
+        body.galaxy-bg-active.theme-light .tree-view-header-controls,
+        body.galaxy-bg-active.theme-light .tree-view-toggle-bar,
+        body.galaxy-bg-active.theme-light .skill-search-wrapper,
+        body.galaxy-bg-active.theme-light .skill-search-box,
+        body.galaxy-bg-active.theme-light .workouts-subtab-bar,
+        body.galaxy-bg-active.theme-light .workouts-subtabs-nav,
+        body.galaxy-bg-active.theme-light .arena-subtabs-nav {
+            background: transparent !important;
+            border: none !important;
+            box-shadow: none !important;
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
+            padding: 0 !important;
+        }
+
+        body.galaxy-bg-active.theme-light #skill-search-input {
+            background: rgba(255, 255, 255, 0.65) !important;
+            backdrop-filter: blur(20px) saturate(190%) !important;
+            -webkit-backdrop-filter: blur(20px) saturate(190%) !important;
+            border: 1.5px solid rgba(255, 255, 255, 0.9) !important;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08) !important;
+        }
+
+        body.galaxy-bg-active.theme-light .tree-view-toggle-btn,
+        body.galaxy-bg-active.theme-light .workouts-subtab-btn,
+        body.galaxy-bg-active.theme-light .arena-subtab-btn {
+            background: rgba(255, 255, 255, 0.55) !important;
+            backdrop-filter: blur(14px) !important;
+            -webkit-backdrop-filter: blur(14px) !important;
+            border: 1px solid rgba(255, 255, 255, 0.75) !important;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05) !important;
+        }
+
+        body.galaxy-bg-active.theme-light .tree-view-toggle-btn.active,
+        body.galaxy-bg-active.theme-light .workouts-subtab-btn.active,
+        body.galaxy-bg-active.theme-light .arena-subtab-btn.active {
+            background: var(--accent) !important;
+            color: #ffffff !important;
+            border-color: var(--accent) !important;
+        }
+
+        body.galaxy-bg-active.theme-light .chat-tabs {
+            background: transparent !important;
+            border: none !important;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.08) !important;
+            box-shadow: none !important;
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
+        }
+
         body.galaxy-bg-active.theme-light .bento-stat-chip,
         body.galaxy-bg-active.theme-light .bento-theme-chip,
         body.galaxy-bg-active.theme-light .leaderboard-item,
@@ -5458,7 +5556,7 @@
             -webkit-backdrop-filter: blur(14px) !important;
             border: 1px solid rgba(255, 255, 255, 0.70) !important;
         }
-
+        
         .galaxy-toggle-card-row {
             margin-top: 14px;
             padding-top: 12px;
@@ -6252,7 +6350,13 @@
             margin-bottom: 12px;
             display: flex;
             align-items: center;
-            justify-content: space-between;
+            gap: 10px;
+        }
+
+        .bento-card-title .ui-svg-icon {
+            margin-right: 6px;
+            flex-shrink: 0;
+            color: var(--accent);
         }
 
         .bento-stats-row {
@@ -7284,7 +7388,7 @@
                     <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px;">
                         <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
                             <h3 id="bento-nickname" style="margin:0; font-size:1.35rem; color:var(--text); font-weight:800;">Atleta</h3>
-                            <span id="bento-streak-badge" class="streak-badge" style="background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.35); color:#f87171; border-radius:999px; padding:3px 10px; font-size:0.82rem; font-weight:800; display:none; align-items:center; gap:4px;"><svg class="ui-svg-icon" viewBox="0 0 24 24" width="14" height="14" fill="currentColor" stroke="none" style="color:#f87171;"><path d="M12 2c-.5 2.5-3 4.5-3 7 0 2.8 2.2 5 5 5 1.4 0 2.7-.6 3.6-1.5C17.3 14 15 16 12 16c-3.3 0-6 2.7-6 6 0 0 8.5 2 12-4 2.5-4.3 1-8.5-.5-11-.8 1.5-2.2 2.5-3.5 2.5-2.2 0-3.5-2-2-7.5z"/></svg> 0</span>
+                            <span id="bento-streak-badge" class="streak-badge" style="background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.35); color:#f87171; border-radius:999px; padding:3px 10px; font-size:0.82rem; font-weight:800; display:none; align-items:center; gap:4px;">🔥 0</span>
                             <button type="button" class="btn-edit-nickname" id="btn-edit-nickname" onclick="openEditNicknameModal()" style="background:rgba(56,189,248,0.12); border:1px solid var(--accent); color:var(--accent); padding:4px 10px; border-radius:8px; font-size:0.78rem; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; gap:5px; transition:all 0.2s;">
                                 <svg class="ui-svg-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg> Modifica
                             </button>
@@ -7303,7 +7407,7 @@
                 <div class="profile-col">
                     <!-- Statistiche Duelli 1vs1 -->
                     <div class="bento-card bento-duels">
-                        <div class="bento-card-title"><svg class="ui-svg-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 17.5L3 6V3h3l11.5 11.5"/><path d="M13 19l6-6"/><path d="M16 16l4 4"/><path d="M19 21l2-2"/><path d="M9.5 17.5L21 6V3h-3L6.5 14.5"/><path d="M11 19l-6-6"/><path d="M8 16l-4 4"/></svg> Statistiche Duelli 1vs1</div>
+                        <div class="bento-card-title" style="display:flex; align-items:center; gap:10px;"><svg class="ui-svg-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--accent); flex-shrink:0; margin-right:4px;"><path d="M14.5 17.5L3 6V3h3l11.5 11.5"/><path d="M13 19l6-6"/><path d="M16 16l4 4"/><path d="M19 21l2-2"/><path d="M9.5 17.5L21 6V3h-3L6.5 14.5"/><path d="M11 19l-6-6"/><path d="M8 16l-4 4"/></svg> <span>Statistiche Duelli 1vs1</span></div>
                         <div class="bento-stats-row">
                             <div class="bento-stat-pill">
                                 <span class="stat-num" id="bento-stat-total" style="color:var(--text);">0</span>
@@ -7350,7 +7454,7 @@
 
                     <!-- Tema Grafico (Compatto e senza spazio vuoto!) -->
                     <div class="bento-card bento-theme">
-                        <div class="bento-card-title"><svg class="ui-svg-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="6.5" r=".5" fill="currentColor"/><circle cx="17.5" cy="10.5" r=".5" fill="currentColor"/><circle cx="8.5" cy="7.5" r=".5" fill="currentColor"/><circle cx="6.5" cy="12.5" r=".5" fill="currentColor"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.9 0 1.5-.7 1.5-1.5 0-.4-.2-.8-.4-1.1-.3-.3-.4-.7-.4-1.1 0-.9.7-1.5 1.5-1.5H16c3.3 0 6-2.7 6-6 0-5.5-4.5-9.8-10-9.8z"/></svg> Tema Grafico</div>
+                        <div class="bento-card-title" style="display:flex; align-items:center; gap:10px;"><svg class="ui-svg-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--accent); flex-shrink:0; margin-right:4px;"><circle cx="13.5" cy="6.5" r=".5" fill="currentColor"/><circle cx="17.5" cy="10.5" r=".5" fill="currentColor"/><circle cx="8.5" cy="7.5" r=".5" fill="currentColor"/><circle cx="6.5" cy="12.5" r=".5" fill="currentColor"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.9 0 1.5-.7 1.5-1.5 0-.4-.2-.8-.4-1.1-.3-.3-.4-.7-.4-1.1 0-.9.7-1.5 1.5-1.5H16c3.3 0 6-2.7 6-6 0-5.5-4.5-9.8-10-9.8z"/></svg> <span>Tema Grafico</span></div>
                         <div class="bento-theme-swatches">
                             <button type="button" class="bento-theme-chip active" id="theme-chip-default" onclick="changeTheme('default'); syncBentoThemeChips();">
                                 <span class="swatch" style="background:#38bdf8;"></span> Predefinito
@@ -7365,7 +7469,24 @@
                         <select id="themeSelect" style="display:none;" aria-hidden="true"><option value="default">Predefinito</option><option value="light">Chiaro</option><option value="dark">Scuro</option></select>
                         <div class="galaxy-toggle-card-row">
                             <div class="galaxy-toggle-info">
-                                <span style="font-size:1.15rem; color:#38bdf8; display:inline-flex; align-items:center;"><svg class="ui-svg-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 4.8L19 9.5l-4.2 3.7L16 19l-4-2.8L8 19l1.2-5.8L5 9.5l5.1-1.7L12 3z"/></svg></span>
+                                <span class="galaxy-toggle-star-badge" style="display:inline-flex; align-items:center; justify-content:center; width:34px; height:34px; border-radius:10px; background:linear-gradient(135deg, rgba(56, 189, 248, 0.16), rgba(168, 85, 247, 0.16)); border:1px solid rgba(56, 189, 248, 0.35); box-shadow:0 0 14px rgba(56, 189, 248, 0.25); flex-shrink:0;">
+                                    <svg class="ui-svg-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" style="margin:0; filter:drop-shadow(0 0 5px rgba(56, 189, 248, 0.85));">
+                                        <defs>
+                                            <linearGradient id="galaxy-sparkle-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                                <stop offset="0%" stop-color="#38bdf8"/>
+                                                <stop offset="50%" stop-color="#818cf8"/>
+                                                <stop offset="100%" stop-color="#c084fc"/>
+                                            </linearGradient>
+                                            <linearGradient id="galaxy-mini-sparkle" x1="0%" y1="0%" x2="100%" y2="100%">
+                                                <stop offset="0%" stop-color="#facc15"/>
+                                                <stop offset="100%" stop-color="#fb923c"/>
+                                            </linearGradient>
+                                        </defs>
+                                        <path d="M12 1.5 C12 7 7 12 1.5 12 C7 12 12 17 12 22.5 C12 17 17 12 22.5 12 C17 12 12 7 12 1.5 Z" fill="url(#galaxy-sparkle-grad)"/>
+                                        <path d="M19.5 2 C19.5 3.8 18 5 16.5 5 C18 5 19.5 6.2 19.5 8 C19.5 6.2 21 5 22.5 5 C21 5 19.5 3.8 19.5 2 Z" fill="url(#galaxy-mini-sparkle)"/>
+                                        <path d="M4.5 17.5 C4.5 18.8 3.5 19.5 2.5 19.5 C3.5 19.5 4.5 20.2 4.5 21.5 C4.5 20.2 5.5 19.5 6.5 19.5 C5.5 19.5 4.5 18.8 4.5 17.5 Z" fill="#38bdf8"/>
+                                    </svg>
+                                </span>
                                 <div>
                                     <div class="galaxy-toggle-title">Sfondo Galaxy</div>
                                     <div class="galaxy-toggle-desc">Particelle stellari fluide (compatibile con tutti i temi)</div>
@@ -7384,7 +7505,7 @@
                     <!-- Invita Amici & Guadagna XP -->
                     <div class="bento-card bento-share" id="share-section">
                         <div class="share-header-left" style="display:flex; justify-content:space-between; align-items:center;">
-                            <div class="bento-card-title" style="margin:0;"><svg class="ui-svg-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg> Invita Amici & Guadagna XP</div>
+                            <div class="bento-card-title" style="margin:0; display:flex; align-items:center; gap:10px;"><svg class="ui-svg-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--accent); flex-shrink:0; margin-right:4px;"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg> <span>Invita Amici & Guadagna XP</span></div>
                             <span class="share-bonus-badge">+3.000 XP</span>
                         </div>
                         <span class="collapsible-icon" id="share-toggle-icon" style="display:none;">▼ Espandi</span>
@@ -7396,7 +7517,7 @@
                     <!-- Impostazioni Account & Privacy -->
                     <div class="bento-card bento-settings" id="profile-settings-section">
                         <div class="section-collapsible-header" onclick="toggleProfileSection()" style="display:flex; justify-content:space-between; align-items:center;">
-                            <div class="bento-card-title" style="margin:0;"><svg class="ui-svg-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg> Impostazioni Account & Privacy</div>
+                            <div class="bento-card-title" style="margin:0; display:flex; align-items:center; gap:10px;"><svg class="ui-svg-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--accent); flex-shrink:0; margin-right:4px;"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg> <span>Impostazioni Account & Privacy</span></div>
                             <span class="collapsible-icon" id="profile-toggle-icon">▲ Riduci</span>
                         </div>
                         <div id="profile-collapsible-content" style="display:block; margin-top:12px;">
@@ -10849,7 +10970,7 @@ let currentUser = null;
                 checkStreakInactivity();
                 renderAllStreakBadges();
 
-                document.getElementById('user-status-text').innerHTML = `${window.APP_ICONS ? window.APP_ICONS.user : ''} Non autenticato (Salvataggio locale) <span id="tree-streak-badge" class="streak-badge" style="background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.35); color:#f87171; border-radius:999px; padding:2px 8px; font-size:0.75rem; font-weight:800; margin-left:6px; display:${(userStreak || 0) > 0 ? 'inline-flex' : 'none'}; align-items:center; gap:3px;">${window.APP_ICONS ? window.APP_ICONS.flame : '🔥'} ${userStreak || 0}</span>`;
+                document.getElementById('user-status-text').innerHTML = `${window.APP_ICONS ? window.APP_ICONS.user : ''} Non autenticato (Salvataggio locale) <span id="tree-streak-badge" class="streak-badge" style="background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.35); color:#f87171; border-radius:999px; padding:2px 8px; font-size:0.75rem; font-weight:800; margin-left:6px; display:${(userStreak || 0) > 0 ? 'inline-flex' : 'none'}; align-items:center; gap:3px;">🔥 ${userStreak || 0}</span>`;
                 document.getElementById('auth-actions-container').innerHTML = `
                     <button class="btn-auth-secondary" onclick="openAuthModal('login')">Accedi</button>
                     <button class="btn-auth" onclick="openAuthModal('signup')">Registrati</button>
@@ -10870,7 +10991,7 @@ let currentUser = null;
 
         function renderUserAuthBar() {
             const displayName = userNickname || (currentUser ? (currentUser.displayName || currentUser.email) : "");
-            document.getElementById('user-status-text').innerHTML = `${window.APP_ICONS ? window.APP_ICONS.user : ''} <strong>${displayName}</strong> <span id="tree-streak-badge" class="streak-badge" style="background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.35); color:#f87171; border-radius:999px; padding:2px 8px; font-size:0.75rem; font-weight:800; margin-left:6px; display:${(userStreak || 0) > 0 ? 'inline-flex' : 'none'}; align-items:center; gap:3px;">${window.APP_ICONS ? window.APP_ICONS.flame : '🔥'} ${userStreak || 0}</span>`;
+            document.getElementById('user-status-text').innerHTML = `${window.APP_ICONS ? window.APP_ICONS.user : ''} <strong>${displayName}</strong> <span id="tree-streak-badge" class="streak-badge" style="background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.35); color:#f87171; border-radius:999px; padding:2px 8px; font-size:0.75rem; font-weight:800; margin-left:6px; display:${(userStreak || 0) > 0 ? 'inline-flex' : 'none'}; align-items:center; gap:3px;">🔥 ${userStreak || 0}</span>`;
             document.getElementById('auth-actions-container').innerHTML = `
                 <button class="btn-auth-secondary" onclick="openNicknameModal()">✏️ Nickname</button>
                 <button class="btn-auth-secondary" onclick="logoutUser()">Esci</button>
@@ -11069,7 +11190,7 @@ let currentUser = null;
                                 <span class="leaderboard-rank-pos">#${index}</span>
                                 <div class="leaderboard-avatar rank-badge-wrap rank-tier-${rank.tierId || 'bronze'}">${rank.iconSvg}</div>
                                 <span class="leaderboard-name">${nick} ${isMe ? '(Tu)' : ''}</span>
-                                ${data.streak > 0 ? `<span class="streak-badge" title="${data.streak} allenamenti consecutivi" style="background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.35); color:#f87171; border-radius:999px; padding:2px 7px; font-size:0.75rem; font-weight:800; margin-left:4px; display:inline-flex; align-items:center; justify-content:center; gap:3px; white-space:nowrap; flex-shrink:0; line-height:1;">${window.APP_ICONS ? window.APP_ICONS.flame : '🔥'} ${data.streak}</span>` : ''}
+                                ${data.streak > 0 ? `<span class="streak-badge" title="${data.streak} allenamenti consecutivi" style="background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.35); color:#f87171; border-radius:999px; padding:2px 7px; font-size:0.75rem; font-weight:800; margin-left:4px; display:inline-flex; align-items:center; justify-content:center; gap:3px; white-space:nowrap; flex-shrink:0; line-height:1;">🔥 ${data.streak}</span>` : ''}
                             </div>
                             <span class="leaderboard-xp">${xp} XP</span>
                         </div>
@@ -24729,7 +24850,7 @@ function getCalisthenicsExpertResponse(query) {
             if (nickEl) nickEl.innerText = userNickname || (currentUser ? (currentUser.displayName || (currentUser.email ? currentUser.email.split('@')[0] : 'Atleta')) : 'Atleta Calisthenico');
             const profileStreakEl = document.getElementById('bento-streak-badge');
             if (profileStreakEl) {
-                profileStreakEl.innerHTML = (window.APP_ICONS ? window.APP_ICONS.flame + ' ' : '🔥 ') + (userStreak || 0) + ((userStreak || 0) === 1 ? ' giorno' : ' giorni');
+                profileStreakEl.innerHTML = '🔥 ' + (userStreak || 0) + ((userStreak || 0) === 1 ? ' giorno' : ' giorni');
                 profileStreakEl.style.display = (userStreak || 0) > 0 ? 'inline-flex' : 'none';
             }
             if (rankEl) {
