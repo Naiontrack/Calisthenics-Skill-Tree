@@ -3558,7 +3558,226 @@
             border-radius: 8px;
             font-weight: 600;
         }
-        /* Nuove Modalità di Sfida: (Solitaria) e (Duello) */
+        /* Modalità di Sfida: Selettore Visivo & Card Showcase */
+        .modal-box.modal-challenge {
+            max-width: 540px;
+            padding: 18px 18px 20px;
+            text-align: left;
+        }
+        @media (max-width: 600px) {
+            .modal-box.modal-challenge {
+                width: 95%;
+                padding: 14px 12px 18px;
+            }
+            .challenge-mini-banner-desc {
+                display: none !important;
+            }
+        }
+
+        .challenge-mode-picker-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            margin-top: 8px;
+            margin-bottom: 12px;
+        }
+
+        .challenge-mode-card {
+            position: relative;
+            border-radius: 14px;
+            background: var(--input-bg);
+            border: 1px solid var(--line-color);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+            overflow: hidden;
+            cursor: pointer;
+            transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.22s ease, border-color 0.22s ease;
+            display: flex;
+            flex-direction: column;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .challenge-mode-card:hover {
+            transform: translateY(-3px);
+            border-color: var(--accent);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.35), 0 0 16px rgba(56, 189, 248, 0.2);
+        }
+
+        .challenge-mode-card:active {
+            transform: scale(0.985);
+        }
+
+        .challenge-mode-card-banner {
+            position: relative;
+            width: 100%;
+            height: 130px;
+            overflow: hidden;
+            background: #0b0f19;
+        }
+
+        .challenge-mode-card-banner img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center;
+            transition: transform 0.35s ease;
+            display: block;
+        }
+
+        .challenge-mode-card:hover .challenge-mode-card-banner img {
+            transform: scale(1.05);
+        }
+
+        .challenge-mode-card-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(180deg, rgba(0,0,0,0.05) 0%, rgba(10,15,28,0.85) 100%);
+            pointer-events: none;
+        }
+
+        .challenge-mode-tag-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 0.65rem;
+            font-weight: 800;
+            letter-spacing: 0.6px;
+            text-transform: uppercase;
+            padding: 3px 9px;
+            border-radius: 999px;
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+            z-index: 2;
+        }
+
+        .challenge-mode-card-content {
+            padding: 12px 14px 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            flex: 1;
+        }
+
+        .challenge-mode-card-title {
+            font-size: 1rem;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--text);
+            margin: 0;
+        }
+
+        .challenge-mode-card-desc {
+            font-size: 0.78rem;
+            line-height: 1.4;
+            color: var(--subtext);
+            margin: 0;
+        }
+
+        .challenge-mode-card-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            margin-top: 4px;
+            padding-top: 8px;
+            border-top: 1px solid var(--line-color);
+        }
+
+        .challenge-mode-reward-badge {
+            font-size: 0.72rem;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 2px 7px;
+            border-radius: 6px;
+            background: rgba(245, 158, 11, 0.12);
+            color: #facc15;
+            border: 1px solid rgba(245, 158, 11, 0.25);
+            white-space: nowrap;
+        }
+
+        .challenge-mode-btn-cta {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 5px 12px;
+            border-radius: 7px;
+            font-size: 0.78rem;
+            font-weight: 700;
+            background: var(--accent);
+            color: #000;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 8px rgba(56, 189, 248, 0.3);
+            white-space: nowrap;
+        }
+
+        .challenge-mode-card:hover .challenge-mode-btn-cta {
+            filter: brightness(1.1);
+            box-shadow: 0 4px 12px rgba(56, 189, 248, 0.5);
+        }
+
+        .challenge-config-mini-banner {
+            position: relative;
+            border-radius: 12px;
+            overflow: hidden;
+            height: 68px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            border: 2px solid var(--accent);
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+            background: #0b0f19;
+        }
+
+        .challenge-config-mini-banner-bg {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center;
+            filter: brightness(0.42) saturate(1.25);
+            pointer-events: none;
+        }
+
+        .challenge-config-mini-banner-content {
+            position: relative;
+            z-index: 2;
+            padding: 0 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+        }
+
+        .btn-switch-challenge-mode {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            background: var(--input-bg);
+            border: 1px solid var(--line-color);
+            color: var(--text);
+            padding: 5px 11px;
+            border-radius: 8px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-switch-challenge-mode:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+            background: rgba(56, 189, 248, 0.12);
+        }
+
+        /* Modalità di Sfida: Tab selettore */
         .challenge-mode-tabs {
             display: flex;
             gap: 6px;
@@ -4085,6 +4304,18 @@
             align-items: center;
             justify-content: center;
             transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .bottom-nav-icon svg {
+            width: 22px;
+            height: 22px;
+            stroke: currentColor;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            fill: none;
+            display: block;
+            transition: stroke 0.2s ease, fill 0.2s ease, transform 0.2s ease;
         }
 
         .bottom-nav-label {
@@ -6946,24 +7177,63 @@
     <nav class="bottom-nav-bar" id="bottom-nav-bar">
         <div class="bottom-nav-indicator" id="bottom-nav-indicator"></div>
         <button type="button" class="bottom-nav-item active" data-tab="tree" onclick="switchMainTab('tree')">
-            <span class="bottom-nav-icon">🌳</span>
+            <span class="bottom-nav-icon">
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="4" r="2.2" fill="currentColor"/>
+                    <circle cx="5.5" cy="11.5" r="1.8" fill="currentColor"/>
+                    <circle cx="18.5" cy="11.5" r="1.8" fill="currentColor"/>
+                    <circle cx="12" cy="20" r="2" fill="currentColor"/>
+                    <path d="M12 6.2v11.8"/>
+                    <path d="M5.5 11.5l6.5 4.5 6.5-4.5"/>
+                    <path d="M12 6.2L5.5 11.5"/>
+                    <path d="M12 6.2l6.5 5.3"/>
+                </svg>
+            </span>
             <span class="bottom-nav-label">Albero</span>
         </button>
         <button type="button" class="bottom-nav-item" data-tab="workouts" onclick="switchMainTab('workouts')">
-            <span class="bottom-nav-icon">🏋️</span>
+            <span class="bottom-nav-icon">
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="2" y="8" width="3" height="8" rx="1.5" fill="currentColor"/>
+                    <rect x="19" y="8" width="3" height="8" rx="1.5" fill="currentColor"/>
+                    <rect x="5.5" y="6" width="2.5" height="12" rx="1.2"/>
+                    <rect x="16" y="6" width="2.5" height="12" rx="1.2"/>
+                    <line x1="8" y1="12" x2="16" y2="12" stroke-width="2.5"/>
+                </svg>
+            </span>
             <span class="bottom-nav-label">Allenamenti</span>
         </button>
         <button type="button" class="bottom-nav-item" data-tab="arena" onclick="switchMainTab('arena')">
-            <span class="bottom-nav-icon">⚔️</span>
+            <span class="bottom-nav-icon">
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M14.5 17.5L3 6V3h3l11.5 11.5"/>
+                    <path d="M13 19l6-6"/>
+                    <path d="M16 16l4 4"/>
+                    <path d="M19 21l2-2"/>
+                    <path d="M9.5 17.5L21 6V3h-3L6.5 14.5"/>
+                    <path d="M11 19l-6-6"/>
+                    <path d="M8 16l-4 4"/>
+                    <path d="M5 21l-2-2"/>
+                </svg>
+            </span>
             <span class="bottom-nav-label">Arena</span>
         </button>
         <button type="button" class="bottom-nav-item" data-tab="chat" onclick="switchMainTab('chat')">
-            <span class="bottom-nav-icon">💬</span>
+            <span class="bottom-nav-icon">
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>
+                </svg>
+            </span>
             <span class="bottom-nav-label">Chat</span>
             <span class="bottom-nav-badge" id="bottom-nav-chat-badge" style="display:none;">0</span>
         </button>
         <button type="button" class="bottom-nav-item" data-tab="profile" onclick="switchMainTab('profile')">
-            <span class="bottom-nav-icon">👤</span>
+            <span class="bottom-nav-icon">
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                    <circle cx="12" cy="7" r="4"/>
+                </svg>
+            </span>
             <span class="bottom-nav-label">Profilo</span>
         </button>
     </nav>
@@ -10668,7 +10938,7 @@ let currentUser = null;
         }
 
         function openCustomModal(title, text, confirmText, isDanger, onConfirm, onSuccess, onCancel) {
-            const _mBox = document.querySelector('#custom-modal .modal-box'); if (_mBox) _mBox.classList.remove('modal-compact');
+            const _mBox = document.querySelector('#custom-modal .modal-box'); if (_mBox) { _mBox.classList.remove('modal-compact'); _mBox.classList.remove('modal-challenge'); }
             const modal = document.getElementById('custom-modal');
             const fsEl = document.fullscreenElement;
             if (fsEl && fsEl !== document.documentElement && modal && !fsEl.contains(modal)) {
@@ -21104,11 +21374,144 @@ function getCalisthenicsExpertResponse(query) {
         let challengeSelectedUsers = {};
         let challengeAllUsers = [];
 
-        function openCreateChallengeModal() {
-            const _mBox = document.querySelector('#custom-modal .modal-box'); if (_mBox) _mBox.classList.remove('modal-compact');
+        function openSoloChallengeModal() {
+            openCreateChallengeModal('solo');
+        }
+
+        function openCreateChallengeModal(initialMode) {
+            const modal = document.getElementById('custom-modal');
+            const _mBox = document.querySelector('#custom-modal .modal-box');
+            if (_mBox) {
+                _mBox.classList.remove('modal-compact');
+                _mBox.classList.add('modal-challenge');
+            }
             if (!currentUser) return;
+
+            if (!initialMode) {
+                renderChallengeModeShowcase();
+                return;
+            }
+
+            renderChallengeConfigModal(initialMode);
+        }
+
+        function renderChallengeModeShowcase() {
+            const modal = document.getElementById('custom-modal');
+            const titleEl = document.getElementById('modal-title');
+            const bodyContent = document.getElementById('modal-body-content');
+            const actionsBox = document.getElementById('modal-actions-box');
+
+            titleEl.innerText = "🏹 Sfide tra Atleti • Scegli Modalità";
+            bodyContent.innerHTML = `
+                <p style="margin: 0 0 14px 0; color: var(--subtext); font-size: 0.85rem; text-align: center; line-height: 1.45;">
+                    Seleziona la modalità di sfida per competere nell'Arena, superare i tuoi limiti e scalare la classifica:
+                </p>
+
+                <div class="challenge-mode-picker-grid">
+                    <!-- CARD 1: STANDARD -->
+                    <div class="challenge-mode-card" onclick="openCreateChallengeModal('standard')">
+                        <div class="challenge-mode-card-banner">
+                            <img src="./assets/challenges/challenge_standard.jpg" 
+                                 onerror="this.onerror=null; this.src='file:///C:/Users/naion/.gemini/antigravity/brain/2e77f1f9-3dd8-47dc-a077-1700163652db/challenge_standard_1789204896378.jpg';" 
+                                 alt="Sfida Standard">
+                            <div class="challenge-mode-card-overlay"></div>
+                            <span class="challenge-mode-tag-badge" style="background: rgba(56, 189, 248, 0.25); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.4);">
+                                👥 MULTIPLAYER
+                            </span>
+                        </div>
+                        <div class="challenge-mode-card-content">
+                            <h4 class="challenge-mode-card-title">
+                                <span>🏹 Corsa agli XP (Gruppo)</span>
+                            </h4>
+                            <p class="challenge-mode-card-desc">
+                                Sfida aperta tra 2 o più atleti: il primo che accumula la soglia prestabilita di XP completando skill e workout vince il trofeo e guadagna il giro alla Ruota della Fortuna!
+                            </p>
+                            <div class="challenge-mode-card-footer">
+                                <span class="challenge-mode-reward-badge">
+                                    ⚡ 500 – 25.000 XP • 🎡 Ruota
+                                </span>
+                                <button type="button" class="challenge-mode-btn-cta">
+                                    Seleziona & Configura ➔
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- CARD 2: SOLITARIA -->
+                    <div class="challenge-mode-card" onclick="openCreateChallengeModal('solo')">
+                        <div class="challenge-mode-card-banner">
+                            <img src="./assets/challenges/challenge_solo.jpg" 
+                                 onerror="this.onerror=null; this.src='file:///C:/Users/naion/.gemini/antigravity/brain/2e77f1f9-3dd8-47dc-a077-1700163652db/challenge_solo_1789204911859.jpg';" 
+                                 alt="Sfida Solitaria">
+                            <div class="challenge-mode-card-overlay"></div>
+                            <span class="challenge-mode-tag-badge" style="background: rgba(16, 185, 129, 0.25); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4);">
+                                🎯 SOLO PVE
+                            </span>
+                        </div>
+                        <div class="challenge-mode-card-content">
+                            <h4 class="challenge-mode-card-title">
+                                <span>🎯 Sfida Solitaria (Target Difficoltà)</span>
+                            </h4>
+                            <p class="challenge-mode-card-desc">
+                                Supera i tuoi limiti affrontando 5 esercizi calisthenici estratti casualmente. Scegli tra 4 livelli di intensità: Facile, Normale, Difficile o Estremo.
+                            </p>
+                            <div class="challenge-mode-card-footer">
+                                <span class="challenge-mode-reward-badge" style="background: rgba(16, 185, 129, 0.12); color: #34d399; border-color: rgba(16, 185, 129, 0.25);">
+                                    🏆 Fino a 10.000 XP • ⏱️ 7 Giorni
+                                </span>
+                                <button type="button" class="challenge-mode-btn-cta" style="background: #10b981; color: #fff;">
+                                    Seleziona & Configura ➔
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- CARD 3: DUELLO -->
+                    <div class="challenge-mode-card" onclick="openCreateChallengeModal('duel')">
+                        <div class="challenge-mode-card-banner">
+                            <img src="./assets/challenges/challenge_duel.jpg" 
+                                 onerror="this.onerror=null; this.src='file:///C:/Users/naion/.gemini/antigravity/brain/2e77f1f9-3dd8-47dc-a077-1700163652db/challenge_duel_1789204927775.jpg';" 
+                                 alt="Duello 1vs1">
+                            <div class="challenge-mode-card-overlay"></div>
+                            <span class="challenge-mode-tag-badge" style="background: rgba(245, 158, 11, 0.25); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.4);">
+                                ⚔️ ARENA 1vs1
+                            </span>
+                        </div>
+                        <div class="challenge-mode-card-content">
+                            <h4 class="challenge-mode-card-title">
+                                <span>⚔️ Duello Reps Battle (1 vs 1)</span>
+                            </h4>
+                            <p class="challenge-mode-card-desc">
+                                Scontro testa a testa su 3 round a ripetizioni massimali! Sfida un singolo atleta sui round estratti: chi conquista 2 round su 3 vince l'intero montepremi.
+                            </p>
+                            <div class="challenge-mode-card-footer">
+                                <span class="challenge-mode-reward-badge" style="background: rgba(245, 158, 11, 0.15); color: #fbbf24; border-color: rgba(245, 158, 11, 0.3);">
+                                    💥 5.000 XP in Palio • 🥊 3 Round
+                                </span>
+                                <button type="button" class="challenge-mode-btn-cta" style="background: #f59e0b; color: #000;">
+                                    Seleziona & Configura ➔
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            actionsBox.innerHTML = `
+                <button class="btn-cancel" id="modal-btn-cancel" style="width:100%; border-radius:10px; font-weight:700; padding:10px 16px;">Chiudi</button>
+            `;
+
+            modal.classList.add('active');
+            document.getElementById('modal-btn-cancel').onclick = () => {
+                modal.classList.remove('active');
+                const _mBox = document.querySelector('#custom-modal .modal-box');
+                if (_mBox) _mBox.classList.remove('modal-challenge');
+            };
+        }
+
+        function renderChallengeConfigModal(initialMode) {
             challengeSelectedUsers = {};
-            currentChallengeModalMode = 'standard';
+            currentChallengeModalMode = initialMode || 'standard';
             selectedSoloDifficulty = 'facile';
             currentSoloExercisesPreview = generateSoloExercises('facile');
             currentDuelRoundExercises = generateDuelRoundExercises();
@@ -21120,15 +21523,27 @@ function getCalisthenicsExpertResponse(query) {
             const bodyContent = document.getElementById('modal-body-content');
             const actionsBox = document.getElementById('modal-actions-box');
 
-            titleEl.innerText = "🏹 Nuova Sfida tra Atleti";
+            titleEl.innerText = "🏹 Personalizza Sfida";
             bodyContent.innerHTML = `
                 <div class="auth-error" id="new-challenge-error"></div>
 
-                <!-- Selettore modalità di sfida -->
+                <!-- Barra superiore navigazione modalità -->
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                    <button type="button" class="btn-switch-challenge-mode" onclick="openCreateChallengeModal()">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle; margin-right:4px;"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                        Cambia Modalità
+                    </button>
+                    <span style="font-size:0.75rem; color:var(--subtext); font-weight:600;">Personalizzazione Regole</span>
+                </div>
+
+                <!-- Mini banner di testata con artwork della modalità -->
+                <div class="challenge-config-mini-banner" id="challenge-config-mini-banner"></div>
+
+                <!-- Selettore rapido tab modalità di sfida -->
                 <div class="challenge-mode-tabs">
                     <button type="button" class="challenge-mode-tab active" id="tab-mode-standard" onclick="setChallengeModalMode('standard')">🏹 Standard</button>
-                    <button type="button" class="challenge-mode-tab" id="tab-mode-solo" onclick="setChallengeModalMode('solo')">🎯 (Solitaria)</button>
-                    <button type="button" class="challenge-mode-tab" id="tab-mode-duel" onclick="setChallengeModalMode('duel')">⚔️ (Duello)</button>
+                    <button type="button" class="challenge-mode-tab" id="tab-mode-solo" onclick="setChallengeModalMode('solo')">🎯 Solitaria</button>
+                    <button type="button" class="challenge-mode-tab" id="tab-mode-duel" onclick="setChallengeModalMode('duel')">⚔️ Duello</button>
                 </div>
 
                 <!-- CONTENITORE: MODALITÀ STANDARD (CORSA XP) -->
@@ -21222,18 +21637,76 @@ function getCalisthenicsExpertResponse(query) {
             `;
 
             modal.classList.add('active');
-            document.getElementById('modal-btn-cancel').onclick = () => modal.classList.remove('active');
+            document.getElementById('modal-btn-cancel').onclick = () => {
+                modal.classList.remove('active');
+                const _mBox = document.querySelector('#custom-modal .modal-box');
+                if (_mBox) _mBox.classList.remove('modal-challenge');
+            };
             document.getElementById('new-challenge-search').oninput = (e) => renderChallengeUserList(e.target.value);
             document.getElementById('duel-opponent-search').oninput = (e) => renderDuelOpponentList(e.target.value);
-            document.getElementById('modal-btn-confirm-action').onclick = confirmCreateChallenge;
+
+            setChallengeModalMode(initialMode || 'standard');
 
             renderSoloExercisesPreview();
             renderDuelRoundExercisesPreview();
             loadUsersForChallenge();
         }
 
+        function updateChallengeMiniBanner(mode) {
+            const bannerEl = document.getElementById('challenge-config-mini-banner');
+            if (!bannerEl) return;
+            const configs = {
+                standard: {
+                    img: './assets/challenges/challenge_standard.jpg',
+                    fallback: 'file:///C:/Users/naion/.gemini/antigravity/brain/2e77f1f9-3dd8-47dc-a077-1700163652db/challenge_standard_1789204896378.jpg',
+                    badge: '👥 MULTIPLAYER',
+                    badgeColor: '#38bdf8',
+                    badgeBg: 'rgba(56, 189, 248, 0.25)',
+                    borderColor: '#38bdf8',
+                    title: '🏹 Corsa agli XP (Gruppo)',
+                    desc: 'Il primo che raggiunge la quota XP vince e gira la ruota!'
+                },
+                solo: {
+                    img: './assets/challenges/challenge_solo.jpg',
+                    fallback: 'file:///C:/Users/naion/.gemini/antigravity/brain/2e77f1f9-3dd8-47dc-a077-1700163652db/challenge_solo_1789204911859.jpg',
+                    badge: '🎯 SOLO PVE',
+                    badgeColor: '#34d399',
+                    badgeBg: 'rgba(16, 185, 129, 0.25)',
+                    borderColor: '#10b981',
+                    title: '🎯 Sfida Solitaria (Target Difficoltà)',
+                    desc: '5 esercizi casuali estratti su 4 livelli di difficoltà!'
+                },
+                duel: {
+                    img: './assets/challenges/challenge_duel.jpg',
+                    fallback: 'file:///C:/Users/naion/.gemini/antigravity/brain/2e77f1f9-3dd8-47dc-a077-1700163652db/challenge_duel_1789204927775.jpg',
+                    badge: '⚔️ ARENA 1vs1',
+                    badgeColor: '#fbbf24',
+                    badgeBg: 'rgba(245, 158, 11, 0.25)',
+                    borderColor: '#f59e0b',
+                    title: '⚔️ Duello Reps Battle (1 vs 1)',
+                    desc: 'Scontro secco in 3 round su ripetizioni massimali!'
+                }
+            };
+            const c = configs[mode] || configs.standard;
+            bannerEl.style.borderColor = c.borderColor;
+            bannerEl.innerHTML = `
+                <img class="challenge-config-mini-banner-bg" src="${c.img}" onerror="this.onerror=null; this.src='${c.fallback}';" alt="${c.title}">
+                <div class="challenge-mode-card-overlay"></div>
+                <div class="challenge-config-mini-banner-content">
+                    <div>
+                        <span style="font-size:0.65rem; font-weight:800; color:${c.badgeColor}; background:${c.badgeBg}; border:1px solid ${c.badgeColor}50; padding:2px 8px; border-radius:999px; text-transform:uppercase; letter-spacing:0.5px;">${c.badge}</span>
+                        <div style="font-weight:800; font-size:0.92rem; color:#ffffff; margin-top:3px; text-shadow:0 2px 4px rgba(0,0,0,0.8);">${c.title}</div>
+                    </div>
+                    <div style="font-size:0.72rem; color:rgba(255,255,255,0.85); text-align:right; max-width:180px; line-height:1.25;" class="challenge-mini-banner-desc">
+                        ${c.desc}
+                    </div>
+                </div>
+            `;
+        }
+
         function setChallengeModalMode(mode) {
             currentChallengeModalMode = mode;
+            updateChallengeMiniBanner(mode);
             const titleEl = document.getElementById('modal-title');
             const confirmBtn = document.getElementById('modal-btn-confirm-action');
 
@@ -21253,7 +21726,7 @@ function getCalisthenicsExpertResponse(query) {
             if (errEl) errEl.innerText = '';
 
             if (mode === 'standard') {
-                if (titleEl) titleEl.innerText = "🏹 Nuova Sfida tra Atleti";
+                if (titleEl) titleEl.innerText = "🏹 Configura Sfida: Standard";
                 if (confirmBtn) {
                     confirmBtn.innerText = "Lancia Sfida";
                     confirmBtn.style.background = "";
@@ -21261,7 +21734,7 @@ function getCalisthenicsExpertResponse(query) {
                     confirmBtn.onclick = confirmCreateChallenge;
                 }
             } else if (mode === 'solo') {
-                if (titleEl) titleEl.innerText = "🎯 Nuova Sfida (Solitaria)";
+                if (titleEl) titleEl.innerText = "🎯 Configura Sfida: Solitaria";
                 if (confirmBtn) {
                     confirmBtn.innerText = "🎯 Inizia Sfida (Solitaria)";
                     confirmBtn.style.background = "#10b981";
@@ -21270,7 +21743,7 @@ function getCalisthenicsExpertResponse(query) {
                 }
                 renderSoloExercisesPreview();
             } else if (mode === 'duel') {
-                if (titleEl) titleEl.innerText = "⚔️ Nuovo (Duello) Reps Battle";
+                if (titleEl) titleEl.innerText = "⚔️ Configura Sfida: Duello 1vs1";
                 if (confirmBtn) {
                     confirmBtn.innerText = "⚔️ Lancia Duello";
                     confirmBtn.style.background = "#f59e0b";
