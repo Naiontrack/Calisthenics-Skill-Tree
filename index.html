@@ -4402,6 +4402,17 @@
             transform: scale(0.92);
         }
 
+        
+        /* UI SVG ICON STANDARD (APPLE SF SYMBOLS / LUCIDE STYLE) */
+        .ui-svg-icon {
+            display: inline-block;
+            vertical-align: -2.5px;
+            stroke: currentColor;
+            fill: none;
+            flex-shrink: 0;
+            transition: transform 0.2s ease, stroke 0.2s ease;
+        }
+
         .bottom-nav-icon {
             font-size: 1.30rem;
             line-height: 1;
@@ -5323,6 +5334,129 @@
         html.galaxy-bg-active:has(body.theme-dark) {
             background-color: #060609 !important;
             color-scheme: dark !important;
+        }
+
+        
+        /* =========================================================
+           MODALITÀ GALAXY: EFFETTO GLASS PANEL iPHONE (iOS GLASSMORPHISM)
+           Tutte le interfacce, schede, card, modali, chat e drawer
+           diventano traslucidi con sfocatura satinata ad alta fedeltà
+           facendo trasparire lo sciame stellare e le nebulose cosmiche!
+           ========================================================= */
+        body.galaxy-bg-active .rank-card,
+        body.galaxy-bg-active .bento-card,
+        body.galaxy-bg-active .workout-card,
+        body.galaxy-bg-active .workout-event-card,
+        body.galaxy-bg-active .challenge-card,
+        body.galaxy-bg-active .leaderboard-container,
+        body.galaxy-bg-active .chat-container,
+        body.galaxy-bg-active .chat-panel,
+        body.galaxy-bg-active .chat-input-bar,
+        body.galaxy-bg-active .chat-sidebar,
+        body.galaxy-bg-active .tree-view-header-controls,
+        body.galaxy-bg-active .tree-view-toggle-bar,
+        body.galaxy-bg-active .skill-search-box,
+        body.galaxy-bg-active .category-picker,
+        body.galaxy-bg-active .skill-card,
+        body.galaxy-bg-active .workouts-subtab-bar,
+        body.galaxy-bg-active .workouts-subtabs-nav,
+        body.galaxy-bg-active .arena-subtabs-nav,
+        body.galaxy-bg-active .arena-card-box,
+        body.galaxy-bg-active .chat-tabs,
+        body.galaxy-bg-active .modal-box,
+        body.galaxy-bg-active .skill-detail-drawer,
+        body.galaxy-bg-active .new-workout-panel,
+        body.galaxy-bg-active .auth-card {
+            background: rgba(8, 14, 28, 0.48) !important;
+            backdrop-filter: blur(20px) saturate(190%) !important;
+            -webkit-backdrop-filter: blur(20px) saturate(190%) !important;
+            border: 1px solid rgba(255, 255, 255, 0.12) !important;
+            box-shadow: 0 16px 40px -8px rgba(0, 0, 0, 0.55),
+                        0 0 20px rgba(56, 189, 248, 0.08),
+                        inset 0 1px 1.5px rgba(255, 255, 255, 0.18) !important;
+        }
+
+        /* Hover states in galaxy glass mode */
+        body.galaxy-bg-active .bento-card:hover,
+        body.galaxy-bg-active .workout-card:hover,
+        body.galaxy-bg-active .challenge-card:hover,
+        body.galaxy-bg-active .skill-card:hover {
+            background: rgba(12, 20, 40, 0.62) !important;
+            border-color: rgba(56, 189, 248, 0.35) !important;
+            box-shadow: 0 20px 48px -6px rgba(0, 0, 0, 0.65),
+                        0 0 26px rgba(56, 189, 248, 0.20),
+                        inset 0 1px 2px rgba(255, 255, 255, 0.25) !important;
+        }
+
+        /* Glass chips and inner containers */
+        body.galaxy-bg-active .bento-stat-chip,
+        body.galaxy-bg-active .bento-theme-chip,
+        body.galaxy-bg-active .leaderboard-item,
+        body.galaxy-bg-active .diff-card,
+        body.galaxy-bg-active .challenge-mode-card {
+            background: rgba(15, 23, 42, 0.40) !important;
+            backdrop-filter: blur(14px) saturate(180%) !important;
+            -webkit-backdrop-filter: blur(14px) saturate(180%) !important;
+            border: 1px solid rgba(255, 255, 255, 0.10) !important;
+        }
+
+        body.galaxy-bg-active .chat-bubble.other {
+            background: rgba(15, 23, 42, 0.55) !important;
+            backdrop-filter: blur(12px) !important;
+            -webkit-backdrop-filter: blur(12px) !important;
+            border: 1px solid rgba(255, 255, 255, 0.10) !important;
+        }
+
+        body.galaxy-bg-active .chat-bubble.mine {
+            background: rgba(2, 132, 199, 0.45) !important;
+            backdrop-filter: blur(12px) !important;
+            -webkit-backdrop-filter: blur(12px) !important;
+            border: 1px solid rgba(56, 189, 248, 0.35) !important;
+        }
+
+        /* Light theme variant of Galaxy Glass */
+        body.galaxy-bg-active.theme-light .rank-card,
+        body.galaxy-bg-active.theme-light .bento-card,
+        body.galaxy-bg-active.theme-light .workout-card,
+        body.galaxy-bg-active.theme-light .workout-event-card,
+        body.galaxy-bg-active.theme-light .challenge-card,
+        body.galaxy-bg-active.theme-light .leaderboard-container,
+        body.galaxy-bg-active.theme-light .chat-container,
+        body.galaxy-bg-active.theme-light .chat-panel,
+        body.galaxy-bg-active.theme-light .chat-input-bar,
+        body.galaxy-bg-active.theme-light .chat-sidebar,
+        body.galaxy-bg-active.theme-light .tree-view-header-controls,
+        body.galaxy-bg-active.theme-light .tree-view-toggle-bar,
+        body.galaxy-bg-active.theme-light .skill-search-box,
+        body.galaxy-bg-active.theme-light .category-picker,
+        body.galaxy-bg-active.theme-light .skill-card,
+        body.galaxy-bg-active.theme-light .workouts-subtab-bar,
+        body.galaxy-bg-active.theme-light .workouts-subtabs-nav,
+        body.galaxy-bg-active.theme-light .arena-subtabs-nav,
+        body.galaxy-bg-active.theme-light .arena-card-box,
+        body.galaxy-bg-active.theme-light .chat-tabs,
+        body.galaxy-bg-active.theme-light .modal-box,
+        body.galaxy-bg-active.theme-light .skill-detail-drawer,
+        body.galaxy-bg-active.theme-light .new-workout-panel,
+        body.galaxy-bg-active.theme-light .auth-card {
+            background: rgba(255, 255, 255, 0.62) !important;
+            backdrop-filter: blur(20px) saturate(190%) !important;
+            -webkit-backdrop-filter: blur(20px) saturate(190%) !important;
+            border: 1.5px solid rgba(255, 255, 255, 0.85) !important;
+            box-shadow: 0 16px 36px -4px rgba(0, 0, 0, 0.12),
+                        0 0 20px rgba(2, 132, 199, 0.10),
+                        inset 0 1.5px 2px rgba(255, 255, 255, 1) !important;
+        }
+
+        body.galaxy-bg-active.theme-light .bento-stat-chip,
+        body.galaxy-bg-active.theme-light .bento-theme-chip,
+        body.galaxy-bg-active.theme-light .leaderboard-item,
+        body.galaxy-bg-active.theme-light .diff-card,
+        body.galaxy-bg-active.theme-light .challenge-mode-card {
+            background: rgba(255, 255, 255, 0.50) !important;
+            backdrop-filter: blur(14px) !important;
+            -webkit-backdrop-filter: blur(14px) !important;
+            border: 1px solid rgba(255, 255, 255, 0.70) !important;
         }
 
         .galaxy-toggle-card-row {
@@ -6916,7 +7050,7 @@
     <div class="main-tab-view active" id="tab-view-tree">
         <div class="header">
             <div class="auth-bar" id="auth-bar">
-                <span id="user-status-text">👤 Non autenticato (Salvataggio locale) <span id="tree-streak-badge" class="streak-badge" style="background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.35); color:#f87171; border-radius:999px; padding:2px 8px; font-size:0.75rem; font-weight:800; margin-left:6px; display:none; align-items:center; gap:3px;">🔥 0</span></span>
+                <span id="user-status-text"><svg class="ui-svg-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> Non autenticato (Salvataggio locale) <span id="tree-streak-badge" class="streak-badge" style="background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.35); color:#f87171; border-radius:999px; padding:2px 8px; font-size:0.75rem; font-weight:800; margin-left:6px; display:none; align-items:center; gap:3px;"><svg class="ui-svg-icon" viewBox="0 0 24 24" width="14" height="14" fill="currentColor" stroke="none" style="color:#f87171;"><path d="M12 2c-.5 2.5-3 4.5-3 7 0 2.8 2.2 5 5 5 1.4 0 2.7-.6 3.6-1.5C17.3 14 15 16 12 16c-3.3 0-6 2.7-6 6 0 0 8.5 2 12-4 2.5-4.3 1-8.5-.5-11-.8 1.5-2.2 2.5-3.5 2.5-2.2 0-3.5-2-2-7.5z"/></svg> 0</span></span>
                 <div class="auth-actions" id="auth-actions-container">
                     <button class="btn-auth-secondary" onclick="openAuthModal('login')">Accedi</button>
                     <button class="btn-auth" onclick="openAuthModal('signup')">Registrati</button>
@@ -6927,7 +7061,7 @@
                 <h1>Occhionero's Calisthenics Tree</h1>
                 <div class="controls-group">
                     <div class="selector-box">
-                        <label for="categorySelect">📁 Sezione:</label>
+                        <label for="categorySelect"><svg class="ui-svg-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg> Sezione:</label>
                         <select id="categorySelect" class="custom-select" onchange="changeCategory(this.value)">
                             <option value="all">Tutte (Tutto)</option>
                         </select>
@@ -6949,16 +7083,16 @@
         <div class="tree-view-header-controls">
             <div class="tree-view-toggle-bar">
                 <button type="button" class="tree-view-toggle-btn active" id="btn-view-graph" onclick="toggleSkillTreeView('graph')">
-                    🕸️ Albero RPG
+                    <svg class="ui-svg-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="2.2" fill="currentColor"/><circle cx="5" cy="12" r="2" fill="currentColor"/><circle cx="19" cy="12" r="2" fill="currentColor"/><circle cx="12" cy="19" r="2.2" fill="currentColor"/><path d="M12 7.2v9.6m0-4.8l-5-2m5 2l5-2"/></svg> Albero RPG
                 </button>
                 <button type="button" class="tree-view-toggle-btn" id="btn-view-cards" onclick="toggleSkillTreeView('cards')">
-                    📋 Schede Classiche
+                    <svg class="ui-svg-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/></svg> Schede Classiche
                 </button>
             </div>
 
             <div class="skill-search-wrapper">
                 <div class="skill-search-box">
-                    <span class="skill-search-icon">🔍</span>
+                    <span class="skill-search-icon"><svg class="ui-svg-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
                     <input type="text" id="skill-search-input" placeholder="Cerca skill (es. Planche, Pull Ups, Dip...)" oninput="handleSkillSearch(this.value)" autocomplete="off">
                     <button type="button" id="skill-search-clear" onclick="clearSkillSearch()" title="Cancella ricerca">✕</button>
                 </div>
@@ -6996,13 +7130,13 @@
          ==================================================================== -->
     <div class="main-tab-view" id="tab-view-workouts">
         <div class="tab-header-banner">
-            <h2>🏋️ Registro Allenamenti & Community</h2>
+            <h2><svg class="ui-svg-icon" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="8" width="3" height="8" rx="1.5" fill="currentColor"/><rect x="19" y="8" width="3" height="8" rx="1.5" fill="currentColor"/><rect x="5.5" y="6" width="2.5" height="12" rx="1.2"/><rect x="16" y="6" width="2.5" height="12" rx="1.2"/><line x1="8" y1="12" x2="16" y2="12" stroke-width="2.5"/></svg> Registro Allenamenti & Community</h2>
             <p>Traccia i tuoi volumi personali o partecipa ai ritrovi e sondaggi della community.</p>
         </div>
 
         <div class="workouts-subtabs-nav">
-            <button type="button" class="workouts-subtab-btn active" id="btn-subtab-workouts-diary" onclick="switchWorkoutsSubTab('diary')">📋 Diario Personale</button>
-            <button type="button" class="workouts-subtab-btn" id="btn-subtab-workouts-events" onclick="switchWorkoutsSubTab('events')">📅 Sondaggi & Ritrovi <span class="events-badge-dot" id="events-badge-dot" style="display:none; position:relative; top:auto; right:auto; width:8px; height:8px; background:#ef4444; border-radius:50%; margin-left:6px; vertical-align:middle;"></span></button>
+            <button type="button" class="workouts-subtab-btn active" id="btn-subtab-workouts-diary" onclick="switchWorkoutsSubTab('diary')"><svg class="ui-svg-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/></svg> Diario Personale</button>
+            <button type="button" class="workouts-subtab-btn" id="btn-subtab-workouts-events" onclick="switchWorkoutsSubTab('events')"><svg class="ui-svg-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Sondaggi & Ritrovi <span class="events-badge-dot" id="events-badge-dot" style="display:none; position:relative; top:auto; right:auto; width:8px; height:8px; background:#ef4444; border-radius:50%; margin-left:6px; vertical-align:middle;"></span></button>
         </div>
 
         <!-- Subtab 1: Personal Workout Diary -->
@@ -7011,11 +7145,11 @@
                 <div class="workouts-section-header">
                     <div class="workouts-toggle-title" onclick="toggleWorkoutsSection()">
                         <h3 class="leaderboard-title" style="margin:0; border-bottom:none; padding-bottom:0;">
-                            📋 I Miei Allenamenti <span id="workouts-count-badge" class="workouts-count-badge">(0)</span>
+                            <svg class="ui-svg-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/></svg> I Miei Allenamenti <span id="workouts-count-badge" class="workouts-count-badge">(0)</span>
                         </h3>
                         <span class="collapsible-icon" id="workouts-toggle-icon">▼ Espandi</span>
                     </div>
-                    <button class="btn-confirm" id="new-workout-btn" onclick="openNewWorkoutModal()">➕ Nuovo Allenamento</button>
+                    <button class="btn-confirm" id="new-workout-btn" onclick="openNewWorkoutModal()"><svg class="ui-svg-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Nuovo Allenamento</button>
                 </div>
                 <div id="workouts-collapsible-content" style="display: block; margin-top: 14px; border-top: 1px solid var(--line-color); padding-top: 14px;">
                     <div id="workouts-list-container" style="max-height: calc(100vh - 270px); overflow-y: auto; padding-right: 4px;">
@@ -7029,9 +7163,9 @@
         <div class="workouts-subtab-pane" id="workouts-subtab-events">
             <div class="arena-card-box">
                 <div class="arena-card-box-header">
-                    <h3>📅 Eventi & Sondaggi Allenamento</h3>
+                    <h3><svg class="ui-svg-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Eventi & Sondaggi Allenamento</h3>
                     <div style="display:flex; gap:8px; align-items:center;">
-                        <button class="chat-new-btn" onclick="openCreateEventModal()">➕ Nuovo Sondaggio</button>
+                        <button class="chat-new-btn" onclick="openCreateEventModal()"><svg class="ui-svg-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Nuovo Sondaggio</button>
                     </div>
                 </div>
                 <div class="events-panel active" id="events-panel" style="position:static; width:100%; height:auto; box-shadow:none; border:none; background:transparent;">
@@ -7051,24 +7185,24 @@
          ==================================================================== -->
     <div class="main-tab-view" id="tab-view-arena">
         <div class="tab-header-banner">
-            <h2>⚔️ Arena Calisthenica</h2>
+            <h2><svg class="ui-svg-icon" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 17.5L3 6V3h3l11.5 11.5"/><path d="M13 19l6-6"/><path d="M16 16l4 4"/><path d="M19 21l2-2"/><path d="M9.5 17.5L21 6V3h-3L6.5 14.5"/><path d="M11 19l-6-6"/><path d="M8 16l-4 4"/></svg> Arena Calisthenica</h2>
             <p>Sfida gli altri atleti in duelli 1vs1 e scala la Classifica Globale.</p>
         </div>
 
         <div class="arena-subtabs-nav">
-            <button type="button" class="arena-subtab-btn active" id="btn-subtab-challenges" onclick="switchArenaSubTab('challenges')">🏹 Duelli & Sfide</button>
-            <button type="button" class="arena-subtab-btn" id="btn-subtab-leaderboard" onclick="switchArenaSubTab('leaderboard')">🏆 Classifica Globale</button>
+            <button type="button" class="arena-subtab-btn active" id="btn-subtab-challenges" onclick="switchArenaSubTab('challenges')"><svg class="ui-svg-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2" fill="currentColor"/></svg> Duelli & Sfide</button>
+            <button type="button" class="arena-subtab-btn" id="btn-subtab-leaderboard" onclick="switchArenaSubTab('leaderboard')"><svg class="ui-svg-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.45 1-1 1H8v4h8v-4h-1c-.55 0-1-.45-1-1v-2.34"/><path d="M18 4H6v7a6 6 0 0 0 12 0V4z"/></svg> Classifica Globale</button>
         </div>
 
         <!-- Subtab 1: Challenges -->
         <div class="arena-subtab-pane active" id="arena-subtab-challenges">
             <div class="arena-card-box">
                 <div class="arena-card-box-header">
-                    <h3>🏹 Sfide tra Atleti</h3>
+                    <h3><svg class="ui-svg-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2" fill="currentColor"/></svg> Sfide tra Atleti</h3>
                     <div style="display:flex; gap:8px; align-items:center;">
                         <span class="challenges-badge-dot" id="challenges-badge-dot" style="display:none;"></span>
-                        <button class="btn-auth-secondary" style="font-size:0.8rem; padding:6px 12px;" onclick="openSoloChallengeModal()">🎯 Sfida Solitaria</button>
-                        <button class="chat-new-btn" onclick="openCreateChallengeModal()">➕ Nuova Sfida</button>
+                        <button class="btn-auth-secondary" style="font-size:0.8rem; padding:6px 12px;" onclick="openSoloChallengeModal()"><svg class="ui-svg-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2" fill="currentColor"/></svg> Sfida Solitaria</button>
+                        <button class="chat-new-btn" onclick="openCreateChallengeModal()"><svg class="ui-svg-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Nuova Sfida</button>
                     </div>
                 </div>
                 <div class="challenges-panel active" id="challenges-panel" style="position:static; width:100%; height:auto; box-shadow:none; border:none; background:transparent;">
@@ -7083,7 +7217,7 @@
         <div class="arena-subtab-pane" id="arena-subtab-leaderboard">
             <div class="arena-card-box">
                 <div class="leaderboard-section" style="margin-top:0;">
-                    <h3 class="leaderboard-title">🏆 Classifica Globale Atleti</h3>
+                    <h3 class="leaderboard-title"><svg class="ui-svg-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.45 1-1 1H8v4h8v-4h-1c-.55 0-1-.45-1-1v-2.34"/><path d="M18 4H6v7a6 6 0 0 0 12 0V4z"/></svg> Classifica Globale Atleti</h3>
                     <div class="leaderboard-list" id="leaderboard-container">
                         <p style="color: var(--subtext); text-align: center; font-size: 0.9rem;">Caricamento classifica...</p>
                     </div>
@@ -7097,21 +7231,21 @@
          ==================================================================== -->
     <div class="main-tab-view" id="tab-view-chat">
         <div class="tab-header-banner chat-banner-compact" style="margin: 0 auto 6px auto; padding: 6px 14px; width: 100%; max-width: 920px; flex-shrink: 0; border-radius: 12px; display: flex; align-items: center; justify-content: space-between; box-sizing: border-box;">
-            <h2 style="font-size: 1.05rem; margin: 0; display: flex; align-items: center; gap: 6px;">💬 Chat & Community</h2>
+            <h2 style="font-size: 1.05rem; margin: 0; display: flex; align-items: center; gap: 6px;"><svg class="ui-svg-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg> Chat & Community</h2>
             <span style="font-size: 0.74rem; color: var(--subtext); display:flex; align-items:center; gap:6px;">
                 <span>Community • Private • Coach AI</span>
-                <span style="font-size:0.68rem; color:var(--accent); background:rgba(56,189,248,0.12); border:1px solid rgba(56,189,248,0.3); padding:2px 7px; border-radius:999px; font-weight:600;" title="I file multimediali vengono conservati per 90 giorni per rotazione automatica dello spazio">📦 Media 90gg</span>
+                <span style="font-size:0.68rem; color:var(--accent); background:rgba(56,189,248,0.12); border:1px solid rgba(56,189,248,0.3); padding:2px 7px; border-radius:999px; font-weight:600;" title="I file multimediali vengono conservati per 90 giorni per rotazione automatica dello spazio"><svg class="ui-svg-icon" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;"><path d="m16.5 9.4-9-5.19M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" x2="12" y1="22.08" y2="12"/></svg> Media 90gg</span>
             </span>
         </div>
         <div class="chat-panel active" id="chat-panel" style="position:relative; width:100%; max-width:920px; flex:1 1 auto; height:auto; min-height:0; right:auto; top:auto; box-shadow:none; border-radius:16px; border:1px solid var(--line-color); z-index:10; margin:0 auto; display:flex; flex-direction:column; overflow:hidden;">
             <div class="chat-panel-header">
-                <span id="chat-panel-title">💬 Chat Generale</span>
+                <span id="chat-panel-title"><svg class="ui-svg-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg> Chat Generale</span>
                 <span class="chat-badge" id="chat-badge" style="display:none;">0</span>
             </div>
             <div class="chat-tabs" id="chat-tabs">
-                <button class="chat-tab-btn active" id="chat-tab-general" onclick="switchChatTab('general')">💬 Generale <span id="chat-general-dot" class="tab-badge-dot" style="display:none;"></span></button>
-                <button class="chat-tab-btn" id="chat-tab-private" onclick="switchChatTab('private')">👤 Private <span id="chat-private-dot" class="tab-badge-dot" style="display:none;"></span></button>
-                <button class="chat-tab-btn" id="chat-tab-ai" onclick="switchChatTab('ai')">🤖 AI Helper</button>
+                <button class="chat-tab-btn active" id="chat-tab-general" onclick="switchChatTab('general')"><svg class="ui-svg-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg> Generale <span id="chat-general-dot" class="tab-badge-dot" style="display:none;"></span></button>
+                <button class="chat-tab-btn" id="chat-tab-private" onclick="switchChatTab('private')"><svg class="ui-svg-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> Private <span id="chat-private-dot" class="tab-badge-dot" style="display:none;"></span></button>
+                <button class="chat-tab-btn" id="chat-tab-ai" onclick="switchChatTab('ai')"><svg class="ui-svg-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="10" rx="2"/><circle cx="12" cy="5" r="2"/><line x1="12" y1="7" x2="12" y2="11"/><line x1="8" y1="16" x2="8.01" y2="16"/><line x1="16" y1="16" x2="16.01" y2="16"/></svg> AI Helper</button>
             </div>
             <div class="chat-thread-header" id="chat-thread-header" style="display:none;">
                 <button class="chat-back-btn" onclick="backToPrivateList()">←</button>
@@ -7121,14 +7255,14 @@
             </div>
             <div class="ai-helper-header-bar" id="ai-helper-header-bar" style="display:none;">
                 <button type="button" class="ai-helper-chip-btn ai-helper-chip-clear" onclick="clearAiChatHistory()">
-                    🗑️ Pulisci Chat
+                    <svg class="ui-svg-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg> Pulisci Chat
                 </button>
             </div>
             <div class="chat-messages" id="chat-messages" style="flex:1;">
                 <p style="color: var(--subtext); text-align:center; font-size:0.85rem;">Apri la chat per vedere i messaggi...</p>
             </div>
             <div class="chat-input-box" id="chat-input-box">
-                <p style="color: var(--subtext); font-size: 0.85rem; text-align:center; margin:0; padding:8px; width:100%;">🔒 Accedi per scrivere in chat.</p>
+                <p style="color: var(--subtext); font-size: 0.85rem; text-align:center; margin:0; padding:8px; width:100%;"><svg class="ui-svg-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> Accedi per scrivere in chat.</p>
             </div>
         </div>
     </div>
@@ -7138,7 +7272,7 @@
          ==================================================================== -->
     <div class="main-tab-view" id="tab-view-profile">
         <div class="tab-header-banner">
-            <h2>👤 Profilo & Scheda Atleta</h2>
+            <h2><svg class="ui-svg-icon" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> Profilo & Scheda Atleta</h2>
             <p>Panoramica completa del tuo grado, statistiche duelli, tema grafico e impostazioni.</p>
         </div>
 
@@ -7150,9 +7284,9 @@
                     <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px;">
                         <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
                             <h3 id="bento-nickname" style="margin:0; font-size:1.35rem; color:var(--text); font-weight:800;">Atleta</h3>
-                            <span id="bento-streak-badge" class="streak-badge" style="background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.35); color:#f87171; border-radius:999px; padding:3px 10px; font-size:0.82rem; font-weight:800; display:none; align-items:center; gap:4px;">🔥 0</span>
+                            <span id="bento-streak-badge" class="streak-badge" style="background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.35); color:#f87171; border-radius:999px; padding:3px 10px; font-size:0.82rem; font-weight:800; display:none; align-items:center; gap:4px;"><svg class="ui-svg-icon" viewBox="0 0 24 24" width="14" height="14" fill="currentColor" stroke="none" style="color:#f87171;"><path d="M12 2c-.5 2.5-3 4.5-3 7 0 2.8 2.2 5 5 5 1.4 0 2.7-.6 3.6-1.5C17.3 14 15 16 12 16c-3.3 0-6 2.7-6 6 0 0 8.5 2 12-4 2.5-4.3 1-8.5-.5-11-.8 1.5-2.2 2.5-3.5 2.5-2.2 0-3.5-2-2-7.5z"/></svg> 0</span>
                             <button type="button" class="btn-edit-nickname" id="btn-edit-nickname" onclick="openEditNicknameModal()" style="background:rgba(56,189,248,0.12); border:1px solid var(--accent); color:var(--accent); padding:4px 10px; border-radius:8px; font-size:0.78rem; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; gap:5px; transition:all 0.2s;">
-                                ✏️ Modifica
+                                <svg class="ui-svg-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg> Modifica
                             </button>
 
                         </div>
@@ -7169,7 +7303,7 @@
                 <div class="profile-col">
                     <!-- Statistiche Duelli 1vs1 -->
                     <div class="bento-card bento-duels">
-                        <div class="bento-card-title">⚔️ Statistiche Duelli 1vs1</div>
+                        <div class="bento-card-title"><svg class="ui-svg-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 17.5L3 6V3h3l11.5 11.5"/><path d="M13 19l6-6"/><path d="M16 16l4 4"/><path d="M19 21l2-2"/><path d="M9.5 17.5L21 6V3h-3L6.5 14.5"/><path d="M11 19l-6-6"/><path d="M8 16l-4 4"/></svg> Statistiche Duelli 1vs1</div>
                         <div class="bento-stats-row">
                             <div class="bento-stat-pill">
                                 <span class="stat-num" id="bento-stat-total" style="color:var(--text);">0</span>
@@ -7177,15 +7311,15 @@
                             </div>
                             <div class="bento-stat-pill">
                                 <span class="stat-num" id="bento-stat-wins" style="color:#22c55e;">0</span>
-                                <span class="stat-lbl">Vinti 🏆</span>
+                                <span class="stat-lbl">Vinti <svg class="ui-svg-icon" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="#22c55e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.45 1-1 1H8v4h8v-4h-1c-.55 0-1-.45-1-1v-2.34"/><path d="M18 4H6v7a6 6 0 0 0 12 0V4z"/></svg></span>
                             </div>
                             <div class="bento-stat-pill">
                                 <span class="stat-num" id="bento-stat-losses" style="color:#ef4444;">0</span>
-                                <span class="stat-lbl">Persi ❌</span>
+                                <span class="stat-lbl">Persi <svg class="ui-svg-icon" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg></span>
                             </div>
                             <div class="bento-stat-pill">
                                 <span class="stat-num" id="bento-stat-ties" style="color:#f59e0b;">0</span>
-                                <span class="stat-lbl">Pari 🤝</span>
+                                <span class="stat-lbl">Pari <svg class="ui-svg-icon" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 17l-5-5a3.5 3.5 0 0 1 5-5l2 2 2-2a3.5 3.5 0 0 1 5 5l-5 5"/><path d="M12 11l2 2"/></svg></span>
                             </div>
                         </div>
                         <div class="bento-winrate-bar">
@@ -7196,7 +7330,7 @@
 
                     <!-- Composizione Corporea & BMI (Nascosta visivamente: gestita in Impostazioni Account & Privacy) -->
                     <div class="bento-card bento-body" style="display: none !important;" aria-hidden="true">
-                        <div class="bento-card-title">⚖️ Composizione Corporea & BMI</div>
+                        <div class="bento-card-title"><svg class="ui-svg-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 16l3-8 3 8c0 1.5-1.5 2-3 2s-3-.5-3-2z"/><path d="M2 16l3-8 3 8c0 1.5-1.5 2-3 2s-3-.5-3-2z"/><path d="M7 21h10"/><path d="M12 3v18"/><path d="M3 7h18"/></svg> Composizione Corporea & BMI</div>
                         <div class="bento-body-inputs">
                             <div class="bento-input-group">
                                 <label for="bento-body-weight">Peso (kg):</label>
@@ -7216,7 +7350,7 @@
 
                     <!-- Tema Grafico (Compatto e senza spazio vuoto!) -->
                     <div class="bento-card bento-theme">
-                        <div class="bento-card-title">🎨 Tema Grafico</div>
+                        <div class="bento-card-title"><svg class="ui-svg-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="6.5" r=".5" fill="currentColor"/><circle cx="17.5" cy="10.5" r=".5" fill="currentColor"/><circle cx="8.5" cy="7.5" r=".5" fill="currentColor"/><circle cx="6.5" cy="12.5" r=".5" fill="currentColor"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.9 0 1.5-.7 1.5-1.5 0-.4-.2-.8-.4-1.1-.3-.3-.4-.7-.4-1.1 0-.9.7-1.5 1.5-1.5H16c3.3 0 6-2.7 6-6 0-5.5-4.5-9.8-10-9.8z"/></svg> Tema Grafico</div>
                         <div class="bento-theme-swatches">
                             <button type="button" class="bento-theme-chip active" id="theme-chip-default" onclick="changeTheme('default'); syncBentoThemeChips();">
                                 <span class="swatch" style="background:#38bdf8;"></span> Predefinito
@@ -7231,7 +7365,7 @@
                         <select id="themeSelect" style="display:none;" aria-hidden="true"><option value="default">Predefinito</option><option value="light">Chiaro</option><option value="dark">Scuro</option></select>
                         <div class="galaxy-toggle-card-row">
                             <div class="galaxy-toggle-info">
-                                <span style="font-size:1.15rem;">✨</span>
+                                <span style="font-size:1.15rem; color:#38bdf8; display:inline-flex; align-items:center;"><svg class="ui-svg-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 4.8L19 9.5l-4.2 3.7L16 19l-4-2.8L8 19l1.2-5.8L5 9.5l5.1-1.7L12 3z"/></svg></span>
                                 <div>
                                     <div class="galaxy-toggle-title">Sfondo Galaxy</div>
                                     <div class="galaxy-toggle-desc">Particelle stellari fluide (compatibile con tutti i temi)</div>
@@ -7250,7 +7384,7 @@
                     <!-- Invita Amici & Guadagna XP -->
                     <div class="bento-card bento-share" id="share-section">
                         <div class="share-header-left" style="display:flex; justify-content:space-between; align-items:center;">
-                            <div class="bento-card-title" style="margin:0;">🎁 Invita Amici & Guadagna XP</div>
+                            <div class="bento-card-title" style="margin:0;"><svg class="ui-svg-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg> Invita Amici & Guadagna XP</div>
                             <span class="share-bonus-badge">+3.000 XP</span>
                         </div>
                         <span class="collapsible-icon" id="share-toggle-icon" style="display:none;">▼ Espandi</span>
@@ -7262,7 +7396,7 @@
                     <!-- Impostazioni Account & Privacy -->
                     <div class="bento-card bento-settings" id="profile-settings-section">
                         <div class="section-collapsible-header" onclick="toggleProfileSection()" style="display:flex; justify-content:space-between; align-items:center;">
-                            <div class="bento-card-title" style="margin:0;">⚙️ Impostazioni Account & Privacy</div>
+                            <div class="bento-card-title" style="margin:0;"><svg class="ui-svg-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg> Impostazioni Account & Privacy</div>
                             <span class="collapsible-icon" id="profile-toggle-icon">▲ Riduci</span>
                         </div>
                         <div id="profile-collapsible-content" style="display:block; margin-top:12px;">
@@ -7455,7 +7589,56 @@
         };
 
         // Inizializzazione Firebase
-        firebase.initializeApp(firebaseConfig); 
+        firebase.initializeApp(firebaseConfig);
+
+        // ==========================================
+        // APP ICONS (APPLE SF SYMBOLS / LUCIDE VECTOR SVGs)
+        // ==========================================
+        window.APP_ICONS = {
+            tree: `<svg class="ui-svg-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="2.2" fill="currentColor"/><circle cx="5" cy="12" r="2" fill="currentColor"/><circle cx="19" cy="12" r="2" fill="currentColor"/><circle cx="12" cy="19" r="2.2" fill="currentColor"/><path d="M12 7.2v9.6m0-4.8l-5-2m5 2l5-2"/></svg>`,
+            cards: `<svg class="ui-svg-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/></svg>`,
+            search: `<svg class="ui-svg-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>`,
+            folder: `<svg class="ui-svg-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>`,
+            flame: `<svg class="ui-svg-icon" viewBox="0 0 24 24" width="15" height="15" fill="currentColor" stroke="none" style="color:#f87171;"><path d="M12 2c-.5 2.5-3 4.5-3 7 0 2.8 2.2 5 5 5 1.4 0 2.7-.6 3.6-1.5C17.3 14 15 16 12 16c-3.3 0-6 2.7-6 6 0 0 8.5 2 12-4 2.5-4.3 1-8.5-.5-11-.8 1.5-2.2 2.5-3.5 2.5-2.2 0-3.5-2-2-7.5z"/></svg>`,
+            dumbbell: `<svg class="ui-svg-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="8" width="3" height="8" rx="1.5" fill="currentColor"/><rect x="19" y="8" width="3" height="8" rx="1.5" fill="currentColor"/><rect x="5.5" y="6" width="2.5" height="12" rx="1.2"/><rect x="16" y="6" width="2.5" height="12" rx="1.2"/><line x1="8" y1="12" x2="16" y2="12" stroke-width="2.5"/></svg>`,
+            swords: `<svg class="ui-svg-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 17.5L3 6V3h3l11.5 11.5"/><path d="M13 19l6-6"/><path d="M16 16l4 4"/><path d="M19 21l2-2"/><path d="M9.5 17.5L21 6V3h-3L6.5 14.5"/><path d="M11 19l-6-6"/><path d="M8 16l-4 4"/></svg>`,
+            trophy: `<svg class="ui-svg-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.45 1-1 1H8v4h8v-4h-1c-.55 0-1-.45-1-1v-2.34"/><path d="M18 4H6v7a6 6 0 0 0 12 0V4z"/></svg>`,
+            target: `<svg class="ui-svg-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2" fill="currentColor"/></svg>`,
+            calendar: `<svg class="ui-svg-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`,
+            clipboard: `<svg class="ui-svg-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/></svg>`,
+            plus: `<svg class="ui-svg-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>`,
+            chat: `<svg class="ui-svg-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>`,
+            user: `<svg class="ui-svg-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`,
+            bot: `<svg class="ui-svg-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="10" rx="2"/><circle cx="12" cy="5" r="2"/><line x1="12" y1="7" x2="12" y2="11"/><line x1="8" y1="16" x2="8.01" y2="16"/><line x1="16" y1="16" x2="16.01" y2="16"/></svg>`,
+            poll: `<svg class="ui-svg-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>`,
+            trash: `<svg class="ui-svg-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>`,
+            pencil: `<svg class="ui-svg-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>`,
+            scale: `<svg class="ui-svg-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 16l3-8 3 8c0 1.5-1.5 2-3 2s-3-.5-3-2z"/><path d="M2 16l3-8 3 8c0 1.5-1.5 2-3 2s-3-.5-3-2z"/><path d="M7 21h10"/><path d="M12 3v18"/><path d="M3 7h18"/></svg>`,
+            palette: `<svg class="ui-svg-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="6.5" r=".5" fill="currentColor"/><circle cx="17.5" cy="10.5" r=".5" fill="currentColor"/><circle cx="8.5" cy="7.5" r=".5" fill="currentColor"/><circle cx="6.5" cy="12.5" r=".5" fill="currentColor"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.9 0 1.5-.7 1.5-1.5 0-.4-.2-.8-.4-1.1-.3-.3-.4-.7-.4-1.1 0-.9.7-1.5 1.5-1.5H16c3.3 0 6-2.7 6-6 0-5.5-4.5-9.8-10-9.8z"/></svg>`,
+            gift: `<svg class="ui-svg-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg>`,
+            settings: `<svg class="ui-svg-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>`,
+            link: `<svg class="ui-svg-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>`,
+            lock: `<svg class="ui-svg-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>`,
+            unlock: `<svg class="ui-svg-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>`,
+            check: `<svg class="ui-svg-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`,
+            checkCircle: `<svg class="ui-svg-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="16 9 10 15 8 13"/></svg>`,
+            xCircle: `<svg class="ui-svg-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>`,
+            handshake: `<svg class="ui-svg-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 17l-5-5a3.5 3.5 0 0 1 5-5l2 2 2-2a3.5 3.5 0 0 1 5 5l-5 5"/><path d="M12 11l2 2"/></svg>`,
+            timer: `<svg class="ui-svg-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="14" r="8"/><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="14" x2="15" y2="11"/></svg>`,
+            zap: `<svg class="ui-svg-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>`,
+            save: `<svg class="ui-svg-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>`,
+            disc: `<svg class="ui-svg-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>`,
+            sparkles: `<svg class="ui-svg-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 4.8L19 9.5l-4.2 3.7L16 19l-4-2.8L8 19l1.2-5.8L5 9.5l5.1-1.7L12 3z"/></svg>`,
+            key: `<svg class="ui-svg-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="7.5" cy="15.5" r="5.5"/><path d="m21 2-9.6 9.6"/><path d="m15.5 7.5 3 3L22 7l-3-3"/></svg>`,
+            ruler: `<svg class="ui-svg-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.3 8.7 8.7 21.3c-1 1-2.6 1-3.6 0l-2.4-2.4c-1-1-1-2.6 0-3.6L15.3 2.7c1-1 2.6-1 3.6 0l2.4 2.4c1 1 1 2.6 0 3.6Z"/><path d="m14.5 3.5 2 2"/><path d="m11.5 6.5 2 2"/><path d="m8.5 9.5 2 2"/><path d="m5.5 12.5 2 2"/></svg>`,
+            globe: `<svg class="ui-svg-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>`,
+            bell: `<svg class="ui-svg-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>`,
+            bellOff: `<svg class="ui-svg-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.7 3A6 6 0 0 1 18 8a21.3 21.3 0 0 0 .6 5"/><path d="M17 17H3s3-2 3-9a4.67 4.67 0 0 1 .3-1.7"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/><line x1="2" x2="22" y1="2" y2="22"/></svg>`,
+            package: `<svg class="ui-svg-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m16.5 9.4-9-5.19M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" x2="12" y1="22.08" y2="12"/></svg>`,
+            alert: `<svg class="ui-svg-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`,
+            shieldLock: `<svg class="ui-svg-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><circle cx="12" cy="11" r="1.5" fill="currentColor"/><path d="M12 12.5v2.5"/></svg>`
+        };
+ 
         
          
         const auth = firebase.auth();
@@ -9811,7 +9994,7 @@ let currentUser = null;
             const label = document.getElementById('push-toggle-label');
             if (toggle) toggle.checked = enabled;
             if (label) {
-                label.innerText = enabled ? '🔔 Notifiche Telefono: Attive' : '🔕 Notifiche Telefono: Disattivate';
+                label.innerHTML = enabled ? ((window.APP_ICONS ? window.APP_ICONS.bell : '🔔') + ' Notifiche Telefono: Attive') : ((window.APP_ICONS ? window.APP_ICONS.bellOff : '🔕') + ' Notifiche Telefono: Disattivate');
             }
 
             window.OneSignalDeferred = window.OneSignalDeferred || [];
@@ -10666,7 +10849,7 @@ let currentUser = null;
                 checkStreakInactivity();
                 renderAllStreakBadges();
 
-                document.getElementById('user-status-text').innerHTML = `👤 Non autenticato (Salvataggio locale) <span id="tree-streak-badge" class="streak-badge" style="background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.35); color:#f87171; border-radius:999px; padding:2px 8px; font-size:0.75rem; font-weight:800; margin-left:6px; display:${(userStreak || 0) > 0 ? 'inline-flex' : 'none'}; align-items:center; gap:3px;">🔥 ${userStreak || 0}</span>`;
+                document.getElementById('user-status-text').innerHTML = `${window.APP_ICONS ? window.APP_ICONS.user : ''} Non autenticato (Salvataggio locale) <span id="tree-streak-badge" class="streak-badge" style="background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.35); color:#f87171; border-radius:999px; padding:2px 8px; font-size:0.75rem; font-weight:800; margin-left:6px; display:${(userStreak || 0) > 0 ? 'inline-flex' : 'none'}; align-items:center; gap:3px;">${window.APP_ICONS ? window.APP_ICONS.flame : '🔥'} ${userStreak || 0}</span>`;
                 document.getElementById('auth-actions-container').innerHTML = `
                     <button class="btn-auth-secondary" onclick="openAuthModal('login')">Accedi</button>
                     <button class="btn-auth" onclick="openAuthModal('signup')">Registrati</button>
@@ -10687,7 +10870,7 @@ let currentUser = null;
 
         function renderUserAuthBar() {
             const displayName = userNickname || (currentUser ? (currentUser.displayName || currentUser.email) : "");
-            document.getElementById('user-status-text').innerHTML = `👤 <strong>${displayName}</strong> <span id="tree-streak-badge" class="streak-badge" style="background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.35); color:#f87171; border-radius:999px; padding:2px 8px; font-size:0.75rem; font-weight:800; margin-left:6px; display:${(userStreak || 0) > 0 ? 'inline-flex' : 'none'}; align-items:center; gap:3px;">🔥 ${userStreak || 0}</span>`;
+            document.getElementById('user-status-text').innerHTML = `${window.APP_ICONS ? window.APP_ICONS.user : ''} <strong>${displayName}</strong> <span id="tree-streak-badge" class="streak-badge" style="background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.35); color:#f87171; border-radius:999px; padding:2px 8px; font-size:0.75rem; font-weight:800; margin-left:6px; display:${(userStreak || 0) > 0 ? 'inline-flex' : 'none'}; align-items:center; gap:3px;">${window.APP_ICONS ? window.APP_ICONS.flame : '🔥'} ${userStreak || 0}</span>`;
             document.getElementById('auth-actions-container').innerHTML = `
                 <button class="btn-auth-secondary" onclick="openNicknameModal()">✏️ Nickname</button>
                 <button class="btn-auth-secondary" onclick="logoutUser()">Esci</button>
@@ -10886,7 +11069,7 @@ let currentUser = null;
                                 <span class="leaderboard-rank-pos">#${index}</span>
                                 <div class="leaderboard-avatar rank-badge-wrap rank-tier-${rank.tierId || 'bronze'}">${rank.iconSvg}</div>
                                 <span class="leaderboard-name">${nick} ${isMe ? '(Tu)' : ''}</span>
-                                ${data.streak > 0 ? `<span class="streak-badge" title="${data.streak} allenamenti consecutivi" style="background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.35); color:#f87171; border-radius:999px; padding:2px 7px; font-size:0.75rem; font-weight:800; margin-left:4px; display:inline-flex; align-items:center; justify-content:center; gap:3px; white-space:nowrap; flex-shrink:0; line-height:1;">🔥 ${data.streak}</span>` : ''}
+                                ${data.streak > 0 ? `<span class="streak-badge" title="${data.streak} allenamenti consecutivi" style="background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.35); color:#f87171; border-radius:999px; padding:2px 7px; font-size:0.75rem; font-weight:800; margin-left:4px; display:inline-flex; align-items:center; justify-content:center; gap:3px; white-space:nowrap; flex-shrink:0; line-height:1;">${window.APP_ICONS ? window.APP_ICONS.flame : '🔥'} ${data.streak}</span>` : ''}
                             </div>
                             <span class="leaderboard-xp">${xp} XP</span>
                         </div>
@@ -12218,7 +12401,7 @@ let currentUser = null;
             if (isDrawerOpen) closeSkillDetailDrawer();
 
             openCustomModal(
-                "🔒 Riblocca Skill",
+                "${window.APP_ICONS ? window.APP_ICONS.lock : ''} Riblocca Skill",
                 `Sei sicuro di voler ribloccare <strong>"${escapeHtml(skill.name)}"</strong>?<br><br>` +
                 `⚠️ La skill tornerà nello stato <strong>Bloccata</strong>, il record verrà azzerato e ti verranno sottratti <strong>-${xpToDeduct} XP</strong>.<br><br>` +
                 `Usa questa opzione se hai sbloccato la skill per sbaglio.`,
@@ -12295,7 +12478,7 @@ let currentUser = null;
         function getPushDiagnosticInfo() {
             const ios = getIOSInfo();
             if (ios.isIOS && !ios.isSupported) {
-                return "⚠️ Funzione notifiche supportata per iOS 16.4 o più recente";
+                return "${window.APP_ICONS ? window.APP_ICONS.alert : '⚠️'} Funzione notifiche supportata per iOS 16.4 o più recente";
             }
             const isStandalone = window.navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches;
             if (ios.isIOS && !isStandalone) {
@@ -12540,7 +12723,7 @@ let currentUser = null;
                 passwordBoxHtml = `
                 <div class="profile-password-change-box" id="profile-password-box" style="margin-top: 22px; padding: 18px; border-radius: 14px; background: rgba(56, 189, 248, 0.05); border: 1px solid rgba(56, 189, 248, 0.28); box-shadow: 0 4px 15px rgba(0,0,0,0.12);">
                     <div style="font-weight: 800; font-size: 0.96rem; color: var(--text); margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px;">
-                        <span style="display:flex; align-items:center; gap:6px;">🔐 Sicurezza: Cambia Password</span>
+                        <span style="display:flex; align-items:center; gap:6px;">${window.APP_ICONS ? window.APP_ICONS.shieldLock : '🔐'} Sicurezza: Cambia Password</span>
                         <div style="display:flex; align-items:center; gap:6px;">
                             ${verifyStatusBadge}
                             <span style="font-size: 0.72rem; color: var(--accent); font-weight: 700; background: rgba(56,189,248,0.14); padding: 3px 10px; border-radius: 999px;">Account Email</span>
@@ -12605,7 +12788,7 @@ let currentUser = null;
                         L'opzione per cambiare password è attiva per gli account registrati con email e password default dell'app. Effettua l'accesso al tuo account per modificare la password.
                     </p>
                     <button type="button" class="btn-auth-primary" onclick="openAuthModal('login')" style="padding: 8px 20px; font-size: 0.84rem; display: inline-flex; align-items: center; gap: 6px; border-radius: 8px;">
-                        🔑 Accedi per Cambiare Password
+                        ${window.APP_ICONS ? window.APP_ICONS.key : '🔑'} Accedi per Cambiare Password
                     </button>
                 </div>
                 `;
@@ -12614,11 +12797,11 @@ let currentUser = null;
             container.innerHTML = `
                 <div class="profile-settings-grid">
                     <div class="auth-form-group">
-                        <label>📏 Altezza in cm (facoltativa, 120-220)</label>
+                        <label>${window.APP_ICONS ? window.APP_ICONS.ruler : '📏'} Altezza in cm (facoltativa, 120-220)</label>
                         <input type="number" id="profile-height-input" min="120" max="220" placeholder="es. 175" value="${height}">
                     </div>
                     <div class="auth-form-group">
-                        <label>⚖️ Peso in kg (facoltativo, 40-130)</label>
+                        <label>${window.APP_ICONS ? window.APP_ICONS.scale : '⚖️'} Peso in kg (facoltativo, 40-130)</label>
                         <input type="number" id="profile-weight-input" min="40" max="140" placeholder="es. 70" value="${weight}">
                     </div>
                 </div>
@@ -12628,7 +12811,7 @@ let currentUser = null;
                         <input type="checkbox" id="profile-public-toggle" ${isPublic ? 'checked' : ''} onchange="onPrivacyToggleChange()">
                         <span class="slider"></span>
                     </label>
-                    <span id="privacy-toggle-label" style="font-size: 0.85rem; font-weight: 600;">${isPublic ? '🌐 Profilo Pubblico' : '🔒 Profilo Privato'}</span>
+                    <span id="privacy-toggle-label" style="font-size: 0.85rem; font-weight: 600; display:inline-flex; align-items:center; gap:6px;">${isPublic ? (window.APP_ICONS ? window.APP_ICONS.globe : '🌐') + ' Profilo Pubblico' : (window.APP_ICONS ? window.APP_ICONS.lock : '🔒') + ' Profilo Privato'}</span>
                 </div>
                 <p style="font-size: 0.75rem; color: var(--subtext); margin-top: 6px;">Se il profilo è pubblico, gli altri utenti potranno vedere le skill sbloccate, l'altezza e il peso cliccando sul tuo nome in classifica. Se è privato, nessuno potrà vederli.</p>
                 <div class="privacy-toggle-row" style="${pushRowStyle}">
@@ -12637,7 +12820,7 @@ let currentUser = null;
                             <input type="checkbox" id="profile-push-toggle" ${isToggleActive ? 'checked' : ''} ${isUnsupportedIOS ? 'disabled' : ''} onchange="togglePushNotifications()">
                             <span class="slider" style="${isUnsupportedIOS ? 'cursor: not-allowed;' : ''}"></span>
                         </label>
-                        <span id="push-toggle-label" style="font-size: 0.85rem; font-weight: 600;">${isToggleActive ? '🔔 Notifiche Telefono: Attive' : '🔕 Notifiche Telefono: Disattivate'}</span>
+                        <span id="push-toggle-label" style="font-size: 0.85rem; font-weight: 600; display:inline-flex; align-items:center; gap:6px;">${isToggleActive ? (window.APP_ICONS ? window.APP_ICONS.bell : '🔔') + ' Notifiche Telefono: Attive' : (window.APP_ICONS ? window.APP_ICONS.bellOff : '🔕') + ' Notifiche Telefono: Disattivate'}</span>
                     </div>
                 </div>
                 ${isUnsupportedIOS ? `
@@ -12665,7 +12848,7 @@ let currentUser = null;
             const checkbox = document.getElementById('profile-public-toggle');
             const label = document.getElementById('privacy-toggle-label');
             if (!checkbox || !label) return;
-            label.innerText = checkbox.checked ? '🌐 Profilo Pubblico' : '🔒 Profilo Privato';
+            label.innerHTML = checkbox.checked ? ((window.APP_ICONS ? window.APP_ICONS.globe : '🌐') + ' Profilo Pubblico') : ((window.APP_ICONS ? window.APP_ICONS.lock : '🔒') + ' Profilo Privato');
         }
 
         function saveProfileSettings() {
@@ -12868,7 +13051,7 @@ let currentUser = null;
             if (!listEl) return;
 
             if (!workouts || workouts.length === 0) {
-                listEl.innerHTML = `<p style="color: var(--subtext); text-align:center; font-size:0.85rem;">Nessun allenamento registrato ancora. Tocca "➕ Nuovo Allenamento" per iniziare! 💪</p>`;
+                listEl.innerHTML = `<p style="color: var(--subtext); text-align:center; font-size:0.85rem;">Nessun allenamento registrato ancora. Tocca "${window.APP_ICONS ? window.APP_ICONS.plus : '+'} Nuovo Allenamento" per iniziare! ${window.APP_ICONS ? window.APP_ICONS.dumbbell : '💪'}</p>`;
                 return;
             }
 
@@ -16386,7 +16569,7 @@ function getCalisthenicsExpertResponse(query) {
                         <p style="color: var(--subtext); margin-bottom: 12px; font-size: 0.9rem;">
                             Accedi o registrati per ottenere il tuo link personale di invito e guadagnare <strong>+3.000 XP</strong> per ogni amico invitato!
                         </p>
-                        <button class="btn-auth" onclick="openAuthModal('login')" style="padding: 8px 18px;">🔑 Accedi Ora</button>
+                        <button class="btn-auth" onclick="openAuthModal('login')" style="padding: 8px 18px; display:inline-flex; align-items:center; gap:6px;">${window.APP_ICONS ? window.APP_ICONS.key : '🔑'} Accedi Ora</button>
                     </div>
                 `;
                 return;
@@ -16402,7 +16585,7 @@ function getCalisthenicsExpertResponse(query) {
                 container.innerHTML = `
                     <div class="share-card-banner">
                         <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
-                            <span style="font-size: 1.8rem;">🎁</span>
+                            <span style="font-size: 1.8rem; display:inline-flex; align-items:center;">${window.APP_ICONS ? window.APP_ICONS.gift : '🎁'}</span>
                             <div>
                                 <div style="font-weight: bold; font-size: 1rem; color: var(--text-color);">Invita i tuoi amici e guadagna XP!</div>
                                 <div style="font-size: 0.8rem; color: var(--subtext);">Condividi il tuo link personale. Per ogni amico che accede da un nuovo dispositivo, ricevi subito un bonus di <strong>+3.000 XP</strong>!</div>
@@ -16415,10 +16598,10 @@ function getCalisthenicsExpertResponse(query) {
                                 <input type="text" class="share-link-input" id="share-link-field" value="${shareUrl}" readonly onclick="this.select();">
                                 <div class="share-link-actions">
                                     <button class="btn-confirm" onclick="copyShareInviteLink()" style="display: flex; align-items: center; gap: 5px; white-space: nowrap; padding: 8px 14px;">
-                                        <span>📋</span> Copia Link
+                                        ${window.APP_ICONS ? window.APP_ICONS.clipboard : '📋'} Copia Link
                                     </button>
                                     <button class="btn-auth" onclick="triggerNativeShare()" style="display: flex; align-items: center; gap: 5px; white-space: nowrap; padding: 8px 14px;">
-                                        <span>📲</span> Condividi
+                                        ${window.APP_ICONS ? window.APP_ICONS.link : '🔗'} Condividi
                                     </button>
                                 </div>
                             </div>
@@ -17508,7 +17691,7 @@ function getCalisthenicsExpertResponse(query) {
                     box.innerHTML = `<p style="color: var(--subtext); font-size: 0.88rem; text-align:center; margin:0; padding:10px; width:100%;">⏳ Caricamento sessione...</p>`;
                     return;
                 }
-                box.innerHTML = `<p style="color: var(--subtext); font-size: 0.88rem; text-align:center; margin:0; padding:10px; width:100%; cursor:pointer;" onclick="openAuthModal('login')">🔒 Accedi per scrivere in chat. <span style="text-decoration:underline; color:var(--accent); font-weight:600;">Accedi ora</span></p>`;
+                box.innerHTML = `<p style="color: var(--subtext); font-size: 0.88rem; text-align:center; margin:0; padding:10px; width:100%; cursor:pointer;" onclick="openAuthModal('login')">${window.APP_ICONS ? window.APP_ICONS.lock : '🔒'} Accedi per scrivere in chat. <span style="text-decoration:underline; color:var(--accent); font-weight:600;">Accedi ora</span></p>`;
                 return;
             }
 
@@ -21026,7 +21209,7 @@ function getCalisthenicsExpertResponse(query) {
             if (!listEl) return;
 
             if (!currentUser) {
-                listEl.innerHTML = `<p style="color: var(--subtext); text-align:center; font-size:0.85rem;">🔒 Accedi per partecipare e creare sfide tra atleti.</p>`;
+                listEl.innerHTML = `<p style="color: var(--subtext); text-align:center; font-size:0.85rem;">${window.APP_ICONS ? window.APP_ICONS.lock : '🔒'} Accedi per partecipare e creare sfide tra atleti.</p>`;
                 return;
             }
 
@@ -23660,7 +23843,7 @@ function getCalisthenicsExpertResponse(query) {
                             <div class="tree-node-svg">${stickman}</div>
                         </div>
                         <div class="tree-node-rarity-dot ${rarity.id === 'elite' ? 'dot-elite' : ''}" title="${rarity.label}">${rarity.icon}</div>
-                        ${!isUnlocked && !isPrereqMet ? '<div class="tree-node-lock-badge">🔒</div>' : ''}
+                        ${!isUnlocked && !isPrereqMet ? '<div class="tree-node-lock-badge">' + (window.APP_ICONS ? window.APP_ICONS.lock : '🔒') + '</div>' : ''}
                         ${isUnlocked ? '<div class="tree-node-check-badge">✓</div>' : ''}
                         <div class="tree-node-label">${escapeHtml(s.name)}</div>
                     </div>
@@ -23997,8 +24180,8 @@ function getCalisthenicsExpertResponse(query) {
             if (skill.prerequisites && skill.prerequisites.length > 0) {
                 prereqHtml = `
                     <div class="drawer-section-title">
-                        <span>🔗 Prerequisiti Richiesti</span>
-                        <span style="font-size:0.75rem; color:var(--subtext);">${isPrereqMet ? '✅ Soddisfatti' : '🔒 Mancanti'}</span>
+                        <span>${window.APP_ICONS ? window.APP_ICONS.link : ''} Prerequisiti Richiesti</span>
+                        <span style="font-size:0.75rem; color:var(--subtext);">${isPrereqMet ? ((window.APP_ICONS ? window.APP_ICONS.check : '') + ' Soddisfatti') : ((window.APP_ICONS ? window.APP_ICONS.lock : '') + ' Mancanti')}</span>
                     </div>
                     <div class="drawer-prereq-list">
                 `;
@@ -24008,7 +24191,7 @@ function getCalisthenicsExpertResponse(query) {
                     const pUnlocked = userState[pId] && userState[pId].unlocked;
                     prereqHtml += `
                         <div class="drawer-prereq-item ${pUnlocked ? 'met' : 'missing'}">
-                            <span>${pUnlocked ? '✅' : '🔒'}</span>
+                            <span>${pUnlocked ? (window.APP_ICONS ? window.APP_ICONS.checkCircle : '✓') : (window.APP_ICONS ? window.APP_ICONS.lock : '🔒')}</span>
                             <span>${escapeHtml(pName)}</span>
                             <span style="margin-left:auto; font-size:0.75rem;">${pUnlocked ? 'Sbloccata' : 'Da completare'}</span>
                         </div>
@@ -24018,7 +24201,7 @@ function getCalisthenicsExpertResponse(query) {
             } else {
                 prereqHtml = `
                     <div class="drawer-section-title">
-                        <span>🌱 Skill Iniziale</span>
+                        <span>${window.APP_ICONS ? window.APP_ICONS.sparkles : ''} Skill Iniziale</span>
                     </div>
                     <div class="drawer-prereq-list">
                         <div class="drawer-prereq-item met">
@@ -24037,7 +24220,7 @@ function getCalisthenicsExpertResponse(query) {
                     <div style="background: rgba(16, 185, 129, 0.12); border: 1.5px solid var(--unlocked); border-radius: 14px; padding: 14px 18px; margin: 14px 0; display: flex; align-items: center; justify-content: space-between; gap: 12px;">
                         <div>
                             <div style="font-size: 0.76rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.8px; color: var(--subtext);">
-                                ${isHold ? '⏱️ Durata di Hold Attuale' : '💪 Ripetizioni Padroneggiate'}
+                                ${isHold ? ((window.APP_ICONS ? window.APP_ICONS.timer : '') + ' Durata di Hold Attuale') : ((window.APP_ICONS ? window.APP_ICONS.dumbbell : '') + ' Ripetizioni Padroneggiate')}
                             </div>
                             <div style="font-size: 1.55rem; font-weight: 900; color: var(--unlocked); margin-top: 2px; display: flex; align-items: baseline; gap: 6px;">
                                 <span>${currentVal}</span>
@@ -24046,7 +24229,7 @@ function getCalisthenicsExpertResponse(query) {
                         </div>
                         <div style="text-align: right;">
                             <span style="background: rgba(16, 185, 129, 0.25); border: 1px solid var(--unlocked); border-radius: 999px; padding: 4px 12px; font-size: 0.78rem; font-weight: 800; color: var(--unlocked); display: inline-block;">
-                                ✅ Padroneggiata
+                                ${window.APP_ICONS ? window.APP_ICONS.check : ''} Padroneggiata
                             </span>
                             <div style="font-size: 0.74rem; color: var(--subtext); margin-top: 4px;">
                                 Minimo sblocco: ${minTarget} ${unitShort}
@@ -24059,18 +24242,18 @@ function getCalisthenicsExpertResponse(query) {
                     <div style="display:flex; flex-direction:column; gap:12px; width:100%;">
                         <div style="background:rgba(255,255,255,0.03); border:1px solid var(--line-color); border-radius:14px; padding:12px 14px; box-sizing:border-box;">
                             <div style="font-size:0.8rem; font-weight:700; color:var(--subtext); margin-bottom:8px;">
-                                ⚡ Aggiorna Record Massimale:
+                                ${window.APP_ICONS ? window.APP_ICONS.zap : ''} Aggiorna Record Massimale:
                             </div>
                             <div style="display:flex; gap:8px; align-items:center;">
                                 <input type="number" id="drawer-input-${skill.id}" value="${currentVal}" min="${minTarget}" onkeydown="if(${isHold} && (event.key==='1'||event.key==='2'||event.key==='0') && (!this.value || this.selectionStart===0)) { event.preventDefault(); }" oninput="if(${isHold} && this.value && parseInt(this.value)<3){ this.value='3'; }" onchange="if(parseInt(this.value)<${minTarget}) this.value=${minTarget};" style="width:80px; text-align:center; padding:8px 10px; border-radius:8px; border:1px solid var(--line-color); background:var(--bg-color); color:var(--text); font-weight:bold; font-size:1rem; box-sizing:border-box;">
                                 <span style="font-size:0.85rem; font-weight:700; color:var(--text);">${unitShort}</span>
                                 <button type="button" onclick="updateSkillFromDrawer('${skill.id}')" style="flex:1; padding:8px 14px; font-weight:800; font-size:0.85rem; background:linear-gradient(135deg, #10b981, #059669); border:none; border-radius:8px; color:white; cursor:pointer;">
-                                    💾 Salva Record
+                                    ${window.APP_ICONS ? window.APP_ICONS.save : ''} Salva Record
                                 </button>
                             </div>
                         </div>
                         <button type="button" class="btn-cancel" style="width:100%; padding:12px; font-size:0.92rem; font-weight:800; display:flex; align-items:center; justify-content:center; gap:8px; background:rgba(239,68,68,0.14); border:1.5px solid var(--danger); color:var(--danger); border-radius:12px; cursor:pointer;" onclick="askRelock('${skill.id}');">
-                            🔒 Riblocca Skill (-${xpReward} XP)
+                            ${window.APP_ICONS ? window.APP_ICONS.lock : ''} Riblocca Skill (-${xpReward} XP)
                         </button>
                     </div>
                 `;
@@ -24079,7 +24262,7 @@ function getCalisthenicsExpertResponse(query) {
                     <div style="background: rgba(56, 189, 248, 0.1); border: 1.5px solid var(--accent); border-radius: 14px; padding: 14px 18px; margin: 14px 0; display: flex; align-items: center; justify-content: space-between; gap: 12px;">
                         <div>
                             <div style="font-size: 0.76rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.8px; color: var(--accent);">
-                                🎁 Ricompensa Sblocco Skill
+                                ${window.APP_ICONS ? window.APP_ICONS.gift : ''} Ricompensa Sblocco Skill
                             </div>
                             <div style="font-size: 1.55rem; font-weight: 900; color: var(--accent); margin-top: 2px;">
                                 +${xpReward} <span style="font-size: 0.92rem; font-weight: 700; color: var(--text);">XP</span>
@@ -24095,13 +24278,13 @@ function getCalisthenicsExpertResponse(query) {
                 if (!isPrereqMet) {
                     actionButtonsHtml = `
                         <div style="padding:12px 14px; border-radius:12px; background:rgba(239, 68, 68, 0.1); border:1.5px solid rgba(239,68,68,0.3); color:#f87171; font-size:0.85rem; font-weight:700; text-align:center;">
-                            🔒 Completa prima tutte le skill propedeutiche indicate sopra per sbloccare questa variante (+${xpReward} XP)!
+                            ${window.APP_ICONS ? window.APP_ICONS.lock : ''} Completa prima tutte le skill propedeutiche indicate sopra per sbloccare questa variante (+${xpReward} XP)!
                         </div>
                     `;
                 } else {
                     actionButtonsHtml = `
                         <button type="button" class="btn-confirm" style="width:100%; padding:14px; font-size:1rem; font-weight:800; display:flex; align-items:center; justify-content:center; gap:8px; cursor:pointer;" onclick="askUnlock('${skill.id}');">
-                            <span>🔓 Sblocca Skill</span>
+                            <span>${window.APP_ICONS ? window.APP_ICONS.unlock : ''} Sblocca Skill</span>
                             <span style="background:rgba(0,0,0,0.28); padding:3px 10px; border-radius:999px; font-size:0.85rem; border:1px solid rgba(255,255,255,0.35); font-weight:900;">+${xpReward} XP</span>
                         </button>
                     `;
@@ -24117,7 +24300,7 @@ function getCalisthenicsExpertResponse(query) {
                         <div class="drawer-meta">
                             <span class="drawer-rarity-badge rarity-badge-${rarity.id}">${rarity.icon} ${rarity.label.toUpperCase()}</span>
                             <span style="color: ${isUnlocked ? 'var(--unlocked)' : 'var(--accent)'}; font-weight: 700;">
-                                ${isUnlocked ? `🏆 ${currentVal} ${unitShort}` : `🎁 +${xpReward} XP`}
+                                ${isUnlocked ? `${window.APP_ICONS ? window.APP_ICONS.trophy : ''} ${currentVal} ${unitShort}` : `${window.APP_ICONS ? window.APP_ICONS.gift : ''} +${xpReward} XP`}
                             </span>
                         </div>
                     </div>
@@ -24546,7 +24729,7 @@ function getCalisthenicsExpertResponse(query) {
             if (nickEl) nickEl.innerText = userNickname || (currentUser ? (currentUser.displayName || (currentUser.email ? currentUser.email.split('@')[0] : 'Atleta')) : 'Atleta Calisthenico');
             const profileStreakEl = document.getElementById('bento-streak-badge');
             if (profileStreakEl) {
-                profileStreakEl.innerHTML = '🔥 ' + (userStreak || 0) + ((userStreak || 0) === 1 ? ' giorno' : ' giorni');
+                profileStreakEl.innerHTML = (window.APP_ICONS ? window.APP_ICONS.flame + ' ' : '🔥 ') + (userStreak || 0) + ((userStreak || 0) === 1 ? ' giorno' : ' giorni');
                 profileStreakEl.style.display = (userStreak || 0) > 0 ? 'inline-flex' : 'none';
             }
             if (rankEl) {
