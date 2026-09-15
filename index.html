@@ -4258,6 +4258,21 @@
         /* =========================================================================
            FLOATING LIQUID GLASS NAVBAR (IPHONE PILL STYLE 1:1)
            ========================================================================= */
+        
+        /* Luminous Bottom Navigation Icon States */
+        .bottom-nav-item .bottom-nav-icon svg {
+            transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+            opacity: 0.78;
+        }
+        .bottom-nav-item:hover .bottom-nav-icon svg {
+            opacity: 0.95;
+            transform: translateY(-1px) scale(1.05);
+        }
+        .bottom-nav-item.active .bottom-nav-icon svg {
+            opacity: 1;
+            transform: scale(1.12);
+        }
+
         .bottom-nav-bar {
             position: fixed;
             bottom: max(14px, env(safe-area-inset-bottom, 14px));
@@ -7154,7 +7169,7 @@
     <div class="main-tab-view active" id="tab-view-tree">
         <div class="header">
             <div class="auth-bar" id="auth-bar">
-                <span id="user-status-text"><svg class="ui-svg-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> Non autenticato (Salvataggio locale) <span id="tree-streak-badge" class="streak-badge" style="background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.35); color:#f87171; border-radius:999px; padding:2px 8px; font-size:0.75rem; font-weight:800; margin-left:6px; display:none; align-items:center; gap:3px;"><svg class="ui-svg-icon" viewBox="0 0 24 24" width="14" height="14" fill="currentColor" stroke="none" style="color:#f87171;"><path d="M12 2c-.5 2.5-3 4.5-3 7 0 2.8 2.2 5 5 5 1.4 0 2.7-.6 3.6-1.5C17.3 14 15 16 12 16c-3.3 0-6 2.7-6 6 0 0 8.5 2 12-4 2.5-4.3 1-8.5-.5-11-.8 1.5-2.2 2.5-3.5 2.5-2.2 0-3.5-2-2-7.5z"/></svg> 0</span></span>
+                <span id="user-status-text"><svg class="ui-svg-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" style="filter:drop-shadow(0 0 4px rgba(96, 165, 250, 0.7)); vertical-align:-2px;"><defs><linearGradient id="auth-user-grad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#60a5fa"/><stop offset="100%" stop-color="#6366f1"/></linearGradient></defs><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" stroke="url(#auth-user-grad)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="7" r="4" stroke="url(#auth-user-grad)" stroke-width="2" fill="rgba(96, 165, 250, 0.2)"/></svg> Non autenticato (Salvataggio locale) <span id="tree-streak-badge" class="streak-badge" style="background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.35); color:#f87171; border-radius:999px; padding:2px 8px; font-size:0.75rem; font-weight:800; margin-left:6px; display:none; align-items:center; gap:3px;"><svg class="ui-svg-icon" viewBox="0 0 24 24" width="14" height="14" fill="currentColor" stroke="none" style="color:#f87171;"><path d="M12 2c-.5 2.5-3 4.5-3 7 0 2.8 2.2 5 5 5 1.4 0 2.7-.6 3.6-1.5C17.3 14 15 16 12 16c-3.3 0-6 2.7-6 6 0 0 8.5 2 12-4 2.5-4.3 1-8.5-.5-11-.8 1.5-2.2 2.5-3.5 2.5-2.2 0-3.5-2-2-7.5z"/></svg> 0</span></span>
                 <div class="auth-actions" id="auth-actions-container">
                     <button class="btn-auth-secondary" onclick="openAuthModal('login')">Accedi</button>
                     <button class="btn-auth" onclick="openAuthModal('signup')">Registrati</button>
@@ -7165,7 +7180,7 @@
                 <h1>Occhionero's Calisthenics Tree</h1>
                 <div class="controls-group">
                     <div class="selector-box">
-                        <label for="categorySelect"><svg class="ui-svg-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg> Sezione:</label>
+                        <label for="categorySelect"><svg class="ui-svg-icon" viewBox="0 0 24 24" width="17" height="17" fill="none" style="filter:drop-shadow(0 0 4px rgba(56, 189, 248, 0.7)); vertical-align:-2px;"><defs><linearGradient id="hdr-folder" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#38bdf8"/><stop offset="100%" stop-color="#0284c7"/></linearGradient></defs><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" stroke="url(#hdr-folder)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="rgba(56, 189, 248, 0.18)"/></svg> Sezione:</label>
                         <select id="categorySelect" class="custom-select" onchange="changeCategory(this.value)">
                             <option value="all">Tutte (Tutto)</option>
                         </select>
@@ -7187,16 +7202,16 @@
         <div class="tree-view-header-controls">
             <div class="tree-view-toggle-bar">
                 <button type="button" class="tree-view-toggle-btn active" id="btn-view-graph" onclick="toggleSkillTreeView('graph')">
-                    <svg class="ui-svg-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="2.2" fill="currentColor"/><circle cx="5" cy="12" r="2" fill="currentColor"/><circle cx="19" cy="12" r="2" fill="currentColor"/><circle cx="12" cy="19" r="2.2" fill="currentColor"/><path d="M12 7.2v9.6m0-4.8l-5-2m5 2l5-2"/></svg> Albero RPG
+                    <svg class="ui-svg-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" style="filter:drop-shadow(0 0 4px rgba(52, 211, 153, 0.75)); vertical-align:-2px;"><defs><linearGradient id="btn-tree-grad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#6ee7b7"/><stop offset="50%" stop-color="#34d399"/><stop offset="100%" stop-color="#059669"/></linearGradient></defs><circle cx="12" cy="5" r="2.4" fill="url(#btn-tree-grad)"/><circle cx="5" cy="12" r="2.2" fill="url(#btn-tree-grad)"/><circle cx="19" cy="12" r="2.2" fill="url(#btn-tree-grad)"/><circle cx="12" cy="19" r="2.4" fill="url(#btn-tree-grad)"/><path d="M12 7.4v9.2m0-4.6l-5-2m5 2l5-2" stroke="url(#btn-tree-grad)" stroke-width="2" stroke-linecap="round"/></svg> Albero RPG
                 </button>
                 <button type="button" class="tree-view-toggle-btn" id="btn-view-cards" onclick="toggleSkillTreeView('cards')">
-                    <svg class="ui-svg-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/></svg> Schede Classiche
+                    <svg class="ui-svg-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" style="filter:drop-shadow(0 0 4px rgba(56, 189, 248, 0.75)); vertical-align:-2px;"><defs><linearGradient id="btn-cards-grad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#38bdf8"/><stop offset="100%" stop-color="#60a5fa"/></linearGradient></defs><rect x="3" y="3" width="7" height="7" rx="1.5" stroke="url(#btn-cards-grad)" stroke-width="2" fill="rgba(56, 189, 248, 0.2)"/><rect x="14" y="3" width="7" height="7" rx="1.5" stroke="url(#btn-cards-grad)" stroke-width="2" fill="rgba(56, 189, 248, 0.2)"/><rect x="14" y="14" width="7" height="7" rx="1.5" stroke="url(#btn-cards-grad)" stroke-width="2" fill="rgba(56, 189, 248, 0.2)"/><rect x="3" y="14" width="7" height="7" rx="1.5" stroke="url(#btn-cards-grad)" stroke-width="2" fill="rgba(56, 189, 248, 0.2)"/></svg> Schede Classiche
                 </button>
             </div>
 
             <div class="skill-search-wrapper">
                 <div class="skill-search-box">
-                    <span class="skill-search-icon"><svg class="ui-svg-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
+                    <span class="skill-search-icon"><svg class="ui-svg-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" style="filter:drop-shadow(0 0 4px rgba(56, 189, 248, 0.75));"><defs><linearGradient id="hdr-search" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#38bdf8"/><stop offset="100%" stop-color="#0ea5e9"/></linearGradient></defs><circle cx="11" cy="11" r="7" stroke="url(#hdr-search)" stroke-width="2.2" fill="rgba(56, 189, 248, 0.12)"/><line x1="21" y1="21" x2="16.65" y2="16.65" stroke="url(#hdr-search)" stroke-width="2.5" stroke-linecap="round"/></svg></span>
                     <input type="text" id="skill-search-input" placeholder="Cerca skill (es. Planche, Pull Ups, Dip...)" oninput="handleSkillSearch(this.value)" autocomplete="off">
                     <button type="button" id="skill-search-clear" onclick="clearSkillSearch()" title="Cancella ricerca">✕</button>
                 </div>
@@ -7234,13 +7249,13 @@
          ==================================================================== -->
     <div class="main-tab-view" id="tab-view-workouts">
         <div class="tab-header-banner">
-            <h2><svg class="ui-svg-icon" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="8" width="3" height="8" rx="1.5" fill="currentColor"/><rect x="19" y="8" width="3" height="8" rx="1.5" fill="currentColor"/><rect x="5.5" y="6" width="2.5" height="12" rx="1.2"/><rect x="16" y="6" width="2.5" height="12" rx="1.2"/><line x1="8" y1="12" x2="16" y2="12" stroke-width="2.5"/></svg> Registro Allenamenti & Community</h2>
+            <h2><svg class="ui-svg-icon" viewBox="0 0 24 24" width="24" height="24" fill="none" style="filter:drop-shadow(0 0 6px rgba(56, 189, 248, 0.8)); margin-right:8px;"><defs><linearGradient id="hdr-wkt-db" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#7dd3fc"/><stop offset="50%" stop-color="#38bdf8"/><stop offset="100%" stop-color="#0284c7"/></linearGradient></defs><rect x="2" y="8" width="3" height="8" rx="1.5" fill="url(#hdr-wkt-db)"/><rect x="19" y="8" width="3" height="8" rx="1.5" fill="url(#hdr-wkt-db)"/><rect x="5.5" y="6" width="2.5" height="12" rx="1.2" fill="url(#hdr-wkt-db)"/><rect x="16" y="6" width="2.5" height="12" rx="1.2" fill="url(#hdr-wkt-db)"/><line x1="8" y1="12" x2="16" y2="12" stroke="url(#hdr-wkt-db)" stroke-width="2.5" stroke-linecap="round"/></svg> Registro Allenamenti & Community</h2>
             <p>Traccia i tuoi volumi personali o partecipa ai ritrovi e sondaggi della community.</p>
         </div>
 
         <div class="workouts-subtabs-nav">
-            <button type="button" class="workouts-subtab-btn active" id="btn-subtab-workouts-diary" onclick="switchWorkoutsSubTab('diary')"><svg class="ui-svg-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/></svg> Diario Personale</button>
-            <button type="button" class="workouts-subtab-btn" id="btn-subtab-workouts-events" onclick="switchWorkoutsSubTab('events')"><svg class="ui-svg-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Sondaggi & Ritrovi <span class="events-badge-dot" id="events-badge-dot" style="display:none; position:relative; top:auto; right:auto; width:8px; height:8px; background:#ef4444; border-radius:50%; margin-left:6px; vertical-align:middle;"></span></button>
+            <button type="button" class="workouts-subtab-btn active" id="btn-subtab-workouts-diary" onclick="switchWorkoutsSubTab('diary')"><svg class="ui-svg-icon" viewBox="0 0 24 24" width="17" height="17" fill="none" style="filter:drop-shadow(0 0 4px rgba(45, 212, 191, 0.75)); margin-right:4px;"><defs><linearGradient id="subtab-diary" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#2dd4bf"/><stop offset="100%" stop-color="#0284c7"/></linearGradient></defs><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" stroke="url(#subtab-diary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="rgba(45, 212, 191, 0.12)"/><rect x="8" y="2" width="8" height="4" rx="1" stroke="url(#subtab-diary)" stroke-width="2" fill="rgba(14, 165, 233, 0.3)"/></svg> Diario Personale</button>
+            <button type="button" class="workouts-subtab-btn" id="btn-subtab-workouts-events" onclick="switchWorkoutsSubTab('events')"><svg class="ui-svg-icon" viewBox="0 0 24 24" width="17" height="17" fill="none" style="filter:drop-shadow(0 0 4px rgba(251, 113, 133, 0.75)); margin-right:4px;"><defs><linearGradient id="subtab-events" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#fb7185"/><stop offset="100%" stop-color="#fb923c"/></linearGradient></defs><rect x="3" y="4" width="18" height="18" rx="2.5" stroke="url(#subtab-events)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="rgba(251, 113, 133, 0.12)"/><line x1="16" y1="2" x2="16" y2="6" stroke="url(#subtab-events)" stroke-width="2" stroke-linecap="round"/><line x1="8" y1="2" x2="8" y2="6" stroke="url(#subtab-events)" stroke-width="2" stroke-linecap="round"/><line x1="3" y1="10" x2="21" y2="10" stroke="url(#subtab-events)" stroke-width="2"/></svg> Sondaggi & Ritrovi <span class="events-badge-dot" id="events-badge-dot" style="display:none; position:relative; top:auto; right:auto; width:8px; height:8px; background:#ef4444; border-radius:50%; margin-left:6px; vertical-align:middle;"></span></button>
         </div>
 
         <!-- Subtab 1: Personal Workout Diary -->
@@ -7248,12 +7263,12 @@
             <div class="workouts-section full-tab-card" id="workouts-section">
                 <div class="workouts-section-header">
                     <div class="workouts-toggle-title" onclick="toggleWorkoutsSection()">
-                        <h3 class="leaderboard-title" style="margin:0; border-bottom:none; padding-bottom:0;">
-                            <svg class="ui-svg-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/></svg> I Miei Allenamenti <span id="workouts-count-badge" class="workouts-count-badge">(0)</span>
+                        <h3 class="leaderboard-title" style="margin:0; border-bottom:none; padding-bottom:0; display:flex; align-items:center; gap:8px;">
+                            <svg class="ui-svg-icon" viewBox="0 0 24 24" width="19" height="19" fill="none" style="filter:drop-shadow(0 0 4px rgba(45, 212, 191, 0.75));"><defs><linearGradient id="my-wkt-clip" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#2dd4bf"/><stop offset="100%" stop-color="#0284c7"/></linearGradient></defs><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" stroke="url(#my-wkt-clip)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="rgba(45, 212, 191, 0.12)"/><rect x="8" y="2" width="8" height="4" rx="1" stroke="url(#my-wkt-clip)" stroke-width="2" fill="rgba(14, 165, 233, 0.3)"/></svg> I Miei Allenamenti <span id="workouts-count-badge" class="workouts-count-badge">(0)</span>
                         </h3>
                         <span class="collapsible-icon" id="workouts-toggle-icon">▼ Espandi</span>
                     </div>
-                    <button class="btn-confirm" id="new-workout-btn" onclick="openNewWorkoutModal()"><svg class="ui-svg-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Nuovo Allenamento</button>
+                    <button class="btn-confirm" id="new-workout-btn" onclick="openNewWorkoutModal()" style="display:inline-flex; align-items:center; gap:6px;"><svg class="ui-svg-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" style="filter:drop-shadow(0 0 4px rgba(255, 255, 255, 0.8));"><defs><linearGradient id="btn-plus-wkt" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#ffffff"/><stop offset="100%" stop-color="#e0f2fe"/></linearGradient></defs><line x1="12" y1="5" x2="12" y2="19" stroke="url(#btn-plus-wkt)" stroke-width="2.8" stroke-linecap="round"/><line x1="5" y1="12" x2="19" y2="12" stroke="url(#btn-plus-wkt)" stroke-width="2.8" stroke-linecap="round"/></svg> Nuovo Allenamento</button>
                 </div>
                 <div id="workouts-collapsible-content" style="display: block; margin-top: 14px; border-top: 1px solid var(--line-color); padding-top: 14px;">
                     <div id="workouts-list-container" style="max-height: calc(100vh - 270px); overflow-y: auto; padding-right: 4px;">
@@ -7267,9 +7282,9 @@
         <div class="workouts-subtab-pane" id="workouts-subtab-events">
             <div class="arena-card-box">
                 <div class="arena-card-box-header">
-                    <h3><svg class="ui-svg-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Eventi & Sondaggi Allenamento</h3>
+                    <h3 style="display:flex; align-items:center; gap:8px;"><svg class="ui-svg-icon" viewBox="0 0 24 24" width="19" height="19" fill="none" style="filter:drop-shadow(0 0 4px rgba(251, 113, 133, 0.75));"><defs><linearGradient id="box-events-cal" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#fb7185"/><stop offset="100%" stop-color="#fb923c"/></linearGradient></defs><rect x="3" y="4" width="18" height="18" rx="2.5" stroke="url(#box-events-cal)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="rgba(251, 113, 133, 0.12)"/><line x1="16" y1="2" x2="16" y2="6" stroke="url(#box-events-cal)" stroke-width="2" stroke-linecap="round"/><line x1="8" y1="2" x2="8" y2="6" stroke="url(#box-events-cal)" stroke-width="2" stroke-linecap="round"/><line x1="3" y1="10" x2="21" y2="10" stroke="url(#box-events-cal)" stroke-width="2"/></svg> Eventi & Sondaggi Allenamento</h3>
                     <div style="display:flex; gap:8px; align-items:center;">
-                        <button class="chat-new-btn" onclick="openCreateEventModal()"><svg class="ui-svg-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Nuovo Sondaggio</button>
+                        <button class="chat-new-btn" onclick="openCreateEventModal()" style="display:inline-flex; align-items:center; gap:6px;"><svg class="ui-svg-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" style="filter:drop-shadow(0 0 4px rgba(255, 255, 255, 0.8));"><defs><linearGradient id="btn-plus-poll" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#ffffff"/><stop offset="100%" stop-color="#fed7aa"/></linearGradient></defs><line x1="12" y1="5" x2="12" y2="19" stroke="url(#btn-plus-poll)" stroke-width="2.8" stroke-linecap="round"/><line x1="5" y1="12" x2="19" y2="12" stroke="url(#btn-plus-poll)" stroke-width="2.8" stroke-linecap="round"/></svg> Nuovo Sondaggio</button>
                     </div>
                 </div>
                 <div class="events-panel active" id="events-panel" style="position:static; width:100%; height:auto; box-shadow:none; border:none; background:transparent;">
@@ -7277,7 +7292,7 @@
                         <p style="color: var(--subtext); text-align:center; font-size:0.85rem;">Caricamento sondaggi...</p>
                     </div>
                     <div class="events-footer" id="events-footer" style="margin-top:12px;">
-                        <p style="color: var(--subtext); font-size: 0.85rem; text-align:center; margin:0; padding:8px; width:100%;">🔒 Accedi per creare o votare i sondaggi.</p>
+                        <p style="color: var(--subtext); font-size: 0.85rem; text-align:center; margin:0; padding:8px; width:100%; display:flex; align-items:center; justify-content:center; gap:6px;"><svg class="ui-svg-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" style="filter:drop-shadow(0 0 4px rgba(245, 158, 11, 0.75));"><defs><linearGradient id="lock-poll-grad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#fef08a"/><stop offset="50%" stop-color="#facc15"/><stop offset="100%" stop-color="#d97706"/></linearGradient></defs><rect x="3" y="11" width="18" height="11" rx="2.5" stroke="url(#lock-poll-grad)" stroke-width="2" fill="rgba(245, 158, 11, 0.2)"/><path d="M7 11V7a5 5 0 0 1 10 0v4" stroke="url(#lock-poll-grad)" stroke-width="2" stroke-linecap="round"/></svg> Accedi per creare o votare i sondaggi.</p>
                     </div>
                 </div>
             </div>
@@ -7289,24 +7304,24 @@
          ==================================================================== -->
     <div class="main-tab-view" id="tab-view-arena">
         <div class="tab-header-banner">
-            <h2><svg class="ui-svg-icon" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 17.5L3 6V3h3l11.5 11.5"/><path d="M13 19l6-6"/><path d="M16 16l4 4"/><path d="M19 21l2-2"/><path d="M9.5 17.5L21 6V3h-3L6.5 14.5"/><path d="M11 19l-6-6"/><path d="M8 16l-4 4"/></svg> Arena Calisthenica</h2>
+            <h2><svg class="ui-svg-icon" viewBox="0 0 24 24" width="24" height="24" fill="none" style="filter:drop-shadow(0 0 6px rgba(249, 115, 22, 0.8)); margin-right:8px;"><defs><linearGradient id="hdr-arena-sw" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#f87171"/><stop offset="50%" stop-color="#fb923c"/><stop offset="100%" stop-color="#facc15"/></linearGradient></defs><path d="M14.5 17.5L3 6V3h3l11.5 11.5" stroke="url(#hdr-arena-sw)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M13 19l6-6" stroke="url(#hdr-arena-sw)" stroke-width="2" stroke-linecap="round"/><path d="M16 16l4 4" stroke="url(#hdr-arena-sw)" stroke-width="2" stroke-linecap="round"/><path d="M19 21l2-2" stroke="url(#hdr-arena-sw)" stroke-width="2" stroke-linecap="round"/><path d="M9.5 17.5L21 6V3h-3L6.5 14.5" stroke="url(#hdr-arena-sw)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M11 19l-6-6" stroke="url(#hdr-arena-sw)" stroke-width="2" stroke-linecap="round"/><path d="M8 16l-4 4" stroke="url(#hdr-arena-sw)" stroke-width="2" stroke-linecap="round"/></svg> Arena Calisthenica</h2>
             <p>Sfida gli altri atleti in duelli 1vs1 e scala la Classifica Globale.</p>
         </div>
 
         <div class="arena-subtabs-nav">
-            <button type="button" class="arena-subtab-btn active" id="btn-subtab-challenges" onclick="switchArenaSubTab('challenges')"><svg class="ui-svg-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2" fill="currentColor"/></svg> Duelli & Sfide</button>
-            <button type="button" class="arena-subtab-btn" id="btn-subtab-leaderboard" onclick="switchArenaSubTab('leaderboard')"><svg class="ui-svg-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.45 1-1 1H8v4h8v-4h-1c-.55 0-1-.45-1-1v-2.34"/><path d="M18 4H6v7a6 6 0 0 0 12 0V4z"/></svg> Classifica Globale</button>
+            <button type="button" class="arena-subtab-btn active" id="btn-subtab-challenges" onclick="switchArenaSubTab('challenges')"><svg class="ui-svg-icon" viewBox="0 0 24 24" width="17" height="17" fill="none" style="filter:drop-shadow(0 0 4px rgba(249, 115, 22, 0.75)); margin-right:4px;"><defs><linearGradient id="subtab-swords" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#f87171"/><stop offset="50%" stop-color="#fb923c"/><stop offset="100%" stop-color="#facc15"/></linearGradient></defs><path d="M14.5 17.5L3 6V3h3l11.5 11.5" stroke="url(#subtab-swords)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M13 19l6-6" stroke="url(#subtab-swords)" stroke-width="2" stroke-linecap="round"/><path d="M16 16l4 4" stroke="url(#subtab-swords)" stroke-width="2" stroke-linecap="round"/><path d="M9.5 17.5L21 6V3h-3L6.5 14.5" stroke="url(#subtab-swords)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg> Duelli & Sfide</button>
+            <button type="button" class="arena-subtab-btn" id="btn-subtab-leaderboard" onclick="switchArenaSubTab('leaderboard')"><svg class="ui-svg-icon" viewBox="0 0 24 24" width="17" height="17" fill="none" style="filter:drop-shadow(0 0 4px rgba(250, 204, 21, 0.8)); margin-right:4px;"><defs><linearGradient id="subtab-trophy" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#fef08a"/><stop offset="50%" stop-color="#facc15"/><stop offset="100%" stop-color="#d97706"/></linearGradient></defs><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" stroke="url(#subtab-trophy)" stroke-width="2" stroke-linecap="round"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" stroke="url(#subtab-trophy)" stroke-width="2" stroke-linecap="round"/><path d="M4 22h16" stroke="url(#subtab-trophy)" stroke-width="2" stroke-linecap="round"/><path d="M10 14.66V17c0 .55-.45 1-1 1H8v4h8v-4h-1c-.55 0-1-.45-1-1v-2.34" stroke="url(#subtab-trophy)" stroke-width="2"/><path d="M18 4H6v7a6 6 0 0 0 12 0V4z" stroke="url(#subtab-trophy)" stroke-width="2" fill="rgba(250, 204, 21, 0.2)"/></svg> Classifica Globale</button>
         </div>
 
         <!-- Subtab 1: Challenges -->
         <div class="arena-subtab-pane active" id="arena-subtab-challenges">
             <div class="arena-card-box">
                 <div class="arena-card-box-header">
-                    <h3><svg class="ui-svg-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2" fill="currentColor"/></svg> Sfide tra Atleti</h3>
+                    <h3 style="display:flex; align-items:center; gap:8px;"><svg class="ui-svg-icon" viewBox="0 0 24 24" width="19" height="19" fill="none" style="filter:drop-shadow(0 0 4px rgba(239, 68, 68, 0.75));"><defs><linearGradient id="box-tgt-grad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#f87171"/><stop offset="100%" stop-color="#dc2626"/></linearGradient></defs><circle cx="12" cy="12" r="10" stroke="url(#box-tgt-grad)" stroke-width="2" fill="rgba(239, 68, 68, 0.1)"/><circle cx="12" cy="12" r="6" stroke="url(#box-tgt-grad)" stroke-width="2"/><circle cx="12" cy="12" r="2.5" fill="url(#box-tgt-grad)"/></svg> Sfide tra Atleti</h3>
                     <div style="display:flex; gap:8px; align-items:center;">
                         <span class="challenges-badge-dot" id="challenges-badge-dot" style="display:none;"></span>
-                        <button class="btn-auth-secondary" style="font-size:0.8rem; padding:6px 12px;" onclick="openSoloChallengeModal()"><svg class="ui-svg-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2" fill="currentColor"/></svg> Sfida Solitaria</button>
-                        <button class="chat-new-btn" onclick="openCreateChallengeModal()"><svg class="ui-svg-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Nuova Sfida</button>
+                        <button class="btn-auth-secondary" style="font-size:0.8rem; padding:6px 12px; display:inline-flex; align-items:center; gap:6px;" onclick="openSoloChallengeModal()"><svg class="ui-svg-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" style="filter:drop-shadow(0 0 4px rgba(250, 204, 21, 0.8));"><defs><linearGradient id="btn-solo-zap" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#fef08a"/><stop offset="100%" stop-color="#f59e0b"/></linearGradient></defs><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" fill="url(#btn-solo-zap)" stroke="#facc15" stroke-width="1.2"/></svg> Sfida Solitaria</button>
+                        <button class="chat-new-btn" onclick="openCreateChallengeModal()" style="display:inline-flex; align-items:center; gap:6px;"><svg class="ui-svg-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" style="filter:drop-shadow(0 0 4px rgba(255, 255, 255, 0.8));"><defs><linearGradient id="btn-plus-arena" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#ffffff"/><stop offset="100%" stop-color="#e0f2fe"/></linearGradient></defs><line x1="12" y1="5" x2="12" y2="19" stroke="url(#btn-plus-arena)" stroke-width="2.8" stroke-linecap="round"/><line x1="5" y1="12" x2="19" y2="12" stroke="url(#btn-plus-arena)" stroke-width="2.8" stroke-linecap="round"/></svg> Nuova Sfida</button>
                     </div>
                 </div>
                 <div class="challenges-panel active" id="challenges-panel" style="position:static; width:100%; height:auto; box-shadow:none; border:none; background:transparent;">
@@ -7321,7 +7336,7 @@
         <div class="arena-subtab-pane" id="arena-subtab-leaderboard">
             <div class="arena-card-box">
                 <div class="leaderboard-section" style="margin-top:0;">
-                    <h3 class="leaderboard-title"><svg class="ui-svg-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.45 1-1 1H8v4h8v-4h-1c-.55 0-1-.45-1-1v-2.34"/><path d="M18 4H6v7a6 6 0 0 0 12 0V4z"/></svg> Classifica Globale Atleti</h3>
+                    <h3 class="leaderboard-title" style="display:flex; align-items:center; gap:8px;"><svg class="ui-svg-icon" viewBox="0 0 24 24" width="22" height="22" fill="none" style="filter:drop-shadow(0 0 5px rgba(250, 204, 21, 0.8));"><defs><linearGradient id="hdr-ldr-trophy" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#fef08a"/><stop offset="50%" stop-color="#facc15"/><stop offset="100%" stop-color="#d97706"/></linearGradient></defs><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" stroke="url(#hdr-ldr-trophy)" stroke-width="2" stroke-linecap="round"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" stroke="url(#hdr-ldr-trophy)" stroke-width="2" stroke-linecap="round"/><path d="M4 22h16" stroke="url(#hdr-ldr-trophy)" stroke-width="2" stroke-linecap="round"/><path d="M10 14.66V17c0 .55-.45 1-1 1H8v4h8v-4h-1c-.55 0-1-.45-1-1v-2.34" stroke="url(#hdr-ldr-trophy)" stroke-width="2"/><path d="M18 4H6v7a6 6 0 0 0 12 0V4z" stroke="url(#hdr-ldr-trophy)" stroke-width="2" stroke-linecap="round" fill="rgba(250, 204, 21, 0.2)"/></svg> Classifica Globale Atleti</h3>
                     <div class="leaderboard-list" id="leaderboard-container">
                         <p style="color: var(--subtext); text-align: center; font-size: 0.9rem;">Caricamento classifica...</p>
                     </div>
@@ -7335,7 +7350,7 @@
          ==================================================================== -->
     <div class="main-tab-view" id="tab-view-chat">
         <div class="tab-header-banner chat-banner-compact" style="margin: 0 auto 6px auto; padding: 6px 14px; width: 100%; max-width: 920px; flex-shrink: 0; border-radius: 12px; display: flex; align-items: center; justify-content: space-between; box-sizing: border-box;">
-            <h2 style="font-size: 1.05rem; margin: 0; display: flex; align-items: center; gap: 6px;"><svg class="ui-svg-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg> Chat & Community</h2>
+            <h2 style="font-size: 1.05rem; margin: 0; display: flex; align-items: center; gap: 8px;"><svg class="ui-svg-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" style="filter:drop-shadow(0 0 5px rgba(34, 211, 238, 0.8));"><defs><linearGradient id="hdr-chat-bubble" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#22d3ee"/><stop offset="100%" stop-color="#3b82f6"/></linearGradient></defs><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" stroke="url(#hdr-chat-bubble)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="rgba(34, 211, 238, 0.16)"/></svg> Chat & Community</h2>
             <span style="font-size: 0.74rem; color: var(--subtext); display:flex; align-items:center; gap:6px;">
                 <span>Community • Private • Coach AI</span>
                 <span style="font-size:0.68rem; color:var(--accent); background:rgba(56,189,248,0.12); border:1px solid rgba(56,189,248,0.3); padding:2px 7px; border-radius:999px; font-weight:600;" title="I file multimediali vengono conservati per 90 giorni per rotazione automatica dello spazio"><svg class="ui-svg-icon" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;"><path d="m16.5 9.4-9-5.19M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" x2="12" y1="22.08" y2="12"/></svg> Media 90gg</span>
@@ -7343,30 +7358,30 @@
         </div>
         <div class="chat-panel active" id="chat-panel" style="position:relative; width:100%; max-width:920px; flex:1 1 auto; height:auto; min-height:0; right:auto; top:auto; box-shadow:none; border-radius:16px; border:1px solid var(--line-color); z-index:10; margin:0 auto; display:flex; flex-direction:column; overflow:hidden;">
             <div class="chat-panel-header">
-                <span id="chat-panel-title"><svg class="ui-svg-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg> Chat Generale</span>
+                <span id="chat-panel-title" style="display:inline-flex; align-items:center; gap:6px;"><svg class="ui-svg-icon" viewBox="0 0 24 24" width="17" height="17" fill="none" style="filter:drop-shadow(0 0 4px rgba(34, 211, 238, 0.75));"><defs><linearGradient id="pnl-chat-grad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#22d3ee"/><stop offset="100%" stop-color="#3b82f6"/></linearGradient></defs><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" stroke="url(#pnl-chat-grad)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="rgba(34, 211, 238, 0.16)"/></svg> Chat Generale</span>
                 <span class="chat-badge" id="chat-badge" style="display:none;">0</span>
             </div>
             <div class="chat-tabs" id="chat-tabs">
-                <button class="chat-tab-btn active" id="chat-tab-general" onclick="switchChatTab('general')"><svg class="ui-svg-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg> Generale <span id="chat-general-dot" class="tab-badge-dot" style="display:none;"></span></button>
-                <button class="chat-tab-btn" id="chat-tab-private" onclick="switchChatTab('private')"><svg class="ui-svg-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> Private <span id="chat-private-dot" class="tab-badge-dot" style="display:none;"></span></button>
-                <button class="chat-tab-btn" id="chat-tab-ai" onclick="switchChatTab('ai')"><svg class="ui-svg-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="10" rx="2"/><circle cx="12" cy="5" r="2"/><line x1="12" y1="7" x2="12" y2="11"/><line x1="8" y1="16" x2="8.01" y2="16"/><line x1="16" y1="16" x2="16.01" y2="16"/></svg> AI Helper</button>
+                <button class="chat-tab-btn active" id="chat-tab-general" onclick="switchChatTab('general')"><svg class="ui-svg-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" style="filter:drop-shadow(0 0 4px rgba(34, 211, 238, 0.75)); margin-right:4px;"><defs><linearGradient id="tab-gen-chat" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#22d3ee"/><stop offset="100%" stop-color="#3b82f6"/></linearGradient></defs><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" stroke="url(#tab-gen-chat)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="rgba(34, 211, 238, 0.15)"/></svg> Generale <span id="chat-general-dot" class="tab-badge-dot" style="display:none;"></span></button>
+                <button class="chat-tab-btn" id="chat-tab-private" onclick="switchChatTab('private')"><svg class="ui-svg-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" style="filter:drop-shadow(0 0 4px rgba(96, 165, 250, 0.75)); margin-right:4px;"><defs><linearGradient id="tab-priv-user" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#60a5fa"/><stop offset="100%" stop-color="#6366f1"/></linearGradient></defs><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" stroke="url(#tab-priv-user)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="7" r="4" stroke="url(#tab-priv-user)" stroke-width="2" fill="rgba(96, 165, 250, 0.2)"/></svg> Private <span id="chat-private-dot" class="tab-badge-dot" style="display:none;"></span></button>
+                <button class="chat-tab-btn" id="chat-tab-ai" onclick="switchChatTab('ai')"><svg class="ui-svg-icon" viewBox="0 0 24 24" width="17" height="17" fill="none" style="filter:drop-shadow(0 0 5px rgba(192, 132, 252, 0.8)); margin-right:4px;"><defs><linearGradient id="tab-ai-bot" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#c084fc"/><stop offset="100%" stop-color="#ec4899"/></linearGradient></defs><rect x="3" y="11" width="18" height="10" rx="3" stroke="url(#tab-ai-bot)" stroke-width="2" fill="rgba(192, 132, 252, 0.16)"/><circle cx="12" cy="5" r="2.2" fill="url(#tab-ai-bot)"/><line x1="12" y1="7.2" x2="12" y2="11" stroke="url(#tab-ai-bot)" stroke-width="2"/><circle cx="8" cy="16" r="1.5" fill="#38bdf8"/><circle cx="16" cy="16" r="1.5" fill="#38bdf8"/></svg> AI Helper</button>
             </div>
             <div class="chat-thread-header" id="chat-thread-header" style="display:none;">
                 <button class="chat-back-btn" onclick="backToPrivateList()">←</button>
                 <span id="chat-thread-title"></span>
-                <button class="chat-thread-poll-btn" id="chat-thread-poll-btn" onclick="openGroupPollsModal()" title="Sondaggi del gruppo" style="display:none; background:none; border:none; color:var(--text); font-size:1.15rem; cursor:pointer; padding:4px 8px; border-radius:8px; margin-right:4px;">📊</button>
+                <button class="chat-thread-poll-btn" id="chat-thread-poll-btn" onclick="openGroupPollsModal()" title="Sondaggi del gruppo" style="display:none; background:none; border:none; color:var(--text); cursor:pointer; padding:4px 8px; border-radius:8px; margin-right:4px;"><svg class="ui-svg-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" style="filter:drop-shadow(0 0 4px rgba(56, 189, 248, 0.75));"><defs><linearGradient id="chat-thrd-poll" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#38bdf8"/><stop offset="100%" stop-color="#818cf8"/></linearGradient></defs><line x1="18" y1="20" x2="18" y2="10" stroke="url(#chat-thrd-poll)" stroke-width="2.4" stroke-linecap="round"/><line x1="12" y1="20" x2="12" y2="4" stroke="url(#chat-thrd-poll)" stroke-width="2.4" stroke-linecap="round"/><line x1="6" y1="20" x2="6" y2="14" stroke="url(#chat-thrd-poll)" stroke-width="2.4" stroke-linecap="round"/></svg></button>
                 <button class="chat-thread-menu-btn" id="chat-thread-menu-btn" onclick="openConversationOptionsModal()" title="Opzioni chat">⋮</button>
             </div>
             <div class="ai-helper-header-bar" id="ai-helper-header-bar" style="display:none;">
-                <button type="button" class="ai-helper-chip-btn ai-helper-chip-clear" onclick="clearAiChatHistory()">
-                    <svg class="ui-svg-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg> Pulisci Chat
+                <button type="button" class="ai-helper-chip-btn ai-helper-chip-clear" onclick="clearAiChatHistory()" style="display:inline-flex; align-items:center; gap:5px;">
+                    <svg class="ui-svg-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" style="filter:drop-shadow(0 0 4px rgba(239, 68, 68, 0.7));"><defs><linearGradient id="chip-trash-grad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#f87171"/><stop offset="100%" stop-color="#dc2626"/></linearGradient></defs><polyline points="3 6 5 6 21 6" stroke="url(#chip-trash-grad)" stroke-width="2" stroke-linecap="round"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" stroke="url(#chip-trash-grad)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="rgba(239, 68, 68, 0.15)"/></svg> Pulisci Chat
                 </button>
             </div>
             <div class="chat-messages" id="chat-messages" style="flex:1;">
                 <p style="color: var(--subtext); text-align:center; font-size:0.85rem;">Apri la chat per vedere i messaggi...</p>
             </div>
             <div class="chat-input-box" id="chat-input-box">
-                <p style="color: var(--subtext); font-size: 0.85rem; text-align:center; margin:0; padding:8px; width:100%;"><svg class="ui-svg-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> Accedi per scrivere in chat.</p>
+                <p style="color: var(--subtext); font-size: 0.85rem; text-align:center; margin:0; padding:8px; width:100%; display:flex; align-items:center; justify-content:center; gap:6px;"><svg class="ui-svg-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" style="filter:drop-shadow(0 0 4px rgba(245, 158, 11, 0.75));"><defs><linearGradient id="chat-lock-grad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#fef08a"/><stop offset="50%" stop-color="#facc15"/><stop offset="100%" stop-color="#d97706"/></linearGradient></defs><rect x="3" y="11" width="18" height="11" rx="2.5" stroke="url(#chat-lock-grad)" stroke-width="2" fill="rgba(245, 158, 11, 0.2)"/><path d="M7 11V7a5 5 0 0 1 10 0v4" stroke="url(#chat-lock-grad)" stroke-width="2" stroke-linecap="round"/></svg> Accedi per scrivere in chat.</p>
             </div>
         </div>
     </div>
@@ -7376,7 +7391,7 @@
          ==================================================================== -->
     <div class="main-tab-view" id="tab-view-profile">
         <div class="tab-header-banner">
-            <h2><svg class="ui-svg-icon" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> Profilo & Scheda Atleta</h2>
+            <h2><svg class="ui-svg-icon" viewBox="0 0 24 24" width="24" height="24" fill="none" style="filter:drop-shadow(0 0 6px rgba(96, 165, 250, 0.8)); margin-right:8px;"><defs><linearGradient id="hdr-prof-user" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#60a5fa"/><stop offset="50%" stop-color="#6366f1"/><stop offset="100%" stop-color="#a855f7"/></linearGradient></defs><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" stroke="url(#hdr-prof-user)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="7" r="4" stroke="url(#hdr-prof-user)" stroke-width="2" fill="rgba(96, 165, 250, 0.2)"/></svg> Profilo & Scheda Atleta</h2>
             <p>Panoramica completa del tuo grado, statistiche duelli, tema grafico e impostazioni.</p>
         </div>
 
@@ -7389,8 +7404,8 @@
                         <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
                             <h3 id="bento-nickname" style="margin:0; font-size:1.35rem; color:var(--text); font-weight:800;">Atleta</h3>
                             <span id="bento-streak-badge" class="streak-badge" style="background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.35); color:#f87171; border-radius:999px; padding:3px 10px; font-size:0.82rem; font-weight:800; display:none; align-items:center; gap:4px;">🔥 0</span>
-                            <button type="button" class="btn-edit-nickname" id="btn-edit-nickname" onclick="openEditNicknameModal()" style="background:rgba(56,189,248,0.12); border:1px solid var(--accent); color:var(--accent); padding:4px 10px; border-radius:8px; font-size:0.78rem; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; gap:5px; transition:all 0.2s;">
-                                <svg class="ui-svg-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg> Modifica
+                            <button type="button" class="btn-edit-nickname" id="btn-edit-nickname" onclick="openEditNicknameModal()" style="background:rgba(56,189,248,0.12); border:1px solid var(--accent); color:var(--accent); padding:4px 10px; border-radius:8px; font-size:0.78rem; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; gap:6px; transition:all 0.2s;">
+                                <svg class="ui-svg-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" style="filter:drop-shadow(0 0 4px rgba(56, 189, 248, 0.75));"><defs><linearGradient id="btn-nick-pencil" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#38bdf8"/><stop offset="100%" stop-color="#0ea5e9"/></linearGradient></defs><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" stroke="url(#btn-nick-pencil)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="rgba(56, 189, 248, 0.2)"/></svg> Modifica
                             </button>
 
                         </div>
@@ -7415,15 +7430,15 @@
                             </div>
                             <div class="bento-stat-pill">
                                 <span class="stat-num" id="bento-stat-wins" style="color:#22c55e;">0</span>
-                                <span class="stat-lbl">Vinti <svg class="ui-svg-icon" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="#22c55e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.45 1-1 1H8v4h8v-4h-1c-.55 0-1-.45-1-1v-2.34"/><path d="M18 4H6v7a6 6 0 0 0 12 0V4z"/></svg></span>
+                                <span class="stat-lbl">Vinti <svg class="ui-svg-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" style="filter:drop-shadow(0 0 3px rgba(34, 197, 94, 0.8)); vertical-align:-1px;"><defs><linearGradient id="pill-win-trophy" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#86efac"/><stop offset="100%" stop-color="#16a34a"/></linearGradient></defs><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" stroke="url(#pill-win-trophy)" stroke-width="2"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" stroke="url(#pill-win-trophy)" stroke-width="2"/><path d="M4 22h16" stroke="url(#pill-win-trophy)" stroke-width="2"/><path d="M18 4H6v7a6 6 0 0 0 12 0V4z" stroke="url(#pill-win-trophy)" stroke-width="2" fill="rgba(34, 197, 94, 0.25)"/></svg></span>
                             </div>
                             <div class="bento-stat-pill">
                                 <span class="stat-num" id="bento-stat-losses" style="color:#ef4444;">0</span>
-                                <span class="stat-lbl">Persi <svg class="ui-svg-icon" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg></span>
+                                <span class="stat-lbl">Persi <svg class="ui-svg-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" style="filter:drop-shadow(0 0 3px rgba(239, 68, 68, 0.8)); vertical-align:-1px;"><defs><linearGradient id="pill-loss-x" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#f87171"/><stop offset="100%" stop-color="#dc2626"/></linearGradient></defs><circle cx="12" cy="12" r="10" stroke="url(#pill-loss-x)" stroke-width="2" fill="rgba(239, 68, 68, 0.15)"/><line x1="15" y1="9" x2="9" y2="15" stroke="url(#pill-loss-x)" stroke-width="2.5" stroke-linecap="round"/><line x1="9" y1="9" x2="15" y2="15" stroke="url(#pill-loss-x)" stroke-width="2.5" stroke-linecap="round"/></svg></span>
                             </div>
                             <div class="bento-stat-pill">
                                 <span class="stat-num" id="bento-stat-ties" style="color:#f59e0b;">0</span>
-                                <span class="stat-lbl">Pari <svg class="ui-svg-icon" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 17l-5-5a3.5 3.5 0 0 1 5-5l2 2 2-2a3.5 3.5 0 0 1 5 5l-5 5"/><path d="M12 11l2 2"/></svg></span>
+                                <span class="stat-lbl">Pari <svg class="ui-svg-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" style="filter:drop-shadow(0 0 3px rgba(245, 158, 11, 0.8)); vertical-align:-1px;"><defs><linearGradient id="pill-tie-hshake" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#fde047"/><stop offset="100%" stop-color="#f59e0b"/></linearGradient></defs><path d="M11 17l-5-5a3.5 3.5 0 0 1 5-5l2 2 2-2a3.5 3.5 0 0 1 5 5l-5 5" stroke="url(#pill-tie-hshake)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 11l2 2" stroke="url(#pill-tie-hshake)" stroke-width="2" stroke-linecap="round"/></svg></span>
                             </div>
                         </div>
                         <div class="bento-winrate-bar">
@@ -7434,7 +7449,7 @@
 
                     <!-- Composizione Corporea & BMI (Nascosta visivamente: gestita in Impostazioni Account & Privacy) -->
                     <div class="bento-card bento-body" style="display: none !important;" aria-hidden="true">
-                        <div class="bento-card-title"><svg class="ui-svg-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 16l3-8 3 8c0 1.5-1.5 2-3 2s-3-.5-3-2z"/><path d="M2 16l3-8 3 8c0 1.5-1.5 2-3 2s-3-.5-3-2z"/><path d="M7 21h10"/><path d="M12 3v18"/><path d="M3 7h18"/></svg> Composizione Corporea & BMI</div>
+                        <div class="bento-card-title" style="display:flex; align-items:center; gap:8px;"><svg class="ui-svg-icon" viewBox="0 0 24 24" width="19" height="19" fill="none" style="filter:drop-shadow(0 0 4px rgba(251, 191, 36, 0.75));"><defs><linearGradient id="bento-scale-grad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#fde047"/><stop offset="100%" stop-color="#f59e0b"/></linearGradient></defs><path d="M16 16l3-8 3 8c0 1.5-1.5 2-3 2s-3-.5-3-2z" stroke="url(#bento-scale-grad)" stroke-width="2" fill="rgba(251, 191, 36, 0.2)"/><path d="M2 16l3-8 3 8c0 1.5-1.5 2-3 2s-3-.5-3-2z" stroke="url(#bento-scale-grad)" stroke-width="2" fill="rgba(251, 191, 36, 0.2)"/><path d="M7 21h10" stroke="url(#bento-scale-grad)" stroke-width="2" stroke-linecap="round"/><path d="M12 3v18" stroke="url(#bento-scale-grad)" stroke-width="2" stroke-linecap="round"/><path d="M3 7h18" stroke="url(#bento-scale-grad)" stroke-width="2" stroke-linecap="round"/></svg> <span>Composizione Corporea & BMI</span></div>
                         <div class="bento-body-inputs">
                             <div class="bento-input-group">
                                 <label for="bento-body-weight">Peso (kg):</label>
@@ -7449,7 +7464,7 @@
                             <span class="bento-bmi-val" id="bento-bmi-val">--</span>
                             <span class="bento-bmi-status" id="bento-bmi-status">Inserisci peso e altezza</span>
                         </div>
-                        <button type="button" class="btn-auth-secondary" style="width:100%; margin-top:8px; font-size:0.82rem;" onclick="saveBentoBodyStats()">💾 Salva Dati Corporei</button>
+                        <button type="button" class="btn-auth-secondary" style="width:100%; margin-top:8px; font-size:0.82rem; display:inline-flex; align-items:center; justify-content:center; gap:6px;" onclick="saveBentoBodyStats()"><svg class="ui-svg-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" style="filter:drop-shadow(0 0 4px rgba(56, 189, 248, 0.7));"><defs><linearGradient id="save-body-disc" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#38bdf8"/><stop offset="100%" stop-color="#0ea5e9"/></linearGradient></defs><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" stroke="url(#save-body-disc)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="rgba(56, 189, 248, 0.12)"/><polyline points="17 21 17 13 7 13 7 21" stroke="url(#save-body-disc)" stroke-width="2"/><polyline points="7 3 7 8 15 8" stroke="url(#save-body-disc)" stroke-width="2"/></svg> Salva Dati Corporei</button>
                     </div>
 
                     <!-- Tema Grafico (Compatto e senza spazio vuoto!) -->
@@ -7538,50 +7553,77 @@
         <div class="bottom-nav-indicator" id="bottom-nav-indicator"></div>
         <button type="button" class="bottom-nav-item active" data-tab="tree" onclick="switchMainTab('tree')">
             <span class="bottom-nav-icon">
-                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="12" cy="4" r="2.2" fill="currentColor"/>
-                    <circle cx="5.5" cy="11.5" r="1.8" fill="currentColor"/>
-                    <circle cx="18.5" cy="11.5" r="1.8" fill="currentColor"/>
-                    <circle cx="12" cy="20" r="2" fill="currentColor"/>
-                    <path d="M12 6.2v11.8"/>
-                    <path d="M5.5 11.5l6.5 4.5 6.5-4.5"/>
-                    <path d="M12 6.2L5.5 11.5"/>
-                    <path d="M12 6.2l6.5 5.3"/>
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" style="filter:drop-shadow(0 0 4px rgba(52, 211, 153, 0.7));">
+                    <defs>
+                        <linearGradient id="bnav-tree" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#6ee7b7"/>
+                            <stop offset="50%" stop-color="#34d399"/>
+                            <stop offset="100%" stop-color="#059669"/>
+                        </linearGradient>
+                    </defs>
+                    <circle cx="12" cy="4" r="2.4" fill="url(#bnav-tree)"/>
+                    <circle cx="5.5" cy="11.5" r="2" fill="url(#bnav-tree)"/>
+                    <circle cx="18.5" cy="11.5" r="2" fill="url(#bnav-tree)"/>
+                    <circle cx="12" cy="20" r="2.4" fill="url(#bnav-tree)"/>
+                    <path d="M12 6.4v11.2" stroke="url(#bnav-tree)" stroke-width="2" stroke-linecap="round"/>
+                    <path d="M5.5 11.5l6.5 4.5 6.5-4.5" stroke="url(#bnav-tree)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M12 6.4L5.5 11.5" stroke="url(#bnav-tree)" stroke-width="2" stroke-linecap="round"/>
+                    <path d="M12 6.4l6.5 5.1" stroke="url(#bnav-tree)" stroke-width="2" stroke-linecap="round"/>
                 </svg>
             </span>
             <span class="bottom-nav-label">Albero</span>
         </button>
         <button type="button" class="bottom-nav-item" data-tab="workouts" onclick="switchMainTab('workouts')">
             <span class="bottom-nav-icon">
-                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <rect x="2" y="8" width="3" height="8" rx="1.5" fill="currentColor"/>
-                    <rect x="19" y="8" width="3" height="8" rx="1.5" fill="currentColor"/>
-                    <rect x="5.5" y="6" width="2.5" height="12" rx="1.2"/>
-                    <rect x="16" y="6" width="2.5" height="12" rx="1.2"/>
-                    <line x1="8" y1="12" x2="16" y2="12" stroke-width="2.5"/>
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" style="filter:drop-shadow(0 0 5px rgba(56, 189, 248, 0.75));">
+                    <defs>
+                        <linearGradient id="bnav-workouts" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#7dd3fc"/>
+                            <stop offset="50%" stop-color="#38bdf8"/>
+                            <stop offset="100%" stop-color="#0284c7"/>
+                        </linearGradient>
+                    </defs>
+                    <rect x="2" y="8" width="3" height="8" rx="1.5" fill="url(#bnav-workouts)"/>
+                    <rect x="19" y="8" width="3" height="8" rx="1.5" fill="url(#bnav-workouts)"/>
+                    <rect x="5.5" y="6" width="2.5" height="12" rx="1.2" fill="url(#bnav-workouts)"/>
+                    <rect x="16" y="6" width="2.5" height="12" rx="1.2" fill="url(#bnav-workouts)"/>
+                    <line x1="8" y1="12" x2="16" y2="12" stroke="url(#bnav-workouts)" stroke-width="2.5" stroke-linecap="round"/>
                 </svg>
             </span>
             <span class="bottom-nav-label">Allenamenti</span>
         </button>
         <button type="button" class="bottom-nav-item" data-tab="arena" onclick="switchMainTab('arena')">
             <span class="bottom-nav-icon">
-                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M14.5 17.5L3 6V3h3l11.5 11.5"/>
-                    <path d="M13 19l6-6"/>
-                    <path d="M16 16l4 4"/>
-                    <path d="M19 21l2-2"/>
-                    <path d="M9.5 17.5L21 6V3h-3L6.5 14.5"/>
-                    <path d="M11 19l-6-6"/>
-                    <path d="M8 16l-4 4"/>
-                    <path d="M5 21l-2-2"/>
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" style="filter:drop-shadow(0 0 5px rgba(249, 115, 22, 0.75));">
+                    <defs>
+                        <linearGradient id="bnav-arena" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#f87171"/>
+                            <stop offset="50%" stop-color="#fb923c"/>
+                            <stop offset="100%" stop-color="#facc15"/>
+                        </linearGradient>
+                    </defs>
+                    <path d="M14.5 17.5L3 6V3h3l11.5 11.5" stroke="url(#bnav-arena)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M13 19l6-6" stroke="url(#bnav-arena)" stroke-width="2" stroke-linecap="round"/>
+                    <path d="M16 16l4 4" stroke="url(#bnav-arena)" stroke-width="2" stroke-linecap="round"/>
+                    <path d="M19 21l2-2" stroke="url(#bnav-arena)" stroke-width="2" stroke-linecap="round"/>
+                    <path d="M9.5 17.5L21 6V3h-3L6.5 14.5" stroke="url(#bnav-arena)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M11 19l-6-6" stroke="url(#bnav-arena)" stroke-width="2" stroke-linecap="round"/>
+                    <path d="M8 16l-4 4" stroke="url(#bnav-arena)" stroke-width="2" stroke-linecap="round"/>
                 </svg>
             </span>
             <span class="bottom-nav-label">Arena</span>
         </button>
         <button type="button" class="bottom-nav-item" data-tab="chat" onclick="switchMainTab('chat')">
             <span class="bottom-nav-icon">
-                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" style="filter:drop-shadow(0 0 5px rgba(34, 211, 238, 0.75));">
+                    <defs>
+                        <linearGradient id="bnav-chat" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#22d3ee"/>
+                            <stop offset="50%" stop-color="#38bdf8"/>
+                            <stop offset="100%" stop-color="#818cf8"/>
+                        </linearGradient>
+                    </defs>
+                    <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" stroke="url(#bnav-chat)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="rgba(34, 211, 238, 0.15)"/>
                 </svg>
             </span>
             <span class="bottom-nav-label">Chat</span>
@@ -7589,9 +7631,16 @@
         </button>
         <button type="button" class="bottom-nav-item" data-tab="profile" onclick="switchMainTab('profile')">
             <span class="bottom-nav-icon">
-                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                    <circle cx="12" cy="7" r="4"/>
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" style="filter:drop-shadow(0 0 5px rgba(96, 165, 250, 0.75));">
+                    <defs>
+                        <linearGradient id="bnav-profile" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#60a5fa"/>
+                            <stop offset="50%" stop-color="#6366f1"/>
+                            <stop offset="100%" stop-color="#a855f7"/>
+                        </linearGradient>
+                    </defs>
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" stroke="url(#bnav-profile)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <circle cx="12" cy="7" r="4" stroke="url(#bnav-profile)" stroke-width="2" fill="rgba(96, 165, 250, 0.2)"/>
                 </svg>
             </span>
             <span class="bottom-nav-label">Profilo</span>
@@ -7748,13 +7797,13 @@
             timer: `<svg class="ui-svg-icon" viewBox="0 0 24 24" width="17" height="17" fill="none" style="filter:drop-shadow(0 0 4px rgba(56, 189, 248, 0.7));"><defs><linearGradient id="ai-timer" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#38bdf8"/><stop offset="100%" stop-color="#818cf8"/></linearGradient></defs><circle cx="12" cy="14" r="8" stroke="url(#ai-timer)" stroke-width="2" fill="rgba(56, 189, 248, 0.1)"/><line x1="12" y1="2" x2="12" y2="6" stroke="url(#ai-timer)" stroke-width="2" stroke-linecap="round"/><line x1="12" y1="14" x2="15" y2="11" stroke="url(#ai-timer)" stroke-width="2" stroke-linecap="round"/></svg>`,
             zap: `<svg class="ui-svg-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" style="filter:drop-shadow(0 0 4px rgba(250, 204, 21, 0.8));"><defs><linearGradient id="ai-zap" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#fef08a"/><stop offset="100%" stop-color="#f59e0b"/></linearGradient></defs><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" fill="url(#ai-zap)" stroke="#facc15" stroke-width="1.2"/></svg>`,
             save: `<svg class="ui-svg-icon" viewBox="0 0 24 24" width="17" height="17" fill="none" style="filter:drop-shadow(0 0 4px rgba(56, 189, 248, 0.7));"><defs><linearGradient id="ai-save" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#38bdf8"/><stop offset="100%" stop-color="#0ea5e9"/></linearGradient></defs><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" stroke="url(#ai-save)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="rgba(56, 189, 248, 0.1)"/><polyline points="17 21 17 13 7 13 7 21" stroke="url(#ai-save)" stroke-width="2"/><polyline points="7 3 7 8 15 8" stroke="url(#ai-save)" stroke-width="2"/></svg>`,
-            disc: `<svg class="ui-svg-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" style="filter:drop-shadow(0 0 4px rgba(56, 189, 248, 0.7));"><circle cx="12" cy="12" r="10" stroke="#38bdf8" stroke-width="2"/><circle cx="12" cy="12" r="3" fill="#38bdf8"/></svg>`,
+            disc: `<svg class="ui-svg-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" style="filter:drop-shadow(0 0 4px rgba(56, 189, 248, 0.75));"><defs><linearGradient id="ai-disc" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#38bdf8"/><stop offset="100%" stop-color="#0ea5e9"/></linearGradient></defs><circle cx="12" cy="12" r="10" stroke="url(#ai-disc)" stroke-width="2" fill="rgba(56, 189, 248, 0.15)"/><circle cx="12" cy="12" r="3.5" fill="url(#ai-disc)"/></svg>`,
             sparkles: `<svg class="ui-svg-icon" viewBox="0 0 24 24" width="19" height="19" fill="none" style="filter:drop-shadow(0 0 5px rgba(56, 189, 248, 0.85));"><defs><linearGradient id="ai-sparkles" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#38bdf8"/><stop offset="50%" stop-color="#818cf8"/><stop offset="100%" stop-color="#c084fc"/></linearGradient><linearGradient id="ai-mini-gold" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#facc15"/><stop offset="100%" stop-color="#fb923c"/></linearGradient></defs><path d="M12 1.5 C12 7 7 12 1.5 12 C7 12 12 17 12 22.5 C12 17 17 12 22.5 12 C17 12 12 7 12 1.5 Z" fill="url(#ai-sparkles)"/><path d="M19.5 2 C19.5 3.8 18 5 16.5 5 C18 5 19.5 6.2 19.5 8 C19.5 6.2 21 5 22.5 5 C21 5 19.5 3.8 19.5 2 Z" fill="url(#ai-mini-gold)"/><path d="M4.5 17.5 C4.5 18.8 3.5 19.5 2.5 19.5 C3.5 19.5 4.5 20.2 4.5 21.5 C4.5 20.2 5.5 19.5 6.5 19.5 C5.5 19.5 4.5 18.8 4.5 17.5 Z" fill="#38bdf8"/></svg>`,
             key: `<svg class="ui-svg-icon" viewBox="0 0 24 24" width="17" height="17" fill="none" style="filter:drop-shadow(0 0 4px rgba(250, 204, 21, 0.8));"><defs><linearGradient id="ai-key" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#fef08a"/><stop offset="50%" stop-color="#facc15"/><stop offset="100%" stop-color="#ca8a04"/></linearGradient></defs><circle cx="7.5" cy="15.5" r="5.5" stroke="url(#ai-key)" stroke-width="2" fill="rgba(250, 204, 21, 0.2)"/><path d="m21 2-9.6 9.6" stroke="url(#ai-key)" stroke-width="2" stroke-linecap="round"/><path d="m15.5 7.5 3 3L22 7l-3-3" stroke="url(#ai-key)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
             ruler: `<svg class="ui-svg-icon" viewBox="0 0 24 24" width="17" height="17" fill="none" style="filter:drop-shadow(0 0 4px rgba(56, 189, 248, 0.7));"><defs><linearGradient id="ai-ruler" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#818cf8"/><stop offset="100%" stop-color="#38bdf8"/></linearGradient></defs><path d="M21.3 8.7 8.7 21.3c-1 1-2.6 1-3.6 0l-2.4-2.4c-1-1-1-2.6 0-3.6L15.3 2.7c1-1 2.6-1 3.6 0l2.4 2.4c1 1 1 2.6 0 3.6Z" stroke="url(#ai-ruler)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="rgba(56, 189, 248, 0.12)"/><path d="m14.5 3.5 2 2" stroke="url(#ai-ruler)" stroke-width="2"/><path d="m11.5 6.5 2 2" stroke="url(#ai-ruler)" stroke-width="2"/><path d="m8.5 9.5 2 2" stroke="url(#ai-ruler)" stroke-width="2"/><path d="m5.5 12.5 2 2" stroke="url(#ai-ruler)" stroke-width="2"/></svg>`,
             globe: `<svg class="ui-svg-icon" viewBox="0 0 24 24" width="17" height="17" fill="none" style="filter:drop-shadow(0 0 4px rgba(56, 189, 248, 0.7));"><defs><linearGradient id="ai-globe" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#34d399"/><stop offset="100%" stop-color="#0ea5e9"/></linearGradient></defs><circle cx="12" cy="12" r="10" stroke="url(#ai-globe)" stroke-width="2" fill="rgba(14, 165, 233, 0.12)"/><line x1="2" y1="12" x2="22" y2="12" stroke="url(#ai-globe)" stroke-width="1.8"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" stroke="url(#ai-globe)" stroke-width="1.8"/></svg>`,
             bell: `<svg class="ui-svg-icon" viewBox="0 0 24 24" width="17" height="17" fill="none" style="filter:drop-shadow(0 0 4px rgba(250, 204, 21, 0.75));"><defs><linearGradient id="ai-bell" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#fef08a"/><stop offset="100%" stop-color="#f59e0b"/></linearGradient></defs><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" stroke="url(#ai-bell)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="rgba(250, 204, 21, 0.15)"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" stroke="url(#ai-bell)" stroke-width="2"/></svg>`,
-            bellOff: `<svg class="ui-svg-icon" viewBox="0 0 24 24" width="17" height="17" fill="none" style="filter:drop-shadow(0 0 4px rgba(148, 163, 184, 0.5));"><path d="M8.7 3A6 6 0 0 1 18 8a21.3 21.3 0 0 0 .6 5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M17 17H3s3-2 3-9a4.67 4.67 0 0 1 .3-1.7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" stroke="currentColor" stroke-width="2"/><line x1="2" x2="22" y1="2" y2="22" stroke="#ef4444" stroke-width="2" stroke-linecap="round"/></svg>`,
+            bellOff: `<svg class="ui-svg-icon" viewBox="0 0 24 24" width="17" height="17" fill="none" style="filter:drop-shadow(0 0 4px rgba(248, 113, 113, 0.6));"><defs><linearGradient id="ai-belloff" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#cbd5e1"/><stop offset="100%" stop-color="#64748b"/></linearGradient></defs><path d="M8.7 3A6 6 0 0 1 18 8a21.3 21.3 0 0 0 .6 5" stroke="url(#ai-belloff)" stroke-width="2" stroke-linecap="round"/><path d="M17 17H3s3-2 3-9a4.67 4.67 0 0 1 .3-1.7" stroke="url(#ai-belloff)" stroke-width="2" stroke-linecap="round"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" stroke="url(#ai-belloff)" stroke-width="2"/><line x1="2" x2="22" y1="2" y2="22" stroke="#ef4444" stroke-width="2.2" stroke-linecap="round"/></svg>`,
             package: `<svg class="ui-svg-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" style="filter:drop-shadow(0 0 4px rgba(192, 132, 252, 0.7));"><defs><linearGradient id="ai-package" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#c084fc"/><stop offset="100%" stop-color="#818cf8"/></linearGradient></defs><path d="m16.5 9.4-9-5.19M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" stroke="url(#ai-package)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="rgba(192, 132, 252, 0.12)"/><polyline points="3.27 6.96 12 12.01 20.73 6.96" stroke="url(#ai-package)" stroke-width="2"/><line x1="12" y1="22.08" x2="12" y2="12" stroke="url(#ai-package)" stroke-width="2"/></svg>`,
             alert: `<svg class="ui-svg-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" style="filter:drop-shadow(0 0 4px rgba(245, 158, 11, 0.8));"><defs><linearGradient id="ai-alert" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#fef08a"/><stop offset="100%" stop-color="#f59e0b"/></linearGradient></defs><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" stroke="url(#ai-alert)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="rgba(245, 158, 11, 0.18)"/><line x1="12" y1="9" x2="12" y2="13" stroke="url(#ai-alert)" stroke-width="2" stroke-linecap="round"/><line x1="12" y1="17" x2="12.01" y2="17" stroke="url(#ai-alert)" stroke-width="2.5" stroke-linecap="round"/></svg>`,
             shieldLock: `<svg class="ui-svg-icon" viewBox="0 0 24 24" width="17" height="17" fill="none" style="filter:drop-shadow(0 0 4px rgba(56, 189, 248, 0.75));"><defs><linearGradient id="ai-shield" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#38bdf8"/><stop offset="100%" stop-color="#818cf8"/></linearGradient></defs><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="url(#ai-shield)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="rgba(56, 189, 248, 0.15)"/><circle cx="12" cy="11" r="1.6" fill="#facc15"/><path d="M12 12.6v2.4" stroke="#facc15" stroke-width="1.8" stroke-linecap="round"/></svg>`
@@ -13188,17 +13237,17 @@ let currentUser = null;
                         <div class="workout-card-header">
                             <span class="workout-card-title">${escapeHtml(w.name || 'Allenamento')} <span class="workout-card-date">— ${escapeHtml(w.date || '')}</span></span>
                             <div style="display:flex; align-items:center; gap:4px;">
-                                <button class="event-edit-btn" title="Modifica allenamento" onclick="openEditWorkoutModal('${w.id}')" style="background:none; border:none; color:var(--text); font-size:1.05rem; cursor:pointer; padding:4px 6px;">✏️</button>
-                                <button class="event-delete-btn" title="Elimina allenamento" onclick="askDeleteWorkout('${w.id}')">🗑️</button>
+                                <button class="event-edit-btn" title="Modifica allenamento" onclick="openEditWorkoutModal('${w.id}')" style="background:none; border:none; cursor:pointer; padding:4px 6px; display:inline-flex; align-items:center;">${window.APP_ICONS ? window.APP_ICONS.pencil : '✏️'}</button>
+                                <button class="event-delete-btn" title="Elimina allenamento" onclick="askDeleteWorkout('${w.id}')" style="display:inline-flex; align-items:center;">${window.APP_ICONS ? window.APP_ICONS.trash : '🗑️'}</button>
                             </div>
                         </div>
                         <div class="workout-card-meta">
-                            ⏱️ ${w.durationMin || 0} min &nbsp;|&nbsp; 🔥 Intensità ${w.intensity || 5}/10
+                            ${window.APP_ICONS ? window.APP_ICONS.timer : '⏱️'} ${w.durationMin || 0} min &nbsp;|&nbsp; 🔥 Intensità ${w.intensity || 5}/10
                         </div>
                         <div class="workout-exercises-summary">
                             ${exercisesHtml || '<span style="color:var(--subtext);">Nessun esercizio dettagliato.</span>'}
                         </div>
-                        ${w.notes ? `<div class="workout-card-notes">📝 ${escapeHtml(w.notes)}</div>` : ''}
+                        ${w.notes ? `<div class="workout-card-notes" style="display:flex; align-items:center; gap:6px;">${window.APP_ICONS ? window.APP_ICONS.clipboard : '📝'} ${escapeHtml(w.notes)}</div>` : ''}
                         <div class="workout-xp-badge" style="background:rgba(16,185,129,0.15); color:#10b981; border:1px solid rgba(16,185,129,0.3); font-weight:800;">+500 XP</div>
                     </div>
                 `;
@@ -20245,18 +20294,18 @@ function getCalisthenicsExpertResponse(query) {
                             <span class="event-card-title">🤸 Allenamento</span>
                             <div class="event-header-actions">
                                 <button class="event-info-btn" title="Chi ha votato" onclick="openEventVotersModal('${ev.id}')">ℹ️</button>
-                                ${isCreator ? `<button class="event-delete-btn" title="Elimina sondaggio" onclick="askDeleteEvent('${ev.id}')">🗑️</button>` : ''}
+                                ${isCreator ? `<button class="event-delete-btn" title="Elimina sondaggio" onclick="askDeleteEvent('${ev.id}')" style="display:inline-flex; align-items:center;">${window.APP_ICONS ? window.APP_ICONS.trash : '🗑️'}</button>` : ''}
                             </div>
                         </div>
                         <div class="event-card-meta">
-                            📆 ${escapeHtml(ev.day || '')}<br>
-                            🕒 ${escapeHtml(ev.time || '')}<br>
-                            📍 ${escapeHtml(ev.place || '')}
+                            <span style="display:inline-flex; align-items:center; gap:5px;">${window.APP_ICONS ? window.APP_ICONS.calendar : '📆'} ${escapeHtml(ev.day || '')}</span><br>
+                            <span style="display:inline-flex; align-items:center; gap:5px; margin-top:2px;">${window.APP_ICONS ? window.APP_ICONS.timer : '🕒'} ${escapeHtml(ev.time || '')}</span><br>
+                            <span style="display:inline-flex; align-items:center; gap:5px; margin-top:2px;">${window.APP_ICONS ? window.APP_ICONS.target : '📍'} ${escapeHtml(ev.place || '')}</span>
                         </div>
                         <div class="event-card-creator">Creato da ${escapeHtml(ev.creatorName || 'Anonimo')}</div>
                         <div class="event-vote-row">
-                            <button class="event-vote-btn ${myResponse === 'yes' ? 'selected-yes' : ''}" ${canVote ? `onclick="voteEvent('${ev.id}', 'yes')"` : 'disabled'}>✅ Sì, sarò presente</button>
-                            <button class="event-vote-btn ${myResponse === 'no' ? 'selected-no' : ''}" ${canVote ? `onclick="voteEvent('${ev.id}', 'no')"` : 'disabled'}>❌ No, non sarò presente</button>
+                            <button class="event-vote-btn ${myResponse === 'yes' ? 'selected-yes' : ''}" ${canVote ? `onclick="voteEvent('${ev.id}', 'yes')"` : 'disabled'}>${window.APP_ICONS ? window.APP_ICONS.checkCircle : '✅'} Sì, sarò presente</button>
+                            <button class="event-vote-btn ${myResponse === 'no' ? 'selected-no' : ''}" ${canVote ? `onclick="voteEvent('${ev.id}', 'no')"` : 'disabled'}>${window.APP_ICONS ? window.APP_ICONS.xCircle : '❌'} No, non sarò presente</button>
                             ${ev.allowMaybe ? `<button class="event-vote-btn ${myResponse === 'maybe' ? 'selected-maybe' : ''}" ${canVote ? `onclick="voteEvent('${ev.id}', 'maybe')"` : 'disabled'}>🤔 Forse</button>` : ''}
                         </div>
                         ${ev.allowMaybe && ev.maybeDeadlineDate && ev.maybeDeadlineTime ? `
@@ -21341,7 +21390,7 @@ function getCalisthenicsExpertResponse(query) {
                 html += `
                     <div class="chat-invites-section" style="border-color:var(--accent);">
                         <div class="chat-invites-title">
-                            <span>🏹 Inviti alle sfide</span>
+                            <span style="display:inline-flex; align-items:center; gap:6px;">${window.APP_ICONS ? window.APP_ICONS.swords : '🏹'} Inviti alle sfide</span>
                             <span style="background:var(--danger); color:#fff; border-radius:999px; padding:1px 7px; font-size:0.7rem;">${pendingChallengeInvites.length}</span>
                         </div>
                         ${pendingChallengeInvites.map(inv => {
@@ -21349,7 +21398,7 @@ function getCalisthenicsExpertResponse(query) {
                             return `
                             <div class="chat-invite-item" style="${isDuel ? 'border-left: 3px solid #f59e0b; padding-left: 8px;' : ''}">
                                 <div style="font-weight:700; color:${isDuel ? '#f59e0b' : 'var(--accent)'}; font-size:0.9rem;">
-                                    ${isDuel ? `⚔️ (Duello) - 3 Esercizi Diversi` : escapeHtml(inv.challengeTitle || 'Sfida')}
+                                    ${isDuel ? `${window.APP_ICONS ? window.APP_ICONS.swords : '⚔️'} (Duello) - 3 Esercizi Diversi` : escapeHtml(inv.challengeTitle || 'Sfida')}
                                 </div>
                                 <div style="font-size:0.78rem; color:var(--subtext); margin-top:2px;">
                                     ${isDuel 
@@ -21954,7 +22003,7 @@ function getCalisthenicsExpertResponse(query) {
                 <!-- Barra superiore navigazione modalità -->
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
                     <button type="button" class="btn-switch-challenge-mode" onclick="openCreateChallengeModal()">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle; margin-right:4px;"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" style="vertical-align:middle; margin-right:5px; filter:drop-shadow(0 0 4px rgba(56, 189, 248, 0.7));"><defs><linearGradient id="btn-back-arr" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#38bdf8"/><stop offset="100%" stop-color="#818cf8"/></linearGradient></defs><line x1="19" y1="12" x2="5" y2="12" stroke="url(#btn-back-arr)" stroke-width="2.6" stroke-linecap="round"></line><polyline points="12 19 5 12 12 5" stroke="url(#btn-back-arr)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"></polyline></svg>
                         Cambia Modalità
                     </button>
                     <span style="font-size:0.75rem; color:var(--subtext); font-weight:600;">Personalizzazione Regole</span>
@@ -24326,7 +24375,7 @@ function getCalisthenicsExpertResponse(query) {
                     </div>
                     <div class="drawer-prereq-list">
                         <div class="drawer-prereq-item met">
-                            <span>✨</span>
+                            <span>${window.APP_ICONS ? window.APP_ICONS.sparkles : '✨'}</span>
                             <span>Skill fondamentale di partenza (Nessun prerequisito richiesto)</span>
                         </div>
                     </div>
