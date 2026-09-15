@@ -7471,9 +7471,12 @@
                 <button class="chat-thread-poll-btn" id="chat-thread-poll-btn" onclick="openGroupPollsModal()" title="Sondaggi del gruppo" style="display:none; background:none; border:none; color:var(--text); cursor:pointer; padding:4px 8px; border-radius:8px; margin-right:4px;"><svg class="ui-svg-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" style="filter:drop-shadow(0 0 4px rgba(56, 189, 248, 0.75));"><defs><linearGradient id="chat-thrd-poll" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#38bdf8"/><stop offset="100%" stop-color="#818cf8"/></linearGradient></defs><line x1="18" y1="20" x2="18" y2="10" stroke="url(#chat-thrd-poll)" stroke-width="2.4" stroke-linecap="round"/><line x1="12" y1="20" x2="12" y2="4" stroke="url(#chat-thrd-poll)" stroke-width="2.4" stroke-linecap="round"/><line x1="6" y1="20" x2="6" y2="14" stroke="url(#chat-thrd-poll)" stroke-width="2.4" stroke-linecap="round"/></svg></button>
                 <button class="chat-thread-menu-btn" id="chat-thread-menu-btn" onclick="openConversationOptionsModal()" title="Opzioni chat">⋮</button>
             </div>
-            <div class="ai-helper-header-bar" id="ai-helper-header-bar" style="display:none;">
+            <div class="ai-helper-header-bar" id="ai-helper-header-bar" style="display:none; justify-content:space-between; align-items:center;">
                 <button type="button" class="ai-helper-chip-btn ai-helper-chip-clear" onclick="clearAiChatHistory()" style="display:inline-flex; align-items:center; gap:5px;">
                     <svg class="ui-svg-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" style="filter:drop-shadow(0 0 5px rgba(244, 63, 94, 0.85)); vertical-align:-2px;"><defs><linearGradient id="chip-sweep-grad" x1="0%" y1="0%" x2="100%" y2="100%" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#fda4af"/><stop offset="50%" stop-color="#f43f5e"/><stop offset="100%" stop-color="#e11d48"/></linearGradient></defs><path d="M19 3l-8 8" stroke="url(#chip-sweep-grad)" stroke-width="2.4" stroke-linecap="round"/><path d="M11 11l2 2-1 4-6 4 1-5 4-5z" stroke="url(#chip-sweep-grad)" stroke-width="1.8" stroke-linejoin="round" fill="rgba(244, 63, 94, 0.25)"/><line x1="8" y1="17" x2="6" y2="19" stroke="url(#chip-sweep-grad)" stroke-width="1.4" stroke-linecap="round"/><circle cx="18.5" cy="14.5" r="1.2" fill="#fda4af"/><circle cx="21" cy="9.5" r="1.5" fill="#fda4af"/><circle cx="6.5" cy="8" r="1.3" fill="#fda4af"/></svg> Pulisci Chat
+                </button>
+                <button type="button" class="ai-helper-chip-btn" id="btn-ai-config-key" onclick="openGeminiApiKeyModal()" title="Configura Chiave Google Gemini AI" style="display:inline-flex; align-items:center; gap:5px; font-size:0.75rem;">
+                    <svg class="ui-svg-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" style="filter:drop-shadow(0 0 4px rgba(56, 189, 248, 0.75)); vertical-align:-2px;"><defs><linearGradient id="chip-gear-grad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#38bdf8"/><stop offset="100%" stop-color="#818cf8"/></linearGradient></defs><circle cx="12" cy="12" r="3" stroke="url(#chip-gear-grad)" stroke-width="2"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" stroke="url(#chip-gear-grad)" stroke-width="2"/></svg> Configura AI
                 </button>
             </div>
             <div class="chat-messages" id="chat-messages" style="flex:1;">
@@ -14538,6 +14541,8 @@ function getCalisthenicsExpertResponse(query) {
         // ==========================================
         // MULTIMODAL COACH AI & FORM CHECK VISION
         // ==========================================
+        // Chiave globale Google Gemini (se impostata qui, TUTTI gli utenti dell'app accedono al Coach AI senza dover inserire nulla!)
+        let GLOBAL_GEMINI_API_KEY = "";
         let pendingAiMedia = null; // { file, previewUrl, base64, type: 'image', originalName }
 
         function triggerAiCameraInput() {
@@ -14830,25 +14835,41 @@ function getCalisthenicsExpertResponse(query) {
             // 2. Chiamata a Gemini API multimodale (se configurata in background)
             if (!aiResponse) {
                 const userGeminiKey = localStorage.getItem("calisthenics_gemini_api_key");
-                const apiKeyToUse = (userGeminiKey && userGeminiKey.trim()) ? userGeminiKey.trim().replace(/^["']|["']$/g, '') : null;
+                const apiKeyToUse = (GLOBAL_GEMINI_API_KEY && GLOBAL_GEMINI_API_KEY.trim())
+                    ? GLOBAL_GEMINI_API_KEY.trim().replace(/^["']|["']$/g, '')
+                    : (userGeminiKey && userGeminiKey.trim()) ? userGeminiKey.trim().replace(/^["']|["']$/g, '') : null;
 
                 if (apiKeyToUse) {
                     const systemPrompt = "Sei Ares, il Coach Ufficiale di Calisthenics & Street Lifting dell'app 'Occhionero's Calisthenics Tree'. " +
                         "IL TUO AMBITO È STRETTAMENTE LIMITATO ALLO SPORT, FITNESS, NUTRIZIONE SPORTIVA, MOBILITÀ E CALISTHENICS. " +
-                        "Se l'utente fa domande estranee allo sport o al calisthenics, rifiuta educatamente e reindirizza all'allenamento. " +
+                        "Se l'utente fa domande totalmente estranee allo sport o al calisthenics, rifiuta educatamente e reindirizza all'allenamento. " +
                         "Se è presente un'immagine di una tenuta o esercizio (Form Check), esamina: 1) Skill/propedeutica riconosciuta, 2) Assetto scapolare (protrazione/depressione/retrazione), 3) Retroversione bacino (PPT) e core, 4) Lockout gomiti a 180°, 5) Consigli pratici ed esercizi correttivi. " +
-                        "Rispondi in italiano con tono energico, tecnico ed incoraggiante da coach calisthenico.\n\n";
+                        "Rispondi in italiano con tono energico, tecnico ed incoraggiante da vero coach calisthenico. Usa formattazione markdown chiara con elenchi puntati.\n\n";
 
-                    const contentsParts = [{ text: systemPrompt + (query || "Analizza la mia postura e la tenuta in questa foto") }];
-                    if (attachedMedia && attachedMedia.base64) {
-                        const mime = (attachedMedia.file && attachedMedia.file.type) ? attachedMedia.file.type : "image/jpeg";
-                        const b64Data = attachedMedia.base64.split(",")[1] || attachedMedia.base64;
-                        contentsParts.push({
-                            inlineData: {
-                                mimeType: mime,
-                                data: b64Data
-                            }
-                        });
+                    // Costruisci cronologia multi-turn per una conversazione fluida e naturale
+                    const historyContents = [];
+                    const recentMsgs = (aiChatMessages || []).slice(-6);
+                    for (let i = 0; i < recentMsgs.length; i++) {
+                        const m = recentMsgs[i];
+                        const isLast = (i === recentMsgs.length - 1);
+                        const role = m.sender === "user" ? "user" : "model";
+                        const parts = [{ text: m.text || "..." }];
+                        if (isLast && attachedMedia && attachedMedia.base64) {
+                            const mime = (attachedMedia.file && attachedMedia.file.type) ? attachedMedia.file.type : "image/jpeg";
+                            const b64Data = attachedMedia.base64.split(",")[1] || attachedMedia.base64;
+                            parts.push({
+                                inlineData: {
+                                    mimeType: mime,
+                                    data: b64Data
+                                }
+                            });
+                        }
+                        if (historyContents.length === 0 && role === "model") continue;
+                        if (historyContents.length > 0 && historyContents[historyContents.length - 1].role === role) {
+                            historyContents[historyContents.length - 1].parts.push(...parts);
+                        } else {
+                            historyContents.push({ role, parts });
+                        }
                     }
 
                     const modelsToTry = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash"];
@@ -14857,12 +14878,19 @@ function getCalisthenicsExpertResponse(query) {
                             const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${encodeURIComponent(apiKeyToUse)}`, {
                                 method: "POST",
                                 headers: { "Content-Type": "application/json" },
-                                body: JSON.stringify({ contents: [{ parts: contentsParts }] })
+                                body: JSON.stringify({
+                                    systemInstruction: { parts: [{ text: systemPrompt }] },
+                                    contents: historyContents.length > 0 ? historyContents : [{ role: "user", parts: [{ text: query || "Form Check postura" }] }],
+                                    generationConfig: { temperature: 0.7, maxOutputTokens: 1000 }
+                                })
                             });
                             if (res.ok) {
                                 const resData = await res.json();
                                 aiResponse = resData.candidates?.[0]?.content?.parts?.[0]?.text;
                                 if (aiResponse) break;
+                            } else {
+                                const errData = await res.json().catch(() => ({}));
+                                console.warn(`Gemini API error [${m} - HTTP ${res.status}]:`, errData);
                             }
                         } catch(err) {
                             console.warn('Tentativo Gemini fallito su ' + m + ':', err);
@@ -14896,20 +14924,31 @@ function getCalisthenicsExpertResponse(query) {
         }
 
         function openGeminiApiKeyModal() {
-            const current = localStorage.getItem("calisthenics_gemini_api_key") || "";
-            const key = prompt("⚙️ Configurazione Chiave Google Gemini AI (Opzionale)\n\n" +
-                "1. Vai su https://aistudio.google.com/app/apikey (è 100% gratuita con il tuo account Google)\n" +
+            const current = (GLOBAL_GEMINI_API_KEY || localStorage.getItem("calisthenics_gemini_api_key") || "").trim();
+            const key = prompt("⚙️ Attivazione Coach AI con Google Gemini\n\n" +
+                "1. Vai su https://aistudio.google.com/app/apikey (100% gratuita per sempre, senza carta di credito)\n" +
                 "2. Clicca 'Create API Key' e copiala\n" +
-                "3. Incollala qui sotto per sbloccare risposte AI generative su qualsiasi domanda:\n\n" +
-                "(Lascia vuoto per usare il Coach con Knowledge Base integrata gratuita)", current);
+                "3. Incollala qui sotto per sbloccare risposte AI generative su qualsiasi domanda e il Form Check visivo!\n\n" +
+                "(Lascia vuoto per disattivare)", current);
             if (key !== null) {
-                if (key.trim()) {
-                    localStorage.setItem("calisthenics_gemini_api_key", key.trim());
-                    alert("✅ Chiave Google Gemini salvata! Ora il Coach AI risponderà con intelligenza generativa avanzata.");
+                const trimmed = key.trim().replace(/^["']|["']$/g, '');
+                if (trimmed) {
+                    localStorage.setItem("calisthenics_gemini_api_key", trimmed);
+                    GLOBAL_GEMINI_API_KEY = trimmed;
+                    if (typeof showAppToast === 'function') {
+                        showAppToast("⚡ Coach AI con Google Gemini attivato con successo!", "success");
+                    } else {
+                        alert("⚡ Coach AI con Google Gemini attivato con successo!");
+                    }
                     renderAiHelperView(true);
                 } else {
                     localStorage.removeItem("calisthenics_gemini_api_key");
-                    alert("Modalità motore di conoscenza integrato ripristinata.");
+                    GLOBAL_GEMINI_API_KEY = "";
+                    if (typeof showAppToast === 'function') {
+                        showAppToast("Chiave rimossa. Ripristinato motore integrato.", "info");
+                    } else {
+                        alert("Chiave rimossa. Ripristinato motore integrato.");
+                    }
                     renderAiHelperView(true);
                 }
             }
@@ -20611,7 +20650,7 @@ function getCalisthenicsExpertResponse(query) {
             const footer = document.getElementById('events-footer');
             if (!footer) return;
             if (currentUser) {
-                footer.innerHTML = `<button class="chat-new-btn" onclick="openCreateEventModal()">➕ Nuovo sondaggio allenamento</button>`;
+                footer.innerHTML = `<button class="chat-new-btn" onclick="openCreateEventModal()" style="display:inline-flex; align-items:center; justify-content:center; gap:6px;"><svg class="ui-svg-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" style="filter:drop-shadow(0 0 5px rgba(255, 255, 255, 0.95)); vertical-align:-2px;"><rect x="10.5" y="4" width="3" height="16" rx="1.5" fill="#ffffff"/><rect x="4" y="10.5" width="16" height="3" rx="1.5" fill="#ffffff"/></svg> Nuovo sondaggio allenamento</button>`;
             } else {
                 footer.innerHTML = `<p style="color: var(--subtext); font-size: 0.85rem; text-align:center; margin:0; padding:8px; width:100%;">🔒 Accedi per creare o votare i sondaggi.</p>`;
             }
@@ -21067,7 +21106,7 @@ function getCalisthenicsExpertResponse(query) {
             bodyContent.innerHTML = `<p style="text-align:center; color:var(--subtext); font-size:0.85rem; padding:15px;">Caricamento sondaggi...</p>`;
             actionsBox.innerHTML = `
                 <button class="btn-cancel" id="modal-btn-cancel">Chiudi</button>
-                <button class="btn-confirm" id="group-poll-create-btn">➕ Crea sondaggio</button>
+                <button class="btn-confirm" id="group-poll-create-btn" style="display:inline-flex; align-items:center; justify-content:center; gap:6px;"><svg class="ui-svg-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" style="filter:drop-shadow(0 0 5px rgba(255, 255, 255, 0.95)); vertical-align:-2px;"><rect x="10.5" y="4" width="3" height="16" rx="1.5" fill="#ffffff"/><rect x="4" y="10.5" width="16" height="3" rx="1.5" fill="#ffffff"/></svg> Crea sondaggio</button>
             `;
             modal.classList.add('active');
             document.getElementById('modal-btn-cancel').onclick = () => modal.classList.remove('active');
@@ -21087,7 +21126,7 @@ function getCalisthenicsExpertResponse(query) {
                                 <div style="font-size:2.2rem; margin-bottom:8px;">📊</div>
                                 <p style="color:var(--text); font-weight:600; margin:0 0 6px 0;">Nessun sondaggio per questo gruppo</p>
                                 <p style="color:var(--subtext); font-size:0.85rem; margin:0 0 15px 0;">Crea un sondaggio privato per organizzare un allenamento solo con i membri di questo gruppo!</p>
-                                <button class="chat-new-btn" onclick="openCreateEventModal('${convId}')">➕ Crea il primo sondaggio</button>
+                                <button class="chat-new-btn" onclick="openCreateEventModal('${convId}')" style="display:inline-flex; align-items:center; justify-content:center; gap:6px;"><svg class="ui-svg-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" style="filter:drop-shadow(0 0 5px rgba(255, 255, 255, 0.95)); vertical-align:-2px;"><rect x="10.5" y="4" width="3" height="16" rx="1.5" fill="#ffffff"/><rect x="4" y="10.5" width="16" height="3" rx="1.5" fill="#ffffff"/></svg> Crea il primo sondaggio</button>
                             </div>
                         `;
                         return;
