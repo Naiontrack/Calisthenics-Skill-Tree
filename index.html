@@ -2269,35 +2269,72 @@
 
         .chat-tabs {
             display: flex;
-            border-bottom: 1px solid var(--line-color);
-            background: rgba(255, 255, 255, 0.02);
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 5px 6px;
+            margin: 10px 14px 8px 14px;
+            border-radius: 9999px;
+            background: rgba(15, 23, 42, 0.55);
+            backdrop-filter: blur(14px) saturate(180%);
+            -webkit-backdrop-filter: blur(14px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.25), 0 4px 14px rgba(0, 0, 0, 0.2);
             overflow-x: auto;
+            scrollbar-width: none;
+        }
+        .chat-tabs::-webkit-scrollbar {
+            display: none;
         }
 
         .chat-tab-btn {
             flex: 1;
             position: relative;
-            background: none;
-            border: none;
-            border-radius: 0;
-            padding: 12px 8px;
-            font-size: 0.85rem;
-            min-height: 44px;
+            background: transparent;
+            border: 1px solid transparent;
+            border-radius: 9999px;
+            padding: 8px 14px;
+            font-size: 0.84rem;
+            min-height: 38px;
             color: var(--subtext);
             cursor: pointer;
-            border-bottom: 2px solid transparent;
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            gap: 5px;
+            gap: 6px;
             white-space: nowrap;
+            transition: all 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .chat-tab-btn:hover {
+            color: var(--text);
+            background: rgba(255, 255, 255, 0.06);
         }
 
         .chat-tab-btn.active {
-            color: var(--accent);
-            border-bottom: 2px solid var(--accent);
-            font-weight: bold;
-            background: rgba(56, 189, 248, 0.05);
+            color: #ffffff;
+            background: linear-gradient(135deg, rgba(56, 189, 248, 0.32), rgba(99, 102, 241, 0.28));
+            border: 1px solid rgba(56, 189, 248, 0.55);
+            box-shadow: 0 4px 14px rgba(56, 189, 248, 0.3), inset 0 1px 1px rgba(255, 255, 255, 0.3);
+            font-weight: 700;
+            transform: scale(1.02);
+        }
+
+        @keyframes chatViewFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(8px) scale(0.995);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .chat-tab-transition {
+            animation: chatViewFadeIn 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
 
         .chat-thread-header {
@@ -3614,6 +3651,7 @@
             overflow: hidden;
             background: #0b0f19;
             flex-shrink: 0;
+            border-bottom: none !important;
         }
 
         .challenge-mode-card-banner img {
@@ -3623,6 +3661,8 @@
             object-position: center;
             transition: transform 0.35s ease;
             display: block;
+            border: none !important;
+            outline: none !important;
         }
 
         .challenge-mode-card:hover .challenge-mode-card-banner img {
@@ -3632,8 +3672,34 @@
         .challenge-mode-card-overlay {
             position: absolute;
             inset: 0;
-            background: linear-gradient(180deg, rgba(0,0,0,0.05) 0%, rgba(10,15,28,0.85) 100%);
+            background: linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(10,15,28,0.2) 40%, rgba(10,15,28,0.85) 85%, var(--input-bg, #0f172a) 100%);
             pointer-events: none;
+        }
+
+        .challenge-mode-card-banner::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            right: 0;
+            height: 20px;
+            background: linear-gradient(to bottom, transparent 0%, var(--input-bg, #0f172a) 100%);
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        body.galaxy-bg-active .challenge-mode-card-banner::after {
+            background: linear-gradient(to bottom, transparent 0%, rgba(15, 23, 42, 0.98) 100%);
+        }
+
+        body.galaxy-bg-active.theme-light .challenge-mode-card-banner::after {
+            background: linear-gradient(to bottom, transparent 0%, rgba(255, 255, 255, 0.98) 100%);
+        }
+
+        @media (max-width: 600px) {
+            .challenge-mode-card-banner::after {
+                display: none;
+            }
         }
 
         .challenge-mode-tag-badge {
@@ -4593,6 +4659,9 @@
             border-color: var(--accent);
             box-shadow: 0 3px 12px rgba(56, 189, 248, 0.4);
         }
+        .tree-view-toggle-btn.active svg {
+            filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.95)) brightness(2.2);
+        }
 
 
         /* ====================================================================
@@ -5436,14 +5505,18 @@
             box-shadow: 0 0 18px rgba(56, 189, 248, 0.4) !important;
         }
 
-        /* Chat tabs interne pulite senza scatole doppie */
+        /* Chat tabs capsule flottante su galaxy glass */
         body.galaxy-bg-active .chat-tabs {
-            background: transparent !important;
-            border: none !important;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.10) !important;
-            box-shadow: none !important;
-            backdrop-filter: none !important;
-            -webkit-backdrop-filter: none !important;
+            background: rgba(8, 14, 28, 0.52) !important;
+            border: 1px solid rgba(255, 255, 255, 0.16) !important;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35), inset 0 1px 2px rgba(255, 255, 255, 0.15) !important;
+            backdrop-filter: blur(16px) saturate(180%) !important;
+            -webkit-backdrop-filter: blur(16px) saturate(180%) !important;
+        }
+        body.galaxy-bg-active .chat-tab-btn.active {
+            background: linear-gradient(135deg, rgba(56, 189, 248, 0.38), rgba(129, 140, 248, 0.32)) !important;
+            border-color: rgba(56, 189, 248, 0.65) !important;
+            box-shadow: 0 0 16px rgba(56, 189, 248, 0.4), inset 0 1px 1.5px rgba(255, 255, 255, 0.4) !important;
         }
 
         /* Hover states in galaxy glass mode */
@@ -5553,12 +5626,17 @@
         }
 
         body.galaxy-bg-active.theme-light .chat-tabs {
-            background: transparent !important;
-            border: none !important;
-            border-bottom: 1px solid rgba(0, 0, 0, 0.08) !important;
-            box-shadow: none !important;
-            backdrop-filter: none !important;
-            -webkit-backdrop-filter: none !important;
+            background: rgba(255, 255, 255, 0.65) !important;
+            border: 1px solid rgba(255, 255, 255, 0.85) !important;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06), inset 0 1px 2px rgba(255, 255, 255, 0.9) !important;
+            backdrop-filter: blur(16px) !important;
+            -webkit-backdrop-filter: blur(16px) !important;
+        }
+        body.galaxy-bg-active.theme-light .chat-tab-btn.active {
+            color: #0284c7 !important;
+            background: #ffffff !important;
+            border-color: rgba(2, 132, 199, 0.25) !important;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
         }
 
         body.galaxy-bg-active.theme-light .bento-stat-chip,
@@ -7205,7 +7283,7 @@
                     <svg class="ui-svg-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" style="filter:drop-shadow(0 0 4px rgba(52, 211, 153, 0.75)); vertical-align:-2px;"><defs><linearGradient id="btn-tree-grad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#6ee7b7"/><stop offset="50%" stop-color="#34d399"/><stop offset="100%" stop-color="#059669"/></linearGradient></defs><circle cx="12" cy="5" r="2.4" fill="url(#btn-tree-grad)"/><circle cx="5" cy="12" r="2.2" fill="url(#btn-tree-grad)"/><circle cx="19" cy="12" r="2.2" fill="url(#btn-tree-grad)"/><circle cx="12" cy="19" r="2.4" fill="url(#btn-tree-grad)"/><path d="M12 7.4v9.2m0-4.6l-5-2m5 2l5-2" stroke="url(#btn-tree-grad)" stroke-width="2" stroke-linecap="round"/></svg> Albero RPG
                 </button>
                 <button type="button" class="tree-view-toggle-btn" id="btn-view-cards" onclick="toggleSkillTreeView('cards')">
-                    <svg class="ui-svg-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" style="filter:drop-shadow(0 0 4px rgba(56, 189, 248, 0.75)); vertical-align:-2px;"><defs><linearGradient id="btn-cards-grad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#38bdf8"/><stop offset="100%" stop-color="#60a5fa"/></linearGradient></defs><rect x="3" y="3" width="7" height="7" rx="1.5" stroke="url(#btn-cards-grad)" stroke-width="2" fill="rgba(56, 189, 248, 0.2)"/><rect x="14" y="3" width="7" height="7" rx="1.5" stroke="url(#btn-cards-grad)" stroke-width="2" fill="rgba(56, 189, 248, 0.2)"/><rect x="14" y="14" width="7" height="7" rx="1.5" stroke="url(#btn-cards-grad)" stroke-width="2" fill="rgba(56, 189, 248, 0.2)"/><rect x="3" y="14" width="7" height="7" rx="1.5" stroke="url(#btn-cards-grad)" stroke-width="2" fill="rgba(56, 189, 248, 0.2)"/></svg> Schede Classiche
+                    <svg class="ui-svg-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" style="filter:drop-shadow(0 0 5px rgba(251, 191, 36, 0.85)); vertical-align:-2px;"><defs><linearGradient id="btn-cards-grad" x1="0%" y1="0%" x2="100%" y2="100%" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#fef08a"/><stop offset="50%" stop-color="#facc15"/><stop offset="100%" stop-color="#f59e0b"/></linearGradient></defs><rect x="3" y="3" width="7" height="7" rx="1.8" stroke="url(#btn-cards-grad)" stroke-width="2" fill="rgba(250, 204, 21, 0.25)"/><rect x="14" y="3" width="7" height="7" rx="1.8" stroke="url(#btn-cards-grad)" stroke-width="2" fill="rgba(250, 204, 21, 0.25)"/><rect x="14" y="14" width="7" height="7" rx="1.8" stroke="url(#btn-cards-grad)" stroke-width="2" fill="rgba(250, 204, 21, 0.25)"/><rect x="3" y="14" width="7" height="7" rx="1.8" stroke="url(#btn-cards-grad)" stroke-width="2" fill="rgba(250, 204, 21, 0.25)"/></svg> Schede Classiche
                 </button>
             </div>
 
@@ -7249,13 +7327,13 @@
          ==================================================================== -->
     <div class="main-tab-view" id="tab-view-workouts">
         <div class="tab-header-banner">
-            <h2><svg class="ui-svg-icon" viewBox="0 0 24 24" width="24" height="24" fill="none" style="filter:drop-shadow(0 0 6px rgba(56, 189, 248, 0.8)); margin-right:8px;"><defs><linearGradient id="hdr-wkt-db" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#7dd3fc"/><stop offset="50%" stop-color="#38bdf8"/><stop offset="100%" stop-color="#0284c7"/></linearGradient></defs><rect x="2" y="8" width="3" height="8" rx="1.5" fill="url(#hdr-wkt-db)"/><rect x="19" y="8" width="3" height="8" rx="1.5" fill="url(#hdr-wkt-db)"/><rect x="5.5" y="6" width="2.5" height="12" rx="1.2" fill="url(#hdr-wkt-db)"/><rect x="16" y="6" width="2.5" height="12" rx="1.2" fill="url(#hdr-wkt-db)"/><line x1="8" y1="12" x2="16" y2="12" stroke="url(#hdr-wkt-db)" stroke-width="2.5" stroke-linecap="round"/></svg> Registro Allenamenti & Community</h2>
+            <h2><svg class="ui-svg-icon" viewBox="0 0 24 24" width="24" height="24" fill="none" style="filter:drop-shadow(0 0 6px rgba(56, 189, 248, 0.8)); margin-right:8px;"><defs><linearGradient id="hdr-wkt-db" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#7dd3fc"/><stop offset="50%" stop-color="#38bdf8"/><stop offset="100%" stop-color="#0284c7"/></linearGradient></defs><rect x="2" y="8" width="3" height="8" rx="1.5" fill="url(#hdr-wkt-db)"/><rect x="19" y="8" width="3" height="8" rx="1.5" fill="url(#hdr-wkt-db)"/><rect x="5.5" y="6" width="2.5" height="12" rx="1.2" fill="url(#hdr-wkt-db)"/><rect x="16" y="6" width="2.5" height="12" rx="1.2" fill="url(#hdr-wkt-db)"/><rect x="8" y="10.8" width="8" height="2.4" rx="1.2" fill="url(#hdr-wkt-db)"/></svg> Registro Allenamenti & Community</h2>
             <p>Traccia i tuoi volumi personali o partecipa ai ritrovi e sondaggi della community.</p>
         </div>
 
         <div class="workouts-subtabs-nav">
             <button type="button" class="workouts-subtab-btn active" id="btn-subtab-workouts-diary" onclick="switchWorkoutsSubTab('diary')"><svg class="ui-svg-icon" viewBox="0 0 24 24" width="17" height="17" fill="none" style="filter:drop-shadow(0 0 4px rgba(45, 212, 191, 0.75)); margin-right:4px;"><defs><linearGradient id="subtab-diary" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#2dd4bf"/><stop offset="100%" stop-color="#0284c7"/></linearGradient></defs><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" stroke="url(#subtab-diary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="rgba(45, 212, 191, 0.12)"/><rect x="8" y="2" width="8" height="4" rx="1" stroke="url(#subtab-diary)" stroke-width="2" fill="rgba(14, 165, 233, 0.3)"/></svg> Diario Personale</button>
-            <button type="button" class="workouts-subtab-btn" id="btn-subtab-workouts-events" onclick="switchWorkoutsSubTab('events')"><svg class="ui-svg-icon" viewBox="0 0 24 24" width="17" height="17" fill="none" style="filter:drop-shadow(0 0 4px rgba(251, 113, 133, 0.75)); margin-right:4px;"><defs><linearGradient id="subtab-events" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#fb7185"/><stop offset="100%" stop-color="#fb923c"/></linearGradient></defs><rect x="3" y="4" width="18" height="18" rx="2.5" stroke="url(#subtab-events)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="rgba(251, 113, 133, 0.12)"/><line x1="16" y1="2" x2="16" y2="6" stroke="url(#subtab-events)" stroke-width="2" stroke-linecap="round"/><line x1="8" y1="2" x2="8" y2="6" stroke="url(#subtab-events)" stroke-width="2" stroke-linecap="round"/><line x1="3" y1="10" x2="21" y2="10" stroke="url(#subtab-events)" stroke-width="2"/></svg> Sondaggi & Ritrovi <span class="events-badge-dot" id="events-badge-dot" style="display:none; position:relative; top:auto; right:auto; width:8px; height:8px; background:#ef4444; border-radius:50%; margin-left:6px; vertical-align:middle;"></span></button>
+            <button type="button" class="workouts-subtab-btn" id="btn-subtab-workouts-events" onclick="switchWorkoutsSubTab('events')"><svg class="ui-svg-icon" viewBox="0 0 24 24" width="17" height="17" fill="none" style="filter:drop-shadow(0 0 5px rgba(251, 113, 133, 0.8)); margin-right:5px; vertical-align:-3px;"><defs><linearGradient id="subtab-events" x1="0%" y1="0%" x2="100%" y2="100%" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#fb7185"/><stop offset="50%" stop-color="#fb923c"/><stop offset="100%" stop-color="#facc15"/></linearGradient></defs><rect x="3" y="13" width="4.5" height="8" rx="1.5" fill="url(#subtab-events)"/><rect x="9.75" y="6" width="4.5" height="15" rx="1.5" fill="url(#subtab-events)"/><rect x="16.5" y="10" width="4.5" height="11" rx="1.5" fill="url(#subtab-events)"/><circle cx="12" cy="3" r="1.5" fill="#facc15"/></svg> Sondaggi & Ritrovi <span class="events-badge-dot" id="events-badge-dot" style="display:none; position:relative; top:auto; right:auto; width:8px; height:8px; background:#ef4444; border-radius:50%; margin-left:6px; vertical-align:middle;"></span></button>
         </div>
 
         <!-- Subtab 1: Personal Workout Diary -->
@@ -7282,9 +7360,9 @@
         <div class="workouts-subtab-pane" id="workouts-subtab-events">
             <div class="arena-card-box">
                 <div class="arena-card-box-header">
-                    <h3 style="display:flex; align-items:center; gap:8px;"><svg class="ui-svg-icon" viewBox="0 0 24 24" width="19" height="19" fill="none" style="filter:drop-shadow(0 0 4px rgba(251, 113, 133, 0.75));"><defs><linearGradient id="box-events-cal" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#fb7185"/><stop offset="100%" stop-color="#fb923c"/></linearGradient></defs><rect x="3" y="4" width="18" height="18" rx="2.5" stroke="url(#box-events-cal)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="rgba(251, 113, 133, 0.12)"/><line x1="16" y1="2" x2="16" y2="6" stroke="url(#box-events-cal)" stroke-width="2" stroke-linecap="round"/><line x1="8" y1="2" x2="8" y2="6" stroke="url(#box-events-cal)" stroke-width="2" stroke-linecap="round"/><line x1="3" y1="10" x2="21" y2="10" stroke="url(#box-events-cal)" stroke-width="2"/></svg> Eventi & Sondaggi Allenamento</h3>
+                    <h3 style="display:flex; align-items:center; gap:8px;"><svg class="ui-svg-icon" viewBox="0 0 24 24" width="19" height="19" fill="none" style="filter:drop-shadow(0 0 5px rgba(251, 113, 133, 0.8)); vertical-align:-3px;"><defs><linearGradient id="box-events-cal" x1="0%" y1="0%" x2="100%" y2="100%" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#fb7185"/><stop offset="50%" stop-color="#fb923c"/><stop offset="100%" stop-color="#facc15"/></linearGradient></defs><rect x="3" y="13" width="4.5" height="8" rx="1.5" fill="url(#box-events-cal)"/><rect x="9.75" y="6" width="4.5" height="15" rx="1.5" fill="url(#box-events-cal)"/><rect x="16.5" y="10" width="4.5" height="11" rx="1.5" fill="url(#box-events-cal)"/><circle cx="12" cy="3" r="1.5" fill="#facc15"/></svg> Eventi & Sondaggi Allenamento</h3>
                     <div style="display:flex; gap:8px; align-items:center;">
-                        <button class="chat-new-btn" onclick="openCreateEventModal()" style="display:inline-flex; align-items:center; gap:6px;"><svg class="ui-svg-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" style="filter:drop-shadow(0 0 4px rgba(255, 255, 255, 0.8));"><defs><linearGradient id="btn-plus-poll" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#ffffff"/><stop offset="100%" stop-color="#fed7aa"/></linearGradient></defs><line x1="12" y1="5" x2="12" y2="19" stroke="url(#btn-plus-poll)" stroke-width="2.8" stroke-linecap="round"/><line x1="5" y1="12" x2="19" y2="12" stroke="url(#btn-plus-poll)" stroke-width="2.8" stroke-linecap="round"/></svg> Nuovo Sondaggio</button>
+                        <button class="chat-new-btn" onclick="openCreateEventModal()" style="display:inline-flex; align-items:center; gap:6px;"><svg class="ui-svg-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" style="filter:drop-shadow(0 0 5px rgba(255, 255, 255, 0.95)); vertical-align:-2px;"><rect x="10.5" y="4" width="3" height="16" rx="1.5" fill="#ffffff"/><rect x="4" y="10.5" width="16" height="3" rx="1.5" fill="#ffffff"/></svg> Nuovo Sondaggio</button>
                     </div>
                 </div>
                 <div class="events-panel active" id="events-panel" style="position:static; width:100%; height:auto; box-shadow:none; border:none; background:transparent;">
@@ -7374,7 +7452,7 @@
             </div>
             <div class="ai-helper-header-bar" id="ai-helper-header-bar" style="display:none;">
                 <button type="button" class="ai-helper-chip-btn ai-helper-chip-clear" onclick="clearAiChatHistory()" style="display:inline-flex; align-items:center; gap:5px;">
-                    <svg class="ui-svg-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" style="filter:drop-shadow(0 0 4px rgba(239, 68, 68, 0.7));"><defs><linearGradient id="chip-trash-grad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#f87171"/><stop offset="100%" stop-color="#dc2626"/></linearGradient></defs><polyline points="3 6 5 6 21 6" stroke="url(#chip-trash-grad)" stroke-width="2" stroke-linecap="round"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" stroke="url(#chip-trash-grad)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="rgba(239, 68, 68, 0.15)"/></svg> Pulisci Chat
+                    <svg class="ui-svg-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" style="filter:drop-shadow(0 0 5px rgba(244, 63, 94, 0.85)); vertical-align:-2px;"><defs><linearGradient id="chip-sweep-grad" x1="0%" y1="0%" x2="100%" y2="100%" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#fda4af"/><stop offset="50%" stop-color="#f43f5e"/><stop offset="100%" stop-color="#e11d48"/></linearGradient></defs><path d="M19 3l-8 8" stroke="url(#chip-sweep-grad)" stroke-width="2.4" stroke-linecap="round"/><path d="M11 11l2 2-1 4-6 4 1-5 4-5z" stroke="url(#chip-sweep-grad)" stroke-width="1.8" stroke-linejoin="round" fill="rgba(244, 63, 94, 0.25)"/><line x1="8" y1="17" x2="6" y2="19" stroke="url(#chip-sweep-grad)" stroke-width="1.4" stroke-linecap="round"/><circle cx="18.5" cy="14.5" r="1.2" fill="#fda4af"/><circle cx="21" cy="9.5" r="1.5" fill="#fda4af"/><circle cx="6.5" cy="8" r="1.3" fill="#fda4af"/></svg> Pulisci Chat
                 </button>
             </div>
             <div class="chat-messages" id="chat-messages" style="flex:1;">
@@ -7577,7 +7655,7 @@
             <span class="bottom-nav-icon">
                 <svg viewBox="0 0 24 24" width="22" height="22" fill="none" style="filter:drop-shadow(0 0 5px rgba(56, 189, 248, 0.75));">
                     <defs>
-                        <linearGradient id="bnav-workouts" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <linearGradient id="bnav-workouts" x1="0%" y1="0%" x2="100%" y2="100%" gradientUnits="userSpaceOnUse">
                             <stop offset="0%" stop-color="#7dd3fc"/>
                             <stop offset="50%" stop-color="#38bdf8"/>
                             <stop offset="100%" stop-color="#0284c7"/>
@@ -7587,7 +7665,7 @@
                     <rect x="19" y="8" width="3" height="8" rx="1.5" fill="url(#bnav-workouts)"/>
                     <rect x="5.5" y="6" width="2.5" height="12" rx="1.2" fill="url(#bnav-workouts)"/>
                     <rect x="16" y="6" width="2.5" height="12" rx="1.2" fill="url(#bnav-workouts)"/>
-                    <line x1="8" y1="12" x2="16" y2="12" stroke="url(#bnav-workouts)" stroke-width="2.5" stroke-linecap="round"/>
+                    <rect x="8" y="10.8" width="8" height="2.4" rx="1.2" fill="url(#bnav-workouts)"/>
                 </svg>
             </span>
             <span class="bottom-nav-label">Allenamenti</span>
@@ -7766,29 +7844,29 @@
         // ==========================================
         window.APP_ICONS = {
             tree: `<svg class="ui-svg-icon" viewBox="0 0 24 24" width="17" height="17" fill="none" style="filter:drop-shadow(0 0 4px rgba(52, 211, 153, 0.7));"><defs><linearGradient id="ai-tree" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#6ee7b7"/><stop offset="50%" stop-color="#34d399"/><stop offset="100%" stop-color="#059669"/></linearGradient></defs><circle cx="12" cy="5" r="2.4" fill="url(#ai-tree)"/><circle cx="5" cy="12" r="2.2" fill="url(#ai-tree)"/><circle cx="19" cy="12" r="2.2" fill="url(#ai-tree)"/><circle cx="12" cy="19" r="2.4" fill="url(#ai-tree)"/><path d="M12 7.4v9.2m0-4.6l-5-2m5 2l5-2" stroke="url(#ai-tree)" stroke-width="2" stroke-linecap="round"/></svg>`,
-            cards: `<svg class="ui-svg-icon" viewBox="0 0 24 24" width="17" height="17" fill="none" style="filter:drop-shadow(0 0 4px rgba(56, 189, 248, 0.7));"><defs><linearGradient id="ai-cards" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#38bdf8"/><stop offset="100%" stop-color="#60a5fa"/></linearGradient></defs><rect x="3" y="3" width="7" height="7" rx="1.5" stroke="url(#ai-cards)" stroke-width="2" fill="rgba(56, 189, 248, 0.2)"/><rect x="14" y="3" width="7" height="7" rx="1.5" stroke="url(#ai-cards)" stroke-width="2" fill="rgba(56, 189, 248, 0.2)"/><rect x="14" y="14" width="7" height="7" rx="1.5" stroke="url(#ai-cards)" stroke-width="2" fill="rgba(56, 189, 248, 0.2)"/><rect x="3" y="14" width="7" height="7" rx="1.5" stroke="url(#ai-cards)" stroke-width="2" fill="rgba(56, 189, 248, 0.2)"/></svg>`,
+            cards: `<svg class="ui-svg-icon" viewBox="0 0 24 24" width="17" height="17" fill="none" style="filter:drop-shadow(0 0 5px rgba(250, 204, 21, 0.85)); vertical-align:-2px;"><defs><linearGradient id="ai-cards" x1="0%" y1="0%" x2="100%" y2="100%" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#fef08a"/><stop offset="50%" stop-color="#facc15"/><stop offset="100%" stop-color="#f59e0b"/></linearGradient></defs><rect x="3" y="3" width="7.5" height="7.5" rx="2" stroke="url(#ai-cards)" stroke-width="2" fill="rgba(250, 204, 21, 0.22)"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="2" stroke="url(#ai-cards)" stroke-width="2" fill="rgba(250, 204, 21, 0.22)"/><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="2" stroke="url(#ai-cards)" stroke-width="2" fill="rgba(250, 204, 21, 0.22)"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="2" stroke="url(#ai-cards)" stroke-width="2" fill="rgba(250, 204, 21, 0.22)"/></svg>`,
             search: `<svg class="ui-svg-icon" viewBox="0 0 24 24" width="17" height="17" fill="none" style="filter:drop-shadow(0 0 4px rgba(56, 189, 248, 0.7));"><defs><linearGradient id="ai-search" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#38bdf8"/><stop offset="100%" stop-color="#0ea5e9"/></linearGradient></defs><circle cx="11" cy="11" r="7" stroke="url(#ai-search)" stroke-width="2.2" fill="rgba(56, 189, 248, 0.1)"/><line x1="21" y1="21" x2="16.65" y2="16.65" stroke="url(#ai-search)" stroke-width="2.5" stroke-linecap="round"/></svg>`,
             folder: `<svg class="ui-svg-icon" viewBox="0 0 24 24" width="17" height="17" fill="none" style="filter:drop-shadow(0 0 4px rgba(56, 189, 248, 0.6));"><defs><linearGradient id="ai-folder" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#38bdf8"/><stop offset="100%" stop-color="#0284c7"/></linearGradient></defs><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" stroke="url(#ai-folder)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="rgba(56, 189, 248, 0.15)"/></svg>`,
             flame: `🔥`,
-            dumbbell: `<svg class="ui-svg-icon" viewBox="0 0 24 24" width="19" height="19" fill="none" style="filter:drop-shadow(0 0 5px rgba(56, 189, 248, 0.75));"><defs><linearGradient id="ai-dumbbell" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#7dd3fc"/><stop offset="50%" stop-color="#38bdf8"/><stop offset="100%" stop-color="#0284c7"/></linearGradient></defs><rect x="2" y="8" width="3" height="8" rx="1.5" fill="url(#ai-dumbbell)"/><rect x="19" y="8" width="3" height="8" rx="1.5" fill="url(#ai-dumbbell)"/><rect x="5.5" y="6" width="2.5" height="12" rx="1.2" fill="url(#ai-dumbbell)"/><rect x="16" y="6" width="2.5" height="12" rx="1.2" fill="url(#ai-dumbbell)"/><line x1="8" y1="12" x2="16" y2="12" stroke="url(#ai-dumbbell)" stroke-width="2.5" stroke-linecap="round"/></svg>`,
+            dumbbell: `<svg class="ui-svg-icon" viewBox="0 0 24 24" width="19" height="19" fill="none" style="filter:drop-shadow(0 0 5px rgba(56, 189, 248, 0.75)); vertical-align:-2px;"><defs><linearGradient id="ai-dumbbell" x1="0%" y1="0%" x2="100%" y2="100%" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#7dd3fc"/><stop offset="50%" stop-color="#38bdf8"/><stop offset="100%" stop-color="#0284c7"/></linearGradient></defs><rect x="2" y="8" width="3" height="8" rx="1.5" fill="url(#ai-dumbbell)"/><rect x="19" y="8" width="3" height="8" rx="1.5" fill="url(#ai-dumbbell)"/><rect x="5.5" y="6" width="2.5" height="12" rx="1.2" fill="url(#ai-dumbbell)"/><rect x="16" y="6" width="2.5" height="12" rx="1.2" fill="url(#ai-dumbbell)"/><rect x="8" y="10.8" width="8" height="2.4" rx="1.2" fill="url(#ai-dumbbell)"/></svg>`,
             swords: `<svg class="ui-svg-icon" viewBox="0 0 24 24" width="19" height="19" fill="none" style="filter:drop-shadow(0 0 5px rgba(249, 115, 22, 0.75));"><defs><linearGradient id="ai-swords" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#f87171"/><stop offset="50%" stop-color="#fb923c"/><stop offset="100%" stop-color="#facc15"/></linearGradient></defs><path d="M14.5 17.5L3 6V3h3l11.5 11.5" stroke="url(#ai-swords)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M13 19l6-6" stroke="url(#ai-swords)" stroke-width="2" stroke-linecap="round"/><path d="M16 16l4 4" stroke="url(#ai-swords)" stroke-width="2" stroke-linecap="round"/><path d="M19 21l2-2" stroke="url(#ai-swords)" stroke-width="2" stroke-linecap="round"/><path d="M9.5 17.5L21 6V3h-3L6.5 14.5" stroke="url(#ai-swords)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M11 19l-6-6" stroke="url(#ai-swords)" stroke-width="2" stroke-linecap="round"/><path d="M8 16l-4 4" stroke="url(#ai-swords)" stroke-width="2" stroke-linecap="round"/></svg>`,
             trophy: `<svg class="ui-svg-icon" viewBox="0 0 24 24" width="19" height="19" fill="none" style="filter:drop-shadow(0 0 5px rgba(250, 204, 21, 0.8));"><defs><linearGradient id="ai-trophy" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#fef08a"/><stop offset="50%" stop-color="#facc15"/><stop offset="100%" stop-color="#d97706"/></linearGradient></defs><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" stroke="url(#ai-trophy)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" stroke="url(#ai-trophy)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 22h16" stroke="url(#ai-trophy)" stroke-width="2" stroke-linecap="round"/><path d="M10 14.66V17c0 .55-.45 1-1 1H8v4h8v-4h-1c-.55 0-1-.45-1-1v-2.34" stroke="url(#ai-trophy)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M18 4H6v7a6 6 0 0 0 12 0V4z" stroke="url(#ai-trophy)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="rgba(250, 204, 21, 0.18)"/></svg>`,
             target: `<svg class="ui-svg-icon" viewBox="0 0 24 24" width="19" height="19" fill="none" style="filter:drop-shadow(0 0 5px rgba(239, 68, 68, 0.75));"><defs><linearGradient id="ai-target" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#f87171"/><stop offset="100%" stop-color="#dc2626"/></linearGradient></defs><circle cx="12" cy="12" r="10" stroke="url(#ai-target)" stroke-width="2" fill="rgba(239, 68, 68, 0.1)"/><circle cx="12" cy="12" r="6" stroke="url(#ai-target)" stroke-width="2"/><circle cx="12" cy="12" r="2.5" fill="url(#ai-target)"/></svg>`,
             calendar: `<svg class="ui-svg-icon" viewBox="0 0 24 24" width="17" height="17" fill="none" style="filter:drop-shadow(0 0 4px rgba(251, 113, 133, 0.7));"><defs><linearGradient id="ai-calendar" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#fb7185"/><stop offset="100%" stop-color="#fb923c"/></linearGradient></defs><rect x="3" y="4" width="18" height="18" rx="2.5" stroke="url(#ai-calendar)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="rgba(251, 113, 133, 0.1)"/><line x1="16" y1="2" x2="16" y2="6" stroke="url(#ai-calendar)" stroke-width="2" stroke-linecap="round"/><line x1="8" y1="2" x2="8" y2="6" stroke="url(#ai-calendar)" stroke-width="2" stroke-linecap="round"/><line x1="3" y1="10" x2="21" y2="10" stroke="url(#ai-calendar)" stroke-width="2"/></svg>`,
             clipboard: `<svg class="ui-svg-icon" viewBox="0 0 24 24" width="17" height="17" fill="none" style="filter:drop-shadow(0 0 4px rgba(45, 212, 191, 0.7));"><defs><linearGradient id="ai-clipboard" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#2dd4bf"/><stop offset="100%" stop-color="#0284c7"/></linearGradient></defs><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" stroke="url(#ai-clipboard)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="rgba(45, 212, 191, 0.1)"/><rect x="8" y="2" width="8" height="4" rx="1" stroke="url(#ai-clipboard)" stroke-width="2" fill="rgba(14, 165, 233, 0.3)"/></svg>`,
-            plus: `<svg class="ui-svg-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" style="filter:drop-shadow(0 0 4px rgba(56, 189, 248, 0.8));"><defs><linearGradient id="ai-plus" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#7dd3fc"/><stop offset="100%" stop-color="#0ea5e9"/></linearGradient></defs><line x1="12" y1="5" x2="12" y2="19" stroke="url(#ai-plus)" stroke-width="2.6" stroke-linecap="round"/><line x1="5" y1="12" x2="19" y2="12" stroke="url(#ai-plus)" stroke-width="2.6" stroke-linecap="round"/></svg>`,
+            plus: `<svg class="ui-svg-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" style="filter:drop-shadow(0 0 5px rgba(56, 189, 248, 0.85)); vertical-align:-2px;"><defs><linearGradient id="ai-plus" x1="0%" y1="0%" x2="100%" y2="100%" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#7dd3fc"/><stop offset="100%" stop-color="#0ea5e9"/></linearGradient></defs><rect x="10.5" y="4" width="3" height="16" rx="1.5" fill="url(#ai-plus)"/><rect x="4" y="10.5" width="16" height="3" rx="1.5" fill="url(#ai-plus)"/></svg>`,
             chat: `<svg class="ui-svg-icon" viewBox="0 0 24 24" width="19" height="19" fill="none" style="filter:drop-shadow(0 0 5px rgba(6, 182, 212, 0.7));"><defs><linearGradient id="ai-chat" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#22d3ee"/><stop offset="100%" stop-color="#3b82f6"/></linearGradient></defs><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" stroke="url(#ai-chat)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="rgba(34, 211, 238, 0.15)"/></svg>`,
             user: `<svg class="ui-svg-icon" viewBox="0 0 24 24" width="19" height="19" fill="none" style="filter:drop-shadow(0 0 5px rgba(96, 165, 250, 0.7));"><defs><linearGradient id="ai-user" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#60a5fa"/><stop offset="100%" stop-color="#6366f1"/></linearGradient></defs><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" stroke="url(#ai-user)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="7" r="4" stroke="url(#ai-user)" stroke-width="2" fill="rgba(96, 165, 250, 0.2)"/></svg>`,
             bot: `<svg class="ui-svg-icon" viewBox="0 0 24 24" width="19" height="19" fill="none" style="filter:drop-shadow(0 0 5px rgba(192, 132, 252, 0.8));"><defs><linearGradient id="ai-bot" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#c084fc"/><stop offset="100%" stop-color="#ec4899"/></linearGradient></defs><rect x="3" y="11" width="18" height="10" rx="3" stroke="url(#ai-bot)" stroke-width="2" fill="rgba(192, 132, 252, 0.15)"/><circle cx="12" cy="5" r="2.2" fill="url(#ai-bot)"/><line x1="12" y1="7.2" x2="12" y2="11" stroke="url(#ai-bot)" stroke-width="2"/><circle cx="8" cy="16" r="1.5" fill="#38bdf8"/><circle cx="16" cy="16" r="1.5" fill="#38bdf8"/></svg>`,
             poll: `<svg class="ui-svg-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" style="filter:drop-shadow(0 0 4px rgba(56, 189, 248, 0.7));"><defs><linearGradient id="ai-poll" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#38bdf8"/><stop offset="100%" stop-color="#818cf8"/></linearGradient></defs><line x1="18" y1="20" x2="18" y2="10" stroke="url(#ai-poll)" stroke-width="2.4" stroke-linecap="round"/><line x1="12" y1="20" x2="12" y2="4" stroke="url(#ai-poll)" stroke-width="2.4" stroke-linecap="round"/><line x1="6" y1="20" x2="6" y2="14" stroke="url(#ai-poll)" stroke-width="2.4" stroke-linecap="round"/></svg>`,
-            trash: `<svg class="ui-svg-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" style="filter:drop-shadow(0 0 4px rgba(239, 68, 68, 0.7));"><defs><linearGradient id="ai-trash" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#f87171"/><stop offset="100%" stop-color="#dc2626"/></linearGradient></defs><polyline points="3 6 5 6 21 6" stroke="url(#ai-trash)" stroke-width="2" stroke-linecap="round"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" stroke="url(#ai-trash)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="rgba(239, 68, 68, 0.12)"/></svg>`,
+            trash: `<svg class="ui-svg-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" style="filter:drop-shadow(0 0 4px rgba(239, 68, 68, 0.8)); vertical-align:-2px;"><defs><linearGradient id="ai-trash" x1="0%" y1="0%" x2="100%" y2="100%" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#f87171"/><stop offset="100%" stop-color="#dc2626"/></linearGradient></defs><path d="M9 4.5a1.5 1.5 0 0 1 1.5-1.5h3A1.5 1.5 0 0 1 15 4.5V6H9V4.5z" stroke="url(#ai-trash)" stroke-width="1.8" fill="rgba(239, 68, 68, 0.2)"/><rect x="3" y="6" width="18" height="2" rx="1" fill="url(#ai-trash)"/><path d="M5 8l1.4 12.2A2 2 0 0 0 8.4 22h7.2a2 2 0 0 0 2-1.8L19 8" stroke="url(#ai-trash)" stroke-width="1.8" stroke-linecap="round" fill="rgba(239, 68, 68, 0.12)"/><line x1="10" y1="11" x2="10" y2="17" stroke="url(#ai-trash)" stroke-width="1.5" stroke-linecap="round"/><line x1="14" y1="11" x2="14" y2="17" stroke="url(#ai-trash)" stroke-width="1.5" stroke-linecap="round"/></svg>`,
             pencil: `<svg class="ui-svg-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" style="filter:drop-shadow(0 0 4px rgba(56, 189, 248, 0.7));"><defs><linearGradient id="ai-pencil" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#38bdf8"/><stop offset="100%" stop-color="#0284c7"/></linearGradient></defs><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" stroke="url(#ai-pencil)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="rgba(56, 189, 248, 0.15)"/></svg>`,
-            scale: `<svg class="ui-svg-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" style="filter:drop-shadow(0 0 4px rgba(251, 191, 36, 0.7));"><defs><linearGradient id="ai-scale" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#fde047"/><stop offset="100%" stop-color="#f59e0b"/></linearGradient></defs><path d="M16 16l3-8 3 8c0 1.5-1.5 2-3 2s-3-.5-3-2z" stroke="url(#ai-scale)" stroke-width="2" fill="rgba(251, 191, 36, 0.18)"/><path d="M2 16l3-8 3 8c0 1.5-1.5 2-3 2s-3-.5-3-2z" stroke="url(#ai-scale)" stroke-width="2" fill="rgba(251, 191, 36, 0.18)"/><path d="M7 21h10" stroke="url(#ai-scale)" stroke-width="2" stroke-linecap="round"/><path d="M12 3v18" stroke="url(#ai-scale)" stroke-width="2" stroke-linecap="round"/><path d="M3 7h18" stroke="url(#ai-scale)" stroke-width="2" stroke-linecap="round"/></svg>`,
+            scale: `<svg class="ui-svg-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" style="filter:drop-shadow(0 0 5px rgba(250, 204, 21, 0.85)); vertical-align:-3px;"><defs><linearGradient id="ai-scale" x1="0%" y1="0%" x2="100%" y2="100%" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#fef08a"/><stop offset="50%" stop-color="#facc15"/><stop offset="100%" stop-color="#f59e0b"/></linearGradient></defs><rect x="3" y="3" width="18" height="18" rx="4.5" stroke="url(#ai-scale)" stroke-width="2" fill="rgba(250, 204, 21, 0.14)"/><rect x="8" y="5.5" width="8" height="4" rx="1.5" stroke="url(#ai-scale)" stroke-width="1.3" fill="rgba(250, 204, 21, 0.3)"/><circle cx="12" cy="14.5" r="3.2" stroke="url(#ai-scale)" stroke-width="1.5" fill="rgba(250, 204, 21, 0.1)"/><path d="M12 14.5L13.8 12.8" stroke="url(#ai-scale)" stroke-width="1.6" stroke-linecap="round"/></svg>`,
             palette: `<svg class="ui-svg-icon" viewBox="0 0 24 24" width="19" height="19" fill="none" style="filter:drop-shadow(0 0 5px rgba(168, 85, 247, 0.7));"><defs><linearGradient id="ai-palette" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#f43f5e"/><stop offset="45%" stop-color="#a855f7"/><stop offset="100%" stop-color="#38bdf8"/></linearGradient></defs><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.9 0 1.5-.7 1.5-1.5 0-.4-.2-.8-.4-1.1-.3-.3-.4-.7-.4-1.1 0-.9.7-1.5 1.5-1.5H16c3.3 0 6-2.7 6-6 0-5.5-4.5-9.8-10-9.8z" stroke="url(#ai-palette)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="rgba(168, 85, 247, 0.12)"/><circle cx="13.5" cy="6.5" r="1.3" fill="#38bdf8"/><circle cx="17.5" cy="10.5" r="1.3" fill="#f43f5e"/><circle cx="8.5" cy="7.5" r="1.3" fill="#facc15"/><circle cx="6.5" cy="12.5" r="1.3" fill="#34d399"/></svg>`,
             gift: `<svg class="ui-svg-icon" viewBox="0 0 24 24" width="19" height="19" fill="none" style="filter:drop-shadow(0 0 5px rgba(244, 63, 94, 0.75));"><defs><linearGradient id="ai-gift" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#fb7185"/><stop offset="50%" stop-color="#f43f5e"/><stop offset="100%" stop-color="#e11d48"/></linearGradient></defs><polyline points="20 12 20 22 4 22 4 12" stroke="url(#ai-gift)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="rgba(244, 63, 94, 0.12)"/><rect x="2" y="7" width="20" height="5" rx="1.5" stroke="url(#ai-gift)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="rgba(251, 113, 133, 0.22)"/><line x1="12" y1="22" x2="12" y2="7" stroke="url(#ai-gift)" stroke-width="2"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z" stroke="url(#ai-gift)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="rgba(244, 63, 94, 0.22)"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z" stroke="url(#ai-gift)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="rgba(244, 63, 94, 0.22)"/></svg>`,
             settings: `<svg class="ui-svg-icon" viewBox="0 0 24 24" width="19" height="19" fill="none" style="filter:drop-shadow(0 0 5px rgba(56, 189, 248, 0.75));"><defs><linearGradient id="ai-settings" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#38bdf8"/><stop offset="50%" stop-color="#818cf8"/><stop offset="100%" stop-color="#a855f7"/></linearGradient></defs><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" stroke="url(#ai-settings)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="rgba(56, 189, 248, 0.1)"/><circle cx="12" cy="12" r="3" stroke="url(#ai-settings)" stroke-width="2" fill="rgba(129, 140, 248, 0.3)"/></svg>`,
             link: `<svg class="ui-svg-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" style="filter:drop-shadow(0 0 4px rgba(56, 189, 248, 0.7));"><defs><linearGradient id="ai-link" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#38bdf8"/><stop offset="100%" stop-color="#818cf8"/></linearGradient></defs><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" stroke="url(#ai-link)" stroke-width="2.2" stroke-linecap="round"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" stroke="url(#ai-link)" stroke-width="2.2" stroke-linecap="round"/></svg>`,
-            lock: `<svg class="ui-svg-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" style="filter:drop-shadow(0 0 4px rgba(245, 158, 11, 0.75));"><defs><linearGradient id="ai-lock" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#fef08a"/><stop offset="50%" stop-color="#facc15"/><stop offset="100%" stop-color="#d97706"/></linearGradient></defs><rect x="3" y="11" width="18" height="11" rx="2.5" stroke="url(#ai-lock)" stroke-width="2" fill="rgba(245, 158, 11, 0.2)"/><path d="M7 11V7a5 5 0 0 1 10 0v4" stroke="url(#ai-lock)" stroke-width="2" stroke-linecap="round"/></svg>`,
+            lock: `<svg class="ui-svg-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" style="filter:drop-shadow(0 0 5px rgba(245, 158, 11, 0.85)); vertical-align:-3px;"><defs><linearGradient id="ai-lock" x1="0%" y1="0%" x2="100%" y2="100%" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#fef08a"/><stop offset="50%" stop-color="#facc15"/><stop offset="100%" stop-color="#f59e0b"/></linearGradient></defs><path d="M7 10V7a5 5 0 0 1 10 0v3" stroke="url(#ai-lock)" stroke-width="2.3" stroke-linecap="round"/><rect x="3.5" y="10" width="17" height="11.5" rx="3" stroke="url(#ai-lock)" stroke-width="2" fill="rgba(245, 158, 11, 0.22)"/><circle cx="12" cy="15" r="1.6" fill="#fef08a"/><path d="M12 16.6v2" stroke="#fef08a" stroke-width="1.6" stroke-linecap="round"/></svg>`,
             unlock: `<svg class="ui-svg-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" style="filter:drop-shadow(0 0 4px rgba(34, 197, 94, 0.75));"><defs><linearGradient id="ai-unlock" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#86efac"/><stop offset="100%" stop-color="#22c55e"/></linearGradient></defs><rect x="3" y="11" width="18" height="11" rx="2.5" stroke="url(#ai-unlock)" stroke-width="2" fill="rgba(34, 197, 94, 0.2)"/><path d="M7 11V7a5 5 0 0 1 9.9-1" stroke="url(#ai-unlock)" stroke-width="2" stroke-linecap="round"/></svg>`,
             check: `<svg class="ui-svg-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" style="filter:drop-shadow(0 0 4px rgba(34, 197, 94, 0.8));"><defs><linearGradient id="ai-check" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#86efac"/><stop offset="100%" stop-color="#16a34a"/></linearGradient></defs><polyline points="20 6 9 17 4 12" stroke="url(#ai-check)" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
             checkCircle: `<svg class="ui-svg-icon" viewBox="0 0 24 24" width="17" height="17" fill="none" style="filter:drop-shadow(0 0 4px rgba(34, 197, 94, 0.8));"><defs><linearGradient id="ai-chkcirc" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#86efac"/><stop offset="100%" stop-color="#16a34a"/></linearGradient></defs><circle cx="12" cy="12" r="10" stroke="url(#ai-chkcirc)" stroke-width="2" fill="rgba(34, 197, 94, 0.15)"/><polyline points="16 9 10 15 8 13" stroke="url(#ai-chkcirc)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
@@ -12981,7 +13059,7 @@ let currentUser = null;
                         <input type="checkbox" id="profile-public-toggle" ${isPublic ? 'checked' : ''} onchange="onPrivacyToggleChange()">
                         <span class="slider"></span>
                     </label>
-                    <span id="privacy-toggle-label" style="font-size: 0.85rem; font-weight: 600; display:inline-flex; align-items:center; gap:6px;">${isPublic ? (window.APP_ICONS ? window.APP_ICONS.globe : '🌐') + ' Profilo Pubblico' : (window.APP_ICONS ? window.APP_ICONS.lock : '🔒') + ' Profilo Privato'}</span>
+                    <span id="privacy-toggle-label" style="font-size: 0.85rem; font-weight: 600; display:inline-flex; align-items:center; gap:6px;">${isPublic ? (window.APP_ICONS ? window.APP_ICONS.globe : '🌐') + ' <span style="color:#38bdf8; font-weight:700;">Profilo Pubblico</span>' : (window.APP_ICONS ? window.APP_ICONS.lock : '🔒') + ' <span style="color:#f59e0b; font-weight:700;">Profilo Privato</span>'}</span>
                 </div>
                 <p style="font-size: 0.75rem; color: var(--subtext); margin-top: 6px;">Se il profilo è pubblico, gli altri utenti potranno vedere le skill sbloccate, l'altezza e il peso cliccando sul tuo nome in classifica. Se è privato, nessuno potrà vederli.</p>
                 <div class="privacy-toggle-row" style="${pushRowStyle}">
@@ -13018,7 +13096,7 @@ let currentUser = null;
             const checkbox = document.getElementById('profile-public-toggle');
             const label = document.getElementById('privacy-toggle-label');
             if (!checkbox || !label) return;
-            label.innerHTML = checkbox.checked ? ((window.APP_ICONS ? window.APP_ICONS.globe : '🌐') + ' Profilo Pubblico') : ((window.APP_ICONS ? window.APP_ICONS.lock : '🔒') + ' Profilo Privato');
+            label.innerHTML = checkbox.checked ? ((window.APP_ICONS ? window.APP_ICONS.globe : '🌐') + ' <span style="color:#38bdf8; font-weight:700;">Profilo Pubblico</span>') : ((window.APP_ICONS ? window.APP_ICONS.lock : '🔒') + ' <span style="color:#f59e0b; font-weight:700;">Profilo Privato</span>');
         }
 
         function saveProfileSettings() {
@@ -16882,17 +16960,24 @@ function getCalisthenicsExpertResponse(query) {
             const aiHeaderBar = document.getElementById('ai-helper-header-bar');
             const tabGeneral = document.getElementById('chat-tab-general');
             const tabPrivate = document.getElementById('chat-tab-private');
+            const tabAi = document.getElementById('chat-tab-ai');
             const pollBtn = document.getElementById('chat-thread-poll-btn');
             if (pollBtn) pollBtn.style.display = 'none';
 
-            const tabAi = document.getElementById('chat-tab-ai');
+            const chatMessages = document.getElementById('chat-messages');
+            if (chatMessages) {
+                chatMessages.classList.remove('chat-tab-transition');
+                void chatMessages.offsetWidth;
+                chatMessages.classList.add('chat-tab-transition');
+            }
+
             if (tab === 'general') {
                 activeChatView = 'general';
                 activeConversationId = null;
                 activeConversationData = null;
                 threadHeader.style.display = 'none';
                 if (aiHeaderBar) aiHeaderBar.style.display = 'none';
-                titleEl.innerText = '💬 Chat Generale';
+                if (titleEl) titleEl.innerHTML = `${window.APP_ICONS ? window.APP_ICONS.chat : '💬'} <span>Chat Generale</span>`;
                 tabGeneral.classList.add('active');
                 tabPrivate.classList.remove('active');
                 if (tabAi) tabAi.classList.remove('active');
@@ -16902,7 +16987,7 @@ function getCalisthenicsExpertResponse(query) {
                 activeConversationData = null;
                 threadHeader.style.display = 'none';
                 if (aiHeaderBar) aiHeaderBar.style.display = 'flex';
-                titleEl.innerText = '🤖 AI Helper Coach';
+                if (titleEl) titleEl.innerHTML = `${window.APP_ICONS ? window.APP_ICONS.bot : '🤖'} <span>AI Helper Coach</span>`;
                 tabGeneral.classList.remove('active');
                 tabPrivate.classList.remove('active');
                 if (tabAi) tabAi.classList.add('active');
@@ -16915,13 +17000,15 @@ function getCalisthenicsExpertResponse(query) {
                 activeConversationData = null;
                 threadHeader.style.display = 'none';
                 if (aiHeaderBar) aiHeaderBar.style.display = 'none';
-                titleEl.innerText = '👤 Chat Private';
+                if (titleEl) titleEl.innerHTML = `${window.APP_ICONS ? window.APP_ICONS.user : '👤'} <span>Chat Private</span>`;
                 tabGeneral.classList.remove('active');
                 tabPrivate.classList.add('active');
                 if (tabAi) tabAi.classList.remove('active');
             }
 
-            document.getElementById('chat-messages').innerHTML = `<p style="color: var(--subtext); text-align:center; font-size:0.85rem;">Caricamento...</p>`;
+            if (chatMessages) {
+                chatMessages.innerHTML = `<p style="color: var(--subtext); text-align:center; font-size:0.85rem;">Caricamento...</p>`;
+            }
             renderChatInputState();
             resumeActiveChatListener();
             if (tab === 'general') markGeneralChatAsRead();
@@ -21885,8 +21972,8 @@ function getCalisthenicsExpertResponse(query) {
                                  onerror="this.onerror=null; this.src='./assets/challenges/challenge_standard.webp';" 
                                  alt="Sfida Standard">
                             <div class="challenge-mode-card-overlay"></div>
-                            <span class="challenge-mode-tag-badge" style="background: rgba(56, 189, 248, 0.25); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.4);">
-                                👥 MULTIPLAYER
+                            <span class="challenge-mode-tag-badge" style="background: rgba(56, 189, 248, 0.25); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.4); display:inline-flex; align-items:center; gap:5px;">
+                                ${window.APP_ICONS ? window.APP_ICONS.user : '👥'} MULTIPLAYER
                             </span>
                         </div>
                         <div class="challenge-mode-card-content">
@@ -21914,8 +22001,8 @@ function getCalisthenicsExpertResponse(query) {
                                  onerror="this.onerror=null; this.src='./assets/challenges/challenge_solo.webp';" 
                                  alt="Sfida Solitaria">
                             <div class="challenge-mode-card-overlay"></div>
-                            <span class="challenge-mode-tag-badge" style="background: rgba(16, 185, 129, 0.25); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4);">
-                                🎯 SOLO PVE
+                            <span class="challenge-mode-tag-badge" style="background: rgba(16, 185, 129, 0.25); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4); display:inline-flex; align-items:center; gap:5px;">
+                                ${window.APP_ICONS ? window.APP_ICONS.target : '🎯'} SOLO PVE
                             </span>
                         </div>
                         <div class="challenge-mode-card-content">
@@ -21943,8 +22030,8 @@ function getCalisthenicsExpertResponse(query) {
                                  onerror="this.onerror=null; this.src='./assets/challenges/challenge_duel.webp';" 
                                  alt="Duello 1vs1">
                             <div class="challenge-mode-card-overlay"></div>
-                            <span class="challenge-mode-tag-badge" style="background: rgba(245, 158, 11, 0.25); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.4);">
-                                ⚔️ ARENA 1VS1
+                            <span class="challenge-mode-tag-badge" style="background: rgba(245, 158, 11, 0.25); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.4); display:inline-flex; align-items:center; gap:5px;">
+                                ${window.APP_ICONS ? window.APP_ICONS.swords : '⚔️'} ARENA 1VS1
                             </span>
                         </div>
                         <div class="challenge-mode-card-content">
