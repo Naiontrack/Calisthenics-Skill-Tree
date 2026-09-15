@@ -5505,6 +5505,27 @@
             box-shadow: 0 0 18px rgba(56, 189, 248, 0.4) !important;
         }
 
+        .tree-view-toggle-btn.active .ui-svg-icon {
+            filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.95)) !important;
+        }
+        .tree-view-toggle-btn.active .ui-svg-icon circle,
+        .tree-view-toggle-btn.active .ui-svg-icon rect {
+            fill: #ffffff !important;
+        }
+        .tree-view-toggle-btn.active .ui-svg-icon path,
+        .tree-view-toggle-btn.active .ui-svg-icon line {
+            stroke: #ffffff !important;
+        }
+        .tree-view-toggle-btn:not(.active) .tree-view-icon-graph {
+            filter: drop-shadow(0 0 4px rgba(52, 211, 153, 0.75)) !important;
+        }
+        .tree-view-toggle-btn:not(.active) .tree-view-icon-graph circle {
+            fill: #34d399 !important;
+        }
+        .tree-view-toggle-btn:not(.active) .tree-view-icon-graph path {
+            stroke: #34d399 !important;
+        }
+
         /* Chat tabs capsule flottante su galaxy glass */
         body.galaxy-bg-active .chat-tabs {
             background: rgba(8, 14, 28, 0.52) !important;
@@ -7280,7 +7301,7 @@
         <div class="tree-view-header-controls">
             <div class="tree-view-toggle-bar">
                 <button type="button" class="tree-view-toggle-btn active" id="btn-view-graph" onclick="toggleSkillTreeView('graph')">
-                    <svg class="ui-svg-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" style="filter:drop-shadow(0 0 4px rgba(52, 211, 153, 0.75)); vertical-align:-2px;"><defs><linearGradient id="btn-tree-grad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#6ee7b7"/><stop offset="50%" stop-color="#34d399"/><stop offset="100%" stop-color="#059669"/></linearGradient></defs><circle cx="12" cy="5" r="2.4" fill="url(#btn-tree-grad)"/><circle cx="5" cy="12" r="2.2" fill="url(#btn-tree-grad)"/><circle cx="19" cy="12" r="2.2" fill="url(#btn-tree-grad)"/><circle cx="12" cy="19" r="2.4" fill="url(#btn-tree-grad)"/><path d="M12 7.4v9.2m0-4.6l-5-2m5 2l5-2" stroke="url(#btn-tree-grad)" stroke-width="2" stroke-linecap="round"/></svg> Albero RPG
+                    <svg class="ui-svg-icon tree-view-icon-graph" viewBox="0 0 24 24" width="16" height="16" fill="none" style="filter:drop-shadow(0 0 5px rgba(255, 255, 255, 0.95)); vertical-align:-2px;"><defs><linearGradient id="btn-tree-grad" x1="0%" y1="0%" x2="100%" y2="100%" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#a7f3d0"/><stop offset="50%" stop-color="#34d399"/><stop offset="100%" stop-color="#059669"/></linearGradient></defs><circle cx="12" cy="5" r="2.5" fill="url(#btn-tree-grad)"/><circle cx="5" cy="12" r="2.3" fill="url(#btn-tree-grad)"/><circle cx="19" cy="12" r="2.3" fill="url(#btn-tree-grad)"/><circle cx="12" cy="19" r="2.5" fill="url(#btn-tree-grad)"/><path d="M12 7.4v9.2m0-4.6l-5-2m5 2l5-2" stroke="url(#btn-tree-grad)" stroke-width="2.4" stroke-linecap="round"/></svg> Albero RPG
                 </button>
                 <button type="button" class="tree-view-toggle-btn" id="btn-view-cards" onclick="toggleSkillTreeView('cards')">
                     <svg class="ui-svg-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" style="filter:drop-shadow(0 0 5px rgba(251, 191, 36, 0.85)); vertical-align:-2px;"><defs><linearGradient id="btn-cards-grad" x1="0%" y1="0%" x2="100%" y2="100%" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#fef08a"/><stop offset="50%" stop-color="#facc15"/><stop offset="100%" stop-color="#f59e0b"/></linearGradient></defs><rect x="3" y="3" width="7" height="7" rx="1.8" stroke="url(#btn-cards-grad)" stroke-width="2" fill="rgba(250, 204, 21, 0.25)"/><rect x="14" y="3" width="7" height="7" rx="1.8" stroke="url(#btn-cards-grad)" stroke-width="2" fill="rgba(250, 204, 21, 0.25)"/><rect x="14" y="14" width="7" height="7" rx="1.8" stroke="url(#btn-cards-grad)" stroke-width="2" fill="rgba(250, 204, 21, 0.25)"/><rect x="3" y="14" width="7" height="7" rx="1.8" stroke="url(#btn-cards-grad)" stroke-width="2" fill="rgba(250, 204, 21, 0.25)"/></svg> Schede Classiche
@@ -7346,7 +7367,7 @@
                         </h3>
                         <span class="collapsible-icon" id="workouts-toggle-icon">▼ Espandi</span>
                     </div>
-                    <button class="btn-confirm" id="new-workout-btn" onclick="openNewWorkoutModal()" style="display:inline-flex; align-items:center; gap:6px;"><svg class="ui-svg-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" style="filter:drop-shadow(0 0 4px rgba(255, 255, 255, 0.8));"><defs><linearGradient id="btn-plus-wkt" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#ffffff"/><stop offset="100%" stop-color="#e0f2fe"/></linearGradient></defs><line x1="12" y1="5" x2="12" y2="19" stroke="url(#btn-plus-wkt)" stroke-width="2.8" stroke-linecap="round"/><line x1="5" y1="12" x2="19" y2="12" stroke="url(#btn-plus-wkt)" stroke-width="2.8" stroke-linecap="round"/></svg> Nuovo Allenamento</button>
+                    <button class="btn-confirm" id="new-workout-btn" onclick="openNewWorkoutModal()" style="display:inline-flex; align-items:center; gap:6px;"><svg class="ui-svg-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" style="filter:drop-shadow(0 0 5px rgba(255, 255, 255, 0.95)); vertical-align:-2px;"><defs><linearGradient id="btn-plus-wkt" x1="0%" y1="0%" x2="100%" y2="100%" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#ffffff"/><stop offset="100%" stop-color="#ffffff"/></linearGradient></defs><rect x="10.5" y="4" width="3" height="16" rx="1.5" fill="#ffffff"/><rect x="4" y="10.5" width="16" height="3" rx="1.5" fill="#ffffff"/></svg> Nuovo Allenamento</button>
                 </div>
                 <div id="workouts-collapsible-content" style="display: block; margin-top: 14px; border-top: 1px solid var(--line-color); padding-top: 14px;">
                     <div id="workouts-list-container" style="max-height: calc(100vh - 270px); overflow-y: auto; padding-right: 4px;">
@@ -7399,7 +7420,7 @@
                     <div style="display:flex; gap:8px; align-items:center;">
                         <span class="challenges-badge-dot" id="challenges-badge-dot" style="display:none;"></span>
                         <button class="btn-auth-secondary" style="font-size:0.8rem; padding:6px 12px; display:inline-flex; align-items:center; gap:6px;" onclick="openSoloChallengeModal()"><svg class="ui-svg-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" style="filter:drop-shadow(0 0 4px rgba(250, 204, 21, 0.8));"><defs><linearGradient id="btn-solo-zap" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#fef08a"/><stop offset="100%" stop-color="#f59e0b"/></linearGradient></defs><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" fill="url(#btn-solo-zap)" stroke="#facc15" stroke-width="1.2"/></svg> Sfida Solitaria</button>
-                        <button class="chat-new-btn" onclick="openCreateChallengeModal()" style="display:inline-flex; align-items:center; gap:6px;"><svg class="ui-svg-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" style="filter:drop-shadow(0 0 4px rgba(255, 255, 255, 0.8));"><defs><linearGradient id="btn-plus-arena" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#ffffff"/><stop offset="100%" stop-color="#e0f2fe"/></linearGradient></defs><line x1="12" y1="5" x2="12" y2="19" stroke="url(#btn-plus-arena)" stroke-width="2.8" stroke-linecap="round"/><line x1="5" y1="12" x2="19" y2="12" stroke="url(#btn-plus-arena)" stroke-width="2.8" stroke-linecap="round"/></svg> Nuova Sfida</button>
+                        <button class="chat-new-btn" onclick="openCreateChallengeModal()" style="display:inline-flex; align-items:center; gap:6px;"><svg class="ui-svg-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" style="filter:drop-shadow(0 0 5px rgba(255, 255, 255, 0.95)); vertical-align:-2px;"><defs><linearGradient id="btn-plus-arena" x1="0%" y1="0%" x2="100%" y2="100%" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#ffffff"/><stop offset="100%" stop-color="#ffffff"/></linearGradient></defs><rect x="10.5" y="4" width="3" height="16" rx="1.5" fill="#ffffff"/><rect x="4" y="10.5" width="16" height="3" rx="1.5" fill="#ffffff"/></svg> Nuova Sfida</button>
                     </div>
                 </div>
                 <div class="challenges-panel active" id="challenges-panel" style="position:static; width:100%; height:auto; box-shadow:none; border:none; background:transparent;">
@@ -14067,6 +14088,12 @@ let currentUser = null;
                 const formatted = formatAiMessageText(m.text || "");
                 const msgDomId = m.id ? `ai-msg-${m.id}` : `ai-msg-idx-${idx}`;
 
+                const mediaHtml = (m.imageBase64 || m.mediaUrl) ? `
+                    <div class="ai-msg-media-preview" style="margin-bottom:8px;">
+                        <img src="${m.imageBase64 || m.mediaUrl}" alt="Foto Postura Form Check" style="max-width:100%; max-height:220px; border-radius:8px; cursor:pointer; object-fit:contain; border:1px solid rgba(255,255,255,0.2); box-shadow:0 4px 12px rgba(0,0,0,0.3);" onclick="openChatMediaLightbox('${m.imageBase64 || m.mediaUrl}')">
+                    </div>
+                ` : '';
+
                 messagesHtml += `
                     <div class="ai-chat-msg-wrapper ${isAi ? "ai" : "user"}" id="${msgDomId}">
                         <div class="ai-chat-meta">
@@ -14076,6 +14103,7 @@ let currentUser = null;
                             <span class="ai-chat-time">${timeStr}</span>
                         </div>
                         <div class="${isAi ? "ai-bubble-ai" : "ai-bubble-user"}">
+                            ${mediaHtml}
                             ${formatted}
                         </div>
                     </div>
@@ -14088,6 +14116,9 @@ let currentUser = null;
                     
                     <div class="ai-suggested-prompts" id="ai-suggested-prompts">
                         <div style="font-size:0.75rem; color:var(--subtext); font-weight:bold; margin-bottom:4px;">💡 Domande rapide suggerite:</div>
+                        <button type="button" class="ai-suggested-prompt-btn" onclick="sendSuggestedPromptBtn(this)" data-prompt="📸 Come fare il Form Check della mia postura con una foto?">
+                            📸 Come fare il Form Check della mia postura con una foto?
+                        </button>
                         <button type="button" class="ai-suggested-prompt-btn" onclick="sendSuggestedPromptBtn(this)" data-prompt="Come posso sbloccare le skill con l'AI Referee?">
                             📱 Come sbloccare le skill con l'AI Referee?
                         </button>
@@ -14504,19 +14535,264 @@ function getCalisthenicsExpertResponse(query) {
         "💡 *Hai una domanda specifica?* Chiedimi pure dettagli su una skill (es. *'Come fare il Muscle-up?'* o *'Progressioni Planche'*) oppure chiedimi come sbloccare o ribloccare le skill dell'albero!";
 }
 
+        // ==========================================
+        // MULTIMODAL COACH AI & FORM CHECK VISION
+        // ==========================================
+        let pendingAiMedia = null; // { file, previewUrl, base64, type: 'image', originalName }
+
+        function triggerAiCameraInput() {
+            const input = document.getElementById('ai-chat-camera-input');
+            if (input) input.click();
+        }
+
+        function triggerAiFileInput() {
+            const input = document.getElementById('ai-chat-file-input');
+            if (input) input.click();
+        }
+
+        async function handleAiMediaSelected(event, source) {
+            const file = event.target.files && event.target.files[0];
+            if (!file) return;
+            event.target.value = '';
+
+            if (!file.type.startsWith('image/')) {
+                if (typeof showAppToast === 'function') {
+                    showAppToast("Il Coach AI accetta solo immagini per il Form Check della postura.", "warning");
+                } else {
+                    alert("Il Coach AI accetta solo immagini per il Form Check della postura.");
+                }
+                return;
+            }
+
+            let processedFile = file;
+            if (typeof compressImageClientSide === 'function') {
+                try {
+                    processedFile = await compressImageClientSide(file);
+                } catch (e) {
+                    console.warn("Compressione foto per AI fallita, uso originale:", e);
+                }
+            }
+
+            const base64Data = await new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onloadend = () => resolve(reader.result);
+                reader.onerror = reject;
+                reader.readAsDataURL(processedFile);
+            });
+
+            if (pendingAiMedia && pendingAiMedia.previewUrl) {
+                try { URL.revokeObjectURL(pendingAiMedia.previewUrl); } catch(e) {}
+            }
+
+            pendingAiMedia = {
+                file: processedFile,
+                previewUrl: URL.createObjectURL(processedFile),
+                base64: base64Data,
+                type: 'image',
+                originalName: file.name || 'Foto Postura'
+            };
+
+            renderAiPendingMediaBar();
+            const input = document.getElementById('ai-chat-input');
+            if (input) {
+                if (!input.value.trim()) {
+                    input.value = "Analizza la mia postura e la tenuta in questa foto";
+                }
+                input.focus();
+            }
+        }
+
+        function renderAiPendingMediaBar() {
+            const container = document.getElementById('ai-pending-media-container');
+            if (!container) return;
+            if (!pendingAiMedia) {
+                container.innerHTML = '';
+                return;
+            }
+            const sizeStr = (typeof formatFileSize === 'function') ? formatFileSize(pendingAiMedia.file.size) : '';
+            container.innerHTML = `
+                <div class="chat-pending-media-bar" style="margin-bottom:8px; display:flex; align-items:center; gap:8px; padding:6px 10px; border-radius:8px; background:rgba(56, 189, 248, 0.12); border:1px solid rgba(56, 189, 248, 0.35);">
+                    <img src="${pendingAiMedia.previewUrl}" class="chat-pending-thumb" alt="Anteprima Postura" style="width:40px; height:40px; border-radius:6px; object-fit:cover; border:1px solid rgba(255,255,255,0.2);">
+                    <div class="chat-pending-info" style="flex:1; overflow:hidden;">
+                        <span class="chat-pending-name" style="font-weight:700; color:#38bdf8; display:block; font-size:0.8rem;">📸 Foto Form Check Pronta</span>
+                        <span class="chat-pending-size" style="font-size:0.75rem; color:var(--subtext);">${sizeStr} (Tocca Invia per analizzare)</span>
+                    </div>
+                    <button type="button" class="chat-pending-remove-btn" onclick="removePendingAiMedia()" title="Rimuovi foto" aria-label="Rimuovi" style="background:none; border:none; color:var(--subtext); cursor:pointer; font-size:1.1rem; padding:4px 8px;">✕</button>
+                </div>
+            `;
+        }
+
+        function removePendingAiMedia() {
+            if (pendingAiMedia && pendingAiMedia.previewUrl) {
+                try { URL.revokeObjectURL(pendingAiMedia.previewUrl); } catch(e) {}
+            }
+            pendingAiMedia = null;
+            renderAiPendingMediaBar();
+        }
+
+        function isOffTopicNonSportQuery(text) {
+            if (!text) return false;
+            const q = text.toLowerCase();
+
+            const explicitOffTopic = [
+                "elezion", "politica", "governo", "partito", "presidente", "parlament", "ministro", "guerra",
+                "film", "cinema", "serie tv", "netflix", "attore", "canzon", "cantant", "sanremo", "musica pop",
+                "equazion", "matematica", "geografia", "capitale della", "storia antica", "latino", "compiti", "poesia",
+                "python", "javascript", "c++", "codice", "programmare", "software", "sql", "database", "sito web",
+                "carbonara", "pizza", "torta", "ricetta", "biscotti", "dolce",
+                "oroscopo", "astrologia", "zodiaco", "gossip", "vip", "notizie di cronaca"
+            ];
+
+            const hardSportKeywords = [
+                "calisthenic", "calistenia", "corpo libero", "sport", "workout", "allenament", "eserciz", "skill",
+                "planche", "lever", "handstand", "vertical", "muscle", "bandiera", "hefesto", "manna", "l-sit", "v-sit",
+                "anelli", "sbarra", "parallele", "trazion", "piegament", "dip", "push-up", "pushup", "pull-up", "pullup"
+            ];
+
+            if (explicitOffTopic.some(ow => q.includes(ow)) && !hardSportKeywords.some(sk => q.includes(sk))) {
+                return true;
+            }
+
+            const sportKeywords = [
+                "calisthenic", "calistenia", "corpo libero", "sport", "workout", "allenament", "eserciz", "skill",
+                "planche", "lever", "handstand", "vertical", "muscle", "flag", "bandiera", "hefesto", "manna", "l-sit", "v-sit",
+                "croce", "anelli", "sbarra", "parallele", "pull-up", "pullup", "chin-up", "trazion", "dip", "push-up", "pushup",
+                "piegament", "squat", "pistol", "nordic", "stacco", "panca", "zavorr", "lifting", "isometria", "eccentric",
+                "scapol", "protrazion", "retrazion", "depress", "elevazion", "bacino", "retroversion", "ppt", "antiversion", "apt",
+                "core", "addominal", "hollow", "arch", "lordos", "dorso", "dorsal", "petto", "pettoral", "bicipit", "tricipit",
+                "deltoid", "spall", "trapez", "polso", "polsi", "gomit", "ginocchi", "tendin", "articolaz", "epitrocleit", "epicondilit",
+                "lockout", "postur", "tecnica", "progression", "propedeutic", "serie", "ripetizion", "recuper",
+                "buffer", "rpe", "rir", "sovraccaric", "ipertrofia", "forza", "resistenza", "deload", "scarico",
+                "riscaldament", "defaticament", "stretch", "mobilit", "flessibilit", "spaccata", "pancake", "dislocazion",
+                "calori", "protein", "carboidrat", "grassi", "macro", "creatina", "whey", "integrator", "dieta", "massa", "definizion",
+                "deficit", "surplus", "idratazion", "dormire", "sonno", "acido lattico", "doms", "albero", "tree", "sbloccar",
+                "ribloccar", "referee", "arbitr", "duell", "sfida", "sfide", "arena", "xp", "livello", "classifica", "corsa", "nuoto", "cardio"
+            ];
+
+            for (const kw of sportKeywords) {
+                if (q.includes(kw)) return false;
+            }
+
+            if (/\b(carbo|rom|rest|warm)\b/i.test(q)) return false;
+
+            const generalIntroWords = ["ciao", "buongiorno", "buonasera", "hey", "salve", "chi sei", "cosa sai fare", "come ti chiami", "come iniziare", "aiutami", "iniziare", "grazie"];
+            for (const gw of generalIntroWords) {
+                if (q.includes(gw)) return false;
+            }
+
+            const words = q.split(/\s+/).filter(w => w.length > 2);
+            if (words.length >= 3) {
+                return true;
+            }
+
+            return false;
+        }
+
+        function getCalisthenicsFormCheckResponse(query) {
+            const q = (query || "").toLowerCase();
+            
+            let skillDetected = "Tenuta Isometrica / Esercizio a Corpo Libero";
+            let focusScapole = "Protrazione e depressione attiva (spingere via il pavimento/sbarra con le scapole)";
+            let focusPelvis = "Retroversione pelvica (PPT): glutei stretti e addome contratto per eliminare l'iperlordosi lombare a banana";
+            let focusLockout = "Gomiti in lockout completo a 180° con bicipite ingaggiato per stabilità tendinea";
+            let drills = [
+                "Planche Lean / Hollow Hold a terra (4 serie da 15-20s)",
+                "Scapular Push-ups / Scapular Pull-ups (3 serie da 10-12 rep lente con fermo di 2 secondi)"
+            ];
+
+            if (q.includes("planche") || q.includes("tuck") || q.includes("straddle")) {
+                skillDetected = "Planche (o propedeutica Tuck / Straddle / Full)";
+                focusScapole = "Protrazione massimale (crea la classica 'gobba' dorsale attiva) e forte depressione del cingolo scapolo-omerale per togliere tensione al trapezio e collo.";
+                focusPelvis = "Retroversione di bacino (PPT) rigorosa: contrai fortissimo i glutei ed elimina qualsiasi cedimento lombare. Le anche devono essere allineate all'altezza delle spalle.";
+                focusLockout = "Lockout tassativo a 180°: braccia estese senza piegare minimamente i gomiti (il micro-bending sovraccarica eccessivamente l'articolazione del gomito).";
+                drills = [
+                    "Planche Lean con piedi al muro su rialzo: 4 serie x 12-15s con sbilanciamento progressivo in avanti oltre i polsi",
+                    "Scapular Push-ups in assetto planche: 3 serie x 10 rep con 2s di fermo in massima protrazione",
+                    "Hollow Body Hold con braccia lungo i fianchi: 3 serie x 30s a terra"
+                ];
+            } else if (q.includes("front lever") || q.includes("lever")) {
+                skillDetected = "Front Lever (o propedeutica Tuck / Adv Tuck / Straddle)";
+                focusScapole = "Retrazione e depressione vigorosa del gran dorsale. Il petto deve rimanere fiero e aperto, senza collassare in chiusura.";
+                focusPelvis = "Retroversione del bacino (PPT): colonna in linea retta perfettamente orizzontale e parallela al suolo, senza piegare le anche a 'V'.";
+                focusLockout = "Gomiti completamente distesi e braccia tese a 180°. La trazione deve partire dal dorsale e dal capo lungo del tricipite.";
+                drills = [
+                    "Front Lever Raises controllate (dalla sospensione alla parallela): 4 serie x 5 rep lente",
+                    "Tuck/Adv Tuck Front Lever Holds: 4 serie x 10-12s mantenendo il bacino alto",
+                    "Dragon Flag a terra o su panca: 3 serie x 8 rep lente ed eccentriche"
+                ];
+            } else if (q.includes("handstand") || q.includes("verticale")) {
+                skillDetected = "Handstand (Verticale a terra o su parallele)";
+                focusScapole = "Elevazione scapolare attiva massimale (spingi attivamente verso l'alto come per toccare il soffitto con le spalle).";
+                focusPelvis = "Retroversione pelvica (PPT) con chiusura delle costole (ribs down): corpo a spada perfettamente allineato, niente schiena a 'banana'.";
+                focusLockout = "Gomiti bloccati e polsi attivi: usa i polpastrelli per micro-regolare l'equilibrio e prevenire il sottobilanciamento.";
+                drills = [
+                    "Pancia al muro (Chest-to-Wall Handstand): 4 serie x 30s focalizzandosi sull'allineamento spalle-bacino-caviglie",
+                    "Spallate al muro (Elevazioni scapolari in verticale): 3 serie x 10 rep",
+                    "Hollow Body Rock a terra: 3 serie x 20 oscillazioni controllate"
+                ];
+            } else if (q.includes("muscle") || q.includes("muscle-up") || q.includes("muscleup")) {
+                skillDetected = "Muscle-Up (alla sbarra o anelli)";
+                focusScapole = "Fase di tirata con forte depressione e retrazione esplosiva verso lo sterno; rapida rotazione in protrazione durante la transizione sopra la sbarra.";
+                focusPelvis = "Gambe unite e tese, core compatto per evitare slancio asimmetrico o salita storta a gomito singolo (chicken wing).";
+                focusLockout = "Lockout completo nella dip finale sopra la sbarra con spalle depresse.";
+                drills = [
+                    "Trazioni esplosive al petto/ombelico (High Pull-ups): 4 serie x 4-5 rep",
+                    "Transizioni lente agli anelli con piedi a terra / False grip: 3 serie x 6 rep",
+                    "Straight Bar Dips profonde: 3 serie x 8-10 rep"
+                ];
+            } else if (q.includes("l-sit") || q.includes("v-sit") || q.includes("manna")) {
+                skillDetected = "L-Sit / V-Sit / Manna";
+                focusScapole = "Massima depressione scapolare: spingi il pavimento/parallele verso il basso creando ampio spazio tra spalle e orecchie.";
+                focusPelvis = "Flessione d'anca attiva con quadricipiti contratti, punte dei piedi tese e bacino avanzato rispetto ai polsi.";
+                focusLockout = "Gomiti in lockout solido a 180°. Nessuna flessione delle braccia.";
+                drills = [
+                    "L-Sit su parallele con gambe tese: 4 serie x 10-15s",
+                    "Compressione addominale a terra (Pike pulses): 3 serie x 15 rep",
+                    "Support Hold attivo: 3 serie x 25s"
+                ];
+            } else if (q.includes("push") || q.includes("piegament") || q.includes("dip")) {
+                skillDetected = "Push-up / Dip alle Parallele";
+                focusScapole = "Protrazione a fine spinta (Lockout) e retrazione controllata in discesa (ROM completo a 90° o oltre).";
+                focusPelvis = "Core solido in asse (PPT), niente cedimento lombare.";
+                focusLockout = "Lockout controllato senza iperestensioni a scatto violento.";
+                drills = [
+                    "Piegamenti con fermo isometrico di 2s al petto: 4 serie x 8-10 rep",
+                    "Dip alle parallele con discesa in 3 secondi: 4 serie x 6-8 rep"
+                ];
+            }
+
+            return `📸 **Form Check Postura & Biomeccanica del Coach AI**:\n\n` +
+                `🎯 **Skill Rilevata**: **${skillDetected}**\n\n` +
+                `🛡️ **1. Assetto Scapolare**: ${focusScapole}\n\n` +
+                `📐 **2. Bacino & Core (PPT)**: ${focusPelvis}\n\n` +
+                `🔒 **3. Lockout & Gomiti**: ${focusLockout}\n\n` +
+                `💡 **Esercizi Correttivi per Perfezionare la Tenuta**:\n` +
+                drills.map((d, i) => `${i+1}. ${d}`).join("\n") +
+                `\n\n🔥 *Consiglio del Coach*: Registra un video di 5 secondi o scatta una foto di profilo a 90° rispetto alla fotocamera per verificare che la linea caviglia-bacino-spalla rimanga perfettamente allineata!`;
+        }
+
         async function sendAiHelperMessage() {
             const input = document.getElementById("ai-chat-input") || document.getElementById("chat-input");
-            if (!input) return;
-            const query = input.value.trim();
-            if (!query) return;
+            const query = input ? input.value.trim() : "";
+            const hasMedia = !!pendingAiMedia;
 
-            input.value = "";
+            if (!query && !hasMedia) return;
+
+            if (input) input.value = "";
             loadAiChatHistory();
+
+            let attachedMedia = null;
+            if (hasMedia) {
+                attachedMedia = { ...pendingAiMedia };
+                removePendingAiMedia();
+            }
+
             const userMsgId = "msg_user_" + Date.now();
             aiChatMessages.push({
                 id: userMsgId,
                 sender: "user",
-                text: query,
+                text: query || (attachedMedia ? "📸 [Form Check postura e tenuta]" : ""),
+                imageBase64: attachedMedia ? attachedMedia.base64 : null,
                 timestamp: Date.now()
             });
             saveAiChatHistory();
@@ -14530,7 +14806,7 @@ function getCalisthenicsExpertResponse(query) {
             const typingEl = document.createElement("div");
             typingEl.id = "ai-typing-indicator";
             typingEl.style.cssText = "padding:8px 12px; font-size:0.8rem; color:var(--subtext); font-style:italic; display:flex; align-items:center; gap:6px;";
-            typingEl.innerHTML = '🤖 <span>Il Coach AI sta analizzando...</span>';
+            typingEl.innerHTML = '🤖 <span>Ares Coach AI sta analizzando l\'assetto biomeccanico...</span>';
             if (threadEl) {
                 if (promptsEl) {
                     threadEl.insertBefore(typingEl, promptsEl);
@@ -14538,46 +14814,71 @@ function getCalisthenicsExpertResponse(query) {
                     threadEl.appendChild(typingEl);
                 }
             }
-            // Mantieni la vista ancorata al messaggio appena scritto
             alignAiChatToMessage(userMsgId, false);
 
-            // 1. Verifica se è configurata una chiave Gemini personale
-            const userGeminiKey = localStorage.getItem("calisthenics_gemini_api_key");
             let aiResponse = "";
-            let apiErrorMessage = "";
 
-            if (userGeminiKey && userGeminiKey.trim()) {
-                const cleanKey = userGeminiKey.trim().replace(/^["']|["']$/g, '');
-                const promptText = "Sei il Coach Esperto di Calisthenics dell'app Calisthenics Skill Tree. Rispondi in italiano con precisione tecnica, tono motivante da atleta, consigli pratici, serie/ripetizioni e prevenzione articolare:\n\n" + query;
-                const modelsToTry = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash"];
-                for (const m of modelsToTry) {
-                    try {
-                        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${encodeURIComponent(cleanKey)}`, {
-                            method: "POST",
-                            headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({ contents: [{ parts: [{ text: promptText }] }] })
+            // 1. Guardrail rigoroso: verifica se la richiesta testuale è totalmente off-topic (non sport / non calisthenics)
+            if (!attachedMedia && isOffTopicNonSportQuery(query)) {
+                await new Promise(r => setTimeout(r, 380));
+                aiResponse = "🔥 **Focus sulla Performance, Atleta!**\n\n" +
+                    "Come Coach ufficiale di Calisthenics in **Occhionero's Calisthenics Tree**, la mia missione è farti conquistare le tue skill a corpo libero, costruire un fisico d'acciaio ed eccellere nei tuoi allenamenti.\n\n" +
+                    "Per mantenere la massima efficacia nel nostro percorso, rispondo **esclusivamente a domande su sport, calisthenics, mobilità, nutrizione sportiva e biomeccanica** 🤸‍♂️💪.\n\n" +
+                    "Rimaniamo sul pezzo: quale skill, obiettivo o scheda di allenamento vogliamo affrontare oggi?";
+            }
+
+            // 2. Chiamata a Gemini API multimodale (se configurata in background)
+            if (!aiResponse) {
+                const userGeminiKey = localStorage.getItem("calisthenics_gemini_api_key");
+                const apiKeyToUse = (userGeminiKey && userGeminiKey.trim()) ? userGeminiKey.trim().replace(/^["']|["']$/g, '') : null;
+
+                if (apiKeyToUse) {
+                    const systemPrompt = "Sei Ares, il Coach Ufficiale di Calisthenics & Street Lifting dell'app 'Occhionero's Calisthenics Tree'. " +
+                        "IL TUO AMBITO È STRETTAMENTE LIMITATO ALLO SPORT, FITNESS, NUTRIZIONE SPORTIVA, MOBILITÀ E CALISTHENICS. " +
+                        "Se l'utente fa domande estranee allo sport o al calisthenics, rifiuta educatamente e reindirizza all'allenamento. " +
+                        "Se è presente un'immagine di una tenuta o esercizio (Form Check), esamina: 1) Skill/propedeutica riconosciuta, 2) Assetto scapolare (protrazione/depressione/retrazione), 3) Retroversione bacino (PPT) e core, 4) Lockout gomiti a 180°, 5) Consigli pratici ed esercizi correttivi. " +
+                        "Rispondi in italiano con tono energico, tecnico ed incoraggiante da coach calisthenico.\n\n";
+
+                    const contentsParts = [{ text: systemPrompt + (query || "Analizza la mia postura e la tenuta in questa foto") }];
+                    if (attachedMedia && attachedMedia.base64) {
+                        const mime = (attachedMedia.file && attachedMedia.file.type) ? attachedMedia.file.type : "image/jpeg";
+                        const b64Data = attachedMedia.base64.split(",")[1] || attachedMedia.base64;
+                        contentsParts.push({
+                            inlineData: {
+                                mimeType: mime,
+                                data: b64Data
+                            }
                         });
-                        if (res.ok) {
-                            const resData = await res.json();
-                            aiResponse = resData.candidates?.[0]?.content?.parts?.[0]?.text;
-                            if (aiResponse) break;
-                        } else {
-                            const errData = await res.json().catch(() => ({}));
-                            apiErrorMessage = (errData.error && errData.error.message) || `Errore HTTP ${res.status}`;
-                            console.warn(`Errore Gemini API [${m}]:`, errData);
+                    }
+
+                    const modelsToTry = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash"];
+                    for (const m of modelsToTry) {
+                        try {
+                            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${encodeURIComponent(apiKeyToUse)}`, {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({ contents: [{ parts: contentsParts }] })
+                            });
+                            if (res.ok) {
+                                const resData = await res.json();
+                                aiResponse = resData.candidates?.[0]?.content?.parts?.[0]?.text;
+                                if (aiResponse) break;
+                            }
+                        } catch(err) {
+                            console.warn('Tentativo Gemini fallito su ' + m + ':', err);
                         }
-                    } catch(err) {
-                        apiErrorMessage = err.message;
-                        console.warn('Errore rete Gemini con ' + m + ':', err);
                     }
                 }
             }
 
-            // Fallback su Calisthenics Knowledge Engine
+            // 3. Fallback Zero-Config su Autonomous Biomechanical Coach & Form Check Engine
             if (!aiResponse) {
-                await new Promise(r => setTimeout(r, 450));
-                aiResponse = getCalisthenicsExpertResponse(query);
-                // Silent fallback offline coach
+                await new Promise(r => setTimeout(r, 420));
+                if (attachedMedia || (query && (query.toLowerCase().includes("form check") || query.toLowerCase().includes("postura")))) {
+                    aiResponse = getCalisthenicsFormCheckResponse(query);
+                } else {
+                    aiResponse = getCalisthenicsExpertResponse(query);
+                }
             }
 
             const typingToRemove = document.getElementById("ai-typing-indicator");
@@ -14591,7 +14892,6 @@ function getCalisthenicsExpertResponse(query) {
                 timestamp: Date.now()
             });
             saveAiChatHistory();
-            // Mantieni la vista allineata al messaggio dell'utente per una lettura comoda
             renderAiHelperView(true, userMsgId);
         }
 
@@ -17926,11 +18226,17 @@ function getCalisthenicsExpertResponse(query) {
 
             if (activeChatView === 'ai') {
                 box.innerHTML = `
+                    <input type="file" id="ai-chat-camera-input" accept="image/*" capture="environment" style="display:none;" onchange="handleAiMediaSelected(event, 'camera')">
+                    <input type="file" id="ai-chat-file-input" accept="image/*" style="display:none;" onchange="handleAiMediaSelected(event, 'file')">
+                    <div id="ai-pending-media-container" style="width:100%;"></div>
                     <div class="chat-input-row" style="display:flex; align-items:center; gap:8px; width:100%; box-sizing:border-box;">
-                        <input type="text" id="ai-chat-input" placeholder="Chiedi al Coach (es. come imparare la Planche?)..." maxlength="350" style="flex:1; min-width:0; padding:8px 12px; border-radius:8px; border:1px solid var(--line-color); background:var(--bg-color); color:var(--text); font-size:0.88rem;">
+                        <button type="button" class="chat-icon-action-btn" onclick="triggerAiCameraInput()" title="Scatta foto postura per Form Check" aria-label="Scatta foto" style="font-size:1.1rem; padding:6px 10px; border-radius:8px; background:rgba(255,255,255,0.06); border:1px solid var(--line-color); cursor:pointer;">📷</button>
+                        <button type="button" class="chat-icon-action-btn" onclick="triggerAiFileInput()" title="Allega foto skill / postura per Form Check" aria-label="Allega foto" style="font-size:1.1rem; padding:6px 10px; border-radius:8px; background:rgba(255,255,255,0.06); border:1px solid var(--line-color); cursor:pointer;">📎</button>
+                        <input type="text" id="ai-chat-input" placeholder="Chiedi al Coach o allega foto per Form Check (Planche, Lever...)" maxlength="350" style="flex:1; min-width:0; padding:8px 12px; border-radius:8px; border:1px solid var(--line-color); background:var(--bg-color); color:var(--text); font-size:0.88rem;">
                         <button class="chat-send-btn" onclick="sendAiHelperMessage()" id="ai-chat-send-btn" style="flex-shrink:0;">➤</button>
                     </div>
                 `;
+                renderAiPendingMediaBar();
                 const aiInput = document.getElementById('ai-chat-input');
                 if (aiInput) {
                     aiInput.addEventListener('keydown', (e) => {
