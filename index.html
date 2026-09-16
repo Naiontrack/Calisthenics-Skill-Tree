@@ -14147,6 +14147,15 @@ let currentUser = null;
                     
                     <div class="ai-suggested-prompts" id="ai-suggested-prompts">
                         <div style="font-size:0.75rem; color:var(--subtext); font-weight:bold; margin-bottom:4px;">💡 Domande rapide suggerite:</div>
+                        <button type="button" class="ai-suggested-prompt-btn" onclick="sendSuggestedPromptBtn(this)" data-prompt="📊 Chi sono? Leggi il mio profilo, peso, altezza, rank e streak!">
+                            📊 Chi sono? Leggi profilo, peso, altezza e rank
+                        </button>
+                        <button type="button" class="ai-suggested-prompt-btn" onclick="sendSuggestedPromptBtn(this)" data-prompt="🏆 Quali skill ho sbloccato finora e quali sono i miei record di reps e tenuta?">
+                            🏆 Quali skill ho sbloccato e i miei record?
+                        </button>
+                        <button type="button" class="ai-suggested-prompt-btn" onclick="sendSuggestedPromptBtn(this)" data-prompt="🎯 Qual è la prossima skill che mi consigli di sbloccare in base al mio livello?">
+                            🎯 Prossima skill consigliata per me
+                        </button>
                         <button type="button" class="ai-suggested-prompt-btn" onclick="sendSuggestedPromptBtn(this)" data-prompt="📸 Come fare il Form Check della mia postura con una foto?">
                             📸 Come fare il Form Check della mia postura con una foto?
                         </button>
@@ -14246,6 +14255,189 @@ let currentUser = null;
             sendAiHelperMessage();
         }
 
+        // ==========================================
+        // PROFILO ATLETA PER IL COACH AI ARES
+        // Estrae in tempo reale tutti i dati dell'utente:
+        // Peso, Altezza, BMI, Rank, XP, Streak, Diario Allenamenti,
+        // Skill sbloccate con i relativi record (reps/hold) e prossimi obiettivi.
+        // ==========================================
+        function buildAthleteProfileAiContext() {
+            try {
+                // 1. Identità e credenziali
+                const nick = userNickname || (currentUser ? (currentUser.displayName || (currentUser.email ? currentUser.email.split('@')[0] : '')) : '') || localStorage.getItem('naiontrackNickname') || 'Atleta';
+                const isAuth = !!(currentUser && currentUser.uid);
+                const email = (currentUser && currentUser.email) ? currentUser.email : null;
+
+                // 2. Dati corporei e antropometrici
+                let height = null;
+                if (userProfileData && userProfileData.heightCm) {
+                    height = parseFloat(userProfileData.heightCm);
+                } else {
+                    const hStored = localStorage.getItem('naiontrackHeight');
+                    if (hStored) height = parseFloat(hStored);
+                }
+
+                let weight = null;
+                if (userProfileData && userProfileData.weightKg) {
+                    weight = parseFloat(userProfileData.weightKg);
+                } else {
+                    const wStored = localStorage.getItem('naiontrackWeight');
+                    if (wStored) weight = parseFloat(wStored);
+                }
+
+                let bmiStr = "Non calcolabile (altezza o peso non registrati)";
+                let bmiVal = null;
+                let bmiCategory = "";
+                if (height && weight && height > 0) {
+                    const hM = height / 100;
+                    bmiVal = (weight / (hM * hM)).toFixed(1);
+                    if (bmiVal < 18.5) bmiCategory = "Sottopeso";
+                    else if (bmiVal < 25) bmiCategory = "Normopeso";
+                    else if (bmiVal < 30) bmiCategory = "Sovrappeso";
+                    else bmiCategory = "Obesità";
+                    bmiStr = `${bmiVal} (${bmiCategory})`;
+                }
+
+                // 3. Rank, Grado ed Esperienza XP
+                const skillXp = (typeof calculateXP === 'function') ? calculateXP() : 0;
+                const workoutXp = userWorkoutXp || 0;
+                const totalXp = (typeof getTotalXp === 'function') ? getTotalXp() : (skillXp + workoutXp);
+                const currentRank = (typeof calculateRank === 'function') ? calculateRank(totalXp) : ((typeof getCurrentRank === 'function') ? getCurrentRank(totalXp) : { name: 'Bronzo (Novizio)' });
+                const rankName = currentRank.name || 'Bronzo (Novizio)';
+
+                // 4. Streak e Storico Allenamenti
+                const streak = userStreak || 0;
+                let lastDate = lastWorkoutDate;
+                if (!lastDate && typeof getLastWorkoutDateStorageKey === 'function') {
+                    lastDate = localStorage.getItem(getLastWorkoutDateStorageKey());
+                }
+                if (!lastDate) lastDate = localStorage.getItem('naiontrackLastWorkoutDate') || 'Nessun allenamento recente';
+
+                const workoutsList = (typeof getLocalWorkouts === 'function') ? getLocalWorkouts() : [];
+                const totalWorkouts = workoutsList.length;
+                let recentWorkoutsSummary = "Nessun allenamento registrato di recente.";
+                if (workoutsList.length > 0) {
+                    const recent = workoutsList.slice(-3).reverse();
+                    recentWorkoutsSummary = recent.map(w => {
+                        const date = w.date ? w.date.slice(0, 10) : 'Data N/D';
+                        const dur = w.duration ? `${w.duration} min` : '';
+                        const type = w.type || w.title || 'Sessione';
+                        const notes = w.notes ? ` (Note: ${w.notes.slice(0, 60)})` : '';
+                        return `- ${date}: ${type} ${dur}${notes}`;
+                    }).join("\n");
+                }
+
+                // 5. Skill Sbloccate, Record Reps / Hold e Prossimi Obiettivi
+                let totalSkillsCount = 0;
+                let unlockedCount = 0;
+                const unlockedSkillsList = [];
+                const nextRecommendedSkills = [];
+
+                if (typeof categories !== 'undefined' && Array.isArray(categories)) {
+                    categories.forEach(cat => {
+                        const catTitle = cat.title || cat.name || cat.id;
+                        (cat.skills || []).forEach(s => {
+                            totalSkillsCount++;
+                            const sData = userState && userState[s.id];
+                            const isUnlocked = !!(sData && sData.unlocked);
+                            const unitShort = s.type === 'sec' ? 's (isometria)' : 'reps';
+                            const unitLong = s.type === 'sec' ? 'secondi di tenuta isometrica' : 'ripetizioni';
+
+                            if (isUnlocked) {
+                                unlockedCount++;
+                                const recordVal = (sData.val !== undefined && sData.val !== null) ? sData.val : (s.type === 'sec' ? 3 : 1);
+                                unlockedSkillsList.push({
+                                    id: s.id,
+                                    name: s.name,
+                                    category: catTitle,
+                                    tier: s.tier || 'base',
+                                    record: `${recordVal} ${unitShort}`,
+                                    recordFull: `${recordVal} ${unitLong}`,
+                                    val: recordVal,
+                                    type: s.type
+                                });
+                            } else {
+                                let prereqMet = true;
+                                if (s.prereq && Array.isArray(s.prereq)) {
+                                    for (const pid of s.prereq) {
+                                        if (!userState || !userState[pid] || !userState[pid].unlocked) {
+                                            prereqMet = false;
+                                            break;
+                                        }
+                                    }
+                                } else if (s.prereq && typeof s.prereq === 'string') {
+                                    if (!userState || !userState[s.prereq] || !userState[s.prereq].unlocked) {
+                                        prereqMet = false;
+                                    }
+                                }
+                                if (prereqMet && nextRecommendedSkills.length < 6) {
+                                    nextRecommendedSkills.push(`${s.name} [${catTitle}] (Tier: ${s.tier || 'base'})`);
+                                }
+                            }
+                        });
+                    });
+                }
+
+                let unlockedSkillsText = "Nessuna skill ancora registrata/sbloccata sull'albero.";
+                if (unlockedSkillsList.length > 0) {
+                    unlockedSkillsText = unlockedSkillsList.map(s =>
+                        `• **${s.name}** (${s.category}) | Tier: ${s.tier} ➜ Record personale: **${s.recordFull}**`
+                    ).join("\n");
+                }
+
+                let nextSkillsText = "Inizia padroneggiando i fondamentali (Push-up, Australian Pull-up, Squat).";
+                if (nextRecommendedSkills.length > 0) {
+                    nextSkillsText = nextRecommendedSkills.map(s => `• ${s}`).join("\n");
+                }
+
+                // 6. Testo riassuntivo completo strutturato per il prompt AI
+                let profileText = "=== SCHEDA ATLETA COMPLETA (DATI IN TEMPO REALE) ===\n";
+                profileText += `• Nome/Nickname: ${nick}\n`;
+                profileText += `• Stato Account: ${isAuth ? `Registrato Online (${email || 'Autenticato'})` : 'Locale / Ospite'}\n`;
+                profileText += `• Dati Corporei: ${height ? `Altezza: ${height} cm` : 'Altezza non specificata'}, ${weight ? `Peso: ${weight} kg` : 'Peso non specificato'}\n`;
+                profileText += `• Indice di Massa Corporea (BMI): ${bmiStr}\n`;
+                profileText += `• Grado/Rank Attuale: ${rankName}\n`;
+                profileText += `• Esperienza Totale: ${totalXp} XP (Punti Skill: ${skillXp} XP, Punti Allenamenti: ${workoutXp} XP)\n`;
+                profileText += `• Costanza (Streak): ${streak} ${streak === 1 ? 'giorno consecutivo' : 'giorni consecutivi'} 🔥\n`;
+                profileText += `• Ultimo Allenamento: ${lastDate}\n`;
+                profileText += `• Sessioni Totali nel Diario: ${totalWorkouts}\n\n`;
+
+                profileText += `--- RECENTI ALLENAMENTI REGISTRATI NEL DIARIO ---\n${recentWorkoutsSummary}\n\n`;
+
+                profileText += `--- SKILL SBLOCCATE E RECORD PERSONALI (${unlockedCount} su ${totalSkillsCount} sbloccate) ---\n`;
+                profileText += `${unlockedSkillsText}\n\n`;
+
+                profileText += `--- PROSSIME SKILL PRONTE DA SBLOCCARE (Prerequisiti completati) ---\n`;
+                profileText += `${nextSkillsText}\n`;
+                profileText += `====================================================\n`;
+
+                return {
+                    nick,
+                    height,
+                    weight,
+                    bmiVal,
+                    bmiCategory,
+                    rankName,
+                    totalXp,
+                    skillXp,
+                    workoutXp,
+                    streak,
+                    unlockedCount,
+                    totalSkillsCount,
+                    unlockedSkillsList,
+                    nextRecommendedSkills,
+                    profileText
+                };
+            } catch (err) {
+                console.error("Errore generazione contesto profilo atleta per AI:", err);
+                return {
+                    nick: 'Atleta',
+                    profileText: "=== SCHEDA ATLETA ===\nProfilo in fase di inizializzazione.\n"
+                };
+            }
+        }
+        window.buildAthleteProfileAiContext = buildAthleteProfileAiContext;
+
         // Risposta da Knowledge Base Calisthenica
 function getCalisthenicsExpertResponse(query) {
     const rawQ = (query || "").trim();
@@ -14253,6 +14445,50 @@ function getCalisthenicsExpertResponse(query) {
 
     const has = (...words) => words.some(w => q.includes(w));
     const hasAll = (...words) => words.every(w => q.includes(w));
+
+    // Lettura e consultazione del profilo atleta in tempo reale (peso, altezza, BMI, rank, skill sbloccate, reps/hold, streak)
+    if (has("mio peso", "quanto peso", "il mio peso", "mia altezza", "quanto sono alto", "la mia altezza", "mio profilo", "miei dati", "mie informazioni", "mio rank", "mio grado", "miei xp", "quanti xp", "mio bmi", "mia streak", "mie skill", "skill sbloccate", "quali skill ho", "miei record", "quante trazioni", "quanti push", "chi sono", "mia scheda", "prossima skill")) {
+        const p = buildAthleteProfileAiContext();
+
+        if (has("peso") && !has("skill", "profilo completo", "tutto", "chi sono")) {
+            return p.weight ? `⚖️ Nel tuo profilo hai registrato un peso di **${p.weight} kg**.\n\n${p.bmiVal ? `Il tuo BMI calcolato è **${p.bmiVal}** (${p.bmiCategory}).\n` : ''}Nel calisthenics il peso corporeo è il tuo bilanciere naturale: ogni chilo incide direttamente sul braccio di leva di tenute come Planche e Front Lever!` : "⚖️ Non hai ancora inserito il tuo peso corporeo nel profilo. Puoi farlo toccando la sezione **Profilo**!";
+        }
+        if ((has("altezz") || has("quanto sono alto")) && !has("skill", "profilo completo", "tutto", "chi sono")) {
+            return p.height ? `📏 Nel tuo profilo hai registrato un'altezza di **${p.height} cm**.\n\n${p.height >= 180 ? 'Essendo alto hai leve più lunghe, che rendono le skills isometriche (Planche e Leve) più sfidanti ma biomeccanicamente impressionanti!' : 'La tua statura ti offre leve ideali per dominare sia le tenute isometriche che gli esercizi di spinta!'}` : "📏 Non hai ancora inserito la tua altezza nel profilo. Puoi impostarla nella scheda **Profilo**!";
+        }
+        if (has("bmi") && !has("skill", "profilo completo")) {
+            return p.bmiVal ? `📊 Il tuo BMI (Indice di Massa Corporea) è **${p.bmiVal}** (${p.bmiCategory}), calcolato sulla tua altezza di ${p.height} cm e peso di ${p.weight} kg.` : "📊 Per calcolare il tuo BMI è necessario inserire sia altezza che peso nella sezione Profilo!";
+        }
+        if ((has("rank") || has("grado") || has("xp") || has("punti")) && !has("skill", "peso", "chi sono")) {
+            return `🎖️ **Il tuo Grado Attuale**: **${p.rankName}**\n\n• **Esperienza Totale**: **${p.totalXp} XP** (Skill: ${p.skillXp} XP | Allenamenti: ${p.workoutXp} XP)\n• **Costanza**: **${p.streak} giorni consecutivi** di streak 🔥\n\nContinua ad allenarti e a superare i tuoi record sull'albero per scalare la classifica!`;
+        }
+        if ((has("skill") || has("record") || has("sbloccate") || has("hold") || has("reps") || has("trazioni") || has("push")) && !has("peso", "altezza", "chi sono")) {
+            let res = `🏆 **Le tue Skill Sbloccate & Record Personali** (${p.unlockedCount} su ${p.totalSkillsCount} sbloccate):\n\n`;
+            if (p.unlockedSkillsList && p.unlockedSkillsList.length > 0) {
+                res += p.unlockedSkillsList.map(s => `• **${s.name}** [${s.category}] - Record: **${s.recordFull}**`).join("\n") + "\n\n";
+            } else {
+                res += "Non hai ancora sbloccato nessuna skill sull'albero. Scegli una skill di base (es. Push-up o Australian Pull-up) e verifica il tuo massimale con l'AI Referee!\n\n";
+            }
+            if (p.nextRecommendedSkills && p.nextRecommendedSkills.length > 0) {
+                res += `🎯 **Prossime Skill Consigliate per te**:\n` + p.nextRecommendedSkills.map(s => `• ${s}`).join("\n");
+            }
+            return res;
+        }
+
+        // Risposta generale di riepilogo profilo
+        return `📋 **Ecco la tua Scheda Atleta completa registrata nell'app**:\n\n` +
+            `• **Nome/Atleta**: **${p.nick}**\n` +
+            `• **Dati Corporei**: ${p.height ? `📏 **${p.height} cm**` : 'Altezza non impostata'} | ${p.weight ? `⚖️ **${p.weight} kg**` : 'Peso non impostato'}\n` +
+            `• **BMI**: ${p.bmiVal ? `**${p.bmiVal}** (${p.bmiCategory})` : 'Dati mancanti'}\n` +
+            `• **Grado/Rank**: 🎖️ **${p.rankName}** (${p.totalXp} XP totali)\n` +
+            `• **Costanza**: 🔥 **${p.streak} ${p.streak === 1 ? 'giorno' : 'giorni'} consecutivi** di streak\n` +
+            `• **Skill Sbloccate**: **${p.unlockedCount} / ${p.totalSkillsCount}** sbloccate\n\n` +
+            `🏆 **I tuoi record principali**:\n` +
+            (p.unlockedSkillsList && p.unlockedSkillsList.length > 0 
+                ? p.unlockedSkillsList.slice(0, 8).map(s => `• **${s.name}**: ${s.recordFull}`).join("\n")
+                : '• *Nessuna skill ancora registrata.*') +
+            `\n\n💡 *Chiedimi qualsiasi consiglio su come migliorare le tue skill o come pianificare la tua prossima sessione!*`;
+    }
 
     // 0. Domande su come usare l'app, dove premere, come sbloccare le skill, come funziona l'albero
     if (has("dove devo premere", "dove premere", "dove cliccare", "sblocc", "come funziona l'app", "cosa devo fare per sbloccare", "come usare l'app", "non so cosa fare", "spiegami come sbloccare")) {
@@ -14904,12 +15140,25 @@ function getCalisthenicsExpertResponse(query) {
 
             // 2. Se l'API è configurata, invia la richiesta direttamente a Google Gemini
             if (apiKeyToUse) {
-                const systemPrompt = "Sei Ares, il Coach Ufficiale di Calisthenics & Street Lifting dell'app 'Occhionero's Calisthenics Tree'. " +
-                    "IL TUO AMBITO È STRETTAMENTE LIMITATO ALLO SPORT, FITNESS, NUTRIZIONE SPORTIVA, MOBILITÀ E CALISTHENICS. " +
-                    "Se l'utente fa domande totalmente estranee allo sport o al calisthenics, rispondi con simpatia ed educazione ma reindirizza subito all'allenamento. " +
-                    "Se è presente un'immagine di una tenuta o esercizio (Form Check), esamina: 1) Skill/propedeutica riconosciuta, 2) Assetto scapolare (protrazione/depressione/retrazione), 3) Retroversione bacino (PPT) e core, 4) Lockout gomiti a 180°, 5) Consigli pratici ed esercizi correttivi. " +
-                    "Rispondi in italiano con tono energico, tecnico ed incoraggiante da vero coach calisthenico. Usa elenchi puntati ed emoji tematiche. " +
-                    "REGOLA FONDAMENTALE: Completa sempre ogni risposta e ogni elenco puntato in modo esaustivo, non lasciare mai frasi o punti a metà.\n\n";
+                const athleteProfile = (typeof buildAthleteProfileAiContext === 'function')
+                    ? buildAthleteProfileAiContext()
+                    : { profileText: "Dati profilo non disponibili." };
+
+                const systemPrompt = "Sei Ares, il Coach Ufficiale di Calisthenics & Street Lifting dell'app 'Occhionero's Calisthenics Tree'.\n" +
+                    "IL TUO AMBITO È STRETTAMENTE LIMITATO ALLO SPORT, FITNESS, NUTRIZIONE SPORTIVA, MOBILITÀ E CALISTHENICS.\n" +
+                    "Se l'utente fa domande totalmente estranee allo sport o al calisthenics, rispondi con simpatia ed educazione ma reindirizza subito all'allenamento.\n" +
+                    "Se è presente un'immagine di una tenuta o esercizio (Form Check), esamina: 1) Skill/propedeutica riconosciuta, 2) Assetto scapolare (protrazione/depressione/retrazione), 3) Retroversione bacino (PPT) e core, 4) Lockout gomiti a 180°, 5) Consigli pratici ed esercizi correttivi.\n" +
+                    "Rispondi in italiano con tono energico, tecnico ed incoraggiante da vero coach calisthenico. Usa elenchi puntati ed emoji tematiche.\n" +
+                    "REGOLA FONDAMENTALE: Completa sempre ogni risposta e ogni elenco puntato in modo esaustivo, non lasciare mai frasi o punti a metà.\n\n" +
+                    "═══════════════════════════════════════════════════════════════\n" +
+                    "📊 SCHEDA PROFILO & PROGRESSI REALI DELL'ATLETA CON CUI STAI PARLANDO:\n" +
+                    athleteProfile.profileText + "\n" +
+                    "═══════════════════════════════════════════════════════════════\n\n" +
+                    "ISTRUZIONI SPECIALI SULLA SCHEDA DELL'ATLETA:\n" +
+                    "1. Sei pienamente consapevole di tutti i dati registrati dell'atleta: nome/nickname, peso corporeo (kg), altezza (cm), BMI, grado/rank attuale, punti XP, streak di giorni consecutivi di allenamento, quali skill ha sbloccato e quali sono i suoi esatti record personali (ripetizioni o secondi di tenuta/hold isometrico).\n" +
+                    "2. Quando l'atleta ti chiede 'chi sono?', 'quanto peso?', 'quanto sono alto?', 'qual è il mio rank?', 'quali skill ho sbloccato?', 'quante trazioni o push-up faccio?', 'qual è il mio record di...?', 'cosa dovrei allenare ora?', rispondi citando con precisione i suoi valori reali registrati nell'app.\n" +
+                    "3. Personalizza sempre i tuoi consigli biomeccanici e le schede in base alla sua altezza (lunghezza leve), al suo peso (forza relativa richiesta) e alle skill che ha già sbloccato vs quelle consigliate come prossimo obiettivo.\n" +
+                    "4. Se l'atleta non ha ancora inserito altezza/peso o non ha sbloccato skill, rispondi spiegando chiaramente che non sono ancora stati registrati e incoraggialo con entusiasmo a compilarli nel Profilo o a registrarli sull'albero!\n\n";
 
                 // Costruisci cronologia multi-turn per una conversazione fluida e naturale
                 const historyContents = [];
