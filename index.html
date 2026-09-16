@@ -2133,6 +2133,31 @@
             color: var(--subtext);
             font-size: 0.68rem;
         }
+        .ai-msg-delete-btn {
+            background: none;
+            border: none;
+            color: var(--subtext);
+            cursor: pointer;
+            padding: 2px 4px;
+            border-radius: 4px;
+            opacity: 0.45;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-left: 4px;
+            vertical-align: middle;
+        }
+        .ai-msg-delete-btn:hover {
+            opacity: 1;
+            color: #f43f5e;
+            background: rgba(244, 63, 94, 0.15);
+            transform: scale(1.1);
+        }
+        @keyframes aiCursorBlink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
         .ai-bubble-user {
             background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
             color: #ffffff;
@@ -13997,11 +14022,14 @@ let currentUser = null;
                 const stored = localStorage.getItem(currentKey);
                 if (stored) {
                     aiChatMessages = JSON.parse(stored);
+                    if (aiChatMessages && aiChatMessages.length > 0 && aiChatMessages[0].id === "msg_welcome") {
+                        aiChatMessages[0].text = "Ciao atleta! 👋 Sono Ares, il tuo **Coach AI di Calisthenics**.\n\nChiedimi qualsiasi dubbio su progressioni (*Planche, Front Lever, Muscle-up, Handstand*), correzione di dolori articolari (*polsi, gomiti, spalle*) o routine di riscaldamento!\n\nPuoi anche chiedermi come sbloccare le skill, consigli sulle progressioni o come ribloccarle se le hai segnate per errore!";
+                    }
                 } else {
                     aiChatMessages = [{
                         id: "msg_welcome",
                         sender: "ai",
-                        text: "Ciao atleta! 👋 Sono il tuo **Coach AI di Calisthenics**.\n\nChiedimi qualsiasi dubbio su progressioni (*Planche, Front Lever, Muscle-up, Handstand*), correzione di dolori articolari (*polsi, gomiti, spalle*) o routine di riscaldamento!\n\nPuoi anche chiedermi come sbloccare le skill, consigli sulle progressioni o come ribloccarle se le hai segnate per errore!",
+                        text: "Ciao atleta! 👋 Sono Ares, il tuo **Coach AI di Calisthenics**.\n\nChiedimi qualsiasi dubbio su progressioni (*Planche, Front Lever, Muscle-up, Handstand*), correzione di dolori articolari (*polsi, gomiti, spalle*) o routine di riscaldamento!\n\nPuoi anche chiedermi come sbloccare le skill, consigli sulle progressioni o come ribloccarle se le hai segnate per errore!",
                         timestamp: Date.now()
                     }];
                 }
@@ -14101,6 +14129,9 @@ let currentUser = null;
                                 ? '<span class="ai-chat-meta-badge-ai">🤖 Coach AI Calisthenics</span>' 
                                 : '<span class="ai-chat-meta-badge-user">Tu 👤</span>'}
                             <span class="ai-chat-time">${timeStr}</span>
+                            <button type="button" class="ai-msg-delete-btn" onclick="deleteAiChatMessage('${m.id || ''}', ${idx})" title="${isAi ? 'Elimina questa risposta' : 'Elimina questo messaggio e tutti i successivi'}" aria-label="Elimina messaggio">
+                                <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                            </button>
                         </div>
                         <div class="${isAi ? "ai-bubble-ai" : "ai-bubble-user"}">
                             ${mediaHtml}
@@ -14158,6 +14189,51 @@ let currentUser = null;
             renderAiHelperView(true);
         }
 
+        function deleteAiChatMessage(msgId, idx) {
+            if (!aiChatMessages || aiChatMessages.length === 0) return;
+
+            let targetIndex = -1;
+            if (msgId) {
+                targetIndex = aiChatMessages.findIndex(m => m.id === msgId);
+            }
+            if (targetIndex === -1 && typeof idx === 'number' && idx >= 0 && idx < aiChatMessages.length) {
+                targetIndex = idx;
+            }
+            if (targetIndex === -1) return;
+
+            const targetMsg = aiChatMessages[targetIndex];
+            const isUser = targetMsg && targetMsg.sender === 'user';
+
+            if (isUser) {
+                const countBelow = aiChatMessages.length - targetIndex;
+                const confirmText = countBelow > 1 
+                    ? `Vuoi eliminare questo tuo messaggio e tutti i ${countBelow - 1} messaggi successivi?`
+                    : "Vuoi eliminare questo messaggio?";
+                if (!confirm(confirmText)) return;
+                
+                // Se elimino il mio messaggio, si eliminano anche tutti gli altri sotto
+                aiChatMessages = aiChatMessages.slice(0, targetIndex);
+            } else {
+                if (!confirm("Vuoi eliminare questo messaggio del Coach?")) return;
+                aiChatMessages.splice(targetIndex, 1);
+            }
+
+            if (aiChatMessages.length === 0) {
+                aiChatMessages = [{
+                    id: "msg_welcome",
+                    sender: "ai",
+                    text: "Ciao atleta! 👋 Sono Ares, il tuo **Coach AI di Calisthenics**.\n\nChiedimi qualsiasi dubbio su progressioni (*Planche, Front Lever, Muscle-up, Handstand*), correzione di dolori articolari (*polsi, gomiti, spalle*) o routine di riscaldamento!\n\nPuoi anche chiedermi come sbloccare le skill, consigli sulle progressioni o come ribloccarle se le hai segnate per errore!",
+                    timestamp: Date.now()
+                }];
+            }
+
+            saveAiChatHistory();
+            renderAiHelperView(true);
+            if (typeof showAppToast === 'function') {
+                showAppToast("Messaggio rimosso", "info");
+            }
+        }
+
         function sendSuggestedPromptBtn(btn) {
             if (!btn) return;
             const text = btn.getAttribute("data-prompt") || btn.innerText.trim();
@@ -14191,7 +14267,7 @@ function getCalisthenicsExpertResponse(query) {
 
     // 1. Saluti & Presentazione
     if (has("chi sei", "come ti chiami", "cosa sai fare", "presentati") || (has("ciao", "salve", "buongiorno", "buonasera", "ehi", "hey", "hello") && q.length < 25)) {
-        return "Ciao atleta! 👋 Sono il tuo **Coach AI di Calisthenics**.\n\n" +
+        return "Ciao atleta! 👋 Sono Ares, il tuo **Coach AI di Calisthenics**.\n\n" +
             "Sono la tua guida tecnica specializzata nell'allenamento a corpo libero. Puoi chiedermi qualsiasi cosa su:\n\n" +
             "• **Progressioni di Skill**: *Planche, Front Lever, Muscle-Up, Verticale (Handstand), L-Sit, Bandiera (Human Flag)*.\n" +
             "• **Biomeccanica & Tecnica**: ROM completo a 90°, estensione articolare, retrazione e protrazione scapolare.\n" +
@@ -14600,9 +14676,6 @@ function getCalisthenicsExpertResponse(query) {
             renderAiPendingMediaBar();
             const input = document.getElementById('ai-chat-input');
             if (input) {
-                if (!input.value.trim()) {
-                    input.value = "Analizza la mia postura e la tenuta in questa foto";
-                }
                 input.focus();
             }
         }
@@ -14867,11 +14940,12 @@ function getCalisthenicsExpertResponse(query) {
                     historyContents.push({ role: "user", parts: [{ text: query || "Ciao Coach" }] });
                 }
 
-                // Modelli supportati su generativelanguage v1beta
+                // Modelli supportati su generativelanguage v1beta con Streaming SSE
+                let streamSucceeded = false;
                 const modelsToTry = ["gemini-3.5-flash", "gemini-3.6-flash", "gemini-3.7-flash"];
                 for (const m of modelsToTry) {
                     try {
-                        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${encodeURIComponent(apiKeyToUse)}`, {
+                        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:streamGenerateContent?alt=sse&key=${encodeURIComponent(apiKeyToUse)}`, {
                             method: "POST",
                             headers: { "Content-Type": "application/json" },
                             body: JSON.stringify({
@@ -14880,16 +14954,125 @@ function getCalisthenicsExpertResponse(query) {
                                 generationConfig: { temperature: 0.7, maxOutputTokens: 8192 }
                             })
                         });
-                        if (res.ok) {
-                            const resData = await res.json();
-                            const candidate = resData.candidates?.[0];
-                            if (candidate && candidate.content && Array.isArray(candidate.content.parts)) {
-                                const textParts = candidate.content.parts
-                                    .filter(p => p.text && !p.thought)
-                                    .map(p => p.text);
-                                aiResponse = textParts.join("") || candidate.content.parts[0]?.text || "";
+
+                        if (res.ok && res.body && typeof res.body.getReader === "function") {
+                            // Rimuovi l'indicatore di caricamento e crea subito il contenitore del Coach in tempo reale
+                            const typingToRemove = document.getElementById("ai-typing-indicator");
+                            if (typingToRemove) typingToRemove.remove();
+
+                            const aiMsgId = "msg_ai_" + Date.now();
+                            const aiMsgObj = {
+                                id: aiMsgId,
+                                sender: "ai",
+                                text: "",
+                                timestamp: Date.now()
+                            };
+                            aiChatMessages.push(aiMsgObj);
+
+                            const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                            const msgDom = document.createElement("div");
+                            msgDom.className = "ai-chat-msg-wrapper ai";
+                            msgDom.id = "ai-msg-" + aiMsgId;
+                            msgDom.innerHTML = `
+                                <div class="ai-chat-meta">
+                                    <span class="ai-chat-meta-badge-ai">🤖 Coach AI Calisthenics</span>
+                                    <span class="ai-chat-time">${timeStr}</span>
+                                    <button type="button" class="ai-msg-delete-btn" onclick="deleteAiChatMessage('${aiMsgId}')" title="Elimina questa risposta" aria-label="Elimina messaggio">
+                                        <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                                    </button>
+                                </div>
+                                <div class="ai-bubble-ai">
+                                    <span class="ai-stream-cursor" style="display:inline-block; width:6px; height:14px; background:#38bdf8; margin-left:3px; vertical-align:baseline; animation:aiCursorBlink 0.8s infinite; border-radius:2px;"></span>
+                                </div>
+                            `;
+                            if (threadEl) {
+                                if (promptsEl) {
+                                    threadEl.insertBefore(msgDom, promptsEl);
+                                } else {
+                                    threadEl.appendChild(msgDom);
+                                }
                             }
-                            if (aiResponse) break;
+                            const bubble = msgDom.querySelector(".ai-bubble-ai");
+
+                            const reader = res.body.getReader();
+                            const decoder = new TextDecoder("utf-8");
+                            let buffer = "";
+                            let accumulatedText = "";
+                            let streamDone = false;
+
+                            while (!streamDone) {
+                                const { done, value } = await reader.read();
+                                if (done) {
+                                    streamDone = true;
+                                    break;
+                                }
+                                buffer += decoder.decode(value, { stream: true });
+                                const lines = buffer.split("\n");
+                                buffer = lines.pop();
+
+                                for (const line of lines) {
+                                    const trimmed = line.trim();
+                                    if (!trimmed || !trimmed.startsWith("data:")) continue;
+                                    const jsonStr = trimmed.replace(/^data:\s*/, "");
+                                    if (jsonStr === "[DONE]") {
+                                        streamDone = true;
+                                        break;
+                                    }
+                                    try {
+                                        const parsed = JSON.parse(jsonStr);
+                                        const candidate = parsed.candidates?.[0];
+                                        if (candidate && candidate.content && Array.isArray(candidate.content.parts)) {
+                                            const chunkText = candidate.content.parts
+                                                .filter(p => p.text && !p.thought)
+                                                .map(p => p.text)
+                                                .join("");
+                                            if (chunkText) {
+                                                accumulatedText += chunkText;
+                                                aiMsgObj.text = accumulatedText;
+                                                if (bubble) {
+                                                    bubble.innerHTML = formatAiMessageText(accumulatedText) + '<span class="ai-stream-cursor" style="display:inline-block; width:6px; height:14px; background:#38bdf8; margin-left:3px; vertical-align:baseline; animation:aiCursorBlink 0.8s infinite; border-radius:2px;"></span>';
+                                                }
+                                                const chatScrollContainer = document.getElementById("chat-messages");
+                                                if (chatScrollContainer) {
+                                                    chatScrollContainer.scrollTop = chatScrollContainer.scrollHeight;
+                                                }
+                                            }
+                                        }
+                                    } catch(e) {}
+                                }
+                            }
+
+                            if (buffer && buffer.trim().startsWith("data:")) {
+                                try {
+                                    const parsed = JSON.parse(buffer.trim().replace(/^data:\s*/, ""));
+                                    const candidate = parsed.candidates?.[0];
+                                    if (candidate && candidate.content && Array.isArray(candidate.content.parts)) {
+                                        const chunkText = candidate.content.parts
+                                            .filter(p => p.text && !p.thought)
+                                            .map(p => p.text)
+                                            .join("");
+                                        if (chunkText) {
+                                            accumulatedText += chunkText;
+                                            aiMsgObj.text = accumulatedText;
+                                        }
+                                    }
+                                } catch(e) {}
+                            }
+
+                            if (bubble) {
+                                bubble.innerHTML = formatAiMessageText(accumulatedText);
+                            }
+
+                            if (accumulatedText) {
+                                streamSucceeded = true;
+                                aiResponse = accumulatedText;
+                                saveAiChatHistory();
+                                break;
+                            } else {
+                                if (msgDom && msgDom.parentNode) msgDom.remove();
+                                const remIdx = aiChatMessages.findIndex(m => m.id === aiMsgId);
+                                if (remIdx !== -1) aiChatMessages.splice(remIdx, 1);
+                            }
                         } else if (res.status === 503 || res.status === 429) {
                             console.warn(`Gemini [${m}] occupato (HTTP ${res.status}), provo modello successivo...`);
                             await new Promise(r => setTimeout(r, 400));
@@ -14904,35 +15087,37 @@ function getCalisthenicsExpertResponse(query) {
                 }
             }
 
-            // 3. Fallback solo se la chiave non è configurata o in caso di indisponibilità totale del cloud
-            if (!aiResponse) {
-                if (apiKeyToUse) {
-                    aiResponse = "⚡ **Coach AI al tuo servizio!**\n\nI server cloud di Google Gemini stanno riscontrando un momento di traffico intenso. Riprova tra pochissimi istanti con la tua domanda!";
-                } else if (!attachedMedia && isOffTopicNonSportQuery(query)) {
-                    await new Promise(r => setTimeout(r, 380));
-                    aiResponse = "🔥 **Focus sulla Performance, Atleta!**\n\n" +
-                        "Come Coach ufficiale di Calisthenics in **Occhionero's Calisthenics Tree**, la mia missione è farti conquistare le tue skill a corpo libero, costruire un fisico d'acciaio ed eccellere nei tuoi allenamenti.\n\n" +
-                        "Per mantenere la massima efficacia nel nostro percorso, rispondo **esclusivamente a domande su sport, calisthenics, mobilità, nutrizione sportiva e biomeccanica** 🤸‍♂️💪.\n\n" +
-                        "Rimaniamo sul pezzo: quale skill, obiettivo o scheda di allenamento vogliamo affrontare oggi?";
-                } else if (attachedMedia || (query && (query.toLowerCase().includes("form check") || query.toLowerCase().includes("postura")))) {
-                    aiResponse = getCalisthenicsFormCheckResponse(query);
-                } else {
-                    aiResponse = getCalisthenicsExpertResponse(query);
-                }
-            }
-
             const typingToRemove = document.getElementById("ai-typing-indicator");
             if (typingToRemove) typingToRemove.remove();
 
-            const aiMsgId = "msg_ai_" + Date.now();
-            aiChatMessages.push({
-                id: aiMsgId,
-                sender: "ai",
-                text: aiResponse,
-                timestamp: Date.now()
-            });
-            saveAiChatHistory();
-            renderAiHelperView(true, userMsgId);
+            // 3. Fallback solo se la risposta in streaming non è andata a buon fine o la chiave non è presente
+            if (!streamSucceeded) {
+                if (!aiResponse) {
+                    if (apiKeyToUse) {
+                        aiResponse = "⚡ **Coach AI al tuo servizio!**\n\nI server cloud di Google Gemini stanno riscontrando un momento di traffico intenso. Riprova tra pochissimi istanti con la tua domanda!";
+                    } else if (!attachedMedia && isOffTopicNonSportQuery(query)) {
+                        await new Promise(r => setTimeout(r, 380));
+                        aiResponse = "🔥 **Focus sulla Performance, Atleta!**\n\n" +
+                            "Come Coach ufficiale di Calisthenics in **Occhionero's Calisthenics Tree**, la mia missione è farti conquistare le tue skill a corpo libero, costruire un fisico d'acciaio ed eccellere nei tuoi allenamenti.\n\n" +
+                            "Per mantenere la massima efficacia nel nostro percorso, rispondo **esclusivamente a domande su sport, calisthenics, mobilità, nutrizione sportiva e biomeccanica** 🤸‍♂️💪.\n\n" +
+                            "Rimaniamo sul pezzo: quale skill, obiettivo o scheda di allenamento vogliamo affrontare oggi?";
+                    } else if (attachedMedia || (query && (query.toLowerCase().includes("form check") || query.toLowerCase().includes("postura")))) {
+                        aiResponse = getCalisthenicsFormCheckResponse(query);
+                    } else {
+                        aiResponse = getCalisthenicsExpertResponse(query);
+                    }
+                }
+
+                const aiMsgId = "msg_ai_" + Date.now();
+                aiChatMessages.push({
+                    id: aiMsgId,
+                    sender: "ai",
+                    text: aiResponse,
+                    timestamp: Date.now()
+                });
+                saveAiChatHistory();
+                renderAiHelperView(true, userMsgId);
+            }
         }
 
         function openGeminiApiKeyModal() {
