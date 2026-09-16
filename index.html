@@ -14008,6 +14008,13 @@ let currentUser = null;
         // ===============================================================
         let aiChatMessages = [];
         let aiChatHistoryLoadedKey = null;
+        let aiThinkingState = {
+            isThinking: false,
+            isStreaming: false,
+            activeAiMsgId: null,
+            accumulatedText: ""
+        };
+        window.aiThinkingState = aiThinkingState;
 
         function getAiChatStorageKey() {
             return currentUser ? "calisthenics_ai_chat_" + currentUser.uid : "calisthenics_ai_chat_guest";
@@ -14115,6 +14122,7 @@ let currentUser = null;
                 const timeStr = m.timestamp ? new Date(m.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
                 const formatted = formatAiMessageText(m.text || "");
                 const msgDomId = m.id ? `ai-msg-${m.id}` : `ai-msg-idx-${idx}`;
+                const isCurrentlyStreaming = isAi && aiThinkingState && aiThinkingState.isStreaming && (m.id === aiThinkingState.activeAiMsgId);
 
                 const mediaHtml = (m.imageBase64 || m.mediaUrl) ? `
                     <div class="ai-msg-media-preview" style="margin-bottom:8px;">
@@ -14135,7 +14143,7 @@ let currentUser = null;
                         </div>
                         <div class="${isAi ? "ai-bubble-ai" : "ai-bubble-user"}">
                             ${mediaHtml}
-                            ${formatted}
+                            ${formatted}${isCurrentlyStreaming ? '<span class="ai-stream-cursor" style="display:inline-block; width:6px; height:14px; background:#38bdf8; margin-left:3px; vertical-align:baseline; animation:aiCursorBlink 0.8s infinite; border-radius:2px;"></span>' : ''}
                         </div>
                     </div>
                 `;
@@ -14144,7 +14152,7 @@ let currentUser = null;
             container.innerHTML = `
                 <div class="ai-chat-thread" id="ai-chat-thread">
                     ${messagesHtml}
-                    
+                    ${(aiThinkingState && aiThinkingState.isThinking) ? '<div id="ai-typing-indicator" style="padding:8px 12px; font-size:0.8rem; color:var(--subtext); font-style:italic; display:flex; align-items:center; gap:6px;">🤖 <span>Ares Coach sta pensando...</span></div>' : ''}
                     <div class="ai-suggested-prompts" id="ai-suggested-prompts">
                         <div style="font-size:0.75rem; color:var(--subtext); font-weight:bold; margin-bottom:4px;">💡 Domande rapide suggerite:</div>
                         <button type="button" class="ai-suggested-prompt-btn" onclick="sendSuggestedPromptBtn(this)" data-prompt="📊 Chi sono? Leggi il mio profilo, peso, altezza, rank e streak!">
@@ -15092,8 +15100,20 @@ function getCalisthenicsExpertResponse(query) {
 
             if (!query && !hasMedia) return;
 
+            if (aiThinkingState && (aiThinkingState.isThinking || aiThinkingState.isStreaming)) {
+                if (typeof showAppToast === 'function') {
+                    showAppToast("Ares Coach sta ancora elaborando la risposta...", "info");
+                }
+                return;
+            }
+
             if (input) input.value = "";
             loadAiChatHistory();
+
+            aiThinkingState.isThinking = true;
+            aiThinkingState.isStreaming = false;
+            aiThinkingState.activeAiMsgId = null;
+            aiThinkingState.accumulatedText = "";
 
             let attachedMedia = null;
             if (hasMedia) {
@@ -15205,7 +15225,6 @@ function getCalisthenicsExpertResponse(query) {
                         });
 
                         if (res.ok && res.body && typeof res.body.getReader === "function") {
-                            // Rimuovi l'indicatore di caricamento e crea subito il contenitore del Coach in tempo reale
                             const typingToRemove = document.getElementById("ai-typing-indicator");
                             if (typingToRemove) typingToRemove.remove();
 
@@ -15217,6 +15236,11 @@ function getCalisthenicsExpertResponse(query) {
                                 timestamp: Date.now()
                             };
                             aiChatMessages.push(aiMsgObj);
+
+                            aiThinkingState.isThinking = false;
+                            aiThinkingState.isStreaming = true;
+                            aiThinkingState.activeAiMsgId = aiMsgId;
+                            aiThinkingState.accumulatedText = "";
 
                             const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
                             const msgDom = document.createElement("div");
@@ -15278,8 +15302,15 @@ function getCalisthenicsExpertResponse(query) {
                                             if (chunkText) {
                                                 accumulatedText += chunkText;
                                                 aiMsgObj.text = accumulatedText;
-                                                if (bubble) {
-                                                    bubble.innerHTML = formatAiMessageText(accumulatedText) + '<span class="ai-stream-cursor" style="display:inline-block; width:6px; height:14px; background:#38bdf8; margin-left:3px; vertical-align:baseline; animation:aiCursorBlink 0.8s infinite; border-radius:2px;"></span>';
+                                                aiThinkingState.accumulatedText = accumulatedText;
+
+                                                // Cerca dinamicamente nel DOM attuale (resiste al cambio tab della navbar)
+                                                const liveMsgEl = document.getElementById("ai-msg-" + aiMsgId);
+                                                if (liveMsgEl) {
+                                                    const liveBubble = liveMsgEl.querySelector(".ai-bubble-ai");
+                                                    if (liveBubble) {
+                                                        liveBubble.innerHTML = formatAiMessageText(accumulatedText) + '<span class="ai-stream-cursor" style="display:inline-block; width:6px; height:14px; background:#38bdf8; margin-left:3px; vertical-align:baseline; animation:aiCursorBlink 0.8s infinite; border-radius:2px;"></span>';
+                                                    }
                                                 }
                                                 const chatScrollContainer = document.getElementById("chat-messages");
                                                 if (chatScrollContainer) {
@@ -15308,8 +15339,16 @@ function getCalisthenicsExpertResponse(query) {
                                 } catch(e) {}
                             }
 
-                            if (bubble) {
-                                bubble.innerHTML = formatAiMessageText(accumulatedText);
+                            aiThinkingState.isThinking = false;
+                            aiThinkingState.isStreaming = false;
+                            aiThinkingState.activeAiMsgId = null;
+
+                            const finalMsgEl = document.getElementById("ai-msg-" + aiMsgId);
+                            if (finalMsgEl) {
+                                const finalBubble = finalMsgEl.querySelector(".ai-bubble-ai");
+                                if (finalBubble) {
+                                    finalBubble.innerHTML = formatAiMessageText(accumulatedText);
+                                }
                             }
 
                             if (accumulatedText) {
@@ -15318,7 +15357,7 @@ function getCalisthenicsExpertResponse(query) {
                                 saveAiChatHistory();
                                 break;
                             } else {
-                                if (msgDom && msgDom.parentNode) msgDom.remove();
+                                if (finalMsgEl && finalMsgEl.parentNode) finalMsgEl.remove();
                                 const remIdx = aiChatMessages.findIndex(m => m.id === aiMsgId);
                                 if (remIdx !== -1) aiChatMessages.splice(remIdx, 1);
                             }
@@ -15336,6 +15375,9 @@ function getCalisthenicsExpertResponse(query) {
                 }
             }
 
+            aiThinkingState.isThinking = false;
+            aiThinkingState.isStreaming = false;
+            aiThinkingState.activeAiMsgId = null;
             const typingToRemove = document.getElementById("ai-typing-indicator");
             if (typingToRemove) typingToRemove.remove();
 
@@ -17725,6 +17767,13 @@ function getCalisthenicsExpertResponse(query) {
         }
 
         function resumeActiveChatListener() {
+            if (activeChatView === 'ai') {
+                if (chatUnsubscribe) { chatUnsubscribe(); chatUnsubscribe = null; }
+                stopConversationsListener();
+                stopConversationMessagesListener();
+                renderAiHelperView();
+                return;
+            }
             if (!currentUser) return;
             if (activeChatView === 'private-list') {
                 initConversationsListener();
@@ -24678,15 +24727,61 @@ function getCalisthenicsExpertResponse(query) {
                 if (typeof markChallengesAsRead === 'function') markChallengesAsRead();
             } else if (tabName === 'chat') {
                 chatPanelOpen = true;
-                if (typeof renderChatInputState === 'function') renderChatInputState();
-                if (typeof resumeActiveChatListener === 'function') resumeActiveChatListener();
-                else if (typeof initChatListener === 'function') initChatListener();
-                if (typeof runMediaRetentionCleanup === 'function') runMediaRetentionCleanup();
-                if (activeChatView === 'general' && typeof markGeneralChatAsRead === 'function') {
-                    markGeneralChatAsRead();
-                } else if (activeChatView === 'private-thread' && activeConversationId && typeof markConversationAsRead === 'function') {
-                    markConversationAsRead(activeConversationId);
+                const tabGeneral = document.getElementById('chat-tab-general');
+                const tabPrivate = document.getElementById('chat-tab-private');
+                const tabAi = document.getElementById('chat-tab-ai');
+                const titleEl = document.getElementById('chat-panel-title');
+                const threadHeader = document.getElementById('chat-thread-header');
+                const aiHeaderBar = document.getElementById('ai-helper-header-bar');
+
+                if (activeChatView === 'ai') {
+                    if (tabGeneral) tabGeneral.classList.remove('active');
+                    if (tabPrivate) tabPrivate.classList.remove('active');
+                    if (tabAi) tabAi.classList.add('active');
+                    if (threadHeader) threadHeader.style.display = 'none';
+                    if (aiHeaderBar) aiHeaderBar.style.display = 'flex';
+                    if (titleEl) titleEl.innerHTML = `${window.APP_ICONS ? window.APP_ICONS.bot : '🤖'} <span>AI Helper Coach</span>`;
+                    if (chatUnsubscribe) { chatUnsubscribe(); chatUnsubscribe = null; }
+                    stopConversationsListener();
+                    stopConversationMessagesListener();
+                    renderAiHelperView();
+                    renderChatInputState();
+                } else if (activeChatView === 'private-thread' && activeConversationId) {
+                    if (tabGeneral) tabGeneral.classList.remove('active');
+                    if (tabPrivate) tabPrivate.classList.add('active');
+                    if (tabAi) tabAi.classList.remove('active');
+                    if (aiHeaderBar) aiHeaderBar.style.display = 'none';
+                    if (threadHeader) threadHeader.style.display = 'flex';
+                    if (chatUnsubscribe) { chatUnsubscribe(); chatUnsubscribe = null; }
+                    initConversationMessagesListener(activeConversationId);
+                    renderChatInputState();
+                    if (typeof markConversationAsRead === 'function') markConversationAsRead(activeConversationId);
+                } else if (activeChatView === 'private-list') {
+                    if (tabGeneral) tabGeneral.classList.remove('active');
+                    if (tabPrivate) tabPrivate.classList.add('active');
+                    if (tabAi) tabAi.classList.remove('active');
+                    if (threadHeader) threadHeader.style.display = 'none';
+                    if (aiHeaderBar) aiHeaderBar.style.display = 'none';
+                    if (titleEl) titleEl.innerHTML = `${window.APP_ICONS ? window.APP_ICONS.user : '👤'} <span>Chat Private</span>`;
+                    if (chatUnsubscribe) { chatUnsubscribe(); chatUnsubscribe = null; }
+                    initConversationsListener();
+                    renderChatInputState();
+                } else {
+                    activeChatView = 'general';
+                    if (tabGeneral) tabGeneral.classList.add('active');
+                    if (tabPrivate) tabPrivate.classList.remove('active');
+                    if (tabAi) tabAi.classList.remove('active');
+                    if (threadHeader) threadHeader.style.display = 'none';
+                    if (aiHeaderBar) aiHeaderBar.style.display = 'none';
+                    if (titleEl) titleEl.innerHTML = `${window.APP_ICONS ? window.APP_ICONS.chat : '💬'} <span>Chat Generale</span>`;
+                    stopConversationsListener();
+                    stopConversationMessagesListener();
+                    initChatListener();
+                    renderChatInputState();
+                    if (typeof markGeneralChatAsRead === 'function') markGeneralChatAsRead();
                 }
+
+                if (typeof runMediaRetentionCleanup === 'function') runMediaRetentionCleanup();
                 if (typeof scrollChatToBottom === 'function') setTimeout(scrollChatToBottom, 120);
             } else if (tabName === 'profile') {
                 if (typeof renderProfileSettings === 'function') renderProfileSettings();
@@ -24700,6 +24795,9 @@ function getCalisthenicsExpertResponse(query) {
 
             if (tabName !== 'chat') {
                 chatPanelOpen = false;
+                if (chatUnsubscribe) { chatUnsubscribe(); chatUnsubscribe = null; }
+                stopConversationsListener();
+                stopConversationMessagesListener();
                 if (typeof activeConversationId !== 'undefined' && activeConversationId && typeof markConversationAsRead === 'function') {
                     markConversationAsRead(activeConversationId);
                 } else if (typeof activeChatView !== 'undefined' && activeChatView === 'general' && typeof markGeneralChatAsRead === 'function') {
