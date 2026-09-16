@@ -14826,86 +14826,91 @@ function getCalisthenicsExpertResponse(query) {
 
             let aiResponse = "";
 
-            // 1. Guardrail rigoroso: verifica se la richiesta testuale è totalmente off-topic (non sport / non calisthenics)
-            if (!attachedMedia && isOffTopicNonSportQuery(query)) {
-                await new Promise(r => setTimeout(r, 380));
-                aiResponse = "🔥 **Focus sulla Performance, Atleta!**\n\n" +
-                    "Come Coach ufficiale di Calisthenics in **Occhionero's Calisthenics Tree**, la mia missione è farti conquistare le tue skill a corpo libero, costruire un fisico d'acciaio ed eccellere nei tuoi allenamenti.\n\n" +
-                    "Per mantenere la massima efficacia nel nostro percorso, rispondo **esclusivamente a domande su sport, calisthenics, mobilità, nutrizione sportiva e biomeccanica** 🤸‍♂️💪.\n\n" +
-                    "Rimaniamo sul pezzo: quale skill, obiettivo o scheda di allenamento vogliamo affrontare oggi?";
-            }
+            // 1. Recupero chiave API (priorità: chiave globale incorporata, poi override localStorage)
+            const userGeminiKey = localStorage.getItem("calisthenics_gemini_api_key");
+            const apiKeyToUse = (GLOBAL_GEMINI_API_KEY && GLOBAL_GEMINI_API_KEY.trim())
+                ? GLOBAL_GEMINI_API_KEY.trim().replace(/^["']|["']$/g, '')
+                : (userGeminiKey && userGeminiKey.trim()) ? userGeminiKey.trim().replace(/^["']|["']$/g, '') : null;
 
-            // 2. Chiamata a Gemini API multimodale (se configurata in background)
-            if (!aiResponse) {
-                const userGeminiKey = localStorage.getItem("calisthenics_gemini_api_key");
-                const apiKeyToUse = (GLOBAL_GEMINI_API_KEY && GLOBAL_GEMINI_API_KEY.trim())
-                    ? GLOBAL_GEMINI_API_KEY.trim().replace(/^["']|["']$/g, '')
-                    : (userGeminiKey && userGeminiKey.trim()) ? userGeminiKey.trim().replace(/^["']|["']$/g, '') : null;
+            // 2. Se l'API è configurata, invia la richiesta direttamente a Google Gemini
+            if (apiKeyToUse) {
+                const systemPrompt = "Sei Ares, il Coach Ufficiale di Calisthenics & Street Lifting dell'app 'Occhionero's Calisthenics Tree'. " +
+                    "IL TUO AMBITO È STRETTAMENTE LIMITATO ALLO SPORT, FITNESS, NUTRIZIONE SPORTIVA, MOBILITÀ E CALISTHENICS. " +
+                    "Se l'utente fa domande totalmente estranee allo sport o al calisthenics, rispondi con simpatia ed educazione ma reindirizza subito all'allenamento. " +
+                    "Se è presente un'immagine di una tenuta o esercizio (Form Check), esamina: 1) Skill/propedeutica riconosciuta, 2) Assetto scapolare (protrazione/depressione/retrazione), 3) Retroversione bacino (PPT) e core, 4) Lockout gomiti a 180°, 5) Consigli pratici ed esercizi correttivi. " +
+                    "Rispondi in italiano con tono energico, tecnico ed incoraggiante da vero coach calisthenico. Usa elenchi puntati ed emoji tematiche.\n\n";
 
-                if (apiKeyToUse) {
-                    const systemPrompt = "Sei Ares, il Coach Ufficiale di Calisthenics & Street Lifting dell'app 'Occhionero's Calisthenics Tree'. " +
-                        "IL TUO AMBITO È STRETTAMENTE LIMITATO ALLO SPORT, FITNESS, NUTRIZIONE SPORTIVA, MOBILITÀ E CALISTHENICS. " +
-                        "Se l'utente fa domande totalmente estranee allo sport o al calisthenics, rifiuta educatamente e reindirizza all'allenamento. " +
-                        "Se è presente un'immagine di una tenuta o esercizio (Form Check), esamina: 1) Skill/propedeutica riconosciuta, 2) Assetto scapolare (protrazione/depressione/retrazione), 3) Retroversione bacino (PPT) e core, 4) Lockout gomiti a 180°, 5) Consigli pratici ed esercizi correttivi. " +
-                        "Rispondi in italiano con tono energico, tecnico ed incoraggiante da vero coach calisthenico. Usa formattazione markdown chiara con elenchi puntati.\n\n";
-
-                    // Costruisci cronologia multi-turn per una conversazione fluida e naturale
-                    const historyContents = [];
-                    const recentMsgs = (aiChatMessages || []).slice(-6);
-                    for (let i = 0; i < recentMsgs.length; i++) {
-                        const m = recentMsgs[i];
-                        const isLast = (i === recentMsgs.length - 1);
-                        const role = m.sender === "user" ? "user" : "model";
-                        const parts = [{ text: m.text || "..." }];
-                        if (isLast && attachedMedia && attachedMedia.base64) {
-                            const mime = (attachedMedia.file && attachedMedia.file.type) ? attachedMedia.file.type : "image/jpeg";
-                            const b64Data = attachedMedia.base64.split(",")[1] || attachedMedia.base64;
-                            parts.push({
-                                inlineData: {
-                                    mimeType: mime,
-                                    data: b64Data
-                                }
-                            });
-                        }
-                        if (historyContents.length === 0 && role === "model") continue;
-                        if (historyContents.length > 0 && historyContents[historyContents.length - 1].role === role) {
-                            historyContents[historyContents.length - 1].parts.push(...parts);
-                        } else {
-                            historyContents.push({ role, parts });
-                        }
-                    }
-
-                    const modelsToTry = ["gemini-3.6-flash", "gemini-2.5-flash", "gemini-2.0-flash"];
-                    for (const m of modelsToTry) {
-                        try {
-                            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${encodeURIComponent(apiKeyToUse)}`, {
-                                method: "POST",
-                                headers: { "Content-Type": "application/json" },
-                                body: JSON.stringify({
-                                    systemInstruction: { parts: [{ text: systemPrompt }] },
-                                    contents: historyContents.length > 0 ? historyContents : [{ role: "user", parts: [{ text: query || "Form Check postura" }] }],
-                                    generationConfig: { temperature: 0.7, maxOutputTokens: 1000 }
-                                })
-                            });
-                            if (res.ok) {
-                                const resData = await res.json();
-                                aiResponse = resData.candidates?.[0]?.content?.parts?.[0]?.text;
-                                if (aiResponse) break;
-                            } else {
-                                const errData = await res.json().catch(() => ({}));
-                                console.warn(`Gemini API error [${m} - HTTP ${res.status}]:`, errData);
+                // Costruisci cronologia multi-turn per una conversazione fluida e naturale
+                const historyContents = [];
+                const recentMsgs = (aiChatMessages || []).slice(-6);
+                for (let i = 0; i < recentMsgs.length; i++) {
+                    const m = recentMsgs[i];
+                    const isLast = (i === recentMsgs.length - 1);
+                    const role = m.sender === "user" ? "user" : "model";
+                    const parts = [{ text: m.text || "..." }];
+                    if (isLast && attachedMedia && attachedMedia.base64) {
+                        const mime = (attachedMedia.file && attachedMedia.file.type) ? attachedMedia.file.type : "image/jpeg";
+                        const b64Data = attachedMedia.base64.split(",")[1] || attachedMedia.base64;
+                        parts.push({
+                            inlineData: {
+                                mimeType: mime,
+                                data: b64Data
                             }
-                        } catch(err) {
-                            console.warn('Tentativo Gemini fallito su ' + m + ':', err);
+                        });
+                    }
+                    if (historyContents.length === 0 && role === "model") continue;
+                    if (historyContents.length > 0 && historyContents[historyContents.length - 1].role === role) {
+                        historyContents[historyContents.length - 1].parts[0].text += "\n" + (m.text || "");
+                    } else {
+                        historyContents.push({ role, parts });
+                    }
+                }
+                if (historyContents.length === 0 || historyContents[historyContents.length - 1].role !== "user") {
+                    historyContents.push({ role: "user", parts: [{ text: query || "Ciao Coach" }] });
+                }
+
+                // Modelli supportati su generativelanguage v1beta
+                const modelsToTry = ["gemini-3.5-flash", "gemini-3.6-flash", "gemini-3.7-flash"];
+                for (const m of modelsToTry) {
+                    try {
+                        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${encodeURIComponent(apiKeyToUse)}`, {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                                systemInstruction: { parts: [{ text: systemPrompt }] },
+                                contents: historyContents,
+                                generationConfig: { temperature: 0.7, maxOutputTokens: 1000 }
+                            })
+                        });
+                        if (res.ok) {
+                            const resData = await res.json();
+                            aiResponse = resData.candidates?.[0]?.content?.parts?.[0]?.text;
+                            if (aiResponse) break;
+                        } else if (res.status === 503 || res.status === 429) {
+                            console.warn(`Gemini [${m}] occupato (HTTP ${res.status}), provo modello successivo...`);
+                            await new Promise(r => setTimeout(r, 400));
+                            continue;
+                        } else {
+                            const errData = await res.json().catch(() => ({}));
+                            console.warn(`Gemini API error [${m} - HTTP ${res.status}]:`, errData);
                         }
+                    } catch(err) {
+                        console.warn('Tentativo Gemini fallito su ' + m + ':', err);
                     }
                 }
             }
 
-            // 3. Fallback Zero-Config su Autonomous Biomechanical Coach & Form Check Engine
+            // 3. Fallback solo se la chiave non è configurata o in caso di indisponibilità totale del cloud
             if (!aiResponse) {
-                await new Promise(r => setTimeout(r, 420));
-                if (attachedMedia || (query && (query.toLowerCase().includes("form check") || query.toLowerCase().includes("postura")))) {
+                if (apiKeyToUse) {
+                    aiResponse = "⚡ **Coach AI al tuo servizio!**\n\nI server cloud di Google Gemini stanno riscontrando un momento di traffico intenso. Riprova tra pochissimi istanti con la tua domanda!";
+                } else if (!attachedMedia && isOffTopicNonSportQuery(query)) {
+                    await new Promise(r => setTimeout(r, 380));
+                    aiResponse = "🔥 **Focus sulla Performance, Atleta!**\n\n" +
+                        "Come Coach ufficiale di Calisthenics in **Occhionero's Calisthenics Tree**, la mia missione è farti conquistare le tue skill a corpo libero, costruire un fisico d'acciaio ed eccellere nei tuoi allenamenti.\n\n" +
+                        "Per mantenere la massima efficacia nel nostro percorso, rispondo **esclusivamente a domande su sport, calisthenics, mobilità, nutrizione sportiva e biomeccanica** 🤸‍♂️💪.\n\n" +
+                        "Rimaniamo sul pezzo: quale skill, obiettivo o scheda di allenamento vogliamo affrontare oggi?";
+                } else if (attachedMedia || (query && (query.toLowerCase().includes("form check") || query.toLowerCase().includes("postura")))) {
                     aiResponse = getCalisthenicsFormCheckResponse(query);
                 } else {
                     aiResponse = getCalisthenicsExpertResponse(query);
