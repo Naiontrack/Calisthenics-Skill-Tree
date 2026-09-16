@@ -15093,6 +15093,85 @@ function getCalisthenicsExpertResponse(query) {
                 `\n\n🔥 *Consiglio del Coach*: Registra un video di 5 secondi o scatta una foto di profilo a 90° rispetto alla fotocamera per verificare che la linea caviglia-bacino-spalla rimanga perfettamente allineata!`;
         }
 
+        async function streamFallbackResponse(fullText, userMsgId) {
+            document.querySelectorAll("#ai-typing-indicator").forEach(el => el.remove());
+
+            const aiMsgId = "msg_ai_" + Date.now();
+            const aiMsgObj = {
+                id: aiMsgId,
+                sender: "ai",
+                text: "",
+                timestamp: Date.now()
+            };
+            aiChatMessages.push(aiMsgObj);
+
+            aiThinkingState.isThinking = false;
+            aiThinkingState.isStreaming = true;
+            aiThinkingState.activeAiMsgId = aiMsgId;
+            aiThinkingState.accumulatedText = "";
+
+            const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            const msgDom = document.createElement("div");
+            msgDom.className = "ai-chat-msg-wrapper ai";
+            msgDom.id = "ai-msg-" + aiMsgId;
+            msgDom.innerHTML = `
+                <div class="ai-chat-meta">
+                    <span class="ai-chat-meta-badge-ai">🤖 Coach AI Calisthenics</span>
+                    <span class="ai-chat-time">${timeStr}</span>
+                    <button type="button" class="ai-msg-delete-btn" onclick="deleteAiChatMessage('${aiMsgId}')" title="Elimina questa risposta" aria-label="Elimina messaggio">
+                        <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                    </button>
+                </div>
+                <div class="ai-bubble-ai">
+                    <span class="ai-stream-cursor" style="display:inline-block; width:6px; height:14px; background:#38bdf8; margin-left:3px; vertical-align:baseline; animation:aiCursorBlink 0.8s infinite; border-radius:2px;"></span>
+                </div>
+            `;
+            const threadEl = document.getElementById("ai-chat-thread");
+            const promptsEl = document.getElementById("ai-suggested-prompts");
+            if (threadEl) {
+                if (promptsEl) {
+                    threadEl.insertBefore(msgDom, promptsEl);
+                } else {
+                    threadEl.appendChild(msgDom);
+                }
+            }
+
+            const tokens = String(fullText).match(/\S+|\s+/g) || [fullText];
+            let accumulatedText = "";
+            for (let i = 0; i < tokens.length; i += 2) {
+                const chunk = tokens.slice(i, i + 2).join("");
+                accumulatedText += chunk;
+                aiMsgObj.text = accumulatedText;
+                aiThinkingState.accumulatedText = accumulatedText;
+
+                const liveMsgEl = document.getElementById("ai-msg-" + aiMsgId);
+                if (liveMsgEl) {
+                    const liveBubble = liveMsgEl.querySelector(".ai-bubble-ai");
+                    if (liveBubble) {
+                        liveBubble.innerHTML = formatAiMessageText(accumulatedText) + '<span class="ai-stream-cursor" style="display:inline-block; width:6px; height:14px; background:#38bdf8; margin-left:3px; vertical-align:baseline; animation:aiCursorBlink 0.8s infinite; border-radius:2px;"></span>';
+                    }
+                }
+                const chatScrollContainer = document.getElementById("chat-messages");
+                if (chatScrollContainer) {
+                    chatScrollContainer.scrollTop = chatScrollContainer.scrollHeight;
+                }
+                await new Promise(r => setTimeout(r, 20));
+            }
+
+            aiThinkingState.isThinking = false;
+            aiThinkingState.isStreaming = false;
+            aiThinkingState.activeAiMsgId = null;
+
+            const finalMsgEl = document.getElementById("ai-msg-" + aiMsgId);
+            if (finalMsgEl) {
+                const finalBubble = finalMsgEl.querySelector(".ai-bubble-ai");
+                if (finalBubble) {
+                    finalBubble.innerHTML = formatAiMessageText(accumulatedText);
+                }
+            }
+            saveAiChatHistory();
+        }
+
         async function sendAiHelperMessage() {
             const input = document.getElementById("ai-chat-input") || document.getElementById("chat-input");
             const query = input ? input.value.trim() : "";
@@ -15154,7 +15233,7 @@ function getCalisthenicsExpertResponse(query) {
                     const systemPrompt = "Sei Ares, il Coach Ufficiale di Calisthenics & Street Lifting dell'app 'Occhionero's Calisthenics Tree'.\n" +
                         "IL TUO AMBITO È STRETTAMENTE LIMITATO ALLO SPORT, FITNESS, NUTRIZIONE SPORTIVA, MOBILITÀ E CALISTHENICS.\n" +
                         "Se l'utente fa domande totalmente estranee allo sport o al calisthenics, rispondi con simpatia ed educazione ma reindirizza subito all'allenamento.\n" +
-                        "Se è presente un'immagine di una tenuta o esercizio (Form Check), esamina: 1) Skill/propedeutica riconosciuta, 2) Assetto scapolare (protrazione/depressione/retrazione), 3) Retroversione bacino (PPT) e core, 4) Lockout gomiti a 180°, 5) Consigli pratici ed exercises correttivi.\n" +
+                        "Se è presente un'immagine di una tenuta o esercizio (Form Check), esamina: 1) Skill/propedeutica riconosciuta, 2) Assetto scapolare (protrazione/depressione/retrazione), 3) Retroversione bacino (PPT) e core, 4) Lockout gomiti a 180°, 5) Consigli pratici ed esercizi correttivi.\n" +
                         "Rispondi in italiano con tono energico, tecnico ed incoraggiante da vero coach calisthenico. Usa elenchi puntati ed emoji tematiche.\n" +
                         "REGOLA FONDAMENTALE: Completa sempre ogni risposta e ogni elenco puntato in modo esaustivo, non lasciare mai frasi o punti a metà.\n\n" +
                         "═══════════════════════════════════════════════════════════════\n" +
@@ -15196,12 +15275,19 @@ function getCalisthenicsExpertResponse(query) {
                         historyContents.push({ role: "user", parts: [{ text: query || "Ciao Coach" }] });
                     }
 
-                    // Modelli supportati su generativelanguage v1beta con Streaming SSE
-                    const modelsToTry = ["gemini-3.5-flash", "gemini-3.6-flash", "gemini-3.7-flash"];
+                    // Modelli supportati su generativelanguage v1beta con Streaming SSE (priorità ai modelli attivi con streaming verificato)
+                    const modelsToTry = [
+                        "gemini-flash-lite-latest",
+                        "gemini-3.1-flash-lite",
+                        "gemini-3-flash-preview",
+                        "gemini-flash-latest",
+                        "gemini-3.8-flash",
+                        "gemini-3.5-flash"
+                    ];
                     for (const m of modelsToTry) {
                         try {
                             const controller = new AbortController();
-                            const timeoutId = setTimeout(() => controller.abort(), 7000);
+                            const timeoutId = setTimeout(() => controller.abort(), 25000);
                             const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:streamGenerateContent?alt=sse&key=${encodeURIComponent(apiKeyToUse)}`, {
                                 method: "POST",
                                 headers: { "Content-Type": "application/json" },
@@ -15351,14 +15437,12 @@ function getCalisthenicsExpertResponse(query) {
                                     const remIdx = aiChatMessages.findIndex(m => m.id === aiMsgId);
                                     if (remIdx !== -1) aiChatMessages.splice(remIdx, 1);
                                 }
-                            } else if (res.status === 429) {
-                                console.warn(`Gemini [${m}] quota superata (HTTP 429), passo al motore coach esperto.`);
-                                break;
-                            } else if (res.status === 503) {
-                                console.warn(`Gemini [${m}] occupato (HTTP 503), provo modello successivo...`);
+                            } else if (res.status === 429 || res.status === 503) {
+                                console.warn(`Gemini [${m}] occupato/quota (HTTP ${res.status}), provo modello successivo...`);
                                 continue;
                             } else {
                                 console.warn(`Gemini API error [${m} - HTTP ${res.status}]`);
+                                continue;
                             }
                         } catch(err) {
                             console.warn('Tentativo Gemini fallito su ' + m + ':', err);
@@ -15366,8 +15450,8 @@ function getCalisthenicsExpertResponse(query) {
                     }
                 }
 
-                // 3. Fallback intelligente ed esaustivo: se lo streaming da Gemini non è riuscito o la quota è esaurita,
-                // Coach Ares risponde tempestivamente con la Knowledge Base esperta e la scheda dell'atleta!
+                // 3. Fallback intelligente: se lo streaming da Gemini non è riuscito o la rete è assente,
+                // Ares Coach risponde con la Knowledge Base esperta con animazione progressiva typewriter!
                 if (!streamSucceeded) {
                     if (!aiResponse) {
                         if (!attachedMedia && isOffTopicNonSportQuery(query)) {
@@ -15383,28 +15467,13 @@ function getCalisthenicsExpertResponse(query) {
                         }
                     }
 
-                    const aiMsgId = "msg_ai_" + Date.now();
-                    aiChatMessages.push({
-                        id: aiMsgId,
-                        sender: "ai",
-                        text: aiResponse,
-                        timestamp: Date.now()
-                    });
-                    saveAiChatHistory();
-                    renderAiHelperView(true, userMsgId);
+                    await streamFallbackResponse(aiResponse, userMsgId);
                 }
             } catch (globalErr) {
                 console.error("Errore inatteso in sendAiHelperMessage:", globalErr);
                 if (!streamSucceeded && (!aiChatMessages.length || aiChatMessages[aiChatMessages.length - 1].sender !== 'ai')) {
                     const fallbackMsg = getCalisthenicsExpertResponse(query);
-                    aiChatMessages.push({
-                        id: "msg_ai_" + Date.now(),
-                        sender: "ai",
-                        text: fallbackMsg,
-                        timestamp: Date.now()
-                    });
-                    saveAiChatHistory();
-                    renderAiHelperView(true, userMsgId);
+                    await streamFallbackResponse(fallbackMsg, userMsgId);
                 }
             } finally {
                 // Sblocco e pulizia garantita di indicatori e stati di attesa
