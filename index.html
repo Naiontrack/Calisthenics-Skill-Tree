@@ -8103,7 +8103,7 @@
             alert: `<svg class="ui-svg-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" style="filter:drop-shadow(0 0 4px rgba(245, 158, 11, 0.8));"><defs><linearGradient id="ai-alert" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#fef08a"/><stop offset="100%" stop-color="#f59e0b"/></linearGradient></defs><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" stroke="url(#ai-alert)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="rgba(245, 158, 11, 0.18)"/><line x1="12" y1="9" x2="12" y2="13" stroke="url(#ai-alert)" stroke-width="2" stroke-linecap="round"/><line x1="12" y1="17" x2="12.01" y2="17" stroke="url(#ai-alert)" stroke-width="2.5" stroke-linecap="round"/></svg>`,
             shieldLock: `<svg class="ui-svg-icon" viewBox="0 0 24 24" width="17" height="17" fill="none" style="filter:drop-shadow(0 0 4px rgba(56, 189, 248, 0.75));"><defs><linearGradient id="ai-shield" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#38bdf8"/><stop offset="100%" stop-color="#818cf8"/></linearGradient></defs><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="url(#ai-shield)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="rgba(56, 189, 248, 0.15)"/><circle cx="12" cy="11" r="1.6" fill="#facc15"/><path d="M12 12.6v2.4" stroke="#facc15" stroke-width="1.8" stroke-linecap="round"/></svg>`,
             lock: `<svg class="ui-svg-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" style="filter:drop-shadow(0 0 4px rgba(239, 68, 68, 0.8)); vertical-align:-2px;"><rect x="3" y="11" width="18" height="11" rx="2.5" stroke="#ef4444" stroke-width="2" fill="rgba(239, 68, 68, 0.18)"/><path d="M7 11V7a5 5 0 0 1 10 0v4" stroke="#f87171" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="16" r="1.5" fill="#f87171"/></svg>`,
-            unlock: `<svg class="ui-svg-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" style="filter:drop-shadow(0 0 4px rgba(250, 204, 21, 0.8)); vertical-align:-2px;"><rect x="3" y="11" width="18" height="11" rx="2.5" stroke="#eab308" stroke-width="2" fill="rgba(234, 179, 8, 0.18)"/><path d="M7 11V7a5 5 0 0 1 9.9-1" stroke="#facc15" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="16" r="1.5" fill="#facc15"/></svg>`
+            unlock: `<svg class="ui-svg-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" style="filter:drop-shadow(0 0 4px rgba(250, 204, 21, 0.8)); vertical-align:-2px;"><rect x="3" y="11" width="18" height="11" rx="2.5" stroke="currentColor" stroke-width="2" fill="none"/><path d="M7 11V7a5 5 0 0 1 9.9-1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="16" r="1.5" fill="currentColor"/></svg>`
         };
  
         
@@ -11591,7 +11591,7 @@ let currentUser = null;
 
                     const isFounderRow = (nick && nick.toLowerCase() === 'occhionero') || (data.email && data.email.toLowerCase().includes('occhionero')) || !!data.isSuperAdmin;
                     const isAdminRow = !!data.isAdmin && !isFounderRow;
-                    const isVerifRow = isFounderRow || isUserFullyVerified(data.skills, { displayName: nick, email: data.email, uid: doc.id });
+                    const isVerifRow = isUserFullyVerified(data.skills, { displayName: nick, email: data.email, uid: doc.id });
                     let badgeMini = '';
                     if (isFounderRow) badgeMini = `<span class="verified-badge-mini" title="Founder">${getSvgShield('founder', 13)}</span>`;
                     else if (isAdminRow) badgeMini = `<span class="verified-badge-mini" title="Admin Collaboratore">${getSvgShield('admin', 13)}</span>`;
@@ -11726,7 +11726,7 @@ let currentUser = null;
                                 </button>
                             ` : `
                                 <button type="button" class="unlock-btn" onclick="event.stopPropagation(); askUnlock('${skill.id}')" style="display:inline-flex; align-items:center; gap:6px;">
-                                    ${getSvgUnlock(14)} <span>Sblocca (+${skill.unlockXp || 100} XP)</span>
+                                    ${getSvgUnlock(14, 'currentColor')} <span>Sblocca (+${skill.unlockXp || 100} XP)</span>
                                 </button>
                                 <button type="button" class="btn-verify-ai-card" onclick="event.stopPropagation(); openSkillVerificationModal('${skill.id}')" style="background:rgba(16,185,129,0.18); border:1px solid #10b981; color:#10b981; padding:6px 12px; border-radius:6px; font-size:0.78rem; font-weight:800; cursor:pointer; display:inline-flex; align-items:center; gap:5px; transition:all 0.2s ease;" title="Certifica con Video AI Coach">
                                     ${getSvgShield('verified', 14)} <span>Verifica AI</span>
@@ -12893,12 +12893,11 @@ let currentUser = null;
                         );
                     }
 
-                    const isFounder = isSuperAdminUser(currentUser);
                     userState[id] = {
                         unlocked: true,
                         val: inputVal,
-                        verifiedByAi: isFounder,
-                        isVerified: isFounder
+                        verifiedByAi: false,
+                        isVerified: false
                     };
                     saveState();
                     showAppToast(`🎉 Skill "${skill.name}" sbloccata con ${inputVal} ${unitShort}! +${xpReward} XP`, "success");
@@ -14240,7 +14239,7 @@ let currentUser = null;
 
                 const isFounder = (nick && nick.toLowerCase() === 'occhionero') || (data.email && data.email.toLowerCase().includes('occhionero')) || !!data.isSuperAdmin;
                 const isAdmin = !!data.isAdmin && !isFounder;
-                const isFullyVerif = isFounder || isUserFullyVerified(skillsData, { displayName: nick, email: data.email, uid: uid });
+                const isFullyVerif = isUserFullyVerified(skillsData, { displayName: nick, email: data.email, uid: uid });
 
                 let unlockedHtml = '';
                 categories.forEach(cat => {
@@ -18392,7 +18391,12 @@ function getCalisthenicsExpertResponse(query) {
 
         function compressVideoClientSide(file, maxLandscapeW = 1280, maxLandscapeH = 720, targetFps = 5, onProgress = null) {
             return new Promise((resolve) => {
-                if (!file || !file.type || !file.type.startsWith('video/') || typeof MediaRecorder === 'undefined' || !HTMLCanvasElement.prototype.captureStream) {
+                if (!file || typeof MediaRecorder === 'undefined' || !HTMLCanvasElement.prototype.captureStream) {
+                    resolve(file);
+                    return;
+                }
+                const isVideo = (file.type && file.type.startsWith('video/')) || /\.(mp4|mov|webm|m4v|avi|mkv|3gp)$/i.test(file.name || '');
+                if (!isVideo) {
                     resolve(file);
                     return;
                 }
@@ -18408,7 +18412,11 @@ function getCalisthenicsExpertResponse(query) {
 
                 const video = document.createElement('video');
                 video.muted = true;
+                video.defaultMuted = true;
                 video.playsInline = true;
+                video.setAttribute('muted', '');
+                video.setAttribute('playsinline', '');
+                video.setAttribute('webkit-playsinline', '');
                 video.preload = 'metadata';
                 video.src = videoUrl;
 
@@ -18416,10 +18424,10 @@ function getCalisthenicsExpertResponse(query) {
                     if (!finished) {
                         finished = true;
                         cleanup();
-                        console.warn("Compressione video: timeout raggiunto, utilizzo file originale.");
+                        console.warn("Compressione video: timeout 30s raggiunto, utilizzo file originale.");
                         resolve(file);
                     }
-                }, 25000);
+                }, 30000);
 
                 function cleanup() {
                     clearTimeout(timeoutId);
@@ -18438,7 +18446,7 @@ function getCalisthenicsExpertResponse(query) {
                     const targetMaxW = isLandscape ? maxLandscapeW : maxLandscapeH;
                     const targetMaxH = isLandscape ? maxLandscapeH : maxLandscapeW;
 
-                    if (file.name && file.name.includes('_5fps_') && w <= targetMaxW && h <= targetMaxH && file.size <= 8 * 1024 * 1024) {
+                    if (file.name && file.name.includes('_5fps_') && w <= targetMaxW && h <= targetMaxH && file.size <= 6 * 1024 * 1024) {
                         finished = true;
                         cleanup();
                         resolve(file);
@@ -18464,20 +18472,6 @@ function getCalisthenicsExpertResponse(query) {
                         return;
                     }
 
-                    let combinedStream = canvasStream;
-                    try {
-                        if (typeof video.captureStream === 'function') {
-                            const vStream = video.captureStream();
-                            const audioTracks = vStream.getAudioTracks();
-                            if (audioTracks && audioTracks.length > 0) {
-                                combinedStream = new MediaStream([
-                                    ...canvasStream.getVideoTracks(),
-                                    audioTracks[0]
-                                ]);
-                            }
-                        }
-                    } catch (e) {}
-
                     let mimeType = 'video/webm;codecs=vp8';
                     if (!MediaRecorder.isTypeSupported(mimeType)) {
                         if (MediaRecorder.isTypeSupported('video/mp4')) mimeType = 'video/mp4';
@@ -18489,7 +18483,7 @@ function getCalisthenicsExpertResponse(query) {
                     try {
                         const options = { videoBitsPerSecond: (targetFps <= 5 ? 800000 : 1800000) };
                         if (mimeType) options.mimeType = mimeType;
-                        recorder = new MediaRecorder(combinedStream, options);
+                        recorder = new MediaRecorder(canvasStream, options);
                     } catch (e) {
                         finished = true;
                         cleanup();
@@ -18504,8 +18498,14 @@ function getCalisthenicsExpertResponse(query) {
 
                     let animId;
                     function step() {
-                        if (finished || video.ended || video.paused) return;
+                        if (finished) return;
                         ctx.drawImage(video, 0, 0, targetW, targetH);
+                        if (video.ended || (video.duration && video.currentTime >= video.duration - 0.15)) {
+                            if (recorder.state === 'recording') {
+                                try { recorder.stop(); } catch(e) {}
+                            }
+                            return;
+                        }
                         animId = requestAnimationFrame(step);
                     }
 
@@ -18528,24 +18528,31 @@ function getCalisthenicsExpertResponse(query) {
                                 type: outBlob.type,
                                 lastModified: Date.now()
                             });
-                            // Restituisce sempre il file compresso a 5 FPS per garantire il risparmio dell'83% dei token
                             resolve(compressedFile);
                         } catch (e) {
                             resolve(file);
                         }
                     };
 
+                    video.ontimeupdate = () => {
+                        if (typeof onProgress === 'function' && video.duration > 0) {
+                            onProgress(Math.min(0.99, video.currentTime / video.duration));
+                        }
+                    };
+
+                    video.onended = () => {
+                        if (recorder.state === 'recording') {
+                            try { recorder.stop(); } catch(e) {}
+                        }
+                    };
+
                     try {
-                        video.ontimeupdate = () => {
-                            if (typeof onProgress === 'function' && video.duration > 0) {
-                                onProgress(Math.min(0.99, video.currentTime / video.duration));
-                            }
-                        };
                         recorder.start(100);
-                        video.playbackRate = 2.0;
+                        video.playbackRate = 1.0;
                         video.play().then(() => {
                             step();
-                        }).catch(() => {
+                        }).catch((pe) => {
+                            console.warn("Compressione video: play() non avviato, uso file originale:", pe);
                             finished = true;
                             cleanup();
                             resolve(file);
@@ -18555,12 +18562,6 @@ function getCalisthenicsExpertResponse(query) {
                         cleanup();
                         resolve(file);
                     }
-
-                    video.onended = () => {
-                        if (recorder.state !== 'inactive') {
-                            try { recorder.stop(); } catch (e) {}
-                        }
-                    };
                 };
 
                 video.onerror = () => {
@@ -25820,7 +25821,7 @@ function getCalisthenicsExpertResponse(query) {
                         <button type="button" class="btn-verify-ai-drawer" onclick="openSkillVerificationModal('${skill.id}')" style="width:100%; display:flex; align-items:center; justify-content:center; gap:8px; padding:12px 16px; font-weight:800; font-size:0.95rem; background:rgba(16, 185, 129, 0.15); border:1.5px solid #10b981; color:#34d399; border-radius:12px; cursor:pointer; box-shadow:0 0 14px rgba(16,185,129,0.22); transition:all 0.2s;">
                             ${getSvgShield('verified', 18)} <span>Verifica AI</span>
                         </button>
-                        ${(userSkillData.verifiedByAi || isSuperAdminUser(currentUser))
+                        ${(userSkillData.verifiedByAi)
                             ? `<div style="display:flex; align-items:center; justify-content:center; gap:6px; padding:6px 12px; background:rgba(16, 185, 129, 0.1); border:1px solid rgba(16,185,129,0.35); border-radius:8px; font-size:0.75rem; font-weight:800; color:#10b981;">
                                 ${getSvgShield('verified', 13)} Skill già certificata con Coach Ares AI
                                </div>`
@@ -26324,7 +26325,9 @@ function getCalisthenicsExpertResponse(query) {
                 const isAdmin = isAdminUser(currentUser) && !isSuper;
                 const isVerified = isUserFullyVerified(userState, currentUser);
                 if (isSuper) {
-                    verifiedBadgeEl.innerHTML = `${getSvgShield('founder', 15)} Founder`;
+                    verifiedBadgeEl.innerHTML = isVerified
+                        ? `${getSvgShield('founder', 15)} Founder Verificato`
+                        : `${getSvgShield('founder', 15)} Founder`;
                     verifiedBadgeEl.className = 'verified-badge verified-founder';
                     verifiedBadgeEl.style.display = 'inline-flex';
                 } else if (isAdmin) {
@@ -26540,12 +26543,12 @@ function getCalisthenicsExpertResponse(query) {
             </svg>`;
         }
 
-        function getSvgLock(size = 14, strokeColor = '#ef4444') {
-            return `<svg class="ui-svg-icon" viewBox="0 0 24 24" width="${size}" height="${size}" fill="none" style="vertical-align:middle; flex-shrink:0;"><rect x="3" y="11" width="18" height="11" rx="2" stroke="${strokeColor}" stroke-width="2" fill="rgba(239, 68, 68, 0.15)"/><path d="M7 11V7a5 5 0 0 1 10 0v4" stroke="${strokeColor}" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="16" r="1.5" fill="${strokeColor}"/></svg>`;
+        function getSvgLock(size = 14, strokeColor = 'currentColor') {
+            return `<svg class="ui-svg-icon" viewBox="0 0 24 24" width="${size}" height="${size}" fill="none" style="vertical-align:middle; flex-shrink:0;"><rect x="3" y="11" width="18" height="11" rx="2" stroke="${strokeColor}" stroke-width="2" fill="none"/><path d="M7 11V7a5 5 0 0 1 10 0v4" stroke="${strokeColor}" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="16" r="1.5" fill="${strokeColor}"/></svg>`;
         }
 
-        function getSvgUnlock(size = 14, strokeColor = '#eab308') {
-            return `<svg class="ui-svg-icon" viewBox="0 0 24 24" width="${size}" height="${size}" fill="none" style="vertical-align:middle; flex-shrink:0;"><rect x="3" y="11" width="18" height="11" rx="2" stroke="${strokeColor}" stroke-width="2" fill="rgba(234, 179, 8, 0.15)"/><path d="M7 11V7a5 5 0 0 1 9.9-1" stroke="${strokeColor}" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="16" r="1.5" fill="${strokeColor}"/></svg>`;
+        function getSvgUnlock(size = 14, strokeColor = 'currentColor') {
+            return `<svg class="ui-svg-icon" viewBox="0 0 24 24" width="${size}" height="${size}" fill="none" style="vertical-align:middle; flex-shrink:0;"><rect x="3" y="11" width="18" height="11" rx="2" stroke="${strokeColor}" stroke-width="2" fill="none"/><path d="M7 11V7a5 5 0 0 1 9.9-1" stroke="${strokeColor}" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="16" r="1.5" fill="${strokeColor}"/></svg>`;
         }
 
         if (typeof window !== 'undefined') {
@@ -26606,40 +26609,45 @@ function getCalisthenicsExpertResponse(query) {
         }
 
         function isUserFullyVerified(state, user) {
-            if (isSuperAdminUser(user)) return true;
             let st = null;
             if (state && typeof state === 'object') {
                 st = state;
             } else if (!user || (currentUser && user.uid && user.uid === currentUser.uid)) {
                 st = (typeof userState !== 'undefined') ? userState : null;
+            } else if (isSuperAdminUser(user)) {
+                return true;
             } else {
                 return false;
             }
-            if (!st || typeof st !== 'object') return false;
+            if (!st || typeof st !== 'object') return isSuperAdminUser(user);
             const unlockedKeys = Object.keys(st).filter(k => st[k] && (st[k].unlocked === true || st[k].unlocked === 'true'));
-            if (unlockedKeys.length === 0) return false;
+            if (unlockedKeys.length === 0) return isSuperAdminUser(user);
             return unlockedKeys.every(k => st[k] && st[k].verifiedByAi === true);
         }
 
         function applyOcchioneroAutoVerify() {
             if (!isSuperAdminUser(currentUser)) return;
-            let modified = false;
-            if (userState && typeof userState === 'object') {
-                Object.keys(userState).forEach(k => {
-                    if (userState[k] && userState[k].unlocked && !userState[k].verifiedByAi) {
-                        userState[k].verifiedByAi = true;
-                        userState[k].isVerified = true;
-                        modified = true;
-                    }
-                });
-            }
-            if (userProfileData) {
-                userProfileData.isVerified = true;
-                userProfileData.isSuperAdmin = true;
-                userProfileData.isAdmin = true;
-            }
-            if (modified && typeof saveState === 'function') {
-                saveState();
+            // Preserva come verificate tutte le skill storicamente sbloccate dal Founder fino a questo momento
+            const isHistoricalMigrated = localStorage.getItem('occhionero_historical_skills_verified_v1');
+            if (!isHistoricalMigrated) {
+                let modified = false;
+                if (userState && typeof userState === 'object') {
+                    Object.keys(userState).forEach(k => {
+                        if (userState[k] && (userState[k].unlocked === true || userState[k].unlocked === 'true')) {
+                            userState[k].verifiedByAi = true;
+                            userState[k].isVerified = true;
+                            modified = true;
+                        }
+                    });
+                }
+                if (userProfileData) {
+                    userProfileData.isSuperAdmin = true;
+                    userProfileData.isAdmin = true;
+                }
+                if (modified && typeof saveState === 'function') {
+                    saveState();
+                }
+                try { localStorage.setItem('occhionero_historical_skills_verified_v1', 'true'); } catch(e) {}
             }
         }
 
@@ -26986,16 +26994,7 @@ function getCalisthenicsExpertResponse(query) {
             const skill = typeof findSkillById === 'function' ? findSkillById(skillId) : null;
             if (!skill) return;
 
-            if (isSuperAdminUser(currentUser)) {
-                if (userState[skillId]) {
-                    userState[skillId].verifiedByAi = true;
-                    userState[skillId].isVerified = true;
-                    saveState();
-                }
-                showAppToast(`Account Founder: La skill "${skill.name}" è già certificata e verificata!`, "success");
-                if (typeof openSkillDetailDrawer === 'function') openSkillDetailDrawer(skillId);
-                return;
-            }
+            // Modal aperto regolarmente per tutti gli atleti (incluso il Founder per certificare nuove skill)
 
             currentVerifyingSkillId = skillId;
             const modal = document.getElementById('skill-verify-modal');
@@ -27063,6 +27062,24 @@ function getCalisthenicsExpertResponse(query) {
                 modal.classList.remove('active');
                 modal.style.display = 'none';
             }
+            if (verifyMediaLoadAbort) {
+                try { verifyMediaLoadAbort(); } catch(e) {}
+                verifyMediaLoadAbort = null;
+            }
+            const prevVid = document.getElementById('verify-preview-video-player');
+            if (prevVid) {
+                try { prevVid.pause(); } catch(e) {}
+                if (prevVid.src && prevVid.src.startsWith('blob:')) {
+                    try { URL.revokeObjectURL(prevVid.src); } catch(e) {}
+                }
+                prevVid.src = '';
+            }
+            const box = document.getElementById('verify-media-preview-box');
+            if (box) {
+                box.innerHTML = '';
+                box.style.display = 'none';
+            }
+            preparedVerificationMedia = null;
             currentVerifyingSkillId = null;
         }
 
@@ -27127,36 +27144,49 @@ function getCalisthenicsExpertResponse(query) {
             });
         }
 
-        async // Estrattore 5 FPS a 720p Mobile-Proof compatibile 100% con iOS Safari e Android senza dipendere da captureStream
+        // Estrattore 5 FPS a 720p Mobile-Proof compatibile 100% con iOS Safari e Android
         function extractMobile5FpsSequence(videoFile, targetFps = 5, onProgress = null) {
             return new Promise((resolve) => {
+                let blobUrl = null;
                 try {
                     const video = document.createElement('video');
                     video.muted = true;
+                    video.defaultMuted = true;
                     video.playsInline = true;
+                    video.setAttribute('muted', '');
+                    video.setAttribute('playsinline', '');
+                    video.setAttribute('webkit-playsinline', '');
                     video.preload = 'auto';
-                    const blobUrl = URL.createObjectURL(videoFile);
+                    blobUrl = URL.createObjectURL(videoFile);
                     video.src = blobUrl;
 
                     let resolved = false;
+                    const frames = [];
+
                     const finish = (result) => {
                         if (resolved) return;
                         resolved = true;
                         clearTimeout(timeoutId);
-                        try { URL.revokeObjectURL(blobUrl); } catch(e) {}
+                        if (blobUrl) {
+                            try { URL.revokeObjectURL(blobUrl); } catch(e) {}
+                            blobUrl = null;
+                        }
                         try { video.pause(); } catch(e) {}
                         video.src = '';
                         resolve(result);
                     };
 
                     const timeoutId = setTimeout(() => {
-                        console.warn("[5 FPS Mobile] Timeout raggiunto, restituzione fotogrammi parziali.");
+                        console.warn("[5 FPS Mobile] Watchdog globale completato.");
                         finish(frames.length > 0 ? { duration: frames[frames.length - 1].time, frames: frames } : null);
-                    }, 35000);
+                    }, 25000);
 
-                    const frames = [];
+                    let hasStarted = false;
 
-                    video.onloadedmetadata = () => {
+                    const startExtraction = () => {
+                        if (hasStarted || resolved) return;
+                        hasStarted = true;
+
                         const rawDur = (video.duration && !isNaN(video.duration) && isFinite(video.duration) && video.duration > 0)
                             ? video.duration
                             : ((video.seekable && video.seekable.length > 0) ? video.seekable.end(video.seekable.length - 1) : 10);
@@ -27190,20 +27220,22 @@ function getCalisthenicsExpertResponse(query) {
                         const timestamps = [];
                         for (let t = 0; t <= duration; t += stepSec) {
                             timestamps.push(parseFloat(t.toFixed(2)));
-                            if (timestamps.length >= 100) break;
+                            if (timestamps.length >= 60) break;
                         }
 
-                        if (rawDur > 20 && timestamps.length >= 100) {
+                        if (rawDur > 12 && timestamps.length >= 60) {
                             timestamps.length = 0;
-                            const count = Math.min(75, Math.floor(rawDur * 3));
+                            const count = Math.min(50, Math.floor(rawDur * 2.5));
                             for (let i = 0; i < count; i++) {
                                 timestamps.push(parseFloat((i * (duration / count)).toFixed(2)));
                             }
                         }
 
                         let currentIdx = 0;
+                        let seekWatchdog = null;
 
                         const captureAndSeekNext = () => {
+                            clearTimeout(seekWatchdog);
                             try {
                                 ctx.drawImage(video, 0, 0, targetW, targetH);
                                 const dataUrl = canvas.toDataURL('image/jpeg', 0.65);
@@ -27223,7 +27255,15 @@ function getCalisthenicsExpertResponse(query) {
 
                             currentIdx++;
                             if (currentIdx < timestamps.length) {
-                                video.currentTime = Math.min(duration - 0.05, timestamps[currentIdx]);
+                                seekWatchdog = setTimeout(() => {
+                                    console.warn("[5 FPS Mobile] Watchdog frame scattato per frame", currentIdx);
+                                    captureAndSeekNext();
+                                }, 1000);
+                                try {
+                                    video.currentTime = Math.min(duration - 0.05, timestamps[currentIdx]);
+                                } catch(se) {
+                                    captureAndSeekNext();
+                                }
                             } else {
                                 finish({ duration: duration, frames: frames });
                             }
@@ -27233,7 +27273,20 @@ function getCalisthenicsExpertResponse(query) {
                             captureAndSeekNext();
                         };
 
-                        video.currentTime = timestamps[0] || 0.05;
+                        seekWatchdog = setTimeout(() => {
+                            captureAndSeekNext();
+                        }, 1200);
+                        try {
+                            video.currentTime = timestamps[0] || 0.05;
+                        } catch(e) {
+                            captureAndSeekNext();
+                        }
+                    };
+
+                    video.onloadeddata = startExtraction;
+                    video.oncanplay = startExtraction;
+                    video.onloadedmetadata = () => {
+                        if (video.readyState >= 2) startExtraction();
                     };
 
                     video.onerror = () => {
@@ -27275,36 +27328,51 @@ function getCalisthenicsExpertResponse(query) {
             }
 
             const file = input.files[0];
+            let processedFile = file;
             const isImg = file.type && file.type.startsWith('image');
             const isVideo = !isImg;
 
-            // Disabilita subito il tasto e rendilo grigio durante il caricamento
+            // Disabilita subito il tasto di invio durante l'elaborazione
             if (submitBtn) {
                 submitBtn.disabled = true;
                 submitBtn.style.opacity = '0.5';
                 submitBtn.style.cursor = 'not-allowed';
                 submitBtn.style.background = '#4b5563';
                 submitBtn.style.borderColor = '#4b5563';
-                submitBtn.innerHTML = `<span class="ai-loading-spinner" style="width:14px; height:14px; border:2px solid #e5e7eb; border-top-color:transparent; border-radius:50%; animation:aiSpin 0.8s linear infinite; display:inline-block;"></span> <span>Caricamento video...</span>`;
+                submitBtn.innerHTML = `<span class="ai-loading-spinner" style="width:14px; height:14px; border:2px solid #e5e7eb; border-top-color:transparent; border-radius:50%; animation:aiSpin 0.8s linear infinite; display:inline-block;"></span> <span>${isVideo ? 'caricamento video...' : 'caricamento foto...'}</span>`;
             }
+
+            // CREA SUBITO L'URL DI ANTEPRIMA: IMMEDIATO, ZERO ATTESE!
+            const previewBlobUrl = URL.createObjectURL(processedFile);
 
             if (box) {
                 box.style.display = 'block';
                 box.innerHTML = `
-                    <div id="verify-media-loading" style="padding:12px 14px; border-radius:10px; background:rgba(56,189,248,0.06); border:1px solid rgba(56,189,248,0.22); display:flex; flex-direction:column; gap:8px;">
+                    <div id="verify-media-player-slot" style="margin-bottom:10px;">
+                        ${isImg
+                            ? `<img src="${previewBlobUrl}" style="max-height:180px; max-width:100%; border-radius:10px; border:1px solid var(--line-color); object-fit:contain; display:block; margin:0 auto;" alt="Anteprima">`
+                            : `<video id="verify-preview-video-player" src="${previewBlobUrl}" controls playsinline webkit-playsinline preload="metadata" style="max-height:190px; width:100%; border-radius:10px; border:1px solid var(--line-color); display:block; margin:0 auto; background:#000;"></video>`
+                        }
+                    </div>
+                    <div id="verify-media-loading" style="padding:10px 14px; border-radius:10px; background:rgba(56,189,248,0.06); border:1px solid rgba(56,189,248,0.22); display:flex; flex-direction:column; gap:6px;">
                         <div style="display:flex; align-items:center; justify-content:space-between;">
-                            <div style="display:flex; align-items:center; gap:10px;">
-                                <div class="ai-loading-spinner" style="width:20px; height:20px; border:2.5px solid rgba(56,189,248,0.2); border-top-color:var(--accent); border-radius:50%; animation:aiSpin 0.8s linear infinite; flex-shrink:0;"></div>
-                                <span style="font-size:0.84rem; font-weight:700; color:var(--text);" id="verify-load-status-text">${isVideo ? 'caricamento video...' : 'caricamento immagine...'}</span>
+                            <div style="display:flex; align-items:center; gap:8px;">
+                                <div class="ai-loading-spinner" id="verify-load-spinner" style="width:16px; height:16px; border:2px solid rgba(56,189,248,0.2); border-top-color:var(--accent); border-radius:50%; animation:aiSpin 0.8s linear infinite; flex-shrink:0;"></div>
+                                <span style="font-size:0.82rem; font-weight:700; color:var(--text);" id="verify-load-status-text">${isVideo ? 'caricamento video...' : 'caricamento immagine...'}</span>
                             </div>
-                            <span id="verify-load-percent" style="font-size:0.84rem; font-weight:800; color:var(--accent);">0%</span>
+                            <span id="verify-load-percent" style="font-size:0.82rem; font-weight:800; color:var(--accent);">0%</span>
                         </div>
-                        <div style="width:100%; height:5px; background:rgba(255,255,255,0.08); border-radius:3px; overflow:hidden;">
+                        <div style="width:100%; height:4px; background:rgba(255,255,255,0.08); border-radius:3px; overflow:hidden;">
                             <div id="verify-load-progress-bar" style="width:0%; height:100%; background:linear-gradient(90deg, var(--accent), #38bdf8); transition:width 0.2s ease;"></div>
                         </div>
                     </div>
-                    <div id="verify-media-player-slot" style="display:none; margin-top:10px;"></div>
                 `;
+                const prevVid = document.getElementById('verify-preview-video-player');
+                if (prevVid) {
+                    prevVid.onloadeddata = () => {
+                        try { prevVid.currentTime = 0.05; } catch(e) {}
+                    };
+                }
             }
 
             const updateProgress = (pct, text) => {
@@ -27318,14 +27386,17 @@ function getCalisthenicsExpertResponse(query) {
             };
 
             let isAborted = false;
-            verifyMediaLoadAbort = () => { isAborted = true; };
+            verifyMediaLoadAbort = () => {
+                isAborted = true;
+                try { URL.revokeObjectURL(previewBlobUrl); } catch(e) {}
+            };
 
             try {
                 if (isImg) {
-                    updateProgress(30);
+                    updateProgress(30, "caricamento immagine...");
                     const dataUrl = await readFileWithProgress(file, (p) => updateProgress(30 + p * 0.6));
                     if (isAborted) return;
-                    updateProgress(100);
+                    updateProgress(100, "caricamento completato!");
 
                     preparedVerificationMedia = {
                         file: file,
@@ -27334,12 +27405,16 @@ function getCalisthenicsExpertResponse(query) {
                         isVideo: false
                     };
 
-                    const playerSlot = document.getElementById('verify-media-player-slot');
                     const loadBox = document.getElementById('verify-media-loading');
-                    if (loadBox) loadBox.style.display = 'none';
-                    if (playerSlot) {
-                        playerSlot.style.display = 'block';
-                        playerSlot.innerHTML = `<img src="${dataUrl}" style="max-height:160px; max-width:100%; border-radius:8px; border:1px solid var(--line-color); object-fit:contain; display:block; margin:0 auto;" alt="Anteprima">`;
+                    if (loadBox) {
+                        loadBox.innerHTML = `
+                            <div style="display:flex; align-items:center; justify-content:space-between;">
+                                <span style="color:#10b981; font-weight:700; font-size:0.82rem; display:flex; align-items:center; gap:6px;">
+                                    ${getSvgShield('verified', 14)} Foto pronta per l'analisi
+                                </span>
+                                <span style="font-size:0.75rem; color:var(--subtext);">${(file.size / 1024).toFixed(0)} KB</span>
+                            </div>
+                        `;
                     }
 
                     if (submitBtn) {
@@ -27353,94 +27428,99 @@ function getCalisthenicsExpertResponse(query) {
                     return;
                 }
 
-                // Fase 1: Lettura progressiva del file video (0% -> 40%)
+                // ==========================================
+                // OTTIMIZZAZIONE VIDEO 5 FPS 720p
+                // ==========================================
                 updateProgress(10, "caricamento video...");
-                const rawDataUrl = await readFileWithProgress(file, (pct) => {
-                    updateProgress(10 + pct * 0.3, "caricamento video...");
-                });
-                if (isAborted) return;
-
-                // Fase 2: Validazione metadati e durata video reale (40% -> 60%)
-                updateProgress(45, "caricamento video...");
                 const videoInfo = await validateVideoLoadAndDuration(file);
                 if (isAborted) return;
-                updateProgress(60, "caricamento video...");
+                const dur = videoInfo.duration > 0 ? videoInfo.duration : 10;
+                updateProgress(25, "compressione video...");
 
-                let processedFile = file;
-                let finalDataUrl = rawDataUrl;
+                let finalDataUrl = null;
+                let backupFrames = [];
+                let compressionSuccess = false;
 
-                // Fase 3: Ottimizzazione a 5 FPS 720p universale per Mobile (iOS/Android) e Desktop (40% -> 95%)
-                updateProgress(40, "compressione video...");
-                let mobile5FpsResult = null;
-                try {
-                    mobile5FpsResult = await extractMobile5FpsSequence(file, 5, (p) => {
-                        updateProgress(40 + p * 52, "compressione video...");
-                    });
-                } catch(mErr) {
-                    console.warn("[5 FPS Mobile Extractor]:", mErr);
+                // Metodo 1: Compressione client-side MediaRecorder a 5 FPS (Chrome / Android / Firefox)
+                if (typeof MediaRecorder !== 'undefined' && HTMLCanvasElement.prototype.captureStream) {
+                    try {
+                        const compRes = await compressVideoClientSide(file, 1280, 720, 5, (p) => {
+                            updateProgress(25 + p * 65, "compressione video...");
+                        });
+                        if (compRes && compRes !== file && compRes.size < file.size) {
+                            processedFile = compRes;
+                            compressionSuccess = true;
+                            finalDataUrl = await readFileAsDataURL(processedFile);
+                        }
+                    } catch(compErr) {
+                        console.warn("[5 FPS Compressor]:", compErr);
+                    }
                 }
                 if (isAborted) return;
 
-                // Se supportato dal browser desktop, esegui anche la compressione MediaRecorder
-                if (typeof MediaRecorder !== 'undefined' && HTMLCanvasElement.prototype.captureStream && (!mobile5FpsResult || !mobile5FpsResult.frames)) {
+                // Metodo 2: Se la compressione MediaRecorder non è riuscita (es. iOS Safari), estrai la sequenza 5 FPS
+                if (!compressionSuccess) {
+                    updateProgress(30, "compressione video...");
                     try {
-                        processedFile = await compressVideoClientSide(file, 1280, 720, 5);
-                        finalDataUrl = await readFileAsDataURL(processedFile);
-                    } catch(cErr) {
-                        processedFile = file;
-                        finalDataUrl = rawDataUrl;
+                        const mobile5FpsResult = await extractMobile5FpsSequence(file, 5, (p) => {
+                            updateProgress(30 + p * 65, "compressione video...");
+                        });
+                        if (mobile5FpsResult && mobile5FpsResult.frames && mobile5FpsResult.frames.length > 0) {
+                            backupFrames = mobile5FpsResult.frames;
+                        }
+                    } catch(mErr) {
+                        console.warn("[5 FPS Mobile Sequence]:", mErr);
                     }
                 }
+                if (isAborted) return;
 
-                updateProgress(96, "compressione video...");
-                let backupFrames = (mobile5FpsResult && mobile5FpsResult.frames && mobile5FpsResult.frames.length > 0)
-                    ? mobile5FpsResult.frames
-                    : await extractKeyframesFromVideo(processedFile, 5);
+                // Fallback leggero keyframe se nessun frame estratto
+                if (!compressionSuccess && (!backupFrames || backupFrames.length === 0)) {
+                    updateProgress(90, "compressione video...");
+                    try {
+                        backupFrames = await extractKeyframesFromVideo(file, 5);
+                    } catch(kErr) {}
+                }
                 if (isAborted) return;
 
                 updateProgress(100, "caricamento video...");
 
-                const dur = videoInfo.duration > 0 ? videoInfo.duration : (processedFile.duration || 0);
-
                 preparedVerificationMedia = {
                     file: processedFile,
+                    originalFile: file,
                     dataUrl: finalDataUrl,
                     duration: dur,
                     isImage: false,
                     isVideo: true,
-                    keyframes: backupFrames
+                    keyframes: backupFrames,
+                    is5FpsOptimized: true,
+                    compressionSuccess: compressionSuccess
                 };
 
-                const playerSlot = document.getElementById('verify-media-player-slot');
                 const loadBox = document.getElementById('verify-media-loading');
                 if (loadBox) {
+                    let badgeInfo = "";
+                    if (compressionSuccess) {
+                        const pctSave = Math.round((1 - (processedFile.size / file.size)) * 100);
+                        badgeInfo = `${(processedFile.size / (1024 * 1024)).toFixed(1)} MB (era ${(file.size / (1024 * 1024)).toFixed(1)} MB - ${pctSave > 0 ? `-${pctSave}%` : '5 FPS'})`;
+                    } else if (backupFrames && backupFrames.length > 0) {
+                        const estBytes = backupFrames.length * 28 * 1024;
+                        badgeInfo = `${backupFrames.length} frame 5 FPS (~${(estBytes / (1024 * 1024)).toFixed(1)} MB - 83% risparmio token)`;
+                    } else {
+                        badgeInfo = `${(file.size / (1024 * 1024)).toFixed(1)} MB`;
+                    }
+
                     loadBox.innerHTML = `
-                        <div style="display:flex; align-items:center; justify-content:space-between;">
+                        <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:6px;">
                             <span style="color:#10b981; font-weight:700; font-size:0.82rem; display:flex; align-items:center; gap:6px;">
-                                ${getSvgShield('verified', 14)} Video pronto per l'analisi${dur > 0 ? ` (${dur.toFixed(1)}s)` : ''}
+                                ${getSvgShield('verified', 14)} Video campionato a 5 FPS (720p)${dur > 0 ? ` (${dur.toFixed(1)}s)` : ''}
                             </span>
-                            <span style="font-size:0.75rem; color:var(--subtext);">${(processedFile.size / (1024 * 1024)).toFixed(1)} MB</span>
+                            <span style="font-size:0.75rem; color:#10b981; font-weight:800;">${badgeInfo}</span>
                         </div>
                     `;
                 }
 
-                if (playerSlot) {
-                    playerSlot.style.display = 'block';
-                    try {
-                        const previewBlobUrl = URL.createObjectURL(processedFile);
-                        playerSlot.innerHTML = `<video id="verify-preview-video-player" src="${previewBlobUrl}" controls playsinline preload="auto" style="max-height:180px; max-width:100%; border-radius:8px; border:1px solid var(--line-color); display:block; margin:0 auto; background:#000;"></video>`;
-                        const prevVid = document.getElementById('verify-preview-video-player');
-                        if (prevVid) {
-                            prevVid.onloadeddata = () => {
-                                try { prevVid.currentTime = 0.05; } catch(e) {}
-                            };
-                        }
-                    } catch(pe) {
-                        playerSlot.innerHTML = `<video src="${finalDataUrl}" controls playsinline style="max-height:180px; max-width:100%; border-radius:8px; border:1px solid var(--line-color); display:block; margin:0 auto; background:#000;"></video>`;
-                    }
-                }
-
-                // Abilita il pulsante di verifica solo ora che il video è al 100% pronto
+                // Abilita pulsante invio
                 if (submitBtn) {
                     submitBtn.disabled = false;
                     submitBtn.style.opacity = '1';
@@ -27450,15 +27530,18 @@ function getCalisthenicsExpertResponse(query) {
                     submitBtn.innerHTML = `${getSvgShield('verified', 15)} <span>Certifica con Coach Ares</span>`;
                 }
             } catch(err) {
-                console.error("Errore caricamento media verifica:", err);
-                if (box) {
-                    box.innerHTML = `<div style="padding:10px; background:rgba(239,68,68,0.12); color:#ef4444; border:1px solid #ef4444; border-radius:8px; font-size:0.8rem;">Errore durante il caricamento del video. Riprova con un altro file.</div>`;
+                console.error("Errore elaborazione video verifica:", err);
+                const loadBox = document.getElementById('verify-media-loading');
+                if (loadBox) {
+                    loadBox.innerHTML = `<div style="color:#ef4444; font-size:0.8rem; font-weight:700;">Errore durante il caricamento del video. Riprova con un altro file.</div>`;
                 }
                 if (submitBtn) {
-                    submitBtn.disabled = true;
-                    submitBtn.style.opacity = '0.5';
-                    submitBtn.style.cursor = 'not-allowed';
-                    submitBtn.style.background = '#4b5563';
+                    submitBtn.disabled = false;
+                    submitBtn.style.opacity = '1';
+                    submitBtn.style.cursor = 'pointer';
+                    submitBtn.style.background = '';
+                    submitBtn.style.borderColor = '';
+                    submitBtn.innerHTML = `${getSvgShield('verified', 15)} <span>Certifica con Coach Ares</span>`;
                 }
             }
         }
@@ -27664,7 +27747,7 @@ function getCalisthenicsExpertResponse(query) {
                 geminiParts.push({
                     text: `ESAME CERTIFICAZIONE SKILL - FOTO ESECUZIONE:\n` +
                           `L'atleta ha allegato una foto per la skill: "${skill.name}" (${val} ${unit}).\n` +
-                          `Verifica con rigore la biomeccanica, la presenza umana reale dell'atleta e l'autenticità posturale:`
+                          `Verifica con rigore la biomeccanica, la presenza umana reale dell'atleta e l'autenticit posturale:`
                 });
                 geminiParts.push({
                     inlineData: {
@@ -27673,25 +27756,30 @@ function getCalisthenicsExpertResponse(query) {
                     }
                 });
             } else {
-                const vidB64 = fileDataUrl ? (fileDataUrl.includes(',') ? fileDataUrl.split(',')[1] : fileDataUrl) : null;
-                const vidMime = (processedFile && processedFile.type && processedFile.type.startsWith('video/')) ? processedFile.type : ((file && file.type && file.type.startsWith('video/')) ? file.type : 'video/mp4');
+                const hasCompressedVideo = preparedVerificationMedia &&
+                    preparedVerificationMedia.compressionSuccess &&
+                    processedFile &&
+                    processedFile !== file &&
+                    processedFile.size <= 12 * 1024 * 1024;
 
-                if (vidB64) {
+                if (hasCompressedVideo && fileDataUrl) {
+                    const vidB64 = fileDataUrl.includes(',') ? fileDataUrl.split(',')[1] : fileDataUrl;
+                    const vidMime = (processedFile && processedFile.type) || 'video/webm';
                     geminiParts.push({
                         text: `ESAME CERTIFICAZIONE SKILL - VIDEO INTEGRALE DELL'ATLETA (5 FPS):\n` +
                               `Skill richiesta: "${skill.name}"\n` +
                               `Prestazione dichiarata dall'atleta: ${val} ${unit}\n\n` +
                               `PARAMETRI DI CAMPIONAMENTO AD ALTA PRECISIONE (5 FPS):\n` +
-                              `- Il video è campionato a 5 fotogrammi per secondo (1 fotogramma ogni 0.2 secondi).\n` +
-                              `- Per le RIPETIZIONI dinamiche: ogni ripetizione completa da 1.5-2.5s è rappresentata da una sequenza nitida di 8-15 fotogrammi consecutivi (salita, lockout in alto, discesa, lockout in basso). Conta cronologicamente ogni singola ripetizione valida.\n` +
+                              `- Il video  campionato a 5 fotogrammi per secondo (1 fotogramma ogni 0.2 secondi).\n` +
+                              `- Per le RIPETIZIONI dinamiche: ogni ripetizione completa da 1.5-2.5s  rappresentata da una sequenza nitida di 8-15 fotogrammi consecutivi (salita, lockout in alto, discesa, lockout in basso). Conta cronologicamente ogni singola ripetizione valida.\n` +
                               `- Per gli HOLD (tenute isometriche): ogni secondo corrisponde a 5 fotogrammi consecutivi (es. 50 fotogrammi = 10 secondi esatti). Cronometra i secondi continuativi con allineamento posturale valido.\n\n` +
                               `ISTRUZIONI DI ANALISI CONTINUA:\n` +
                               `1. Visiona e analizza l'INTERO VIDEO dal primo all'ultimo secondo, senza saltare nessun secondo.\n` +
                               `2. Conta cronologicamente ogni singola ripetizione valida (o cronometra i secondi continuativi di tenuta isometrica).\n` +
                               `3. Verifica che il ROM sia completo per ogni ripetizione (es. mento/petto sopra la sbarra, lockout dei gomiti, assenza di kipping o compensi scorretti) o che l'allineamento posturale sia mantenuto per l'intera durata dichiarata.\n` +
                               `4. CONTROLLO ANTI-FRODE: accertati che il video non sia tagliato, montato in loop, velocizzato o interrotto anticipatamente.\n` +
-                              `5. Se l'atleta esegue meno di ${val} ${unit} valide (ad es. esegue solo 8 ripetizioni mentre ne dichiara 10 o 100), o se la tecnica è non conforme, RIFIUTA categoricamente indicando esattamente quante ripetizioni valide hai contato.\n` +
-                              `6. Se l'atleta esegue ${val} o più ${unit} valide con corretta biomeccanica, APPROVA la certificazione.`
+                              `5. Se l'atleta esegue meno di ${val} ${unit} valide (ad es. esegue solo 8 ripetizioni mentre ne dichiara 10 o 100), o se la tecnica  non conforme, RIFIUTA categoricamente indicando esattamente quante ripetizioni valide hai contato.\n` +
+                              `6. Se l'atleta esegue ${val} o pi ${unit} valide con corretta biomeccanica, APPROVA la certificazione.`
                     });
                     geminiParts.push({
                         inlineData: {
@@ -27701,9 +27789,22 @@ function getCalisthenicsExpertResponse(query) {
                     });
                 } else if (videoFrames && videoFrames.length > 0) {
                     geminiParts.push({
-                        text: `L'atleta ha caricato un VIDEO della propria esecuzione per certificare la skill "${skill.name}" (${val} ${unit}).\n` +
-                              `Di seguito trovi la sequenza cronologica di ${videoFrames.length} fotogrammi chiave estratti lungo l'intero video (inizio, salita, apice ROM/lockout, tenuta e discesa).\n` +
-                              `Valuta attentamente la progressione temporale del movimento e la biomeccanica:`
+                        text: `ESAME CERTIFICAZIONE SKILL - VIDEO INTEGRALE DELL'ATLETA (5 FPS):\n` +
+                              `Skill richiesta: "${skill.name}"\n` +
+                              `Prestazione dichiarata dall'atleta: ${val} ${unit}\n\n` +
+                              `PARAMETRI DI CAMPIONAMENTO AD ALTA PRECISIONE (5 FPS):\n` +
+                              `- Questa sequenza rappresenta l'INTERO VIDEO campionato ad altissima efficienza a 5 fotogrammi al secondo (intervallo di 0.2s tra un frame e il successivo).\n` +
+                              `- NON sono singole foto isolate:  l'intero video continuo campionato a 5 FPS con 83% di risparmio token!\n` +
+                              `- Per le RIPETIZIONI dinamiche: ogni ripetizione completa da 1.5-2.5s  rappresentata da una sequenza nitida di 8-15 fotogrammi consecutivi (salita, lockout in alto, discesa, lockout in basso). Conta cronologicamente ogni singola ripetizione valida.\n` +
+                              `- Per gli HOLD (tenute isometriche): ogni secondo corrisponde a 5 fotogrammi consecutivi (es. 50 fotogrammi = 10 secondi esatti). Cronometra i secondi continuativi con allineamento posturale valido.\n\n` +
+                              `ISTRUZIONI DI ANALISI CONTINUA:\n` +
+                              `1. Visiona e analizza l'INTERO VIDEO dal primo all'ultimo secondo, senza saltare nessun secondo.\n` +
+                              `2. Conta cronologicamente ogni singola ripetizione valida (o cronometra i secondi continuativi di tenuta isometrica).\n` +
+                              `3. Verifica che il ROM sia completo per ogni ripetizione (es. mento/petto sopra la sbarra, lockout dei gomiti, assenza di kipping o compensi scorretti) o che l'allineamento posturale sia mantenuto per l'intera durata dichiarata.\n` +
+                              `4. CONTROLLO ANTI-FRODE: accertati che il video non sia tagliato, montato in loop, velocizzato o interrotto anticipatamente.\n` +
+                              `5. Se l'atleta esegue meno di ${val} ${unit} valide (ad es. esegue solo 8 ripetizioni mentre ne dichiara 10 o 100), o se la tecnica  non conforme, RIFIUTA categoricamente indicando esattamente quante ripetizioni valide hai contato.\n` +
+                              `6. Se l'atleta esegue ${val} o pi ${unit} valide con corretta biomeccanica, APPROVA la certificazione.\n` +
+                              `Sequenza cronologica dei fotogrammi:`
                     });
                     videoFrames.forEach((f, idx) => {
                         let phaseLabel = "Fase del movimento";
@@ -27721,6 +27822,21 @@ function getCalisthenicsExpertResponse(query) {
                             }
                         });
                     });
+                } else if (fileDataUrl && processedFile && processedFile.size <= 15 * 1024 * 1024) {
+                    const vidB64 = fileDataUrl.includes(',') ? fileDataUrl.split(',')[1] : fileDataUrl;
+                    const vidMime = (processedFile && processedFile.type) || 'video/mp4';
+                    geminiParts.push({
+                        text: `ESAME CERTIFICAZIONE SKILL - VIDEO INTEGRALE DELL'ATLETA (5 FPS):\n` +
+                              `Skill richiesta: "${skill.name}"\n` +
+                              `Prestazione dichiarata: ${val} ${unit}\n` +
+                              `Analizza con rigore l'intero video e conta le ripetizioni o secondi di tenuta esatti:`
+                    });
+                    geminiParts.push({
+                        inlineData: {
+                            mimeType: vidMime,
+                            data: vidB64
+                        }
+                    });
                 } else {
                     if (submitBtn) {
                         submitBtn.disabled = false;
@@ -27735,8 +27851,7 @@ function getCalisthenicsExpertResponse(query) {
                     return;
                 }
             }
-
-            // Recupero chiave Google Gemini
+// Recupero chiave Google Gemini
             const userGeminiKey = localStorage.getItem("calisthenics_gemini_api_key");
             const apiKeyToUse = (typeof GLOBAL_GEMINI_API_KEY !== 'undefined' && GLOBAL_GEMINI_API_KEY && GLOBAL_GEMINI_API_KEY.trim())
                 ? GLOBAL_GEMINI_API_KEY.trim().replace(/^["']|["']$/g, '')
