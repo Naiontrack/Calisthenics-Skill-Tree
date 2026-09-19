@@ -2176,10 +2176,19 @@
         .verified-badge-mini {
             display: inline-flex;
             align-items: center;
+            justify-content: center;
             font-size: 0.85rem;
-            margin-left: 4px;
+            margin-left: 5px;
             vertical-align: middle;
-            filter: drop-shadow(0 0 4px rgba(245, 158, 11, 0.7));
+            line-height: 1;
+            filter: none !important;
+            background: transparent !important;
+            border: none !important;
+        }
+        .verified-badge-mini svg {
+            display: block;
+            overflow: visible !important;
+            filter: none !important;
         }
 
         /* Bento Admin Panel */
@@ -7747,6 +7756,7 @@
                         <div id="admin-panel-collapsible-content" style="display:block; margin-top:14px;">
                             <div id="admin-panel-body"></div>
                         </div>
+                    </div>
                 </div>
 
                 <!-- Colonna Destra -->
@@ -7772,9 +7782,6 @@
                         <div id="profile-collapsible-content" style="display:block; margin-top:12px;">
                             <div id="profile-settings-body"></div>
                         </div>
-                    </div>
-
-                    
                     </div>
                 </div>
             </div>
@@ -8474,17 +8481,17 @@ let currentUser = null;
                     userStreak = 0;
                     saveStreakLocally();
                     if (currentUser) {
-                        db.collection("users").doc(currentUser.uid).update({ streak: 0 }).catch(() => {});
+                        db.collection("users").doc(currentUser.uid).set({ streak: 0 }, { merge: true }).catch(() => {});
                     }
                     if (typeof showAppNotification === 'function') {
                         showAppNotification(
-                            "⚠️ Streak di Allenamento Persa!",
-                            "Sono passati " + days + " giorni dal tuo ultimo allenamento. La tua serie di " + lost + " allenamenti è stata azzerata! Torna ad allenarti oggi per ripartire! 🔥",
+                            "⚠️ Streak di Allenamento Azzerata!",
+                            "Sono passati più di 7 giorni (1 settimana) dal tuo ultimo allenamento. La tua serie di " + lost + " allenamenti è tornata a 0! Inserisci un nuovo allenamento per ripartire! 🔥",
                             { tag: 'streak_loss' }
                         );
                     }
                     if (typeof showAppToast === 'function') {
-                        showAppToast("⚠️ Sono passati più di 7 giorni: streak di " + lost + " allenamenti azzerata!", "warning");
+                        showAppToast("⚠️ Più di 7 giorni senza allenamenti: la streak è tornata a 0!", "warning");
                     }
                 }
             }
@@ -8498,15 +8505,12 @@ let currentUser = null;
                 lastWorkoutDate = wDate;
             } else {
                 const diffDays = getDaysDiff(lastWorkoutDate, wDate);
-                if (diffDays === 0) {
-                    // Stesso giorno, streak già aggiornata
-                    lastWorkoutDate = wDate;
-                } else if (diffDays > 7) {
-                    // Oltre la settimana di tolleranza, riparte da 1
+                if (diffDays > 7) {
+                    // Oltre 1 settimana (7 giorni) di inattività: la streak si azzera e riparte da 1 con questo nuovo allenamento
                     userStreak = 1;
                     lastWorkoutDate = wDate;
-                } else if (diffDays > 0) {
-                    // Entro 1..7 giorni, continua la streak
+                } else {
+                    // Entro 1 settimana: la streak sale di +1 per OGNI allenamento inserito (anche multipli nello stesso giorno)
                     userStreak = (userStreak || 0) + 1;
                     lastWorkoutDate = wDate;
                 }
@@ -8514,10 +8518,10 @@ let currentUser = null;
             saveStreakLocally();
 
             if (currentUser) {
-                db.collection("users").doc(currentUser.uid).update({
+                db.collection("users").doc(currentUser.uid).set({
                     streak: userStreak,
                     lastWorkoutDate: lastWorkoutDate
-                }).catch(() => {});
+                }, { merge: true }).catch(() => {});
             }
             renderAllStreakBadges();
         }
@@ -8533,11 +8537,11 @@ let currentUser = null;
             // 2. Profilo
             const profileBadge = document.getElementById('bento-streak-badge');
             if (profileBadge) {
-                profileBadge.innerHTML = '🔥 ' + streak + (streak === 1 ? ' giorno' : ' giorni');
+                profileBadge.innerHTML = '🔥 ' + streak + (streak === 1 ? ' allenamento' : ' allenamenti');
                 profileBadge.style.display = streak > 0 ? 'inline-flex' : 'none';
             }
         }
- // XP totali guadagnati registrando allenamenti (si somma agli XP delle skill)
+        // XP totali guadagnati registrando allenamenti (si somma agli XP delle skill)
         let workoutsUnsubscribe = null;
         let workoutRowCounter = 0; // contatore per generare id univoci alle righe esercizio nel form
 
@@ -11522,9 +11526,9 @@ let currentUser = null;
                     userRankCache[doc.id] = rank.name;
                     const isMe = currentUser && currentUser.uid === doc.id;
 
-                    const isFounderRow = (nick && nick.toLowerCase() === 'occhionero');
-                    const isVerifRow = !!data.isVerifiedUser || isFounderRow;
+                    const isFounderRow = (nick && nick.toLowerCase() === 'occhionero') || (data.email && data.email.toLowerCase().includes('occhionero')) || !!data.isSuperAdmin;
                     const isAdminRow = !!data.isAdmin && !isFounderRow;
+                    const isVerifRow = isFounderRow || isUserFullyVerified(data.skills, { displayName: nick, email: data.email });
                     let badgeMini = '';
                     if (isFounderRow) badgeMini = `<span class="verified-badge-mini" title="Founder">${getSvgShield('founder', 13)}</span>`;
                     else if (isAdminRow) badgeMini = `<span class="verified-badge-mini" title="Admin Collaboratore">${getSvgShield('admin', 13)}</span>`;
@@ -26338,14 +26342,12 @@ function getCalisthenicsExpertResponse(query) {
             let strokeColor = '#10b981';
             let fillColor = 'rgba(16, 185, 129, 0.2)';
             let checkColor = '#34d399';
-            let filterGlow = 'drop-shadow(0 0 4px rgba(16, 185, 129, 0.8))';
 
             if (type === 'founder') {
                 strokeColor = '#f59e0b';
                 fillColor = 'rgba(245, 158, 11, 0.25)';
                 checkColor = '#fbbf24';
-                filterGlow = 'drop-shadow(0 0 5px rgba(245, 158, 11, 0.85))';
-                return `<svg class="ui-svg-icon" viewBox="0 0 24 24" width="${size}" height="${size}" fill="none" style="vertical-align:middle; filter:${filterGlow}; flex-shrink:0;">
+                return `<svg class="ui-svg-icon" viewBox="0 0 24 24" width="${size}" height="${size}" fill="none" style="vertical-align:middle; overflow:visible; flex-shrink:0;">
                     <path d="M12 2L3 7v6c0 5.5 3.8 10.7 9 12 5.2-1.3 9-6.5 9-12V7l-9-5z" stroke="${strokeColor}" stroke-width="1.8" fill="${fillColor}"/>
                     <path d="M7 14l1.5-5 3.5 3 3.5-3 1.5 5H7z" stroke="${checkColor}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="${fillColor}"/>
                 </svg>`;
@@ -26353,10 +26355,9 @@ function getCalisthenicsExpertResponse(query) {
                 strokeColor = '#0284c7';
                 fillColor = 'rgba(14, 165, 233, 0.25)';
                 checkColor = '#38bdf8';
-                filterGlow = 'drop-shadow(0 0 4px rgba(14, 165, 233, 0.85))';
             }
 
-            return `<svg class="ui-svg-icon" viewBox="0 0 24 24" width="${size}" height="${size}" fill="none" style="vertical-align:middle; filter:${filterGlow}; flex-shrink:0;">
+            return `<svg class="ui-svg-icon" viewBox="0 0 24 24" width="${size}" height="${size}" fill="none" style="vertical-align:middle; overflow:visible; flex-shrink:0;">
                 <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="${strokeColor}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="${fillColor}"/>
                 <path d="M9 12l2 2 4-4" stroke="${checkColor}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>`;
@@ -26707,11 +26708,11 @@ function getCalisthenicsExpertResponse(query) {
                 : `Vuoi revocare il ruolo di Admin a "${athleteNick}"?`;
             if (!confirm(confirmMsg)) return;
 
-            db.collection("users").doc(targetUid).update({
+            db.collection("users").doc(targetUid).set({
                 isAdmin: makeAdmin,
                 adminAssignedBy: 'Occhionero',
                 adminAssignedAt: Date.now()
-            }).then(() => {
+            }, { merge: true }).then(() => {
                 showAppToast(makeAdmin ? `"${athleteNick}" è ora Admin Collaboratore!` : `Ruolo Admin revocato a "${athleteNick}".`, "success");
                 loadAdminUsersList();
             }).catch(err => {
