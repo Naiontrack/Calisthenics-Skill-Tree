@@ -503,6 +503,7 @@
             padding-right: 4px;
         }
 
+        .verified-leaderboard-row { border-left: 3px solid #10b981 !important; background: rgba(16, 185, 129, 0.04); }
         .leaderboard-item {
             display: flex;
             align-items: center;
@@ -11573,36 +11574,65 @@ let currentUser = null;
                 leaderboardUnsubscribe();
             }
 
-            leaderboardUnsubscribe = db.collection("users").orderBy("totalXp", "desc").limit(20).onSnapshot((snapshot) => {
+            leaderboardUnsubscribe = db.collection("users").orderBy("totalXp", "desc").limit(50).onSnapshot((snapshot) => {
                 if (snapshot.empty) {
                     container.innerHTML = `<p style="color: var(--subtext); text-align: center; font-size: 0.9rem;">Nessun atleta in classifica ancora.</p>`;
                     return;
                 }
 
-                let html = '';
-                let index = 1;
+                const usersList = [];
                 snapshot.forEach((doc) => {
                     const data = doc.data();
                     const xp = data.totalXp || 0;
                     const nick = data.nickname || "Anonimo";
-                    const rank = getCurrentRank(xp);
-                    userRankCache[doc.id] = rank.name;
                     const isMe = currentUser && currentUser.uid === doc.id;
 
                     const isFounderRow = (nick && nick.toLowerCase() === 'occhionero') || (data.email && data.email.toLowerCase().includes('occhionero')) || !!data.isSuperAdmin;
                     const isAdminRow = !!data.isAdmin && !isFounderRow;
                     const isVerifRow = isUserFullyVerified(data.skills, { displayName: nick, email: data.email, uid: doc.id });
+                    const isVerifiedPriority = isFounderRow || isAdminRow || isVerifRow;
+
+                    usersList.push({
+                        id: doc.id,
+                        data: data,
+                        xp: xp,
+                        nick: nick,
+                        isMe: isMe,
+                        isFounderRow: isFounderRow,
+                        isAdminRow: isAdminRow,
+                        isVerifRow: isVerifRow,
+                        isVerifiedPriority: isVerifiedPriority
+                    });
+                });
+
+                // CLASSIFICA: Gli utenti verificati vanno a prescindere in cima rispetto a quelli non verificati
+                usersList.sort((a, b) => {
+                    if (a.isVerifiedPriority && !b.isVerifiedPriority) return -1;
+                    if (!a.isVerifiedPriority && b.isVerifiedPriority) return 1;
+                    return b.xp - a.xp;
+                });
+
+                let html = '';
+                let index = 1;
+                usersList.forEach((u) => {
+                    const data = u.data;
+                    const xp = u.xp;
+                    const nick = u.nick;
+                    const rank = getCurrentRank(xp);
+                    userRankCache[u.id] = rank.name;
+                    const isMe = u.isMe;
+
                     let badgeMini = '';
-                    if (isFounderRow) badgeMini = `<span class="verified-badge-mini" title="Founder">${getSvgShield('founder', 13)}</span>`;
-                    else if (isAdminRow) badgeMini = `<span class="verified-badge-mini" title="Admin Collaboratore">${getSvgShield('admin', 13)}</span>`;
-                    else if (isVerifRow) badgeMini = `<span class="verified-badge-mini" title="Utente Verificato">${getSvgShield('verified', 13)}</span>`;
+                    if (u.isFounderRow) badgeMini = `<span class="verified-badge-mini" title="Founder">${getSvgShield('founder', 13)}</span>`;
+                    else if (u.isAdminRow) badgeMini = `<span class="verified-badge-mini" title="Admin Collaboratore">${getSvgShield('admin', 13)}</span>`;
+                    else if (u.isVerifRow) badgeMini = `<span class="verified-badge-mini" title="Utente Verificato">${getSvgShield('verified', 13)}</span>`;
 
                     html += `
-                        <div class="leaderboard-item ${isMe ? 'current-user-item' : ''}" onclick="openUserProfileModal('${doc.id}')">
+                        <div class="leaderboard-item ${isMe ? 'current-user-item' : ''} ${u.isVerifiedPriority ? 'verified-leaderboard-row' : ''}" onclick="openUserProfileModal('${u.id}')">
                             <div class="leaderboard-left">
                                 <span class="leaderboard-rank-pos">#${index}</span>
                                 <div class="leaderboard-avatar rank-badge-wrap rank-tier-${rank.tierId || 'bronze'}">${rank.iconSvg}</div>
-                                <span class="leaderboard-name">${nick} ${isMe ? '(Tu)' : ''} ${badgeMini}</span>
+                                <span class="leaderboard-name">${escapeHtml(nick)} ${isMe ? '(Tu)' : ''} ${badgeMini}</span>
                                 ${data.streak > 0 ? `<span class="streak-badge" title="${data.streak} allenamenti consecutivi" style="background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.35); color:#f87171; border-radius:999px; padding:2px 7px; font-size:0.75rem; font-weight:800; margin-left:4px; display:inline-flex; align-items:center; justify-content:center; gap:3px; white-space:nowrap; flex-shrink:0; line-height:1;">🔥 ${data.streak}</span>` : ''}
                             </div>
                             <span class="leaderboard-xp">${xp} XP</span>
@@ -27038,6 +27068,81 @@ function getCalisthenicsExpertResponse(query) {
         // =========================================================================
         let currentVerifyingSkillId = null;
 
+        function getSkillBiomechanicsCriteriaHtml(skill, val, unit) {
+            const id = (skill && skill.id) || '';
+            const name = (skill && skill.name) || '';
+            if (id === 'chest_to_bar' || /chest.*bar/i.test(name)) {
+                return `• <strong style="color:#ef4444;">CRITERIO TASSATIVO:</strong> Il petto (sterno o clavicola) DEVE TOCCARE FISICAMENTE la sbarra ad ogni ripetizione.<br>
+• Se superi la sbarra solo con il mento (trazioni normali), la prova verrà RESPINTA categoricamente.<br>
+• Estensione completa delle braccia in discesa (lockout) e completamento di tutte le <strong>${val} ${unit}</strong> dichiarate.`;
+            } else if (id === 'pullups' || /pull\s*up/i.test(name) || /trazion/i.test(name)) {
+                return `• Superamento netto della sbarra con il mento al picco di salita.<br>
+• Distensione quasi completa/lockout dei gomiti nella fase di discesa prima della ripetizione successiva.<br>
+• Forma controllata senza kipping e completamento di tutte le <strong>${val} ${unit}</strong> dichiarate.`;
+            } else if (id === 'muscle_up' || /muscle\s*up/i.test(name)) {
+                return `• Transizione sopra la sbarra simultanea di entrambe le braccia (divieto di salita asimmetrica a 'chicken wing').<br>
+• Lockout completo del dip sopra la sbarra con braccia tese.<br>
+• Completamento di tutte le <strong>${val} ${unit}</strong> dichiarate.`;
+            } else if (id.includes('dip') || /dip/i.test(name)) {
+                return `• Flessione dei gomiti ad almeno 90° nella fase eccentrica (spalle a livello o sotto i gomiti).<br>
+• Estensione completa (lockout) delle braccia in cima con spalle depresse.<br>
+• Esecuzione di tutte le <strong>${val} ${unit}</strong> dichiarate.`;
+            } else if (skill && skill.type === 'sec') {
+                return `• Allineamento posturale perfetto e continuo per tutta la durata dichiarata.<br>
+• Nessun cedimento dell'angolo o del bacino.<br>
+• Tenuta ininterrotta per tutti i <strong>${val} ${unit}</strong> dichiarati.`;
+            }
+            return `• ROM completo e lockout articolare corretto ad ogni ripetizione.<br>
+• Forma controllata e assenza di oscillazioni improprie.<br>
+• Raggiungimento effettivo di tutte le <strong>${val} ${unit}</strong> dichiarate.`;
+        }
+
+        function getSkillBiomechanicalRules(skill, val, unit) {
+            const id = (skill && skill.id) || '';
+            const name = (skill && skill.name) || '';
+            let rules = '';
+
+            if (id === 'chest_to_bar' || /chest.*bar/i.test(name) || /trazion.*petto/i.test(name)) {
+                rules = `\nCRITERIO BIOMECCANICO TASSATIVO PER "${name.toUpperCase()}" (CHEST TO BAR PULL UPS):\n` +
+                        `- DISCRIMINANTE FONDAMENTALE TRA PULL UP E CHEST TO BAR:\n` +
+                        `  * In un normale Pull Up (trazione al mento), l'atleta supera la sbarra solo con il mento.\n` +
+                        `  * In un CHEST TO BAR PULL UP, la sbarra DEVE AVERE UN CONTATTO FISICO DIRETTO E VISIBILE CON IL PETTO (sterno, clavicola o parte superiore del torace) ad ogni singola ripetizione.\n` +
+                        `- SE L'ATLETA ESEGUE NORMALI TRAZIONI AL MENTO (senza che il petto tocchi la sbarra):\n` +
+                        `  * QUESTE RIPETIZIONI SONO TOTALMENTE NULLE per la skill Chest to Bar!\n` +
+                        `  * DEVI CATEGORICAMENTE RIFIUTARE LA CERTIFICAZIONE impostando "approved": false.\n` +
+                        `  * In "reps_counted", imposta 0 (o il solo numero di ripetizioni con impatto petto-sbarra effettivo).\n` +
+                        `  * In "feedback", scrivi: "L'atleta ha eseguito trazioni con mento sopra la sbarra (Pull Ups regolari), ma per la skill Chest to Bar è indispensabile il contatto fisico del petto/sterno con la sbarra. Nessun Chest to Bar valido rilevato. Certificazione RESPINTA."\n`;
+            } else if (id === 'pullups' || id === 'australian' || /pull\s*up/i.test(name) || /trazion/i.test(name)) {
+                rules = `\nCRITERIO BIOMECCANICO PER "${name.toUpperCase()}":\n` +
+                        `- Salita fino al superamento netto della sbarra con il mento.\n` +
+                        `- Discesa a braccia distese (lockout dei gomiti) prima di risalire.\n` +
+                        `- Assenza di kipping o slanci delle gambe incontrollati.\n`;
+            } else if (id === 'muscle_up' || /muscle\s*up/i.test(name)) {
+                rules = `\nCRITERIO BIOMECCANICO PER "${name.toUpperCase()}" (BAR MUSCLE UP):\n` +
+                        `- Transizione sopra la sbarra simultanea di entrambe le braccia. RIFIUTA categoricamente se un gomito sale prima dell'altro (chicken wing / ala di gabbiano).\n` +
+                        `- Lockout completo del dip sopra la sbarra.\n`;
+            } else if (id.includes('dip') || /dip/i.test(name)) {
+                rules = `\nCRITERIO BIOMECCANICO PER "${name.toUpperCase()}":\n` +
+                        `- Flessione minima del gomito di 90 gradi nella discesa.\n` +
+                        `- Lockout completo delle braccia in estensione al ritorno.\n`;
+            } else if (id.includes('pushup') || /push\s*up/i.test(name) || /piegament/i.test(name)) {
+                rules = `\nCRITERIO BIOMECCANICO PER "${name.toUpperCase()}":\n` +
+                        `- Petto a terra o a sfiorare il suolo al massimo affondo.\n` +
+                        `- Distensione completa delle braccia in alto, corpo allineato in hollow.\n`;
+            } else if (id.includes('planche') || /planche/i.test(name)) {
+                rules = `\nCRITERIO BIOMECCANICO PER "${name.toUpperCase()}" (PLANCHE):\n` +
+                        `- Braccia bloccate tese, protrazione scapolare, corpo orizzontale senza gambe basse o schiena inarcata.\n`;
+            } else if (id.includes('fl') || /front\s*lever/i.test(name)) {
+                rules = `\nCRITERIO BIOMECCANICO PER "${name.toUpperCase()}" (FRONT LEVER):\n` +
+                        `- Corpo perfettamente orizzontale parallelo al suolo, braccia tese, retrazione scapolare.\n`;
+            } else if (id.includes('handstand') || id.includes('hs') || /handstand/i.test(name) || /verticale/i.test(name)) {
+                rules = `\nCRITERIO BIOMECCANICO PER "${name.toUpperCase()}":\n` +
+                        `- Braccia tese, spalle in spinta, tenuta controllata senza appoggi alle pareti (per libera).\n`;
+            }
+
+            return rules;
+        }
+
         function openSkillVerificationModal(skillId) {
             const skill = typeof findSkillById === 'function' ? findSkillById(skillId) : null;
             if (!skill) return;
@@ -27067,9 +27172,7 @@ function getCalisthenicsExpertResponse(query) {
                     <div style="font-weight:800; color:var(--accent); margin-bottom:6px; display:flex; align-items:center; gap:6px;">
                         ${getSvgInfo(15)} <span>Criteri Biomeccanici Valutati da Coach Ares:</span>
                     </div>
-                    • ROM completo (mento sopra la sbarra / 90° gomiti / estensione completa lockout)<br>
-                    • Forma controllata e assenza di kipping/oscillazioni improprie<br>
-                    • Esecutore umano reale chiaramente identificabile nell'atto di eseguire la skill
+                    ${getSkillBiomechanicsCriteriaHtml(skill, currentVal, unit)}
                 </div>
 
                 <div class="auth-form-group" style="margin-bottom:12px;">
@@ -27946,27 +28049,51 @@ function getCalisthenicsExpertResponse(query) {
             if (apiKeyToUse) {
                 const systemPrompt = `Sei Coach Ares, il giudice ufficiale, severo, incorruttibile ed esperto di biomeccanica e calisthenics dell'app 'Occhionero\'s Calisthenics Tree'.
 Il tuo compito è visionare e analizzare il media fornito (l'INTERO VIDEO integrale dell'atleta o la foto) ed emettere una decisione RIGIDA e vincolante sull'approvazione o il rifiuto della CERTIFICAZIONE UFFICIALE della skill richiesta.
-Skill richiesta: "${skill.name}"
+Skill richiesta: "${skill.name}" (ID: ${skill.id})
 Quantità/Tenuta dichiarata dall'atleta: ${val} ${unit}
+${getSkillBiomechanicalRules(skill, val, unit)}
+
+COMPRENSIONE SEMANTICA AUTONOMA DELLA SKILL ("${skill.name}", ID: "${skill.id}"):
+In qualità di Maestro di Calisthenics e Biomeccanica, DEVI comprendere e dedurre autonomamente in base al nome della skill i requisiti biomeccanici tassativi del Calisthenics scientifico internazionale:
+- Se nel nome è presente "Chest to Bar" o "al petto": l'atleta DEVE toccare fisicamente la sbarra con il petto (sterno/clavicola) ad ogni ripetizione. Se supera la sbarra solo con il mento (Pull Up normale), le ripetizioni per Chest to Bar sono NULLE (0) e la prova va RESPINTA con approved: false.
+- Se nel nome è presente "Pull Up", "Trazioni" o "Chin": superamento netto del mento sopra la sbarra e distensione completa delle braccia in discesa (lockout), senza kipping né oscillazioni.
+- Se nel nome è presente "Muscle Up": salita simultanea di entrambe le braccia (vietata l'ala di gabbiano / salita asimmetrica) e blocco articolare completo del dip sopra la sbarra.
+- Se nel nome è presente "Dip": flessione gomiti di almeno 90 gradi e risalita a lockout completo delle braccia in estensione in cima.
+- Se nel nome è presente "Push Up" o "Piegamenti": petto a terra/pavimento, corpo retto in hollow body e distensione completa dei gomiti in cima.
+- Se nel nome è presente "Hold", "Lever", "Planche", "Handstand", "Sit", "Flag": postura rigida, allineamento perfetto (orizzontale o verticale) mantenuto in modo continuativo senza cedimenti per tutti i ${val} secondi.
+- Per qualsiasi delle 81 skill dell'app o nuove skill, deduci automaticamente dal nome il ROM completo, i punti di contatto obbligatori e i vincoli articolari.
+
+REQUISITI DI VISIBILITÀ, ILLUMINAZIONE, INQUADRATURA E GUIDA REGIA:
+- Se il video presenta uno di questi difetti:
+  * TROPPO BUIO o IN CONTROLUCE (sagoma scura, illuminazione insufficiente per distinguere le articolazioni, il petto o la sbarra);
+  * ANGOLAZIONE SCORRETTA o INCOMPLETA (inquadratura da dietro, prospettiva schiacciata dal basso o dall'alto che impedisce di verificare il contatto petto/sbarra, il mento o il blocco dei gomiti);
+  * CORPO TAGLIATO FUORI INQUADRATURA (piedi, braccia o sbarra che escono dal frame durante l'esercizio);
+  * SFOCATO o RISOLUZIONE INSUFFICIENTE;
+- In questi casi DEVI:
+  1. RIFIUTARE la certificazione ("approved": false, "reps_counted": 0, "hold_seconds": 0).
+  2. Nel "feedback", spiegare chiaramente il difetto visivo riscontrato e FORNIRE ISTRUZIONI PRATICHE ESATTE SU COME FILMARE IL VIDEO SUCCESSIVO:
+     - Posizione telecamera: ad altezza sbarra o bacino, a 3-4 metri di distanza, con inquadratura laterale o a tre quarti a figura intera che mostri contemporaneamente la sbarra e tutto il corpo dell'atleta dall'inizio alla fine.
+     - Illuminazione: luce frontale alle spalle della telecamera, evitando finestre o forti fonti di luce dietro l'atleta.
 
 REGOLE FONDAMENTALI DI VALUTAZIONE BIOMECCANICA:
 1. PRESENZA UMANA ED ESERCIZIO SPECIFICO (CRITICO E INDISPENSABILE - TOLLERANZA ZERO FRAUDI):
    - Il media deve mostrare CHIARAMENTE un essere umano reale intento ad eseguire l'esercizio specifico indicato ("${skill.name}").
    - Se l'immagine contiene un fiore, una pianta, un animale, un oggetto inanimato, un disegno, uno screenshot casuale, un meme, uno sfondo vuoto, una persona in piedi o in una posa che NON corrisponde alla skill indicata: DEVI CATEGORICAMENTE RIFIUTARE (approved: false).
-2. VALUTAZIONE INTEGRALE DEL VIDEO (MANDATORIO E TASSATIVO):
+2. CONFRONTO SEVERO SOGLIA DICHIARATA (${val} ${unit}) vs CONTEGGIO EFFETTIVO (MANDATORIO E TASSATIVO):
+   - L'atleta ha dichiarato di aver eseguito ${val} ${unit}.
+   - Se il numero di ripetizioni valide contate (reps_counted) o secondi di tenuta valida (hold_seconds) è INFERIORE a ${val} (ad esempio: dichiara 15 ripetizioni ma ne conta 12, oppure dichiara 10s ma ne tiene 8s):
+     * DEVI TASSATIVAMENTE IMPOSTARE: "approved": false.
+     * NON APPROVARE MAI se l'atleta esegue anche una sola ripetizione in meno rispetto al dichiarato! L'esame è FALLITO.
+     * In "reps_counted" / "hold_seconds", inserisci il numero esatto effettivo contato.
+     * In "feedback", spiega che sono state contate solo X ripetizioni/secondi validi su ${val} dichiarati e che la certificazione è RESPINTA per target non raggiunto.
+   - Solo se l'atleta esegue ALMENO ${val} ripetizioni (o secondi) valide con biomeccanica conforme puoi impostare "approved": true.
+3. VALUTAZIONE INTEGRALE DEL VIDEO (MANDATORIO E TASSATIVO):
    - Stai analizzando l'INTERO VIDEO dell'atleta (o la sequenza cronologica ad alta densità lungo l'intera durata).
    - NON DEVI MAI RIFIUTARE affermando che "è una foto singola", che "un singolo frame statico non basta" o che "serve un video completo": stai già analizzando la sequenza cronologica del video!
-   - PER LE RIPETIZIONI (es. Muscle Up, Pull-up, Dip, Push-up, HSPU):
-     * Conta con estrema precisione ogni singola ripetizione valida (ROM completo: superamento sbarra con mento/petto, gomiti bloccati in lockout ove previsto, discesa completa, assenza di slancio incontrollato o compensi gravi).
-     * Se l'atleta esegue meno di ${val} ripetizioni valide (ad es. dichiara 10 o 100 ripetizioni ma ne esegue solo 8), DEVI TASSATIVAMENTE RIFIUTARE (approved: false) e spiegare nel feedback il conteggio esatto delle ripetizioni eseguite.
-     * Se l'atleta esegue almeno ${val} ripetizioni valide con forma conforme, APPROVA (approved: true).
-   - PER LE TENUTE ISOMETRICHE (es. Planche, Front Lever, Handstand, L-Sit, V-Sit):
-     * Cronometra l'esatta durata in secondi della tenuta continua con allineamento valido (parallela al suolo, protrazione/depressione scapolare, retroversione di bacino, ginocchia bloccate).
-     * Se la tenuta valida dura meno di ${val} secondi, RIFIUTA (approved: false) indicando i secondi effettivi mantenuti.
-     * Se mantiene la posizione per almeno ${val} secondi, APPROVA (approved: true).
-   - CONTROLLO ANTI-FRODE:
-     * Verifica attentamente che non vi siano tagli ingannevoli, loop ripetuti, montaggi o salti temporali per fingere serie multiple.
-3. FORMATO RISPOSTA:
+   - PER LE RIPETIZIONI (ROM completo, lockout in alto e in basso, assenza di kipping non consentito).
+   - PER GLI HOLD (cronometra i secondi continuativi con allineamento posturale valido).
+   - CONTROLLO ANTI-FRODE: verifica che non vi siano tagli ingannevoli, loop ripetuti o montaggi.
+4. FORMATO RISPOSTA:
    Rispondi ESCLUSIVAMENTE in JSON valido (senza testo markdown attorno):
    {
      "approved": true | false,
@@ -28056,6 +28183,52 @@ REGOLE FONDAMENTALI DI VALUTAZIONE BIOMECCANICA:
                                         }
                                     }
                                     if (parsed && typeof parsed.approved === 'boolean') {
+                                        // 1. ESTRAZIONE CONTEGGIO EFFETTIVO CON FALLBACK REGEX DA FEEDBACK
+                                        let countedReps = (typeof parsed.reps_counted === 'number') ? parsed.reps_counted : 0;
+                                        if (countedReps === 0 && parsed.feedback && skill.type === 'rep') {
+                                            const mReps = parsed.feedback.match(/(?:contat[eo]|eseguit[eo]|complessiv[eo]|valid[eo])\s*(\d+)\s*ripetizion/i);
+                                            if (mReps) countedReps = parseInt(mReps[1]) || 0;
+                                        }
+
+                                        let countedSec = (typeof parsed.hold_seconds === 'number') ? parsed.hold_seconds : 0;
+                                        if (countedSec === 0 && parsed.feedback && skill.type === 'sec') {
+                                            const mSec = parsed.feedback.match(/(?:contat[eo]|mantenut[eo]|cronometrat[eo])\s*(\d+)\s*(?:secondi|sec|s\b)/i);
+                                            if (mSec) countedSec = parseInt(mSec[1]) || 0;
+                                        }
+
+                                        // 2. CONTROLLO DETERMINISTICO SOGLIA DICHIARATA vs EFFETTIVA
+                                        if (skill.type === 'rep') {
+                                            if (countedReps < val) {
+                                                parsed.approved = false;
+                                                parsed.feedback = `Dichiarate ${val} ripetizioni, ma Coach Ares ha contato solo ${countedReps} ripetizioni valide con ROM completo. Certificazione RESPINTA: per certificare questo livello devi completare tutte le ${val} ripetizioni dichiarate.`;
+                                            }
+                                        } else if (skill.type === 'sec') {
+                                            if (countedSec < val) {
+                                                parsed.approved = false;
+                                                parsed.feedback = `Dichiarati ${val} secondi di tenuta, ma Coach Ares ha cronometrato solo ${countedSec}s continuativi con allineamento valido. Certificazione RESPINTA: devi mantenere la posizione per tutti i ${val}s dichiarati.`;
+                                            }
+                                        }
+
+                                        // 3. PROTEZIONE SPECIALE CHEST TO BAR vs PULL UPS REGOLARI
+                                        if (skill.id === 'chest_to_bar') {
+                                            const fbLower = (parsed.feedback || '').toLowerCase();
+                                            if (
+                                                fbLower.includes('petto non tocca') ||
+                                                fbLower.includes('non tocca il petto') ||
+                                                fbLower.includes('non ha toccato il petto') ||
+                                                fbLower.includes('solo il mento') ||
+                                                fbLower.includes('trazioni normali') ||
+                                                fbLower.includes('pull up normali') ||
+                                                fbLower.includes('senza toccare il petto') ||
+                                                fbLower.includes('nessun chest to bar')
+                                            ) {
+                                                parsed.approved = false;
+                                                if (!parsed.feedback.includes('RESPINTA')) {
+                                                    parsed.feedback += " [Coach Ares: Rilevate solo trazioni al mento. Contatto petto-sbarra obbligatorio per Chest to Bar. Certificazione RESPINTA]";
+                                                }
+                                            }
+                                        }
+
                                         aiResult = parsed;
                                         break;
                                     }
@@ -28171,20 +28344,39 @@ REGOLE FONDAMENTALI DI VALUTAZIONE BIOMECCANICA:
                 if (typeof updateBentoProfileStats === 'function') updateBentoProfileStats();
                 if (typeof renderLeaderboard === 'function') renderLeaderboard();
 
+                // RIMOSSA LA CHIUSURA AUTOMATICA: L'ATLETA CONFERMA MANUALMENTE
                 if (feedbackEl) {
                     feedbackEl.style.display = 'block';
                     feedbackEl.style.background = 'rgba(16,185,129,0.15)';
                     feedbackEl.style.color = '#10b981';
                     feedbackEl.style.border = '1px solid #10b981';
-                    feedbackEl.innerHTML = `<div style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">${getSvgShield('verified', 16)} <strong>APPROVATA DA COACH ARES!</strong></div><span style="font-size:0.8rem; line-height:1.4;">${escapeHtml(aiFeedbackText)}</span>`;
+                    feedbackEl.innerHTML = `
+                        <div style="display:flex; align-items:center; gap:6px; margin-bottom:6px;">
+                            ${getSvgShield('verified', 18)} <strong style="font-size:0.95rem;">APPROVATA DA COACH ARES!</strong>
+                        </div>
+                        <div style="font-size:0.84rem; line-height:1.45; margin-bottom:12px; color:var(--text);">${escapeHtml(aiFeedbackText)}</div>
+                        <button type="button" class="btn-confirm" id="btn-verified-confirm-ok" onclick="closeSkillVerifyModal(); if (typeof openSkillDetailDrawer === 'function') openSkillDetailDrawer('${skillId}');" style="width:100%; padding:11px 16px; font-weight:800; font-size:0.92rem; background:linear-gradient(135deg, #10b981 0%, #059669 100%); border:1px solid #10b981; color:#ffffff; border-radius:10px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; box-shadow:0 0 16px rgba(16,185,129,0.35); transition:all 0.2s ease;">
+                            ${getSvgShield('verified', 16)} <span>Fantastico, Conferma e Continua</span>
+                        </button>
+                    `;
+                }
+
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.style.opacity = '1';
+                    submitBtn.style.cursor = 'pointer';
+                    submitBtn.style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
+                    submitBtn.style.borderColor = '#10b981';
+                    submitBtn.style.color = '#ffffff';
+                    submitBtn.style.boxShadow = '0 0 16px rgba(16,185,129,0.35)';
+                    submitBtn.innerHTML = `${getSvgShield('verified', 15)} <span>Fantastico, Conferma e Continua</span>`;
+                    submitBtn.onclick = () => {
+                        closeSkillVerifyModal();
+                        if (typeof openSkillDetailDrawer === 'function') openSkillDetailDrawer(skillId);
+                    };
                 }
 
                 showAppToast(`Skill "${skill.name}" CERTIFICATA con successo!`, "success");
-
-                setTimeout(() => {
-                    closeSkillVerifyModal();
-                    if (typeof openSkillDetailDrawer === 'function') openSkillDetailDrawer(skillId);
-                }, 2200);
             } else {
                 // RIFIUTATA DA COACH ARES PER MOTIVI BIOMECCANICI VERI
                 if (currentUser && typeof db !== 'undefined') {
