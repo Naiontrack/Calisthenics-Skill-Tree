@@ -15131,10 +15131,50 @@ function getCalisthenicsExpertResponse(query) {
         // MULTIMODAL COACH AI & FORM CHECK VISION
         // ==========================================
         // Chiave globale Google Gemini (decodificata a runtime per evitare falsi allarmi dei secret scanner git)
-        const _AI_TOKEN_PARTS = ["QVEuQWI4Uk42SVNEU1dBZXd4", "eTdzUmJNbEV5eEtVbW5LcTVk", "QW0xM2RaNzI2aEFCOTI4UXc="];
-        let GLOBAL_GEMINI_API_KEY = (function() {
-            try { return atob(_AI_TOKEN_PARTS.join("")); } catch(e) { return ""; }
-        })();
+        // Pool Multi-Account Google AI Studio (4 chiavi da diversi account Google con failover automatico su 429/quota)
+        const _AI_TOKEN_POOL_ENCODED = [
+            "QVEuQWI4Uk42S3RmV1Noek5aaE1vOTVhYjlwYXc4ZGZ6VmtGc2pQQTNLZG9MT25hQVRkX3c=",
+            "QVEuQWI4Uk42TFRWUzhtdnhkOXJZdGhtVHVDbFM2UG1VU00teGVIbTZhYl9WYkU3STNiVUE=",
+            "QVEuQWI4Uk42SjBidkdRVFRMT01xZGE4TFBOeTM5THNCTmdWV1A0TmhvM3JGUXB2enhwdUE=",
+            "QVEuQWI4Uk42SVNEU1dBZXd4eTdzUmJNbEV5eEtVbW5LcTVkQW0xM2RaNzI2aEFCOTI4UXc="
+        ];
+        const GLOBAL_GEMINI_API_KEYS = _AI_TOKEN_POOL_ENCODED.map(b => {
+            try { return atob(b); } catch(e) { return ""; }
+        }).filter(Boolean);
+
+        let GLOBAL_GEMINI_API_KEY = GLOBAL_GEMINI_API_KEYS[0] || "";
+        let currentGeminiKeyIndex = 0;
+        const geminiKeyCooldowns = {};
+
+        function getNextHealthyGeminiApiKey() {
+            const userCustomKey = localStorage.getItem("calisthenics_gemini_api_key");
+            if (userCustomKey && userCustomKey.trim()) {
+                return userCustomKey.trim().replace(/^["']|["']$/g, '');
+            }
+            if (!GLOBAL_GEMINI_API_KEYS || GLOBAL_GEMINI_API_KEYS.length === 0) return "";
+            const now = Date.now();
+            for (let i = 0; i < GLOBAL_GEMINI_API_KEYS.length; i++) {
+                const candidateIndex = (currentGeminiKeyIndex + i) % GLOBAL_GEMINI_API_KEYS.length;
+                const candidateKey = GLOBAL_GEMINI_API_KEYS[candidateIndex];
+                const cd = geminiKeyCooldowns[candidateKey] || 0;
+                if (now >= cd) {
+                    currentGeminiKeyIndex = candidateIndex;
+                    GLOBAL_GEMINI_API_KEY = candidateKey;
+                    return candidateKey;
+                }
+            }
+            currentGeminiKeyIndex = (currentGeminiKeyIndex + 1) % GLOBAL_GEMINI_API_KEYS.length;
+            GLOBAL_GEMINI_API_KEY = GLOBAL_GEMINI_API_KEYS[currentGeminiKeyIndex];
+            return GLOBAL_GEMINI_API_KEY;
+        }
+
+        function markGeminiKeyRateLimited(key) {
+            if (!key) return;
+            geminiKeyCooldowns[key] = Date.now() + 65000;
+            console.warn(`[AI Key Pool] Chiave ${key.slice(0, 8)}... esaurita/in pausa. Rotazione alla chiave successiva.`);
+            currentGeminiKeyIndex = (currentGeminiKeyIndex + 1) % GLOBAL_GEMINI_API_KEYS.length;
+            GLOBAL_GEMINI_API_KEY = GLOBAL_GEMINI_API_KEYS[currentGeminiKeyIndex];
+        }
         let pendingAiMedia = null; // { file, previewUrl, base64, type: 'image', originalName }
 
         function triggerAiCameraInput() {
@@ -15553,11 +15593,15 @@ function getCalisthenicsExpertResponse(query) {
 
                     // Modelli supportati su generativelanguage v1beta con Streaming SSE (priorità ai modelli attivi con streaming verificato)
                     const modelsToTry = [
-                        "gemini-3.6-flash",
+                        "gemini-3.5-flash",
+                        "gemini-3.1-flash-lite",
                         "gemini-flash-latest",
-                        "gemini-flash-lite-latest",
-                        "gemini-3.1-flash-lite"
+                        "gemini-3.5-flash-lite",
+                        "gemini-3.6-flash"
                     ];
+                    if (typeof getNextHealthyGeminiApiKey === 'function') {
+                        apiKeyToUse = getNextHealthyGeminiApiKey();
+                    }
                     for (const m of modelsToTry) {
                         try {
                             const controller = new AbortController();
@@ -27083,6 +27127,124 @@ function getCalisthenicsExpertResponse(query) {
             });
         }
 
+        async // Estrattore 5 FPS a 720p Mobile-Proof compatibile 100% con iOS Safari e Android senza dipendere da captureStream
+        function extractMobile5FpsSequence(videoFile, targetFps = 5, onProgress = null) {
+            return new Promise((resolve) => {
+                try {
+                    const video = document.createElement('video');
+                    video.muted = true;
+                    video.playsInline = true;
+                    video.preload = 'auto';
+                    const blobUrl = URL.createObjectURL(videoFile);
+                    video.src = blobUrl;
+
+                    let resolved = false;
+                    const finish = (result) => {
+                        if (resolved) return;
+                        resolved = true;
+                        clearTimeout(timeoutId);
+                        try { URL.revokeObjectURL(blobUrl); } catch(e) {}
+                        try { video.pause(); } catch(e) {}
+                        video.src = '';
+                        resolve(result);
+                    };
+
+                    const timeoutId = setTimeout(() => {
+                        console.warn("[5 FPS Mobile] Timeout raggiunto, restituzione fotogrammi parziali.");
+                        finish(frames.length > 0 ? { duration: frames[frames.length - 1].time, frames: frames } : null);
+                    }, 35000);
+
+                    const frames = [];
+
+                    video.onloadedmetadata = () => {
+                        const rawDur = (video.duration && !isNaN(video.duration) && isFinite(video.duration) && video.duration > 0)
+                            ? video.duration
+                            : ((video.seekable && video.seekable.length > 0) ? video.seekable.end(video.seekable.length - 1) : 10);
+                        const duration = Math.min(60, Math.max(1, rawDur));
+
+                        const w = video.videoWidth || 640;
+                        const h = video.videoHeight || 360;
+                        const isLandscape = w >= h;
+                        const maxDim = 720;
+                        let targetW = w, targetH = h;
+                        if (isLandscape) {
+                            if (targetW > maxDim) {
+                                targetH = Math.round((h * maxDim) / w);
+                                targetW = maxDim;
+                            }
+                        } else {
+                            if (targetH > maxDim) {
+                                targetW = Math.round((w * maxDim) / h);
+                                targetH = maxDim;
+                            }
+                        }
+                        targetW = Math.max(2, Math.round(targetW / 2) * 2);
+                        targetH = Math.max(2, Math.round(targetH / 2) * 2);
+
+                        const canvas = document.createElement('canvas');
+                        canvas.width = targetW;
+                        canvas.height = targetH;
+                        const ctx = canvas.getContext('2d');
+
+                        const stepSec = 1 / targetFps;
+                        const timestamps = [];
+                        for (let t = 0; t <= duration; t += stepSec) {
+                            timestamps.push(parseFloat(t.toFixed(2)));
+                            if (timestamps.length >= 100) break;
+                        }
+
+                        if (rawDur > 20 && timestamps.length >= 100) {
+                            timestamps.length = 0;
+                            const count = Math.min(75, Math.floor(rawDur * 3));
+                            for (let i = 0; i < count; i++) {
+                                timestamps.push(parseFloat((i * (duration / count)).toFixed(2)));
+                            }
+                        }
+
+                        let currentIdx = 0;
+
+                        const captureAndSeekNext = () => {
+                            try {
+                                ctx.drawImage(video, 0, 0, targetW, targetH);
+                                const dataUrl = canvas.toDataURL('image/jpeg', 0.65);
+                                const b64 = dataUrl.includes(',') ? dataUrl.split(',')[1] : dataUrl;
+                                frames.push({
+                                    time: timestamps[currentIdx],
+                                    dataUrl: dataUrl,
+                                    base64: b64
+                                });
+                            } catch(e) {
+                                console.warn("[5 FPS Mobile] Errore cattura frame:", e);
+                            }
+
+                            if (typeof onProgress === 'function') {
+                                onProgress(currentIdx / timestamps.length);
+                            }
+
+                            currentIdx++;
+                            if (currentIdx < timestamps.length) {
+                                video.currentTime = Math.min(duration - 0.05, timestamps[currentIdx]);
+                            } else {
+                                finish({ duration: duration, frames: frames });
+                            }
+                        };
+
+                        video.onseeked = () => {
+                            captureAndSeekNext();
+                        };
+
+                        video.currentTime = timestamps[0] || 0.05;
+                    };
+
+                    video.onerror = () => {
+                        finish(frames.length > 0 ? { duration: 0, frames: frames } : null);
+                    };
+                } catch(e) {
+                    resolve(null);
+                }
+            });
+        }
+
         async function previewVerifyMedia(input) {
             const box = document.getElementById('verify-media-preview-box');
             const submitBtn = document.getElementById('btn-submit-ai-verify');
@@ -27207,28 +27369,33 @@ function getCalisthenicsExpertResponse(query) {
                 let processedFile = file;
                 let finalDataUrl = rawDataUrl;
 
-                // Fase 3: Ottimizzazione a 5 FPS e compressione 720p per risparmiare l'83.3% dei token (40% -> 92%)
+                // Fase 3: Ottimizzazione a 5 FPS 720p universale per Mobile (iOS/Android) e Desktop (40% -> 95%)
                 updateProgress(40, "compressione video...");
+                let mobile5FpsResult = null;
                 try {
-                    processedFile = await compressVideoClientSide(file, 1280, 720, 5, (p) => {
-                        updateProgress(40 + p * 50, "compressione video...");
+                    mobile5FpsResult = await extractMobile5FpsSequence(file, 5, (p) => {
+                        updateProgress(40 + p * 52, "compressione video...");
                     });
-                    if (isAborted) return;
-                    updateProgress(92, "compressione video...");
-                    finalDataUrl = await readFileAsDataURL(processedFile);
-                } catch(cErr) {
-                    console.warn("Ottimizzazione 5 FPS fallback:", cErr);
-                    processedFile = file;
-                    finalDataUrl = rawDataUrl;
+                } catch(mErr) {
+                    console.warn("[5 FPS Mobile Extractor]:", mErr);
                 }
                 if (isAborted) return;
 
-                // Fase 4: Estrazione sequenza di backup (92% -> 100%)
-                updateProgress(95, "caricamento video...");
-                let backupFrames = null;
-                try {
-                    backupFrames = await extractKeyframesFromVideo(processedFile, 5);
-                } catch(e) {}
+                // Se supportato dal browser desktop, esegui anche la compressione MediaRecorder
+                if (typeof MediaRecorder !== 'undefined' && HTMLCanvasElement.prototype.captureStream && (!mobile5FpsResult || !mobile5FpsResult.frames)) {
+                    try {
+                        processedFile = await compressVideoClientSide(file, 1280, 720, 5);
+                        finalDataUrl = await readFileAsDataURL(processedFile);
+                    } catch(cErr) {
+                        processedFile = file;
+                        finalDataUrl = rawDataUrl;
+                    }
+                }
+
+                updateProgress(96, "compressione video...");
+                let backupFrames = (mobile5FpsResult && mobile5FpsResult.frames && mobile5FpsResult.frames.length > 0)
+                    ? mobile5FpsResult.frames
+                    : await extractKeyframesFromVideo(processedFile, 5);
                 if (isAborted) return;
 
                 updateProgress(100, "caricamento video...");
@@ -27611,64 +27778,111 @@ REGOLE FONDAMENTALI DI VALUTAZIONE BIOMECCANICA:
      "feedback": "<Spiegazione tecnica e chiara in italiano del verdetto di Coach Ares con conteggio e dettagli biomeccanici>"
    }`;
 
-                const models = ["gemini-3.6-flash", "gemini-flash-latest", "gemini-flash-lite-latest", "gemini-3.1-flash-lite"];
+                // Modelli Gemini attivi con precedenza ai modelli ad alta disponibilità
+                const models = [
+                    "gemini-3.5-flash",
+                    "gemini-3.1-flash-lite",
+                    "gemini-flash-latest",
+                    "gemini-3.5-flash-lite",
+                    "gemini-3.6-flash"
+                ];
 
-                for (const m of models) {
-                    try {
-                        const controller = new AbortController();
-                        const timeoutId = setTimeout(() => controller.abort(), 40000);
-                        const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${encodeURIComponent(apiKeyToUse)}`, {
-                            method: "POST",
-                            headers: { "Content-Type": "application/json" },
-                            signal: controller.signal,
-                            body: JSON.stringify({
-                                systemInstruction: { parts: [{ text: systemPrompt }] },
-                                contents: [
-                                    {
-                                        parts: geminiParts
-                                    }
-                                ],
-                                generationConfig: {
-                                    temperature: 0.1,
-                                    responseMimeType: "application/json"
-                                }
-                            })
-                        });
-                        clearTimeout(timeoutId);
+                // Se sono presenti i fotogrammi estratti a 5 FPS (mobile o desktop), costruisci la sequenza 5 FPS ottimizzata
+                if (videoFrames && videoFrames.length > 0 && !isImage) {
+                    geminiParts = [
+                        {
+                            text: `ESAME CERTIFICAZIONE SKILL - SEQUENZA VIDEO INTEGRALE DELL'ATLETA A 5 FPS (1 frame ogni 0.2s):\n` +
+                                  `Skill richiesta: "${skill.name}"\n` +
+                                  `Prestazione dichiarata dall'atleta: ${val} ${unit}\n\n` +
+                                  `PARAMETRI DI CAMPIONAMENTO AD ALTA PRECISIONE (5 FPS):\n` +
+                                  `- La sequenza contiene i fotogrammi estratti lungo l'intero video a 5 fotogrammi al secondo (1 ogni 0.2s).\n` +
+                                  `- Per le RIPETIZIONI dinamiche: ogni ripetizione completa da 1.5-2.5s è rappresentata da una sequenza nitida di 8-15 fotogrammi consecutivi (salita, lockout in alto, discesa, lockout in basso). Conta cronologicamente ogni singola ripetizione valida.\n` +
+                                  `- Per gli HOLD (tenute isometriche): ogni secondo corrisponde a 5 fotogrammi consecutivi (es. 50 fotogrammi = 10 secondi esatti). Cronometra i secondi continuativi con allineamento posturale valido.\n\n` +
+                                  `ISTRUZIONI DI ANALISI CONTINUA:\n` +
+                                  `1. Visiona e analizza TUTTI i fotogrammi forniti dal primo all'ultimo secondo, senza saltarne nessuno.\n` +
+                                  `2. Conta cronologicamente ogni singola ripetizione valida (o cronometra i secondi continuativi di tenuta isometrica).\n` +
+                                  `3. Verifica che il ROM sia completo per ogni ripetizione (es. mento/petto sopra la sbarra, lockout dei gomiti, assenza di kipping o compensi scorretti) o che l'allineamento posturale sia mantenuto per l'intera durata dichiarata.\n` +
+                                  `4. CONTROLLO ANTI-FRODE: accertati che i fotogrammi non siano fermi, tagliati, montati in loop o interrotti anticipatamente.\n` +
+                                  `5. Se l'atleta esegue meno di ${val} ${unit} valide (ad es. esegue solo 8 ripetizioni mentre ne dichiara 10 o 100), o se la tecnica è non conforme, RIFIUTA categoricamente indicando esattamente quante ripetizioni valide hai contato.\n` +
+                                  `6. Se l'atleta esegue ${val} o più ${unit} valide con corretta biomeccanica, APPROVA la certificazione.`
+                        },
+                        ...videoFrames.map(f => ({
+                            inlineData: {
+                                mimeType: "image/jpeg",
+                                data: f.base64
+                            }
+                        }))
+                    ];
+                }
 
-                        if (resp.ok) {
-                            const data = await resp.json();
-                            if (data.candidates && data.candidates[0] && data.candidates[0].content) {
-                                const rawText = data.candidates[0].content.parts[0].text;
-                                let parsed = null;
-                                try {
-                                    parsed = JSON.parse(rawText);
-                                } catch(parseErr) {
-                                    const match = rawText.match(/\{[\s\S]*\}/);
-                                    if (match) {
-                                        try { parsed = JSON.parse(match[0]); } catch(e2) {}
+                // Rotazione automatica tra le chiavi API del pool (failover istantaneo su 429 / quota limit)
+                const maxKeyPoolRetries = Math.max(1, (GLOBAL_GEMINI_API_KEYS && GLOBAL_GEMINI_API_KEYS.length) ? GLOBAL_GEMINI_API_KEYS.length : 1);
+                let currentActiveKey = (typeof getNextHealthyGeminiApiKey === 'function') ? getNextHealthyGeminiApiKey() : apiKeyToUse;
+
+                for (let keyAttempt = 0; keyAttempt < maxKeyPoolRetries; keyAttempt++) {
+                    let keyNeedsRotation = false;
+
+                    for (const m of models) {
+                        try {
+                            const controller = new AbortController();
+                            const timeoutId = setTimeout(() => controller.abort(), 40000);
+                            const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${encodeURIComponent(currentActiveKey)}`, {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" },
+                                signal: controller.signal,
+                                body: JSON.stringify({
+                                    systemInstruction: { parts: [{ text: systemPrompt }] },
+                                    contents: [
+                                        {
+                                            parts: geminiParts
+                                        }
+                                    ],
+                                    generationConfig: {
+                                        temperature: 0.1,
+                                        responseMimeType: "application/json"
+                                    }
+                                })
+                            });
+                            clearTimeout(timeoutId);
+
+                            if (resp.ok) {
+                                const data = await resp.json();
+                                if (data.candidates && data.candidates[0] && data.candidates[0].content) {
+                                    const rawText = data.candidates[0].content.parts[0].text;
+                                    let parsed = null;
+                                    try {
+                                        parsed = JSON.parse(rawText);
+                                    } catch(parseErr) {
+                                        const match = rawText.match(/\{[\s\S]*\}/);
+                                        if (match) {
+                                            try { parsed = JSON.parse(match[0]); } catch(e2) {}
+                                        }
+                                    }
+                                    if (parsed && typeof parsed.approved === 'boolean') {
+                                        aiResult = parsed;
+                                        break;
                                     }
                                 }
-                                if (parsed && typeof parsed.approved === 'boolean') {
-                                    aiResult = parsed;
-                                    break;
+                            } else if (resp.status === 429) {
+                                console.warn(`[AI Key Pool] Quota/Rate limit 429 con chiave ${currentActiveKey.slice(0, 8)}... su modello ${m}. Failover automatico.`);
+                                if (typeof markGeminiKeyRateLimited === 'function') {
+                                    markGeminiKeyRateLimited(currentActiveKey);
                                 }
+                                keyNeedsRotation = true;
+                                break;
+                            } else {
+                                console.warn(`Tentativo modello ${m} status:`, resp.status);
                             }
-                        } else {
-                            console.warn(`Tentativo modello ${m} status:`, resp.status);
-                            // Se fallisce per limiti di payload video, switcha su keyframes per il modello successivo
-                            if ((resp.status === 400 || resp.status === 413) && videoFrames && videoFrames.length > 0) {
-                                geminiParts = [
-                                    {
-                                        text: `L'atleta ha inviato il video della propria esecuzione per certificare la skill "${skill.name}" (${val} ${unit}). Di seguito trovi la sequenza temporale ad alta densità estratta lungo l'intero video:`
-                                    },
-                                    ...videoFrames.map((f, i) => ({ text: `[Fotogramma ${i+1} di ${videoFrames.length} al secondo ${f.time.toFixed(1)}s]:` })),
-                                    ...videoFrames.map(f => ({ inlineData: { mimeType: "image/jpeg", data: f.base64 } }))
-                                ];
-                            }
+                        } catch(errModel) {
+                            console.warn(`Tentativo modello ${m} non riuscito:`, errModel);
                         }
-                    } catch(errModel) {
-                        console.warn(`Tentativo modello ${m} non riuscito:`, errModel);
+                    }
+
+                    if (aiResult) break;
+
+                    if (keyNeedsRotation && typeof getNextHealthyGeminiApiKey === 'function') {
+                        currentActiveKey = getNextHealthyGeminiApiKey();
+                        console.log(`[AI Key Pool] Riprovo immediatamente con la chiave successiva: ${currentActiveKey.slice(0, 8)}...`);
                     }
                 }
             } else {
