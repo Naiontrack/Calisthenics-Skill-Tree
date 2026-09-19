@@ -18413,24 +18413,30 @@ function getCalisthenicsExpertResponse(query) {
                 const video = document.createElement('video');
                 video.muted = true;
                 video.defaultMuted = true;
+                video.volume = 0;
                 video.playsInline = true;
                 video.setAttribute('muted', '');
                 video.setAttribute('playsinline', '');
                 video.setAttribute('webkit-playsinline', '');
-                video.preload = 'metadata';
+                video.preload = 'auto';
                 video.src = videoUrl;
 
-                const timeoutId = setTimeout(() => {
+                let timeoutId = setTimeout(() => {
                     if (!finished) {
                         finished = true;
                         cleanup();
-                        console.warn("Compressione video: timeout 30s raggiunto, utilizzo file originale.");
+                        console.warn("Compressione video: timeout iniziale raggiunto, utilizzo file originale.");
                         resolve(file);
                     }
-                }, 30000);
+                }, 120000);
+
+                let animId = null;
+                let drawTimer = null;
 
                 function cleanup() {
                     clearTimeout(timeoutId);
+                    if (drawTimer) { clearInterval(drawTimer); drawTimer = null; }
+                    if (animId) { cancelAnimationFrame(animId); animId = null; }
                     if (videoUrl) {
                         try { URL.revokeObjectURL(videoUrl); } catch (e) {}
                         videoUrl = null;
@@ -18439,7 +18445,48 @@ function getCalisthenicsExpertResponse(query) {
                     video.src = '';
                 }
 
+                let startAttempted = false;
+                let targetW = 640;
+                let targetH = 360;
+                let ctx = null;
+                let recorder = null;
+                const chunks = [];
+
+                function attemptStartRecording() {
+                    if (startAttempted || finished) return;
+                    if (!recorder || video.readyState < 2) return;
+                    startAttempted = true;
+
+                    try {
+                        recorder.start(100);
+                        video.playbackRate = 1.0;
+                        video.play().then(() => {
+                            step();
+                        }).catch((pe) => {
+                            console.warn("Compressione video: play() non avviato, fallback:", pe);
+                            finished = true;
+                            cleanup();
+                            resolve(file);
+                        });
+                    } catch (err) {
+                        finished = true;
+                        cleanup();
+                        resolve(file);
+                    }
+                }
+
                 video.onloadedmetadata = () => {
+                    const dur = (video.duration && !isNaN(video.duration) && isFinite(video.duration) && video.duration > 0) ? video.duration : 30;
+                    clearTimeout(timeoutId);
+                    timeoutId = setTimeout(() => {
+                        if (!finished) {
+                            finished = true;
+                            cleanup();
+                            console.warn("Compressione video: timeout dinamico completato.");
+                            resolve(file);
+                        }
+                    }, Math.max(120000, Math.round(dur * 2200) + 30000));
+
                     const w = video.videoWidth || 640;
                     const h = video.videoHeight || 360;
                     const isLandscape = w >= h;
@@ -18454,13 +18501,13 @@ function getCalisthenicsExpertResponse(query) {
                     }
 
                     const scale = Math.min(targetMaxW / w, targetMaxH / h, 1);
-                    const targetW = Math.max(2, Math.round((w * scale) / 2) * 2);
-                    const targetH = Math.max(2, Math.round((h * scale) / 2) * 2);
+                    targetW = Math.max(2, Math.round((w * scale) / 2) * 2);
+                    targetH = Math.max(2, Math.round((h * scale) / 2) * 2);
 
                     const canvas = document.createElement('canvas');
                     canvas.width = targetW;
                     canvas.height = targetH;
-                    const ctx = canvas.getContext('2d');
+                    ctx = canvas.getContext('2d');
 
                     let canvasStream;
                     try {
@@ -18479,7 +18526,6 @@ function getCalisthenicsExpertResponse(query) {
                         else mimeType = '';
                     }
 
-                    let recorder;
                     try {
                         const options = { videoBitsPerSecond: (targetFps <= 5 ? 800000 : 1800000) };
                         if (mimeType) options.mimeType = mimeType;
@@ -18491,26 +18537,13 @@ function getCalisthenicsExpertResponse(query) {
                         return;
                     }
 
-                    const chunks = [];
                     recorder.ondataavailable = (e) => {
                         if (e.data && e.data.size > 0) chunks.push(e.data);
                     };
 
-                    let animId;
-                    function step() {
-                        if (finished) return;
-                        ctx.drawImage(video, 0, 0, targetW, targetH);
-                        if (video.ended || (video.duration && video.currentTime >= video.duration - 0.15)) {
-                            if (recorder.state === 'recording') {
-                                try { recorder.stop(); } catch(e) {}
-                            }
-                            return;
-                        }
-                        animId = requestAnimationFrame(step);
-                    }
-
                     recorder.onstop = () => {
-                        cancelAnimationFrame(animId);
+                        if (drawTimer) clearInterval(drawTimer);
+                        if (animId) cancelAnimationFrame(animId);
                         if (finished) return;
                         finished = true;
                         cleanup();
@@ -18534,35 +18567,45 @@ function getCalisthenicsExpertResponse(query) {
                         }
                     };
 
-                    video.ontimeupdate = () => {
-                        if (typeof onProgress === 'function' && video.duration > 0) {
-                            onProgress(Math.min(0.99, video.currentTime / video.duration));
-                        }
-                    };
+                    attemptStartRecording();
+                };
 
-                    video.onended = () => {
-                        if (recorder.state === 'recording') {
-                            try { recorder.stop(); } catch(e) {}
-                        }
-                    };
+                video.onloadeddata = attemptStartRecording;
+                video.oncanplay = attemptStartRecording;
 
-                    try {
-                        recorder.start(100);
-                        video.playbackRate = 1.0;
-                        video.play().then(() => {
-                            step();
-                        }).catch((pe) => {
-                            console.warn("Compressione video: play() non avviato, uso file originale:", pe);
-                            finished = true;
-                            cleanup();
-                            resolve(file);
-                        });
-                    } catch (err) {
-                        finished = true;
-                        cleanup();
-                        resolve(file);
+                video.ontimeupdate = () => {
+                    if (typeof onProgress === 'function' && video.duration > 0) {
+                        onProgress(Math.min(0.99, video.currentTime / video.duration));
                     }
                 };
+
+                video.onended = () => {
+                    if (recorder && recorder.state === 'recording') {
+                        try { recorder.stop(); } catch(e) {}
+                    }
+                };
+
+                function renderCanvasFrame() {
+                    if (finished || !ctx) return;
+                    try {
+                        ctx.drawImage(video, 0, 0, targetW, targetH);
+                    } catch(e) {}
+                    if (video.ended || (video.duration && video.currentTime >= video.duration - 0.15)) {
+                        if (recorder && recorder.state === 'recording') {
+                            try { recorder.stop(); } catch(e) {}
+                        }
+                    }
+                }
+
+                function step() {
+                    if (finished) return;
+                    renderCanvasFrame();
+                    if (!video.ended) {
+                        animId = requestAnimationFrame(step);
+                    }
+                }
+
+                drawTimer = setInterval(renderCanvasFrame, 100);
 
                 video.onerror = () => {
                     finished = true;
@@ -27179,7 +27222,7 @@ function getCalisthenicsExpertResponse(query) {
                     const timeoutId = setTimeout(() => {
                         console.warn("[5 FPS Mobile] Watchdog globale completato.");
                         finish(frames.length > 0 ? { duration: frames[frames.length - 1].time, frames: frames } : null);
-                    }, 25000);
+                    }, 90000);
 
                     let hasStarted = false;
 
@@ -27218,17 +27261,10 @@ function getCalisthenicsExpertResponse(query) {
 
                         const stepSec = 1 / targetFps;
                         const timestamps = [];
+                        // Campionamento continuo puro a 5 FPS (1 fotogramma ogni 0.2s)
                         for (let t = 0; t <= duration; t += stepSec) {
                             timestamps.push(parseFloat(t.toFixed(2)));
-                            if (timestamps.length >= 60) break;
-                        }
-
-                        if (rawDur > 12 && timestamps.length >= 60) {
-                            timestamps.length = 0;
-                            const count = Math.min(50, Math.floor(rawDur * 2.5));
-                            for (let i = 0; i < count; i++) {
-                                timestamps.push(parseFloat((i * (duration / count)).toFixed(2)));
-                            }
+                            if (timestamps.length >= 300) break; // fino a 60s completi di video a 5 FPS
                         }
 
                         let currentIdx = 0;
@@ -27447,7 +27483,7 @@ function getCalisthenicsExpertResponse(query) {
                         const compRes = await compressVideoClientSide(file, 1280, 720, 5, (p) => {
                             updateProgress(25 + p * 65, "compressione video...");
                         });
-                        if (compRes && compRes !== file && compRes.size < file.size) {
+                        if (compRes && compRes !== file) {
                             processedFile = compRes;
                             compressionSuccess = true;
                             finalDataUrl = await readFileAsDataURL(processedFile);
@@ -27458,7 +27494,17 @@ function getCalisthenicsExpertResponse(query) {
                 }
                 if (isAborted) return;
 
-                // Metodo 2: Se la compressione MediaRecorder non è riuscita (es. iOS Safari), estrai la sequenza 5 FPS
+                // Metodo 2: Se la compressione MediaRecorder non è riuscita (es. iOS Safari), se file <= 15MB usiamo il video con campionamento 5 FPS nativo Gemini
+                if (!compressionSuccess && file.size <= 15 * 1024 * 1024) {
+                    processedFile = file;
+                    compressionSuccess = true;
+                    try {
+                        finalDataUrl = await readFileAsDataURL(file);
+                    } catch(e) {}
+                }
+                if (isAborted) return;
+
+                // Metodo 3: Se file > 15MB e MediaRecorder non disponibile, estrai sequenza fotogrammi 5 FPS
                 if (!compressionSuccess) {
                     updateProgress(30, "compressione video...");
                     try {
@@ -27499,23 +27545,11 @@ function getCalisthenicsExpertResponse(query) {
 
                 const loadBox = document.getElementById('verify-media-loading');
                 if (loadBox) {
-                    let badgeInfo = "";
-                    if (compressionSuccess) {
-                        const pctSave = Math.round((1 - (processedFile.size / file.size)) * 100);
-                        badgeInfo = `${(processedFile.size / (1024 * 1024)).toFixed(1)} MB (era ${(file.size / (1024 * 1024)).toFixed(1)} MB - ${pctSave > 0 ? `-${pctSave}%` : '5 FPS'})`;
-                    } else if (backupFrames && backupFrames.length > 0) {
-                        const estBytes = backupFrames.length * 28 * 1024;
-                        badgeInfo = `${backupFrames.length} frame 5 FPS (~${(estBytes / (1024 * 1024)).toFixed(1)} MB - 83% risparmio token)`;
-                    } else {
-                        badgeInfo = `${(file.size / (1024 * 1024)).toFixed(1)} MB`;
-                    }
-
                     loadBox.innerHTML = `
-                        <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:6px;">
+                        <div style="display:flex; align-items:center; justify-content:flex-start; gap:6px;">
                             <span style="color:#10b981; font-weight:700; font-size:0.82rem; display:flex; align-items:center; gap:6px;">
-                                ${getSvgShield('verified', 14)} Video campionato a 5 FPS (720p)${dur > 0 ? ` (${dur.toFixed(1)}s)` : ''}
+                                ${getSvgShield('verified', 14)} video compresso e caricato
                             </span>
-                            <span style="font-size:0.75rem; color:#10b981; font-weight:800;">${badgeInfo}</span>
                         </div>
                     `;
                 }
@@ -27759,8 +27793,7 @@ function getCalisthenicsExpertResponse(query) {
                 const hasCompressedVideo = preparedVerificationMedia &&
                     preparedVerificationMedia.compressionSuccess &&
                     processedFile &&
-                    processedFile !== file &&
-                    processedFile.size <= 12 * 1024 * 1024;
+                    processedFile.size <= 15 * 1024 * 1024;
 
                 if (hasCompressedVideo && fileDataUrl) {
                     const vidB64 = fileDataUrl.includes(',') ? fileDataUrl.split(',')[1] : fileDataUrl;
@@ -27785,6 +27818,9 @@ function getCalisthenicsExpertResponse(query) {
                         inlineData: {
                             mimeType: vidMime,
                             data: vidB64
+                        },
+                        videoMetadata: {
+                            fps: 5
                         }
                     });
                 } else if (videoFrames && videoFrames.length > 0) {
@@ -27835,6 +27871,9 @@ function getCalisthenicsExpertResponse(query) {
                         inlineData: {
                             mimeType: vidMime,
                             data: vidB64
+                        },
+                        videoMetadata: {
+                            fps: 5
                         }
                     });
                 } else {
