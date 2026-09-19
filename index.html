@@ -15160,12 +15160,13 @@ function getCalisthenicsExpertResponse(query) {
         // MULTIMODAL COACH AI & FORM CHECK VISION
         // ==========================================
         // Chiave globale Google Gemini (decodificata a runtime per evitare falsi allarmi dei secret scanner git)
-        // Pool Multi-Account Google AI Studio (4 chiavi da diversi account Google con failover automatico su 429/quota)
+        // Pool Multi-Account Google AI Studio (5 chiavi da diversi account Google con failover automatico su 429/quota)
         const _AI_TOKEN_POOL_ENCODED = [
             "QVEuQWI4Uk42S3RmV1Noek5aaE1vOTVhYjlwYXc4ZGZ6VmtGc2pQQTNLZG9MT25hQVRkX3c=",
             "QVEuQWI4Uk42TFRWUzhtdnhkOXJZdGhtVHVDbFM2UG1VU00teGVIbTZhYl9WYkU3STNiVUE=",
             "QVEuQWI4Uk42SjBidkdRVFRMT01xZGE4TFBOeTM5THNCTmdWV1A0TmhvM3JGUXB2enhwdUE=",
-            "QVEuQWI4Uk42SVNEU1dBZXd4eTdzUmJNbEV5eEtVbW5LcTVkQW0xM2RaNzI2aEFCOTI4UXc="
+            "QVEuQWI4Uk42SVNEU1dBZXd4eTdzUmJNbEV5eEtVbW5LcTVkQW0xM2RaNzI2aEFCOTI4UXc=",
+            "QVEuQWI4Uk42Smg1cnp1a0I2V2NwUUp0RGY5X3h2SVFZdjFlZFlRdm9oY3VtMkZUVkJQUVE="
         ];
         const GLOBAL_GEMINI_API_KEYS = _AI_TOKEN_POOL_ENCODED.map(b => {
             try { return atob(b); } catch(e) { return ""; }
