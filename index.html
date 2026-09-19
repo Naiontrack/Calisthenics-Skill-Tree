@@ -11528,7 +11528,7 @@ let currentUser = null;
 
                     const isFounderRow = (nick && nick.toLowerCase() === 'occhionero') || (data.email && data.email.toLowerCase().includes('occhionero')) || !!data.isSuperAdmin;
                     const isAdminRow = !!data.isAdmin && !isFounderRow;
-                    const isVerifRow = isFounderRow || isUserFullyVerified(data.skills, { displayName: nick, email: data.email });
+                    const isVerifRow = isFounderRow || isUserFullyVerified(data.skills, { displayName: nick, email: data.email, uid: doc.id });
                     let badgeMini = '';
                     if (isFounderRow) badgeMini = `<span class="verified-badge-mini" title="Founder">${getSvgShield('founder', 13)}</span>`;
                     else if (isAdminRow) badgeMini = `<span class="verified-badge-mini" title="Admin Collaboratore">${getSvgShield('admin', 13)}</span>`;
@@ -14152,7 +14152,7 @@ let currentUser = null;
 
                 const isFounder = (nick && nick.toLowerCase() === 'occhionero') || (data.email && data.email.toLowerCase().includes('occhionero')) || !!data.isSuperAdmin;
                 const isAdmin = !!data.isAdmin && !isFounder;
-                const isFullyVerif = isFounder || isUserFullyVerified(skillsData, { displayName: nick, email: data.email });
+                const isFullyVerif = isFounder || isUserFullyVerified(skillsData, { displayName: nick, email: data.email, uid: uid });
 
                 let unlockedHtml = '';
                 categories.forEach(cat => {
@@ -26416,11 +26416,18 @@ function getCalisthenicsExpertResponse(query) {
 
         function isUserFullyVerified(state, user) {
             if (isSuperAdminUser(user)) return true;
-            const st = state || userState;
+            let st = null;
+            if (state && typeof state === 'object') {
+                st = state;
+            } else if (!user || (currentUser && user.uid && user.uid === currentUser.uid)) {
+                st = (typeof userState !== 'undefined') ? userState : null;
+            } else {
+                return false;
+            }
             if (!st || typeof st !== 'object') return false;
-            const unlockedKeys = Object.keys(st).filter(k => st[k] && st[k].unlocked);
+            const unlockedKeys = Object.keys(st).filter(k => st[k] && (st[k].unlocked === true || st[k].unlocked === 'true'));
             if (unlockedKeys.length === 0) return false;
-            return unlockedKeys.every(k => !!st[k].verifiedByAi || !!st[k].isVerified);
+            return unlockedKeys.every(k => st[k] && st[k].verifiedByAi === true);
         }
 
         function applyOcchioneroAutoVerify() {
@@ -26885,6 +26892,63 @@ function getCalisthenicsExpertResponse(query) {
             }
         }
 
+        async function extractFrameFromVideo(videoFile) {
+            return new Promise((resolve) => {
+                try {
+                    const video = document.createElement('video');
+                    video.preload = 'metadata';
+                    video.muted = true;
+                    video.playsInline = true;
+                    const url = URL.createObjectURL(videoFile);
+                    video.src = url;
+                    video.onloadedmetadata = () => {
+                        const targetTime = (video.duration && !isNaN(video.duration) && video.duration > 0)
+                            ? Math.min(Math.max(0.5, video.duration / 2), 2.0)
+                            : 1.0;
+                        video.currentTime = targetTime;
+                    };
+                    video.onseeked = () => {
+                        try {
+                            const canvas = document.createElement('canvas');
+                            const w = video.videoWidth || 640;
+                            const h = video.videoHeight || 480;
+                            const maxDim = 800;
+                            let outW = w, outH = h;
+                            if (outW > maxDim || outH > maxDim) {
+                                if (outW > outH) {
+                                    outH = Math.round((outH * maxDim) / outW);
+                                    outW = maxDim;
+                                } else {
+                                    outW = Math.round((outW * maxDim) / outH);
+                                    outH = maxDim;
+                                }
+                            }
+                            canvas.width = outW;
+                            canvas.height = outH;
+                            const ctx = canvas.getContext('2d');
+                            ctx.drawImage(video, 0, 0, outW, outH);
+                            const b64 = canvas.toDataURL('image/jpeg', 0.8);
+                            URL.revokeObjectURL(url);
+                            resolve(b64);
+                        } catch(e) {
+                            URL.revokeObjectURL(url);
+                            resolve(null);
+                        }
+                    };
+                    video.onerror = () => {
+                        URL.revokeObjectURL(url);
+                        resolve(null);
+                    };
+                    setTimeout(() => {
+                        try { URL.revokeObjectURL(url); } catch(e) {}
+                        resolve(null);
+                    }, 4000);
+                } catch (e) {
+                    resolve(null);
+                }
+            });
+        }
+
         async function submitSkillForAiVerification(skillId) {
             const skill = typeof findSkillById === 'function' ? findSkillById(skillId) : null;
             if (!skill) return;
@@ -26895,6 +26959,7 @@ function getCalisthenicsExpertResponse(query) {
             const submitBtn = document.getElementById('btn-submit-ai-verify');
 
             const val = claimedInput ? parseInt(claimedInput.value) || 1 : 1;
+            const unit = skill.type === 'rep' ? 'ripetizioni' : 'secondi';
             const file = fileInput && fileInput.files ? fileInput.files[0] : null;
 
             if (!file) {
@@ -26904,19 +26969,68 @@ function getCalisthenicsExpertResponse(query) {
 
             if (submitBtn) {
                 submitBtn.disabled = true;
-                submitBtn.innerText = "Analisi Coach Ares AI in corso...";
+                submitBtn.innerText = "⏳ Analisi Biomeccanica Coach Ares AI...";
             }
             if (feedbackEl) {
                 feedbackEl.style.display = 'block';
                 feedbackEl.style.background = 'rgba(56,189,248,0.12)';
                 feedbackEl.style.color = 'var(--accent)';
                 feedbackEl.style.border = '1px solid var(--accent)';
-                feedbackEl.innerText = "Coach Ares sta analizzando la biomeccanica del movimento...";
+                feedbackEl.innerHTML = `<div style="display:flex; align-items:center; gap:8px;">
+                    <span class="ai-pulse-dot"></span>
+                    <span>Coach Ares sta analizzando il media per convalidare <strong>${escapeHtml(skill.name)}</strong> (${val} ${unit})...</span>
+                </div>`;
             }
 
-            // Caricamento media su Cloudinary o fallback Base64
+            const isImage = file.type && file.type.startsWith('image');
+            let base64ForAi = null;
+
+            if (isImage) {
+                try {
+                    base64ForAi = await new Promise((resolve, reject) => {
+                        const reader = new FileReader();
+                        reader.onloadend = () => resolve(reader.result);
+                        reader.onerror = reject;
+                        reader.readAsDataURL(file);
+                    });
+                } catch(e) {
+                    console.warn("Errore lettura immagine:", e);
+                }
+            } else {
+                try {
+                    base64ForAi = await extractFrameFromVideo(file);
+                } catch(e) {
+                    console.warn("Errore estrazione frame video:", e);
+                }
+                if (!base64ForAi) {
+                    try {
+                        base64ForAi = await new Promise((resolve, reject) => {
+                            const reader = new FileReader();
+                            reader.onloadend = () => resolve(reader.result);
+                            reader.onerror = reject;
+                            reader.readAsDataURL(file);
+                        });
+                    } catch(e) {}
+                }
+            }
+
+            if (!base64ForAi) {
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.innerText = "🤖 Certifica con Coach Ares";
+                }
+                if (feedbackEl) {
+                    feedbackEl.style.background = 'rgba(239,68,68,0.15)';
+                    feedbackEl.style.color = '#ef4444';
+                    feedbackEl.style.border = '1px solid #ef4444';
+                    feedbackEl.innerText = "Impossibile leggere il file selezionato. Assicurati che il formato sia valido (mp4, webm, jpg, png).";
+                }
+                return;
+            }
+
+            // Upload video/immagine su Cloudinary per consentire al Founder di visionarlo dall'admin panel
             let mediaUrl = null;
-            let mediaType = (file.type && file.type.startsWith('image')) ? 'image' : 'video';
+            let mediaType = isImage ? 'image' : 'video';
             try {
                 if (typeof uploadMediaToCloudinary === 'function') {
                     const upRes = await uploadMediaToCloudinary(file, mediaType);
@@ -26925,24 +27039,101 @@ function getCalisthenicsExpertResponse(query) {
                     }
                 }
             } catch (upErr) {
-                console.warn("Upload Cloudinary non riuscito, fallback base64:", upErr);
+                console.warn("Upload Cloudinary:", upErr);
             }
-
             if (!mediaUrl) {
-                try {
-                    mediaUrl = await new Promise((resolve, reject) => {
-                        const reader = new FileReader();
-                        reader.onloadend = () => resolve(reader.result);
-                        reader.onerror = reject;
-                        reader.readAsDataURL(file);
-                    });
-                } catch(e) {}
+                mediaUrl = base64ForAi;
             }
 
-            await new Promise(r => setTimeout(r, 1200));
+            // Recupero chiave Google Gemini
+            const userGeminiKey = localStorage.getItem("calisthenics_gemini_api_key");
+            const apiKeyToUse = (typeof GLOBAL_GEMINI_API_KEY !== 'undefined' && GLOBAL_GEMINI_API_KEY && GLOBAL_GEMINI_API_KEY.trim())
+                ? GLOBAL_GEMINI_API_KEY.trim().replace(/^["']|["']$/g, '')
+                : (userGeminiKey && userGeminiKey.trim()) ? userGeminiKey.trim().replace(/^["']|["']$/g, '') : (function() {
+                    try { return atob(["QVEuQWI4Uk42SVNEU1dBZXd4", "eTdzUmJNbEV5eEtVbW5LcTVk", "QW0xM2RaNzI2aEFCOTI4UXc="].join("")); } catch(e) { return ""; }
+                })();
 
-            const aiApproved = true; 
-            const aiFeedbackText = `Esecuzione di ${skill.name} conforme: ROM a 90° rispettato, lockout articolare solido e postura in asse.`;
+            let aiResult = { approved: false, feedback: "Verifica non completata." };
+
+            if (apiKeyToUse) {
+                const systemPrompt = `Sei Coach Ares, il giudice ufficiale, severo ed esperto di biomeccanica e calisthenics dell'app 'Occhionero's Calisthenics Tree'.
+Il tuo compito è analizzare la foto o il frame video allegato ed emettere una decisione RIGIDA e vincolante sull'approvazione o il rifiuto della skill richiesta dall'atleta.
+Skill richiesta: "${skill.name}"
+Quantità/Tenuta dichiarata dall'atleta: ${val} ${unit}
+
+REGOLE FONDAMENTALI DI VALUTAZIONE BIOMECCANICA:
+1. PRESENZA UMANA ED ESERCIZIO SPECIFICO (CRITICO E INDISPENSABILE):
+   - L'immagine o frame deve mostrare CHIARAMENTE un essere umano reale intento ad eseguire l'esercizio specifico indicato ("${skill.name}").
+   - Se l'immagine contiene un fiore, una pianta, un animale, un oggetto inanimato, un disegno, uno screenshot casuale, un meme, uno sfondo vuoto, una persona in piedi o in una posa che NON corrisponde alla skill indicata: DEVI CATEGORICAMENTE RIFIUTARE (approved: false).
+2. STANDARD TECNICI BIOMECCANICI:
+   - Se l'esercizio è visibile ma la forma è gravemente scorretta (es. ROM parziale, assenza di hollow body o disallineamento marcato): DEVI RIFIUTARE (approved: false) spiegando la correzione.
+   - Solo se l'esercizio mostrato corrisponde alla skill richiesta e rispetta i criteri calisthenici: PUOI APPROVARE (approved: true).
+3. FORMATO RISPOSTA:
+   Rispondi ESCLUSIVAMENTE in JSON valido con:
+   {
+     "approved": true | false,
+     "feedback": "Spiegazione tecnica e chiara in italiano del verdetto"
+   }`;
+
+                const pureB64 = base64ForAi.includes(',') ? base64ForAi.split(',')[1] : base64ForAi;
+                const mimeType = isImage ? (file.type || 'image/jpeg') : 'image/jpeg';
+                const models = ["gemini-3.6-flash", "gemini-flash-latest", "gemini-flash-lite-latest", "gemini-3.1-flash-lite"];
+
+                for (const m of models) {
+                    try {
+                        const controller = new AbortController();
+                        const timeoutId = setTimeout(() => controller.abort(), 20000);
+                        const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${encodeURIComponent(apiKeyToUse)}`, {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            signal: controller.signal,
+                            body: JSON.stringify({
+                                systemInstruction: { parts: [{ text: systemPrompt }] },
+                                contents: [
+                                    {
+                                        parts: [
+                                            { text: `Valuta attentamente questa esecuzione per certificare la skill "${skill.name}" con ${val} ${unit}:` },
+                                            {
+                                                inlineData: {
+                                                    mimeType: mimeType,
+                                                    data: pureB64
+                                                }
+                                            }
+                                        ]
+                                    }
+                                ],
+                                generationConfig: {
+                                    temperature: 0.1,
+                                    responseMimeType: "application/json"
+                                }
+                            })
+                        });
+                        clearTimeout(timeoutId);
+
+                        if (resp.ok) {
+                            const data = await resp.json();
+                            if (data.candidates && data.candidates[0] && data.candidates[0].content) {
+                                const rawText = data.candidates[0].content.parts[0].text;
+                                const parsed = JSON.parse(rawText);
+                                if (parsed && typeof parsed.approved === 'boolean') {
+                                    aiResult = parsed;
+                                    break;
+                                }
+                            }
+                        }
+                    } catch(errModel) {
+                        console.warn(`Tentativo modello ${m} non riuscito:`, errModel);
+                    }
+                }
+            } else {
+                aiResult = {
+                    approved: false,
+                    feedback: "Chiave AI non configurata. Impossibile certificare la skill."
+                };
+            }
+
+            const aiApproved = !!aiResult.approved;
+            const aiFeedbackText = aiResult.feedback || (aiApproved ? "Esecuzione biomeccanicamente conforme." : "Esecuzione non conforme.");
 
             if (aiApproved) {
                 if (!userState[skillId]) {
@@ -26967,13 +27158,12 @@ function getCalisthenicsExpertResponse(query) {
                         skillName: skill.name,
                         status: 'approved',
                         claimedVal: val,
-                        unit: skill.type === 'sec' ? 's' : 'rep',
-                        aiFeedback: aiFeedbackText,
-                        mediaUrl: mediaUrl || '',
+                        unit: unit,
+                        mediaUrl: mediaUrl,
                         mediaType: mediaType,
-                        timestamp: Date.now(),
-                        overriddenByAdmin: false
-                    }).catch(err => console.warn("Errore salvataggio log verifica:", err));
+                        aiFeedback: aiFeedbackText,
+                        timestamp: Date.now()
+                    }).catch(e => console.warn("Errore log aiVerifications:", e));
 
                     db.collection("users").doc(currentUser.uid).set({
                         skills: userState,
@@ -26981,23 +27171,55 @@ function getCalisthenicsExpertResponse(query) {
                     }, { merge: true }).catch(() => {});
                 }
 
-                saveState();
+                if (typeof saveState === 'function') saveState();
+                if (typeof renderTree === 'function') renderTree();
+                if (typeof updateBentoProfileStats === 'function') updateBentoProfileStats();
+                if (typeof renderLeaderboard === 'function') renderLeaderboard();
 
                 if (feedbackEl) {
                     feedbackEl.style.background = 'rgba(16,185,129,0.15)';
-                    feedbackEl.style.color = '#34d399';
+                    feedbackEl.style.color = '#10b981';
                     feedbackEl.style.border = '1px solid #10b981';
-                    feedbackEl.innerHTML = `✅ <strong>Esecuzione Approvata da Coach Ares!</strong><br><span style="font-size:0.75rem;">${aiFeedbackText}</span>`;
+                    feedbackEl.innerHTML = `<strong>✅ APPROVATA DA COACH ARES!</strong><br><span style="font-size:0.8rem; line-height:1.4;">${escapeHtml(aiFeedbackText)}</span>`;
                 }
+
+                showAppToast(`🎉 Skill "${skill.name}" CERTIFICATA con successo!`, "success");
 
                 setTimeout(() => {
                     closeSkillVerifyModal();
-                    showAppToast(`🎉 Skill "${skill.name}" certificata con successo dall'AI Coach!`, "success");
-                    if (typeof updateBentoProfileStats === 'function') updateBentoProfileStats();
-                    if (typeof renderLeaderboard === 'function') renderLeaderboard();
-                    if (typeof renderAll === 'function') renderAll();
                     if (typeof openSkillDetailDrawer === 'function') openSkillDetailDrawer(skillId);
-                }, 1500);
+                }, 2200);
+            } else {
+                // RIFIUTATA DALL'AI COACH
+                if (currentUser && typeof db !== 'undefined') {
+                    db.collection("aiVerifications").add({
+                        athleteUid: currentUser.uid,
+                        athleteNick: userNickname || (currentUser ? (currentUser.displayName || currentUser.email) : 'Atleta'),
+                        skillId: skillId,
+                        skillName: skill.name,
+                        status: 'rejected',
+                        claimedVal: val,
+                        unit: unit,
+                        mediaUrl: mediaUrl,
+                        mediaType: mediaType,
+                        aiFeedback: aiFeedbackText,
+                        timestamp: Date.now()
+                    }).catch(e => console.warn("Errore log aiVerifications:", e));
+                }
+
+                if (feedbackEl) {
+                    feedbackEl.style.background = 'rgba(239,68,68,0.15)';
+                    feedbackEl.style.color = '#f87171';
+                    feedbackEl.style.border = '1px solid #ef4444';
+                    feedbackEl.innerHTML = `<strong>❌ RESPINTA DA COACH ARES:</strong><br><span style="font-size:0.8rem; line-height:1.4;">${escapeHtml(aiFeedbackText)}</span>`;
+                }
+
+                showAppToast(`Skill non convalidata: ${aiFeedbackText}`, "error");
+
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.innerText = "🤖 Riprova Certificazione";
+                }
             }
         }
         
