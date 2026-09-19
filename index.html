@@ -12782,13 +12782,6 @@ let currentUser = null;
 
             if (isDrawerOpen) closeSkillDetailDrawer();
 
-            // BLOCCANTE: Se l'account non è il Founder (Occhionero), è OBBLIGATORIA la verifica con l'AI Coach!
-            // Non è consentito lo sblocco libero manuale.
-            if (!isSuperAdminUser(currentUser)) {
-                openSkillVerificationModal(id);
-                return;
-            }
-
             openCustomModal(
                 `🎉 Sblocca Skill (+${xpReward} XP)`,
                 `Vuoi confermare di aver padroneggiato la skill <strong>"${escapeHtml(skill.name)}"</strong>?<br><br>` +
@@ -12800,7 +12793,15 @@ let currentUser = null;
                         `<span style="font-size:0.88rem; font-weight:800; color:var(--accent);">${unitShort}</span>` +
                     `</div>` +
                 `</div>` +
-                `Guadagnerai subito <span style="color: var(--accent); font-size: 1.15rem; font-weight: 900;">+${xpReward} XP</span> sul tuo profilo!`,
+                `Guadagnerai subito <span style="color: var(--accent); font-size: 1.15rem; font-weight: 900;">+${xpReward} XP</span> sul tuo profilo!` +
+                `<div style="margin-top:14px; padding:10px 12px; border-radius:10px; background:rgba(255,255,255,0.03); border:1px solid var(--line-color); text-align:center;">` +
+                    `<div style="font-size:0.75rem; color:var(--subtext); margin-bottom:6px;">` +
+                        `💡 <em>Sblocco libero standard. Se vuoi certificarla per ottenere lo scudo "Utente Verificato":</em>` +
+                    `</div>` +
+                    `<button type="button" class="btn-auth-secondary" onclick="closeCustomModal(); openSkillVerificationModal('${id}');" style="padding:6px 14px; font-size:0.78rem; font-weight:800; border-color:var(--accent); color:var(--accent); border-radius:8px; cursor:pointer; display:inline-flex; align-items:center; gap:6px;">` +
+                        `${getSvgShield('verified', 14)} Sblocca & Certifica con Video AI` +
+                    `</button>` +
+                `</div>`,
                 `🔓 Conferma Sblocco (+${xpReward} XP)`,
                 true,
                 () => {
@@ -12814,9 +12815,18 @@ let currentUser = null;
                         );
                     }
 
-                    userState[id] = { unlocked: true, val: inputVal };
+                    const isFounder = isSuperAdminUser(currentUser);
+                    userState[id] = {
+                        unlocked: true,
+                        val: inputVal,
+                        verifiedByAi: isFounder,
+                        isVerified: isFounder
+                    };
                     saveState();
                     showAppToast(`🎉 Skill "${skill.name}" sbloccata con ${inputVal} ${unitShort}! +${xpReward} XP`, "success");
+                    if (typeof updateBentoProfileStats === 'function') updateBentoProfileStats();
+                    if (typeof renderLeaderboard === 'function') renderLeaderboard();
+                    if (typeof renderTree === 'function') renderTree();
                 },
                 null,
                 () => {
@@ -25699,10 +25709,15 @@ function getCalisthenicsExpertResponse(query) {
                     `;
                 } else {
                     actionButtonsHtml = `
-                        <button type="button" class="btn-confirm" style="width:100%; padding:14px; font-size:1rem; font-weight:800; display:flex; align-items:center; justify-content:center; gap:8px; cursor:pointer;" onclick="askUnlock('${skill.id}');">
+                        <div style="display:flex; flex-direction:column; gap:8px; width:100%;">
+                        <button type="button" class="btn-confirm" style="width:100%; padding:13px; font-size:0.96rem; font-weight:800; display:flex; align-items:center; justify-content:center; gap:8px; cursor:pointer;" onclick="askUnlock('${skill.id}');">
                             <span>${window.APP_ICONS ? window.APP_ICONS.unlock : ''} Sblocca Skill</span>
-                            <span style="background:rgba(0,0,0,0.28); padding:3px 10px; border-radius:999px; font-size:0.85rem; border:1px solid rgba(255,255,255,0.35); font-weight:900;">+${xpReward} XP</span>
+                            <span style="background:rgba(0,0,0,0.28); padding:2px 8px; border-radius:999px; font-size:0.82rem; border:1px solid rgba(255,255,255,0.35); font-weight:900;">+${xpReward} XP</span>
                         </button>
+                        <button type="button" class="btn-auth-secondary" style="width:100%; padding:9px; font-size:0.82rem; font-weight:800; display:flex; align-items:center; justify-content:center; gap:6px; cursor:pointer; border-color:var(--accent); color:var(--accent); border-radius:10px;" onclick="openSkillVerificationModal('${skill.id}');">
+                            ${getSvgShield('verified', 15)} Sblocca & Certifica con AI (Video)
+                        </button>
+                    </div>
                     `;
                 }
             }
