@@ -27986,7 +27986,9 @@ function getCalisthenicsExpertResponse(query) {
             const feedbackEl = document.getElementById('verify-status-feedback');
             const submitBtn = document.getElementById('btn-submit-ai-verify');
 
-            const val = claimedInput ? parseInt(claimedInput.value) || 1 : 1;
+            let val = claimedInput ? parseInt(claimedInput.value) || 1 : 1;
+            let certifiedVal = val;
+            let isPartialCertification = false;
             const unit = skill.type === 'rep' ? 'ripetizioni' : 'secondi';
             let file = fileInput && fileInput.files ? fileInput.files[0] : null;
 
@@ -28389,60 +28391,71 @@ Se rifiuti (approved: false), DEVI spiegare chiaramente e dettagliatamente il MO
                                             if (countedSec === 0) countedSec = val;
                                         }
 
-                                        // 2. CONTROLLO DETERMINISTICO SOGLIA DICHIARATA vs EFFETTIVA:
-                                        // Se l'atleta esegue meno di quanto dichiarato, ma quel numero è valido (> 0), VIENE COMUNQUE CERTIFICATO!
+                                        // 2. CONTEGGIO DETERMINISTICO ED ENTRATA A CONTEGGIO UFFICIALE:
+                                        // Se l'atleta esegue meno di quanto dichiarato, ma ha eseguito ripetizioni o secondi validi (> 0):
+                                        // Coach Ares certifica ufficialmente il livello al numero effettivo contato (es. 6 su 15)!
+                                        // Quel numero entra a tutti gli effetti nel conteggio utente e viene certificato.
                                         if (skill.type === 'rep') {
                                             if (countedReps < val) {
                                                 if (countedReps > 0) {
+                                                    // Certifica il numero contato da Coach Ares!
                                                     const claimedVal = val;
+                                                    certifiedVal = countedReps;
                                                     val = countedReps;
+                                                    isPartialCertification = true;
                                                     parsed.approved = true;
-                                                    const targetMsg = `Dichiarate ${claimedVal} ripetizioni, ma Coach Ares ha contato solo ${countedReps} ripetizioni valide con ROM completo: livello certificato ufficialmente a ${countedReps} ripetizioni!`;
-                                                    const origFb = (parsed.feedback || '').trim();
-                                                    if (origFb && !origFb.includes(String(countedReps))) {
-                                                        parsed.feedback = `${targetMsg} ${origFb}`;
-                                                    } else {
-                                                        parsed.feedback = targetMsg;
-                                                    }
+
+                                                    const cleanCritique = (parsed.feedback || '')
+                                                        .replace(/certificazione\s*respinta[.!]*$/i, '')
+                                                        .trim();
+                                                    
+                                                    parsed.feedback = `Dichiarate ${claimedVal} ripetizioni: Coach Ares ha verificato e convalidato ${countedReps} ripetizioni con ROM valido. Il tuo livello è ufficialmente CERTIFICATO a ${countedReps} ripetizioni!` +
+                                                        (cleanCritique ? ` Note tecniche di Coach Ares: ${cleanCritique}` : '');
                                                 } else {
-                                                    // 0 ripetizioni valide: rifiuto conciso (-30/40%)
+                                                    // 0 ripetizioni valide: rifiuto assoluto
                                                     parsed.approved = false;
                                                     const targetMsg = `Dichiarate ${val} ripetizioni, ma Coach Ares ha contato solo ${countedReps} ripetizioni valide con ROM completo.`;
                                                     const origFb = (parsed.feedback || '').trim();
                                                     if (origFb) {
-                                                        if (!origFb.includes(String(val))) {
-                                                            parsed.feedback = `${targetMsg} Motivo del rifiuto: ${origFb}`;
-                                                        }
+                                                        parsed.feedback = `${targetMsg} Motivo del rifiuto: ${origFb}`;
                                                     } else {
                                                         parsed.feedback = `${targetMsg} Certificazione RESPINTA: per certificare questo livello devi completare tutte le ${val} ripetizioni dichiarate.`;
                                                     }
                                                 }
+                                            } else {
+                                                certifiedVal = Math.max(val, countedReps);
+                                                val = certifiedVal;
+                                                parsed.approved = true;
                                             }
                                         } else if (skill.type === 'sec') {
                                             if (countedSec < val) {
                                                 if (countedSec > 0) {
                                                     const claimedVal = val;
+                                                    certifiedVal = countedSec;
                                                     val = countedSec;
+                                                    isPartialCertification = true;
                                                     parsed.approved = true;
-                                                    const targetMsg = `Dichiarati ${claimedVal} secondi, ma Coach Ares ha cronometrato solo ${countedSec}s continuativi con allineamento valido: livello certificato ufficialmente a ${countedSec} secondi!`;
-                                                    const origFb = (parsed.feedback || '').trim();
-                                                    if (origFb && !origFb.includes(String(countedSec))) {
-                                                        parsed.feedback = `${targetMsg} ${origFb}`;
-                                                    } else {
-                                                        parsed.feedback = targetMsg;
-                                                    }
+
+                                                    const cleanCritique = (parsed.feedback || '')
+                                                        .replace(/certificazione\s*respinta[.!]*$/i, '')
+                                                        .trim();
+
+                                                    parsed.feedback = `Dichiarati ${claimedVal} secondi: Coach Ares ha cronometrato e convalidato ${countedSec}s continuativi con allineamento valido. Il tuo livello è ufficialmente CERTIFICATO a ${countedSec} secondi!` +
+                                                        (cleanCritique ? ` Note tecniche di Coach Ares: ${cleanCritique}` : '');
                                                 } else {
                                                     parsed.approved = false;
                                                     const targetMsg = `Dichiarati ${val} secondi di tenuta, ma Coach Ares ha cronometrato solo ${countedSec}s continuativi con allineamento valido.`;
                                                     const origFb = (parsed.feedback || '').trim();
                                                     if (origFb) {
-                                                        if (!origFb.includes(String(val))) {
-                                                            parsed.feedback = `${targetMsg} Motivo del rifiuto: ${origFb}`;
-                                                        }
+                                                        parsed.feedback = `${targetMsg} Motivo del rifiuto: ${origFb}`;
                                                     } else {
                                                         parsed.feedback = `${targetMsg} Certificazione RESPINTA: devi mantenere la posizione per tutti i ${val}s dichiarati.`;
                                                     }
                                                 }
+                                            } else {
+                                                certifiedVal = Math.max(val, countedSec);
+                                                val = certifiedVal;
+                                                parsed.approved = true;
                                             }
                                         }
 
@@ -28534,11 +28547,10 @@ Se rifiuti (approved: false), DEVI spiegare chiaramente e dettagliatamente il MO
                     ? "Ho visionato attentamente la tua serie: biomeccanica impeccabile, ROM completo e controllo solido. Certificazione approvata a pieni voti!"
                     : "Ho visionato attentamente il tuo video: l'esecuzione non rispetta pienamente i requisiti tecnici necessari per la certificazione.");
 
-            if (typeof claimedInput !== 'undefined' && claimedInput && typeof val !== 'undefined') {
-                claimedInput.value = val;
-            }
-
             if (aiApproved) {
+                if (typeof claimedInput !== 'undefined' && claimedInput && typeof val !== 'undefined') {
+                    claimedInput.value = val;
+                }
                 if (!userState[skillId]) {
                     userState[skillId] = { unlocked: true, val: val, verifiedByAi: true, isVerified: true };
                 } else {
@@ -28588,7 +28600,7 @@ Se rifiuti (approved: false), DEVI spiegare chiaramente e dettagliatamente il MO
                     feedbackEl.style.border = '1px solid #10b981';
                     feedbackEl.innerHTML = `
                         <div style="display:flex; align-items:center; gap:6px; margin-bottom:6px;">
-                            ${getSvgShield('verified', 18)} <strong style="font-size:0.95rem;">APPROVATA DA COACH ARES!</strong>
+                            ${getSvgShield('verified', 18)} <strong style="font-size:0.95rem;">${isPartialCertification ? `LIVELLO CERTIFICATO A ${val} ${unit.toUpperCase()}!` : 'APPROVATA DA COACH ARES!'}</strong>
                         </div>
                         <div style="font-size:0.84rem; line-height:1.45; margin-bottom:12px; color:var(--text);">${escapeHtml(aiFeedbackText)}</div>
                         <button type="button" class="btn-confirm" id="btn-verified-confirm-ok" onclick="closeSkillVerifyModal(); if (typeof openSkillDetailDrawer === 'function') openSkillDetailDrawer('${skillId}');" style="width:100%; padding:11px 16px; font-weight:800; font-size:0.92rem; background:linear-gradient(135deg, #10b981 0%, #059669 100%); border:1px solid #10b981; color:#ffffff; border-radius:10px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; box-shadow:0 0 16px rgba(16,185,129,0.35); transition:all 0.2s ease;">
