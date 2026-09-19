@@ -26530,6 +26530,8 @@ function getCalisthenicsExpertResponse(query) {
                 return;
             }
 
+            const isSuper = isSuperAdminUser(currentUser);
+
             db.collection("aiVerifications").orderBy("timestamp", "desc").limit(30).get().then(snap => {
                 if (snap.empty) {
                     listEl.innerHTML = '<p style="color:var(--subtext); font-size:0.8rem; text-align:center;">Nessuna verifica registrata finora.</p>';
@@ -26544,27 +26546,68 @@ function getCalisthenicsExpertResponse(query) {
                     const isOverridden = !!v.overriddenByAdmin;
 
                     let statusBadge = isApproved
-                        ? `<span style="color:#10b981; font-weight:800; background:rgba(16,185,129,0.15); padding:2px 8px; border-radius:6px; font-size:0.75rem; border:1px solid #10b981; display:inline-flex; align-items:center; gap:4px;">${getSvgCheck(12)} Approvata dall'AI Coach${isOverridden ? ' (Modificata Manualmente)' : ''}</span>`
-                        : `<span style="color:#ef4444; font-weight:800; background:rgba(239,68,68,0.15); padding:2px 8px; border-radius:6px; font-size:0.75rem; border:1px solid #ef4444; display:inline-flex; align-items:center; gap:4px;">${getSvgCross(12)} Non Approvata dall'AI Coach${isOverridden ? ' (Modificata Manualmente)' : ''}</span>`;
+                        ? `<span style="color:#10b981; font-weight:800; background:rgba(16,185,129,0.15); padding:2px 8px; border-radius:6px; font-size:0.75rem; border:1px solid #10b981; display:inline-flex; align-items:center; gap:4px;">${getSvgCheck(12)} Approvata dall'AI Coach${isOverridden ? ' (Modificata dal Founder)' : ''}</span>`
+                        : `<span style="color:#ef4444; font-weight:800; background:rgba(239,68,68,0.15); padding:2px 8px; border-radius:6px; font-size:0.75rem; border:1px solid #ef4444; display:inline-flex; align-items:center; gap:4px;">${getSvgCross(12)} Non Approvata dall'AI Coach${isOverridden ? ' (Modificata dal Founder)' : ''}</span>`;
+
+                    // Media allegato (Video o Foto)
+                    let mediaHtml = '';
+                    if (v.mediaUrl) {
+                        if (v.mediaType === 'image') {
+                            mediaHtml = `
+                                <div style="margin:8px 0;">
+                                    <img src="${v.mediaUrl}" style="max-height:180px; max-width:100%; border-radius:8px; border:1px solid var(--line-color); object-fit:contain; background:rgba(0,0,0,0.3); display:block;" alt="Prova Video/Foto">
+                                </div>
+                            `;
+                        } else {
+                            mediaHtml = `
+                                <div style="margin:8px 0;">
+                                    <video src="${v.mediaUrl}" controls playsinline style="max-height:200px; max-width:100%; border-radius:8px; border:1px solid var(--line-color); background:#000; display:block;"></video>
+                                </div>
+                            `;
+                        }
+                    } else {
+                        mediaHtml = `<div style="font-size:0.72rem; color:var(--subtext); margin:4px 0 8px 0; font-style:italic;">📹 Nessun file video/foto registrato per questa richiesta.</div>`;
+                    }
+
+                    // Azioni riservate SOLO ed ESCLUSIVAMENTE al Founder (Occhionero)
+                    let actionsHtml = '';
+                    if (isSuper) {
+                        const overrideBtn = isApproved
+                            ? `<button type="button" class="btn-cancel" onclick="adminOverrideVerification('${vId}', '${v.athleteUid || v.userId}', '${v.skillId}', false)" style="padding:4px 10px; font-size:0.75rem; display:inline-flex; align-items:center; gap:4px;">${getSvgCross(12)} Revoca / Rifiuta</button>`
+                            : `<button type="button" class="btn-confirm" onclick="adminOverrideVerification('${vId}', '${v.athleteUid || v.userId}', '${v.skillId}', true)" style="padding:4px 10px; font-size:0.75rem; background:rgba(16,185,129,0.25); border:1px solid #10b981; color:#34d399; display:inline-flex; align-items:center; gap:4px;">${getSvgCheck(12)} Approva Manualmente</button>`;
+
+                        const deleteBtn = `<button type="button" class="btn-cancel" onclick="adminDeleteVerification('${vId}')" style="padding:4px 8px; font-size:0.75rem; background:rgba(239,68,68,0.12); border:1px solid rgba(239,68,68,0.4); color:#f87171; display:inline-flex; align-items:center; gap:4px;" title="Elimina questa richiesta">🗑️ Elimina</button>`;
+
+                        actionsHtml = `
+                            <div style="display:flex; gap:8px; justify-content:flex-end; align-items:center; margin-top:8px;">
+                                ${deleteBtn}
+                                ${overrideBtn}
+                            </div>
+                        `;
+                    } else {
+                        actionsHtml = `
+                            <div style="text-align:right; margin-top:6px;">
+                                <span style="font-size:0.72rem; color:var(--subtext); font-style:italic;">Decisione AI definitiva (Modificabile solo dal Founder)</span>
+                            </div>
+                        `;
+                    }
 
                     itemsHtml += `
-                        <div class="admin-verif-item">
+                        <div class="admin-verif-item" style="padding:12px; background:rgba(255,255,255,0.03); border:1px solid var(--line-color); border-radius:12px; margin-bottom:10px;">
                             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; flex-wrap:wrap; gap:6px;">
                                 <div style="font-weight:800; font-size:0.9rem; color:var(--text);">
-                                    ${escapeHtml(v.athleteNick || 'Atleta')} — <span style="color:var(--accent);">${escapeHtml(v.skillName || v.skillId)}</span>
+                                    ${escapeHtml(v.athleteNick || v.userNickname || 'Atleta')} — <span style="color:var(--accent);">${escapeHtml(v.skillName || v.skillId)}</span>
+                                    <span style="font-size:0.78rem; font-weight:normal; color:var(--subtext); margin-left:6px;">(${v.claimedVal || ''} ${v.unit || ''})</span>
                                 </div>
                                 <div style="font-size:0.75rem; color:var(--subtext);">${dateStr}</div>
                             </div>
-                            <div style="margin-bottom:8px;">${statusBadge}</div>
-                            <div style="font-size:0.78rem; color:var(--subtext); margin-bottom:8px; line-height:1.4; background:rgba(0,0,0,0.2); padding:6px 10px; border-radius:6px;">
-                                <strong>Feedback Biomeccanico:</strong> ${escapeHtml(v.aiFeedback || 'Nessun dettaglio registrato')}
+                            ${mediaHtml}
+                            <div style="margin-bottom:6px;">${statusBadge}</div>
+                            <div style="font-size:0.78rem; color:var(--subtext); line-height:1.4; background:rgba(0,0,0,0.25); padding:6px 10px; border-radius:6px;">
+                                <strong>Valutazione AI:</strong> ${escapeHtml(v.aiFeedback || v.aiNotes || 'Nessun dettaglio registrato')}
+                                ${v.overrideReason ? `<br><strong style="color:#fbbf24;">Nota Founder:</strong> ${escapeHtml(v.overrideReason)}` : ''}
                             </div>
-                            <div style="display:flex; gap:8px; justify-content:flex-end;">
-                                ${isApproved
-                                    ? `<button type="button" class="btn-cancel" onclick="adminOverrideVerification('${vId}', '${v.athleteUid}', '${v.skillId}', false)" style="padding:4px 10px; font-size:0.75rem; display:inline-flex; align-items:center; gap:4px;">${getSvgCross(12)} Revoca Verifica</button>`
-                                    : `<button type="button" class="btn-confirm" onclick="adminOverrideVerification('${vId}', '${v.athleteUid}', '${v.skillId}', true)" style="padding:4px 10px; font-size:0.75rem; background:rgba(16,185,129,0.25); border:1px solid #10b981; color:#34d399; display:inline-flex; align-items:center; gap:4px;">${getSvgCheck(12)} Approva Manualmente</button>`
-                                }
-                            </div>
+                            ${actionsHtml}
                         </div>
                     `;
                 });
@@ -26574,16 +26617,31 @@ function getCalisthenicsExpertResponse(query) {
             });
         }
 
+        function adminDeleteVerification(vId) {
+            if (!isSuperAdminUser(currentUser)) {
+                showAppToast("Permesso negato: solo il Founder (Occhionero) può eliminare le verifiche.", "error");
+                return;
+            }
+            if (!confirm("Vuoi eliminare definitivamente questa richiesta dal registro verifiche?")) return;
+
+            db.collection("aiVerifications").doc(vId).delete().then(() => {
+                showAppToast("Richiesta di verifica eliminata.", "success");
+                loadAdminVerificationsList();
+            }).catch(err => {
+                showAppToast("Errore durante l'eliminazione: " + err.message, "error");
+            });
+        }
+
         function adminOverrideVerification(vId, athleteUid, skillId, newStatusApproved) {
-            if (!isAdminUser(currentUser)) {
-                showAppToast("Permesso negato: solo gli Admin possono modificare le verifiche.", "error");
+            if (!isSuperAdminUser(currentUser)) {
+                showAppToast("Permesso negato: solo il Founder (Occhionero) può modificare le decisioni dell'AI.", "error");
                 return;
             }
 
             const promptMsg = newStatusApproved 
                 ? "Motivo dell'approvazione manuale (es. 'ROM valido'):" 
                 : "Motivo della revoca della verifica (es. 'ROM parziale non valido'):";
-            const reason = prompt(promptMsg, newStatusApproved ? "Convalidata manualmente da Admin" : "Revocata da Admin");
+            const reason = prompt(promptMsg, newStatusApproved ? "Convalidata manualmente dal Founder Occhionero" : "Revocata dal Founder Occhionero");
             if (reason === null) return;
 
             db.collection("aiVerifications").doc(vId).update({
@@ -26608,20 +26666,21 @@ function getCalisthenicsExpertResponse(query) {
                             skills[skillId] = { unlocked: true, verifiedByAi: true, isVerified: true, val: 1 };
                         }
                         const isFullyVerif = isUserFullyVerified(skills, { displayName: doc.data().nickname, email: doc.data().email });
-                        return skillRef.update({
+                        return skillRef.set({
                             skills: skills,
                             isVerifiedUser: isFullyVerif
-                        });
+                        }, { merge: true });
                     }
                 });
             }).then(() => {
-                showAppToast(newStatusApproved ? "Verifica approvata con successo!" : "Verifica revocata.", "success");
+                showAppToast(newStatusApproved ? "Skill convalidata con successo!" : "Verifica skill revocata.", "success");
                 loadAdminVerificationsList();
             }).catch(err => {
-                showAppToast("Errore durante l'operazione: " + err.message, "error");
+                showAppToast("Errore aggiornamento verifica: " + err.message, "error");
             });
         }
-
+        
+        
         let adminAllUsers = [];
         function loadAdminUsersList() {
             const listEl = document.getElementById('admin-users-list-container');
@@ -26704,15 +26763,15 @@ function getCalisthenicsExpertResponse(query) {
                 return;
             }
             const confirmMsg = makeAdmin 
-                ? `Vuoi rendere "${athleteNick}" un Admin Collaboratore? Potrà visualizzare e gestire le Verifiche AI.`
+                ? `Vuoi rendere "${athleteNick}" un Admin Collaboratore? Potrà visualizzare le Verifiche AI.`
                 : `Vuoi revocare il ruolo di Admin a "${athleteNick}"?`;
-            if (!confirm(confirmMsg)) return;
+            if (typeof confirm === 'function' && !confirm(confirmMsg)) return;
 
-            db.collection("users").doc(targetUid).set({
+            db.collection("users").doc(targetUid).update({
                 isAdmin: makeAdmin,
                 adminAssignedBy: 'Occhionero',
                 adminAssignedAt: Date.now()
-            }, { merge: true }).then(() => {
+            }).then(() => {
                 showAppToast(makeAdmin ? `"${athleteNick}" è ora Admin Collaboratore!` : `Ruolo Admin revocato a "${athleteNick}".`, "success");
                 loadAdminUsersList();
             }).catch(err => {
@@ -26777,7 +26836,8 @@ function getCalisthenicsExpertResponse(query) {
                     <label style="font-size:0.8rem; font-weight:700; color:var(--text); display:block; margin-bottom:6px;">
                         Seleziona Video (5-10 sec) o Foto Esecuzione:
                     </label>
-                    <input type="file" id="verify-media-file" accept="video/*,image/*" style="width:100%; font-size:0.8rem; color:var(--subtext);">
+                    <input type="file" id="verify-media-file" accept="video/*,image/*" onchange="previewVerifyMedia(this)" style="width:100%; font-size:0.8rem; color:var(--subtext);">
+                    <div id="verify-media-preview-box" style="display:none; margin-top:10px;"></div>
                     <div style="font-size:0.72rem; color:var(--subtext); margin-top:4px;">
                         Accetta video MP4/MOV o scatto chiaro di profilo a 90°.
                     </div>
@@ -26793,13 +26853,36 @@ function getCalisthenicsExpertResponse(query) {
                 </div>
             `;
 
+            modal.classList.add('active');
             modal.style.display = 'flex';
         }
 
         function closeSkillVerifyModal() {
             const modal = document.getElementById('skill-verify-modal');
-            if (modal) modal.style.display = 'none';
+            if (modal) {
+                modal.classList.remove('active');
+                modal.style.display = 'none';
+            }
             currentVerifyingSkillId = null;
+        }
+
+        function previewVerifyMedia(input) {
+            const box = document.getElementById('verify-media-preview-box');
+            if (!box) return;
+            if (!input || !input.files || input.files.length === 0) {
+                box.style.display = 'none';
+                box.innerHTML = '';
+                return;
+            }
+            const file = input.files[0];
+            const isImg = file.type && file.type.startsWith('image');
+            const previewUrl = URL.createObjectURL(file);
+            box.style.display = 'block';
+            if (isImg) {
+                box.innerHTML = `<img src="${previewUrl}" style="max-height:160px; max-width:100%; border-radius:8px; border:1px solid var(--line-color); object-fit:contain; display:block; margin:0 auto;" alt="Anteprima">`;
+            } else {
+                box.innerHTML = `<video src="${previewUrl}" controls playsinline style="max-height:180px; max-width:100%; border-radius:8px; border:1px solid var(--line-color); display:block; margin:0 auto; background:#000;"></video>`;
+            }
         }
 
         async function submitSkillForAiVerification(skillId) {
@@ -26814,6 +26897,11 @@ function getCalisthenicsExpertResponse(query) {
             const val = claimedInput ? parseInt(claimedInput.value) || 1 : 1;
             const file = fileInput && fileInput.files ? fileInput.files[0] : null;
 
+            if (!file) {
+                showAppToast("Per favore seleziona un video o una foto della tua esecuzione.", "warning");
+                return;
+            }
+
             if (submitBtn) {
                 submitBtn.disabled = true;
                 submitBtn.innerText = "Analisi Coach Ares AI in corso...";
@@ -26824,6 +26912,31 @@ function getCalisthenicsExpertResponse(query) {
                 feedbackEl.style.color = 'var(--accent)';
                 feedbackEl.style.border = '1px solid var(--accent)';
                 feedbackEl.innerText = "Coach Ares sta analizzando la biomeccanica del movimento...";
+            }
+
+            // Caricamento media su Cloudinary o fallback Base64
+            let mediaUrl = null;
+            let mediaType = (file.type && file.type.startsWith('image')) ? 'image' : 'video';
+            try {
+                if (typeof uploadMediaToCloudinary === 'function') {
+                    const upRes = await uploadMediaToCloudinary(file, mediaType);
+                    if (upRes && upRes.url) {
+                        mediaUrl = upRes.url;
+                    }
+                }
+            } catch (upErr) {
+                console.warn("Upload Cloudinary non riuscito, fallback base64:", upErr);
+            }
+
+            if (!mediaUrl) {
+                try {
+                    mediaUrl = await new Promise((resolve, reject) => {
+                        const reader = new FileReader();
+                        reader.onloadend = () => resolve(reader.result);
+                        reader.onerror = reject;
+                        reader.readAsDataURL(file);
+                    });
+                } catch(e) {}
             }
 
             await new Promise(r => setTimeout(r, 1200));
@@ -26848,54 +26961,47 @@ function getCalisthenicsExpertResponse(query) {
 
                 if (currentUser && typeof db !== 'undefined') {
                     db.collection("aiVerifications").add({
-                        userId: currentUser.uid,
-                        userNickname: userNickname || currentUser.displayName || 'Atleta',
+                        athleteUid: currentUser.uid,
+                        athleteNick: userNickname || (currentUser ? (currentUser.displayName || currentUser.email) : 'Atleta'),
                         skillId: skillId,
                         skillName: skill.name,
                         status: 'approved',
                         claimedVal: val,
                         unit: skill.type === 'sec' ? 's' : 'rep',
-                        aiNotes: aiFeedbackText,
+                        aiFeedback: aiFeedbackText,
+                        mediaUrl: mediaUrl || '',
+                        mediaType: mediaType,
                         timestamp: Date.now(),
                         overriddenByAdmin: false
                     }).catch(err => console.warn("Errore salvataggio log verifica:", err));
+
+                    db.collection("users").doc(currentUser.uid).set({
+                        skills: userState,
+                        isVerifiedUser: isFullyVerif
+                    }, { merge: true }).catch(() => {});
                 }
 
                 saveState();
 
                 if (feedbackEl) {
-                    feedbackEl.style.background = 'rgba(16,185,129,0.18)';
+                    feedbackEl.style.background = 'rgba(16,185,129,0.15)';
                     feedbackEl.style.color = '#34d399';
                     feedbackEl.style.border = '1px solid #10b981';
-                    feedbackEl.innerHTML = `✅ <strong>Skill Certificata con Successo!</strong><br>${aiFeedbackText}`;
+                    feedbackEl.innerHTML = `✅ <strong>Esecuzione Approvata da Coach Ares!</strong><br><span style="font-size:0.75rem;">${aiFeedbackText}</span>`;
                 }
 
-                await new Promise(r => setTimeout(r, 800));
-                closeSkillVerifyModal();
-
-                const toastMsg = isFullyVerif 
-                    ? `🎉 "${skill.name}" verificata! CONGRATULAZIONI: tutte le tue skill sono verificate! Sei ora UTENTE VERIFICATO 🛡️!`
-                    : `🎉 "${skill.name}" verificata con successo da Coach Ares AI!`;
-                showAppToast(toastMsg, "success");
-
-                if (typeof openSkillDetailDrawer === 'function') openSkillDetailDrawer(skillId);
-                updateUI();
-                if (typeof updateBentoProfileStats === 'function') updateBentoProfileStats();
-            } else {
-                if (feedbackEl) {
-                    feedbackEl.style.background = 'rgba(239,68,68,0.18)';
-                    feedbackEl.style.color = '#f87171';
-                    feedbackEl.style.border = '1px solid #ef4444';
-                    feedbackEl.innerText = "Esecuzione non validata. Riprova curando il lockout completo.";
-                }
-                if (submitBtn) {
-                    submitBtn.disabled = false;
-                    submitBtn.innerText = "Riprova Certificazione";
-                }
+                setTimeout(() => {
+                    closeSkillVerifyModal();
+                    showAppToast(`🎉 Skill "${skill.name}" certificata con successo dall'AI Coach!`, "success");
+                    if (typeof updateBentoProfileStats === 'function') updateBentoProfileStats();
+                    if (typeof renderLeaderboard === 'function') renderLeaderboard();
+                    if (typeof renderAll === 'function') renderAll();
+                    if (typeof openSkillDetailDrawer === 'function') openSkillDetailDrawer(skillId);
+                }, 1500);
             }
         }
-
-    </script>
+        
+        </script>
 </body>
 </html>
 
