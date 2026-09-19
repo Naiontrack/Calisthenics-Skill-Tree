@@ -27165,7 +27165,7 @@ function getCalisthenicsExpertResponse(query) {
 
             bodyEl.innerHTML = `
                 <p style="font-size:0.84rem; color:var(--subtext); margin-top:0; line-height:1.4;">
-                    Per convalidare ufficialmente la skill e ottenere il badge <strong>Utente Verificato</strong>, allega una prova video o foto della tua esecuzione da sottoporre all'analisi biomeccanica di <strong>Coach Ares AI</strong>.
+                    Per convalidare ufficialmente la skill e ottenere il badge <strong>Utente Verificato</strong>, allega il video della tua esecuzione da sottoporre all'analisi biomeccanica di <strong>Coach Ares AI</strong>.
                 </p>
                 
                 <div style="background:rgba(56,189,248,0.08); border:1px solid rgba(56,189,248,0.25); border-radius:10px; padding:10px 12px; margin-bottom:14px; font-size:0.78rem; color:var(--text);">
@@ -27184,7 +27184,7 @@ function getCalisthenicsExpertResponse(query) {
 
                 <div class="auth-form-group" style="margin-bottom:14px;">
                     <label style="font-size:0.8rem; font-weight:700; color:var(--text); display:block; margin-bottom:6px;">
-                        Seleziona Video Esecuzione (o Foto Chiara):
+                        Seleziona Video Esecuzione:
                     </label>
                     <input type="file" id="verify-media-file" accept="video/*,image/*" onchange="previewVerifyMedia(this)" style="width:100%; font-size:0.8rem; color:var(--subtext);">
                     <div id="verify-media-preview-box" style="display:none; margin-top:10px; width:100%; box-sizing:border-box;"></div>
@@ -28099,7 +28099,7 @@ REGOLE FONDAMENTALI DI VALUTAZIONE BIOMECCANICA:
      "approved": true | false,
      "reps_counted": <numero intero di ripetizioni valide contate, oppure 0 se isometria>,
      "hold_seconds": <secondi di tenuta continua contati, oppure 0 se ripetizioni>,
-     "feedback": "<Spiegazione tecnica e chiara in italiano del verdetto di Coach Ares con conteggio e dettagli biomeccanici>"
+     "feedback": "<SPIEGAZIONE DEL MOTIVO DEL VERDETTO: Se approvi, elogia la forma tecnica e i punti di forza. Se RIFIUTI (approved: false), DEVI spiegare chiaramente e dettagliatamente il MOTIVO DEL PERCHÉ hai rifiutato il video: specifica quali ripetizioni non erano conformi e perché (es. mancato superamento sbarra col mento, petto non a contatto per chest to bar, gomiti non estesi in lockout, oscillazioni/kipping con le gambe, salita asimmetrica ad ala di gabbiano per muscle up, cedimento del bacino negli hold), oppure se il video è troppo buio o con angolazione errata spiegando come posizionare la telecamera per riuscire a verificarlo>"
    }`;
 
                 // Modelli Gemini attivi con precedenza ai modelli ad alta disponibilità
@@ -28197,15 +28197,32 @@ REGOLE FONDAMENTALI DI VALUTAZIONE BIOMECCANICA:
                                         }
 
                                         // 2. CONTROLLO DETERMINISTICO SOGLIA DICHIARATA vs EFFETTIVA
+                                        // Preserva integralmente il motivo tecnico del rifiuto spiegato da Coach Ares!
                                         if (skill.type === 'rep') {
                                             if (countedReps < val) {
                                                 parsed.approved = false;
-                                                parsed.feedback = `Dichiarate ${val} ripetizioni, ma Coach Ares ha contato solo ${countedReps} ripetizioni valide con ROM completo. Certificazione RESPINTA: per certificare questo livello devi completare tutte le ${val} ripetizioni dichiarate.`;
+                                                const targetMsg = `Dichiarate ${val} ripetizioni, ma Coach Ares ha contato solo ${countedReps} ripetizioni valide con ROM completo.`;
+                                                const origFb = (parsed.feedback || '').trim();
+                                                if (origFb) {
+                                                    if (!origFb.includes(String(val))) {
+                                                        parsed.feedback = `${targetMsg} Motivo del rifiuto: ${origFb}`;
+                                                    }
+                                                } else {
+                                                    parsed.feedback = `${targetMsg} Certificazione RESPINTA: per certificare questo livello devi completare tutte le ${val} ripetizioni dichiarate.`;
+                                                }
                                             }
                                         } else if (skill.type === 'sec') {
                                             if (countedSec < val) {
                                                 parsed.approved = false;
-                                                parsed.feedback = `Dichiarati ${val} secondi di tenuta, ma Coach Ares ha cronometrato solo ${countedSec}s continuativi con allineamento valido. Certificazione RESPINTA: devi mantenere la posizione per tutti i ${val}s dichiarati.`;
+                                                const targetMsg = `Dichiarati ${val} secondi di tenuta, ma Coach Ares ha cronometrato solo ${countedSec}s continuativi con allineamento valido.`;
+                                                const origFb = (parsed.feedback || '').trim();
+                                                if (origFb) {
+                                                    if (!origFb.includes(String(val))) {
+                                                        parsed.feedback = `${targetMsg} Motivo del rifiuto: ${origFb}`;
+                                                    }
+                                                } else {
+                                                    parsed.feedback = `${targetMsg} Certificazione RESPINTA: devi mantenere la posizione per tutti i ${val}s dichiarati.`;
+                                                }
                                             }
                                         }
 
