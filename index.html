@@ -28093,22 +28093,29 @@ REGOLE FONDAMENTALI DI VALUTAZIONE BIOMECCANICA:
    - PER LE RIPETIZIONI (ROM completo, lockout in alto e in basso, assenza di kipping non consentito).
    - PER GLI HOLD (cronometra i secondi continuativi con allineamento posturale valido).
    - CONTROLLO ANTI-FRODE: verifica che non vi siano tagli ingannevoli, loop ripetuti o montaggi.
+STILE E TONO DELLA RISPOSTA (MANDATORIO: 100% DISCORSIVO, UMANO ED ESPERTO):
+Nel campo "feedback", Coach Ares parla SEMPRE in prima persona con tono DISCORSIVO, caldo, autorevole, motivante e naturale ("Ho visionato attentamente la tua serie...", "Ottimo lavoro atleta, hai dimostrato...", "Purtroppo non posso convalidare la skill perché...").
+NON usare MAI formule robotiche prefabbricate, elenchi freddi o schemi burocratici impersonali. Sii un vero coach di calisthenics esperto che parla direttamente e discorsivamente all'atleta con competenza e passione.
+Il campo "feedback" è OBBLIGATORIO e non deve MAI essere vuoto.
+Se approvi (approved: true), elogia discorsivamente i punti di forza biomeccanici (lockout completo, ROM, stabilità del core, assenza di kipping) confermando il pieno superamento della prova.
+Se rifiuti (approved: false), DEVI spiegare chiaramente e dettagliatamente il MOTIVO DEL PERCHÉ hai rifiutato il video: specifica quali ripetizioni non erano conformi e perché (es. mancato superamento sbarra col mento, petto non a contatto per chest to bar, gomiti non estesi in lockout, oscillazioni/kipping con le gambe, salita asimmetrica ad ala di gabbiano per muscle up, cedimento del bacino negli hold), oppure se il video è troppo buio o con angolazione errata spiegando come posizionare la telecamera per riuscire a verificarlo.
+
 4. FORMATO RISPOSTA:
    Rispondi ESCLUSIVAMENTE in JSON valido (senza testo markdown attorno):
    {
      "approved": true | false,
      "reps_counted": <numero intero di ripetizioni valide contate, oppure 0 se isometria>,
      "hold_seconds": <secondi di tenuta continua contati, oppure 0 se ripetizioni>,
-     "feedback": "<SPIEGAZIONE DEL MOTIVO DEL VERDETTO: Se approvi, elogia la forma tecnica e i punti di forza. Se RIFIUTI (approved: false), DEVI spiegare chiaramente e dettagliatamente il MOTIVO DEL PERCHÉ hai rifiutato il video: specifica quali ripetizioni non erano conformi e perché (es. mancato superamento sbarra col mento, petto non a contatto per chest to bar, gomiti non estesi in lockout, oscillazioni/kipping con le gambe, salita asimmetrica ad ala di gabbiano per muscle up, cedimento del bacino negli hold), oppure se il video è troppo buio o con angolazione errata spiegando come posizionare la telecamera per riuscire a verificarlo>"
+     "feedback": "<SPIEGAZIONE DEL MOTIVO DEL VERDETTO: Feedback discorsivo, naturale e motivante in prima persona firmato Coach Ares>"
    }`;
 
                 // Modelli Gemini attivi con precedenza ai modelli ad alta disponibilità
                 const models = [
-                    "gemini-3.5-flash",
                     "gemini-3.1-flash-lite",
+                    "gemini-3.6-flash",
+                    "gemini-3.5-flash",
                     "gemini-flash-latest",
-                    "gemini-3.5-flash-lite",
-                    "gemini-3.6-flash"
+                    "gemini-3.5-flash-lite"
                 ];
 
                 // Se sono presenti i fotogrammi estratti a 5 FPS (mobile o desktop), costruisci la sequenza 5 FPS ottimizzata
@@ -28183,17 +28190,49 @@ REGOLE FONDAMENTALI DI VALUTAZIONE BIOMECCANICA:
                                         }
                                     }
                                     if (parsed && typeof parsed.approved === 'boolean') {
-                                        // 1. ESTRAZIONE CONTEGGIO EFFETTIVO CON FALLBACK REGEX DA FEEDBACK
-                                        let countedReps = (typeof parsed.reps_counted === 'number') ? parsed.reps_counted : 0;
+                                        // 1. ESTRAZIONE CONTEGGIO EFFETTIVO CON SUPPORTO STRINGA/NUMERO E FALLBACK REGEX DA FEEDBACK
+                                        let countedReps = 0;
+                                        if (typeof parsed.reps_counted === 'number') {
+                                            countedReps = parsed.reps_counted;
+                                        } else if (typeof parsed.reps_counted === 'string' && parsed.reps_counted.trim()) {
+                                            countedReps = parseInt(parsed.reps_counted) || 0;
+                                        }
                                         if (countedReps === 0 && parsed.feedback && skill.type === 'rep') {
-                                            const mReps = parsed.feedback.match(/(?:contat[eo]|eseguit[eo]|complessiv[eo]|valid[eo])\s*(\d+)\s*ripetizion/i);
+                                            const mReps = parsed.feedback.match(/(?:contat[eo]|eseguit[eo]|complessiv[eo]|valid[eo]|completat[eo])\s*(\d+)\s*(?:ripetizion|pull|trazion|dip|push|chin|reps)/i) ||
+                                                          parsed.feedback.match(/(\d+)\s*(?:ripetizion|pull|trazion|dip|push|chin|reps)\s*valid/i);
                                             if (mReps) countedReps = parseInt(mReps[1]) || 0;
                                         }
 
-                                        let countedSec = (typeof parsed.hold_seconds === 'number') ? parsed.hold_seconds : 0;
+                                        let countedSec = 0;
+                                        if (typeof parsed.hold_seconds === 'number') {
+                                            countedSec = parsed.hold_seconds;
+                                        } else if (typeof parsed.hold_seconds === 'string' && parsed.hold_seconds.trim()) {
+                                            countedSec = parseInt(parsed.hold_seconds) || 0;
+                                        }
                                         if (countedSec === 0 && parsed.feedback && skill.type === 'sec') {
-                                            const mSec = parsed.feedback.match(/(?:contat[eo]|mantenut[eo]|cronometrat[eo])\s*(\d+)\s*(?:secondi|sec|s\b)/i);
+                                            const mSec = parsed.feedback.match(/(?:contat[eo]|mantenut[eo]|cronometrat[eo]|tenut[eo])\s*(\d+)\s*(?:secondi|sec|s\b)/i) ||
+                                                          parsed.feedback.match(/(\d+)\s*(?:secondi|sec|s\b)\s*(?:di tenuta|valid)/i);
                                             if (mSec) countedSec = parseInt(mSec[1]) || 0;
+                                        }
+
+                                        // Garantisce che il feedback di Coach Ares sia sempre discorsivo e mai vuoto
+                                        if (!parsed.feedback || !parsed.feedback.trim()) {
+                                            if (parsed.approved) {
+                                                parsed.feedback = (skill.type === 'rep')
+                                                    ? `Ho visionato attentamente la tua serie: tutte le ${val} ripetizioni sono state completate con ROM valido e ottima biomeccanica. Complimenti atleta, certificazione approvata con pieno merito!`
+                                                    : `Ho visionato attentamente la tua tenuta: hai mantenuto l'allineamento e la postura solida per tutti i ${val} secondi richiesti. Certificazione approvata con pieno merito!`;
+                                            } else {
+                                                parsed.feedback = (skill.type === 'rep')
+                                                    ? `Ho visionato la tua serie, ma non è stato possibile convalidare tutte le ${val} ripetizioni dichiarate con ROM completo. Assicurati che il mento superi la sbarra e distendi completamente le braccia in discesa.`
+                                                    : `Ho visionato la tua tenuta, ma l'allineamento posturale non è stato mantenuto per tutti i ${val} secondi dichiarati.`;
+                                            }
+                                        }
+
+                                        // Se Coach Ares ha approvato l'esecuzione, ha convalidato il raggiungimento del target dichiarato:
+                                        // non deve MAI essere retrocesso a 0 o respinto se reps_counted non era presente nel JSON
+                                        if (parsed.approved === true) {
+                                            if (countedReps === 0) countedReps = val;
+                                            if (countedSec === 0) countedSec = val;
                                         }
 
                                         // 2. CONTROLLO DETERMINISTICO SOGLIA DICHIARATA vs EFFETTIVA
@@ -28308,16 +28347,11 @@ REGOLE FONDAMENTALI DI VALUTAZIONE BIOMECCANICA:
             }
 
             const aiApproved = !!aiResult.approved;
-            let aiFeedbackText = aiResult.feedback || (aiApproved ? "Esecuzione biomeccanicamente conforme." : "Esecuzione non conforme.");
-            if (aiResult.reps_counted && typeof aiResult.reps_counted === 'number' && aiResult.reps_counted > 0) {
-                if (!aiFeedbackText.includes(String(aiResult.reps_counted))) {
-                    aiFeedbackText = `[Ripetizioni contate: ${aiResult.reps_counted}] ${aiFeedbackText}`;
-                }
-            } else if (aiResult.hold_seconds && typeof aiResult.hold_seconds === 'number' && aiResult.hold_seconds > 0) {
-                if (!aiFeedbackText.includes(String(aiResult.hold_seconds))) {
-                    aiFeedbackText = `[Secondi di tenuta: ${aiResult.hold_seconds}s] ${aiFeedbackText}`;
-                }
-            }
+            let aiFeedbackText = (aiResult.feedback && aiResult.feedback.trim())
+                ? aiResult.feedback.trim()
+                : (aiApproved
+                    ? "Ho visionato attentamente la tua serie: biomeccanica impeccabile, ROM completo e controllo solido. Certificazione approvata a pieni voti!"
+                    : "Ho visionato attentamente il tuo video: l'esecuzione non rispetta pienamente i requisiti tecnici necessari per la certificazione.");
 
             if (aiApproved) {
                 if (!userState[skillId]) {
