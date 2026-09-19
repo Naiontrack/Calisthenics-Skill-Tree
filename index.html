@@ -18346,7 +18346,7 @@ function getCalisthenicsExpertResponse(query) {
             });
         }
 
-        function compressVideoClientSide(file, maxLandscapeW = 1280, maxLandscapeH = 720) {
+        function compressVideoClientSide(file, maxLandscapeW = 1280, maxLandscapeH = 720, targetFps = 5, onProgress = null) {
             return new Promise((resolve) => {
                 if (!file || !file.type || !file.type.startsWith('video/') || typeof MediaRecorder === 'undefined' || !HTMLCanvasElement.prototype.captureStream) {
                     resolve(file);
@@ -18394,7 +18394,7 @@ function getCalisthenicsExpertResponse(query) {
                     const targetMaxW = isLandscape ? maxLandscapeW : maxLandscapeH;
                     const targetMaxH = isLandscape ? maxLandscapeH : maxLandscapeW;
 
-                    if (w <= targetMaxW && h <= targetMaxH && file.size <= 10 * 1024 * 1024) {
+                    if (file.name && file.name.includes('_5fps_') && w <= targetMaxW && h <= targetMaxH && file.size <= 8 * 1024 * 1024) {
                         finished = true;
                         cleanup();
                         resolve(file);
@@ -18412,7 +18412,7 @@ function getCalisthenicsExpertResponse(query) {
 
                     let canvasStream;
                     try {
-                        canvasStream = canvas.captureStream(30);
+                        canvasStream = canvas.captureStream(targetFps);
                     } catch (err) {
                         finished = true;
                         cleanup();
@@ -18443,7 +18443,7 @@ function getCalisthenicsExpertResponse(query) {
 
                     let recorder;
                     try {
-                        const options = { videoBitsPerSecond: 1800000 };
+                        const options = { videoBitsPerSecond: (targetFps <= 5 ? 800000 : 1800000) };
                         if (mimeType) options.mimeType = mimeType;
                         recorder = new MediaRecorder(combinedStream, options);
                     } catch (e) {
@@ -18478,23 +18478,25 @@ function getCalisthenicsExpertResponse(query) {
 
                         const outBlob = new Blob(chunks, { type: recorder.mimeType || 'video/webm' });
                         const ext = (recorder.mimeType && recorder.mimeType.includes('mp4')) ? 'mp4' : 'webm';
-                        const cleanName = (file.name || 'video').replace(/\.[^/.]+$/, "") + `_720p.${ext}`;
+                        const cleanName = (file.name || 'video').replace(/\.[^/.]+$/, "") + `_${targetFps}fps_720p.${ext}`;
                         try {
                             const compressedFile = new File([outBlob], cleanName, {
                                 type: outBlob.type,
                                 lastModified: Date.now()
                             });
-                            if (compressedFile.size < file.size || file.size > 10 * 1024 * 1024) {
-                                resolve(compressedFile);
-                            } else {
-                                resolve(file);
-                            }
+                            // Restituisce sempre il file compresso a 5 FPS per garantire il risparmio dell'83% dei token
+                            resolve(compressedFile);
                         } catch (e) {
                             resolve(file);
                         }
                     };
 
                     try {
+                        video.ontimeupdate = () => {
+                            if (typeof onProgress === 'function' && video.duration > 0) {
+                                onProgress(Math.min(0.99, video.currentTime / video.duration));
+                            }
+                        };
                         recorder.start(100);
                         video.playbackRate = 2.0;
                         video.play().then(() => {
@@ -27205,24 +27207,24 @@ function getCalisthenicsExpertResponse(query) {
                 let processedFile = file;
                 let finalDataUrl = rawDataUrl;
 
-                // Fase 3: Compressione a 720p 30 FPS se > 8MB (60% -> 90%)
-                if (file.size > 8 * 1024 * 1024) {
-                    updateProgress(65, "compressione video...");
-                    try {
-                        processedFile = await compressVideoClientSide(file, 1280, 720);
-                        if (isAborted) return;
-                        updateProgress(85, "compressione video...");
-                        finalDataUrl = await readFileAsDataURL(processedFile);
-                    } catch(cErr) {
-                        console.warn("Compressione video automatica:", cErr);
-                        processedFile = file;
-                        finalDataUrl = rawDataUrl;
-                    }
+                // Fase 3: Ottimizzazione a 5 FPS e compressione 720p per risparmiare l'83.3% dei token (40% -> 92%)
+                updateProgress(40, "compressione video...");
+                try {
+                    processedFile = await compressVideoClientSide(file, 1280, 720, 5, (p) => {
+                        updateProgress(40 + p * 50, "compressione video...");
+                    });
+                    if (isAborted) return;
+                    updateProgress(92, "compressione video...");
+                    finalDataUrl = await readFileAsDataURL(processedFile);
+                } catch(cErr) {
+                    console.warn("Ottimizzazione 5 FPS fallback:", cErr);
+                    processedFile = file;
+                    finalDataUrl = rawDataUrl;
                 }
                 if (isAborted) return;
 
-                // Fase 4: Estrazione sequenza di backup (90% -> 100%)
-                updateProgress(92, "caricamento video...");
+                // Fase 4: Estrazione sequenza di backup (92% -> 100%)
+                updateProgress(95, "caricamento video...");
                 let backupFrames = null;
                 try {
                     backupFrames = await extractKeyframesFromVideo(processedFile, 5);
@@ -27257,7 +27259,18 @@ function getCalisthenicsExpertResponse(query) {
 
                 if (playerSlot) {
                     playerSlot.style.display = 'block';
-                    playerSlot.innerHTML = `<video src="${finalDataUrl}" controls playsinline style="max-height:180px; max-width:100%; border-radius:8px; border:1px solid var(--line-color); display:block; margin:0 auto; background:#000;"></video>`;
+                    try {
+                        const previewBlobUrl = URL.createObjectURL(processedFile);
+                        playerSlot.innerHTML = `<video id="verify-preview-video-player" src="${previewBlobUrl}" controls playsinline preload="auto" style="max-height:180px; max-width:100%; border-radius:8px; border:1px solid var(--line-color); display:block; margin:0 auto; background:#000;"></video>`;
+                        const prevVid = document.getElementById('verify-preview-video-player');
+                        if (prevVid) {
+                            prevVid.onloadeddata = () => {
+                                try { prevVid.currentTime = 0.05; } catch(e) {}
+                            };
+                        }
+                    } catch(pe) {
+                        playerSlot.innerHTML = `<video src="${finalDataUrl}" controls playsinline style="max-height:180px; max-width:100%; border-radius:8px; border:1px solid var(--line-color); display:block; margin:0 auto; background:#000;"></video>`;
+                    }
                 }
 
                 // Abilita il pulsante di verifica solo ora che il video è al 100% pronto
@@ -27498,9 +27511,13 @@ function getCalisthenicsExpertResponse(query) {
 
                 if (vidB64) {
                     geminiParts.push({
-                        text: `ESAME CERTIFICAZIONE SKILL - VIDEO INTEGRALE DELL'ATLETA (30 FPS):\n` +
+                        text: `ESAME CERTIFICAZIONE SKILL - VIDEO INTEGRALE DELL'ATLETA (5 FPS):\n` +
                               `Skill richiesta: "${skill.name}"\n` +
                               `Prestazione dichiarata dall'atleta: ${val} ${unit}\n\n` +
+                              `PARAMETRI DI CAMPIONAMENTO AD ALTA PRECISIONE (5 FPS):\n` +
+                              `- Il video è campionato a 5 fotogrammi per secondo (1 fotogramma ogni 0.2 secondi).\n` +
+                              `- Per le RIPETIZIONI dinamiche: ogni ripetizione completa da 1.5-2.5s è rappresentata da una sequenza nitida di 8-15 fotogrammi consecutivi (salita, lockout in alto, discesa, lockout in basso). Conta cronologicamente ogni singola ripetizione valida.\n` +
+                              `- Per gli HOLD (tenute isometriche): ogni secondo corrisponde a 5 fotogrammi consecutivi (es. 50 fotogrammi = 10 secondi esatti). Cronometra i secondi continuativi con allineamento posturale valido.\n\n` +
                               `ISTRUZIONI DI ANALISI CONTINUA:\n` +
                               `1. Visiona e analizza l'INTERO VIDEO dal primo all'ultimo secondo, senza saltare nessun secondo.\n` +
                               `2. Conta cronologicamente ogni singola ripetizione valida (o cronometra i secondi continuativi di tenuta isometrica).\n` +
