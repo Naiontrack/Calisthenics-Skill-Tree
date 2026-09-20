@@ -18462,6 +18462,16 @@ function getCalisthenicsExpertResponse(query) {
         const CLOUDINARY_FOLDER = 'chat_media';
         const CLOUDINARY_UPLOAD_URL = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/auto/upload`;
 
+        function sanitizeCloudinaryMediaUrl(url, mediaType) {
+            if (!url || typeof url !== 'string') return url;
+            // Rimuove qualsiasi trasformazione forzata a bassa risoluzione (es. 560p) per garantire 720p 30 FPS nativo
+            if (url.includes('cloudinary.com') && (mediaType === 'video' || url.includes('/video/upload/'))) {
+                return url.replace(/\/video\/upload\/c_limit,w_[0-9]+,h_[0-9]+,?[^/]*\//, '/video/upload/')
+                          .replace(/\/video\/upload\/[^/]*560[^/]*\//, '/video/upload/');
+            }
+            return url;
+        }
+
         // ====================================================================
         // POLITICA DI RETENTION DEI MEDIA (STRATEGIA A: CANCELLAZIONE DOPO 90 GIORNI)
         // ====================================================================
@@ -18999,7 +19009,8 @@ function getCalisthenicsExpertResponse(query) {
                 if (mediaType === 'image') {
                     finalUrl = finalUrl.replace('/image/upload/', '/image/upload/c_limit,w_1280,h_720,q_auto/');
                 } else if (mediaType === 'video') {
-                    finalUrl = finalUrl.replace('/video/upload/', '/video/upload/c_limit,w_996,h_560,q_auto/');
+                    // Mantiene il video 720p a 30 FPS compresso nativo senza forzare downscaling a 560p
+                    finalUrl = sanitizeCloudinaryMediaUrl(finalUrl, 'video');
                 }
             }
 
@@ -19242,12 +19253,15 @@ function getCalisthenicsExpertResponse(query) {
 
                 try {
                     const uploadRes = await uploadMediaToCloudinary(audioFile, 'audio');
+                    const audioBytes = uploadRes.bytes || (audioFile ? audioFile.size : 0);
                     await executeSendChatMessageCore({
                         text: '',
                         mediaUrl: uploadRes.url,
                         mediaPublicId: uploadRes.publicId || null,
                         mediaType: 'audio',
-                        mediaDuration: recordedDuration
+                        mediaDuration: recordedDuration,
+                        bytes: audioBytes,
+                        fileSize: audioBytes
                     });
                 } catch (err) {
                     console.error("Errore invio vocale:", err);
@@ -20261,7 +20275,7 @@ function getCalisthenicsExpertResponse(query) {
                 } else if (mediaUrl && resolvedMediaType === 'video') {
                     mediaHtml = `
                         <div class="chat-media-wrap">
-                            <video src="${escapeHtml(mediaUrl)}" class="chat-media-video" controls playsinline preload="metadata" onerror="this.onerror=null; this.parentElement.innerHTML='<div style=\\'padding:12px; font-size:12px; color:var(--subtext); text-align:center;\\'>🎬 Impossibile riprodurre il video.<br><a href=\\'${escapeHtml(mediaUrl)}\\' target=\\'_blank\\' rel=\\'noopener noreferrer\\' style=\\'color:var(--primary); text-decoration:underline; font-weight:600; display:inline-block; margin-top:4px;\\'>Apri video</a></div>';"></video>
+                            <video src="${escapeHtml(sanitizeCloudinaryMediaUrl(mediaUrl, 'video'))}" class="chat-media-video" controls playsinline preload="metadata" onerror="this.onerror=null; this.parentElement.innerHTML='<div style=\\'padding:12px; font-size:12px; color:var(--subtext); text-align:center;\\'>🎬 Impossibile riprodurre il video.<br><a href=\\'${escapeHtml(mediaUrl)}\\' target=\\'_blank\\' rel=\\'noopener noreferrer\\' style=\\'color:var(--primary); text-decoration:underline; font-weight:600; display:inline-block; margin-top:4px;\\'>Apri video</a></div>';"></video>
                         </div>
                     `;
                 } else if (mediaUrl && resolvedMediaType === 'audio') {
@@ -20390,7 +20404,11 @@ function getCalisthenicsExpertResponse(query) {
             };
 
             if (payload.mediaUrl) msgDoc.mediaUrl = payload.mediaUrl;
-            if (payload.bytes) msgDoc.bytes = payload.bytes;
+            if (payload.bytes || payload.fileSize) {
+                const bVal = payload.bytes || payload.fileSize;
+                msgDoc.bytes = bVal;
+                msgDoc.fileSize = bVal;
+            }
             if (payload.mediaType) msgDoc.mediaType = payload.mediaType;
             if (payload.mediaDuration) msgDoc.mediaDuration = payload.mediaDuration;
             if (payload.mediaPublicId) msgDoc.mediaPublicId = payload.mediaPublicId;
@@ -20508,6 +20526,7 @@ function getCalisthenicsExpertResponse(query) {
             }
 
             try {
+                let mediaBytes = 0;
                 if (pendingChatMedia) {
                     if (sendBtn) sendBtn.innerText = '📤';
                     const uploadRes = await uploadMediaToCloudinary(pendingChatMedia.file, pendingChatMedia.type);
@@ -20515,6 +20534,7 @@ function getCalisthenicsExpertResponse(query) {
                     mediaType = pendingChatMedia.type;
                     mediaDuration = uploadRes.duration || null;
                     mediaPublicId = uploadRes.publicId || null;
+                    mediaBytes = uploadRes.bytes || (pendingChatMedia.file ? pendingChatMedia.file.size : 0);
                     removePendingChatMedia();
                 }
 
@@ -20523,7 +20543,9 @@ function getCalisthenicsExpertResponse(query) {
                     mediaUrl,
                     mediaType,
                     mediaDuration,
-                    mediaPublicId
+                    mediaPublicId,
+                    bytes: mediaBytes,
+                    fileSize: mediaBytes
                 });
 
                 if (input) {
@@ -26975,7 +26997,138 @@ function getCalisthenicsExpertResponse(query) {
         // ==========================================
         // PULIZIA STORAGE MEDIA & VIDEO VERIFICHE AI
         // ==========================================
-        function cleanMediaFromStorage(mediaUrl, mediaType) {
+        // ====================================================================
+        // GESTIONE CREDENZIALI CLOUDINARY FOUNDER & ELIMINAZIONE SERVER FISICA
+        // ====================================================================
+        function getCloudinaryApiKey() {
+            return (localStorage.getItem('calisthenics_cloudinary_api_key') || '').trim();
+        }
+
+        function getCloudinaryApiSecret() {
+            return (localStorage.getItem('calisthenics_cloudinary_api_secret') || '').trim();
+        }
+
+        function isCloudinaryApiConfigured() {
+            return !!(getCloudinaryApiKey() && getCloudinaryApiSecret());
+        }
+
+        function setCloudinaryCredentials(apiKey, apiSecret) {
+            if (apiKey !== undefined) localStorage.setItem('calisthenics_cloudinary_api_key', (apiKey || '').trim());
+            if (apiSecret !== undefined) localStorage.setItem('calisthenics_cloudinary_api_secret', (apiSecret || '').trim());
+            updateCloudinaryConfigUI();
+        }
+
+        function removeCloudinaryCredentials() {
+            localStorage.removeItem('calisthenics_cloudinary_api_key');
+            localStorage.removeItem('calisthenics_cloudinary_api_secret');
+            updateCloudinaryConfigUI();
+        }
+
+        function updateCloudinaryConfigUI() {
+            const badge = document.getElementById('cld-keys-status-badge');
+            if (badge) {
+                badge.innerHTML = isCloudinaryApiConfigured()
+                    ? '<span style="font-size:0.75rem; font-weight:800; color:#10b981; background:rgba(16,185,129,0.15); border:1px solid #10b981; padding:3px 8px; border-radius:6px;">🟢 API Cloudinary Connessa (Eliminazione Server Attiva)</span>'
+                    : '<span style="font-size:0.75rem; font-weight:800; color:#f59e0b; background:rgba(245,158,11,0.15); border:1px solid #f59e0b; padding:3px 8px; border-radius:6px;">⚠️ Inserisci API Key & Secret per Eliminare Fisicamente da Cloudinary</span>';
+            }
+        }
+
+        async function sha1Hex(str) {
+            const enc = new TextEncoder();
+            const buf = await crypto.subtle.digest('SHA-1', enc.encode(str));
+            return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+
+        function submitCloudinaryDestroyForm(actionUrl, params) {
+            let iframe = document.getElementById('cld_destroy_hidden_frame');
+            if (!iframe) {
+                iframe = document.createElement('iframe');
+                iframe.id = 'cld_destroy_hidden_frame';
+                iframe.name = 'cld_destroy_hidden_frame';
+                iframe.style.display = 'none';
+                document.body.appendChild(iframe);
+            }
+
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = actionUrl;
+            form.target = 'cld_destroy_hidden_frame';
+
+            Object.keys(params).forEach(k => {
+                const inp = document.createElement('input');
+                inp.type = 'hidden';
+                inp.name = k;
+                inp.value = params[k];
+                form.appendChild(inp);
+            });
+
+            document.body.appendChild(form);
+            form.submit();
+            setTimeout(() => {
+                try { form.remove(); } catch(e) {}
+            }, 4000);
+        }
+
+        async function deleteAssetFromCloudinary(publicId, resourceType, mediaUrl) {
+            if (!publicId && mediaUrl) {
+                publicId = extractCloudinaryPublicId(mediaUrl);
+            }
+            if (!publicId) return { success: false, reason: 'Nessun publicId trovato' };
+
+            const apiKey = getCloudinaryApiKey();
+            const apiSecret = getCloudinaryApiSecret();
+
+            if (!apiKey || !apiSecret) {
+                console.warn('[Cloudinary Delete] Chiavi API non configurate: rimosso dal database locale.');
+                return { success: false, reason: 'missing_keys' };
+            }
+
+            const timestamp = Math.floor(Date.now() / 1000);
+            let rType = 'image';
+            const mLower = (mediaUrl || '').toLowerCase();
+            const typeLower = (resourceType || '').toLowerCase();
+            if (typeLower === 'video' || mLower.includes('/video/') || mLower.endsWith('.mp4') || mLower.endsWith('.webm') || mLower.endsWith('.mov')) {
+                rType = 'video';
+            } else if (typeLower === 'audio' || mLower.includes('/raw/') || mLower.includes('voice_') || mLower.endsWith('.wav') || mLower.endsWith('.ogg') || mLower.endsWith('.m4a') || mLower.endsWith('.mp3')) {
+                rType = 'raw';
+            }
+
+            const strToSign = `public_id=${publicId}&timestamp=${timestamp}${apiSecret}`;
+            const signature = await sha1Hex(strToSign);
+            const destroyUrl = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/${rType}/destroy`;
+
+            try {
+                // Metodo 1 con form su iframe nascosto per garanzia assoluta no-CORS in qualsiasi browser
+                submitCloudinaryDestroyForm(destroyUrl, {
+                    public_id: publicId,
+                    timestamp: String(timestamp),
+                    api_key: apiKey,
+                    signature: signature
+                });
+
+                // Metodo 2 complementare via fetch diretta
+                const formData = new FormData();
+                formData.append('public_id', publicId);
+                formData.append('timestamp', String(timestamp));
+                formData.append('api_key', apiKey);
+                formData.append('signature', signature);
+
+                try {
+                    fetch(destroyUrl, { method: 'POST', body: formData })
+                        .then(r => r.json())
+                        .then(d => console.log('[Cloudinary Destroy Result]:', d))
+                        .catch(() => {});
+                } catch(e) {}
+
+                console.log(`[Cloudinary Destroy] Richiesta inviata con successo su Cloudinary (${rType}): ${publicId}`);
+                return { success: true };
+            } catch(err) {
+                console.error('[Cloudinary Destroy Error]:', err);
+                return { success: false, error: err };
+            }
+        }
+
+        async function cleanMediaFromStorage(mediaUrl, mediaType) {
             if (!mediaUrl) return;
             try {
                 if (mediaUrl.startsWith('blob:')) {
@@ -26984,7 +27137,7 @@ function getCalisthenicsExpertResponse(query) {
                 if (mediaUrl.includes('cloudinary.com')) {
                     const pubId = extractCloudinaryPublicId(mediaUrl);
                     if (pubId) {
-                        console.log('[Storage Cleanup] Pulizia referenza Cloudinary:', pubId);
+                        await deleteAssetFromCloudinary(pubId, mediaType, mediaUrl);
                     }
                 }
             } catch(e) {
@@ -27479,8 +27632,10 @@ function getCalisthenicsExpertResponse(query) {
 
         function getMediaSizeEstimate(item) {
             if (!item) return 0;
-            if (typeof item.fileSize === 'number' && item.fileSize > 0) return item.fileSize;
             if (typeof item.bytes === 'number' && item.bytes > 0) return item.bytes;
+            if (typeof item.fileSize === 'number' && item.fileSize > 0) return item.fileSize;
+            if (typeof item.mediaBytes === 'number' && item.mediaBytes > 0) return item.mediaBytes;
+            if (typeof item.cloudinaryBytes === 'number' && item.cloudinaryBytes > 0) return item.cloudinaryBytes;
             if (item.mediaUrl && typeof item.mediaUrl === 'string' && item.mediaUrl.startsWith('data:')) {
                 return Math.round(item.mediaUrl.length * 0.75);
             }
@@ -27489,8 +27644,11 @@ function getCalisthenicsExpertResponse(query) {
             if (type === 'audio' || url.includes('/raw/upload/') || url.includes('voice_') || url.includes('audio') || url.endsWith('.ogg') || url.endsWith('.wav') || url.endsWith('.m4a') || url.endsWith('.mp3')) {
                 return 200 * 1024; // ~200 KB nota vocale
             }
-            if (type === 'video' || url.includes('video') || url.endsWith('.mp4') || url.endsWith('.webm') || url.endsWith('.mov')) {
-                return 1.8 * 1024 * 1024; // ~1.8 MB a 8 FPS compresso
+            if (type === 'video' || url.includes('/video/') || url.includes('video') || url.endsWith('.mp4') || url.endsWith('.webm') || url.endsWith('.mov')) {
+                if (item.colType === 'general' || item.colType === 'private' || item.colType === 'cache') {
+                    return 4.5 * 1024 * 1024; // ~4.5 MB video chat 720p 30 FPS fino al probe HEAD reale
+                }
+                return 1.8 * 1024 * 1024; // ~1.8 MB video verifica
             }
             return 350 * 1024; // ~350 KB foto compressa
         }
@@ -27602,8 +27760,8 @@ function getCalisthenicsExpertResponse(query) {
                                 ${getSvgDatabase(18, '#38bdf8')}
                             </span>
                             <div>
-                                <div style="font-size:0.92rem; font-weight:800; color:var(--text);">Spazio Storage Cloudinary & Firestore</div>
-                                <div style="font-size:0.72rem; color:var(--subtext);">Provider: <strong>Cloudinary</strong> (Media) + <strong>Firestore</strong> (DB) &bull; Quota Free: <strong>25.0 GB</strong></div>
+                                <div style="font-size:0.92rem; font-weight:800; color:var(--text);">Spazio Storage Cloudinary &amp; Firestore (Reale)</div>
+                                <div style="font-size:0.72rem; color:var(--subtext);">Provider: <strong>Cloudinary</strong> (Media 720p Collegato in Tempo Reale) + <strong>Firestore</strong> (DB) &bull; Quota Free: <strong>25.0 GB</strong></div>
                             </div>
                         </div>
                         <div style="text-align:right;">
@@ -27646,11 +27804,51 @@ function getCalisthenicsExpertResponse(query) {
                         </div>
                     </div>
                 </div>
-
-                <!-- BOX INFORMATIVO DISCREPANZA CLOUDINARY VECCHI FILE -->
-                <div style="margin-bottom:14px; padding:10px 14px; border-radius:10px; background:rgba(56,189,248,0.06); border:1px solid rgba(56,189,248,0.22); font-size:0.75rem; color:var(--subtext); line-height:1.45;">
-                    💡 <strong style="color:var(--text);">Perché Cloudinary può segnare più spazio (es. 400 MB vs 61 MB)?</strong><br>
-                    Cloudinary conteggia lo storage cumulativo complessivo, includendo i <em>vecchi video nativi a 60 FPS (da 50-90 MB l'uno)</em> caricati prima dell'ottimizzazione a 8 FPS e le copie derivate/trasformate. Il monitoraggio dell'app interroga in background le dimensioni reali. Se desideri azzerare i vecchi video pesanti, puoi usare il tasto <strong>"Svuota Verifiche AI"</strong> oppure eliminarli direttamente dalla Media Library della dashboard web di Cloudinary (cartella <code>chat_media</code>). Con la nuova compressione a 8 FPS ogni nuovo video occuperà solo ~1.5 MB!
+                <!-- GESTIONE CHIAVI CLOUDINARY FOUNDER & ELIMINAZIONE SERVER DIRETTA -->
+                <div style="background:rgba(255,255,255,0.03); border:1px solid var(--line-color); border-radius:14px; padding:14px 16px; margin-bottom:16px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:10px;">
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <span style="font-size:1.1rem;">🔑</span>
+                            <div>
+                                <strong style="font-size:0.88rem; color:var(--text);">Collegamento Diretto API Cloudinary</strong>
+                                <div style="font-size:0.72rem; color:var(--subtext);">Consente l'eliminazione fisica permanente dei file sui server Cloudinary e il calcolo esatto dello spazio.</div>
+                            </div>
+                        </div>
+                        <div id="cld-keys-status-badge">
+                            ${isCloudinaryApiConfigured() 
+                                ? '<span style="font-size:0.75rem; font-weight:800; color:#10b981; background:rgba(16,185,129,0.15); border:1px solid #10b981; padding:3px 8px; border-radius:6px;">🟢 API Cloudinary Connessa (Eliminazione Server Attiva)</span>'
+                                : '<span style="font-size:0.75rem; font-weight:800; color:#f59e0b; background:rgba(245,158,11,0.15); border:1px solid #f59e0b; padding:3px 8px; border-radius:6px;">⚠️ Inserisci API Key & Secret per Eliminare Fisicamente da Cloudinary</span>'
+                            }
+                        </div>
+                    </div>
+                    
+                    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:10px; margin-bottom:10px;">
+                        <div>
+                            <label style="font-size:0.72rem; color:var(--subtext); display:block; margin-bottom:4px;">Cloud Name</label>
+                            <input type="text" value="${CLOUDINARY_CLOUD_NAME}" disabled style="width:100%; box-sizing:border-box; padding:8px 10px; border-radius:8px; border:1px solid var(--line-color); background:rgba(0,0,0,0.25); color:var(--subtext); font-size:0.8rem;">
+                        </div>
+                        <div>
+                            <label style="font-size:0.72rem; color:var(--subtext); display:block; margin-bottom:4px;">API Key Cloudinary</label>
+                            <input type="text" id="cld-api-key-input" value="${getCloudinaryApiKey()}" placeholder="es. 123456789012345" style="width:100%; box-sizing:border-box; padding:8px 10px; border-radius:8px; border:1px solid var(--line-color); background:rgba(255,255,255,0.05); color:var(--text); font-size:0.8rem;">
+                        </div>
+                        <div>
+                            <label style="font-size:0.72rem; color:var(--subtext); display:block; margin-bottom:4px;">API Secret Cloudinary</label>
+                            <div style="position:relative;">
+                                <input type="password" id="cld-api-secret-input" value="${getCloudinaryApiSecret()}" placeholder="es. aBcDeFgHiJkLmNoPqRs" style="width:100%; box-sizing:border-box; padding:8px 36px 8px 10px; border-radius:8px; border:1px solid var(--line-color); background:rgba(255,255,255,0.05); color:var(--text); font-size:0.8rem;">
+                                <button type="button" onclick="toggleCloudinarySecretVisibility()" style="position:absolute; right:8px; top:50%; transform:translateY(-50%); background:none; border:none; color:var(--subtext); cursor:pointer; font-size:0.8rem;" title="Mostra/Nascondi">👁️</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+                        <div style="font-size:0.7rem; color:var(--subtext);">
+                            ℹ️ Trovi API Key e API Secret su <strong>cloudinary.com</strong> nella schermata iniziale Dashboard o sotto <em>Settings &rarr; API Keys</em>.
+                        </div>
+                        <div style="display:flex; gap:8px;">
+                            <button type="button" class="btn-auth-secondary" onclick="saveCloudinaryCredentialsFromUI()" style="padding:6px 14px; font-size:0.78rem; border-radius:8px; cursor:pointer;">
+                                💾 Salva Credenziali Cloudinary
+                            </button>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- SOTTO-NAVIGAZIONE CATEGORIE: VERIFICHE AI vs MEDIA CHAT -->
@@ -27798,7 +27996,7 @@ function getCalisthenicsExpertResponse(query) {
                     typeBadge = '<span style="font-size:0.7rem; padding:1px 6px; border-radius:4px; background:rgba(56,189,248,0.12); color:#38bdf8; border:1px solid rgba(56,189,248,0.3);">📹 Video</span>';
                     mediaEl = `
                         <div style="position:relative; width:110px; height:80px; flex-shrink:0; border-radius:8px; overflow:hidden; background:#000; border:1px solid var(--line-color);">
-                            <video src="${escapeHtml(m.mediaUrl)}" preload="metadata" playsinline muted style="width:100%; height:100%; object-fit:cover;"></video>
+                            <video src="${escapeHtml(sanitizeCloudinaryMediaUrl(m.mediaUrl, 'video'))}" preload="metadata" playsinline muted style="width:100%; height:100%; object-fit:cover;"></video>
                             <a href="${escapeHtml(m.mediaUrl)}" target="_blank" rel="noopener noreferrer" style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.35); color:#fff; text-decoration:none; font-size:1.1rem;" title="Apri video">▶</a>
                         </div>
                     `;
@@ -27845,30 +28043,53 @@ function getCalisthenicsExpertResponse(query) {
             }).join('');
         }
 
-        async 
-        function triggerRealMediaSizeProbing() {
+        async function triggerRealMediaSizeProbing(forceAll = false) {
             const allItems = [...cachedStorageVerifications, ...cachedStorageChatMedia];
-            allItems.forEach(item => {
-                if (item && item.mediaUrl && !item._probed && !item.mediaUrl.startsWith('data:')) {
-                    item._probed = true;
-                    try {
-                        fetch(item.mediaUrl, { method: 'HEAD' })
-                            .then(res => {
-                                if (res.ok) {
-                                    const cl = res.headers.get('content-length');
-                                    if (cl) {
-                                        const parsedBytes = parseInt(cl, 10);
-                                        if (parsedBytes && parsedBytes > 0 && parsedBytes !== item.bytes) {
-                                            item.bytes = parsedBytes;
-                                            item.fileSize = parsedBytes;
+            for (const item of allItems) {
+                if (!item || !item.mediaUrl || item.mediaUrl.startsWith('data:')) continue;
+                if (!forceAll && item._probed) continue;
+                item._probed = true;
+
+                // Usa URL pulito per interrogare la dimensione esatta archiviata su Cloudinary
+                const probeUrl = sanitizeCloudinaryMediaUrl(item.mediaUrl, item.mediaType);
+
+                try {
+                    fetch(probeUrl, { method: 'HEAD' })
+                        .then(res => {
+                            if (res.ok) {
+                                const cl = res.headers.get('content-length');
+                                if (cl) {
+                                    const parsedBytes = parseInt(cl, 10);
+                                    if (parsedBytes && parsedBytes > 0) {
+                                        const changed = item.bytes !== parsedBytes;
+                                        item.bytes = parsedBytes;
+                                        item.fileSize = parsedBytes;
+
+                                        // Aggiorna istantaneamente il badge di peso nella card del file
+                                        const badgeVerif = document.getElementById(`storage-size-verif-${item.id}`);
+                                        if (badgeVerif) badgeVerif.innerText = `~${formatStorageBytes(parsedBytes)}`;
+                                        const badgeChat = document.getElementById(`storage-size-chat-${item.id}`);
+                                        if (badgeChat) badgeChat.innerText = `~${formatStorageBytes(parsedBytes)}`;
+
+                                        if (changed) {
                                             recalculateStorageStats();
+                                            // Salva su Firestore per persistenza definitiva del dato reale Cloudinary
+                                            try {
+                                                if (item.docRef) {
+                                                    item.docRef.update({ bytes: parsedBytes, fileSize: parsedBytes }).catch(() => {});
+                                                } else if (item.colType === 'general') {
+                                                    db.collection("chatMessages").doc(item.id).update({ bytes: parsedBytes, fileSize: parsedBytes }).catch(() => {});
+                                                }
+                                            } catch(e) {}
                                         }
                                     }
                                 }
-                            }).catch(() => {});
-                    } catch(e) {}
-                }
-            });
+                            }
+                        }).catch(err => {
+                            console.warn('[Cloudinary HEAD Probe]:', err);
+                        });
+                } catch(e) {}
+            }
         }
     
         async function loadAdminStorageData(forceRefresh = false) {
@@ -28037,6 +28258,40 @@ function getCalisthenicsExpertResponse(query) {
             }
         }
 
+        function toggleCloudinarySecretVisibility() {
+            const inp = document.getElementById('cld-api-secret-input');
+            if (inp) {
+                inp.type = inp.type === 'password' ? 'text' : 'password';
+            }
+        }
+
+        function saveCloudinaryCredentialsFromUI() {
+            const keyEl = document.getElementById('cld-api-key-input');
+            const secEl = document.getElementById('cld-api-secret-input');
+            const key = keyEl ? keyEl.value.trim() : '';
+            const sec = secEl ? secEl.value.trim() : '';
+
+            setCloudinaryCredentials(key, sec);
+            showAppToast("Credenziali Cloudinary salvate con successo! L'eliminazione fisica permanente è attiva.", "success");
+            triggerRealMediaSizeProbing(true);
+        }
+
+        function verifyCloudinaryConfigBeforeDelete() {
+            if (!isCloudinaryApiConfigured()) {
+                const conf = confirm("ℹ️ Per eliminare il file anche fisicamente dal server Cloudinary e liberare lo spazio dal tuo account, inserisci una sola volta l'API Key e l'API Secret di Cloudinary.\n\nVuoi inserirli adesso?");
+                if (conf) {
+                    const k = prompt("Inserisci la tua API Key di Cloudinary (la trovi su cloudinary.com nella Dashboard):");
+                    if (k && k.trim()) {
+                        const s = prompt("Inserisci ora il tuo API Secret di Cloudinary:");
+                        if (s && s.trim()) {
+                            setCloudinaryCredentials(k.trim(), s.trim());
+                            showAppToast("Credenziali Cloudinary configurate con successo!", "success");
+                        }
+                    }
+                }
+            }
+        }
+
         function switchStorageSubTab(subTab) {
             storageActiveSubTab = subTab;
             const container = document.getElementById('admin-storage-subtab-container');
@@ -28070,6 +28325,8 @@ function getCalisthenicsExpertResponse(query) {
 
             const itemDesc = category === 'verifications' ? "questo video di verifica" : "questo allegato chat";
             if (!confirm(`Sei sicuro di voler eliminare definitivamente ${itemDesc} per liberare spazio dallo storage?`)) return;
+
+            verifyCloudinaryConfigBeforeDelete();
 
             try {
                 if (category === 'verifications') {
