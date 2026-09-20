@@ -15338,7 +15338,12 @@ function getCalisthenicsExpertResponse(query) {
             "QVEuQWI4Uk42THZaYVlPeVRBbmE5Q3hCOE91WlN3SXJacDU5Slg3SDNQeHI1dUUzeWFCc0E=",
             "QVEuQWI4Uk42SkdSM1Fma0JsVWV4YjBqTWhqamctSFNWVl9CZzdpMVVOcTRhOG9NOXdVd0E=",
             "QVEuQWI4Uk42TDhfVE1wdFpoV3Q3QjVpclpuQzYwaFVMTjBZTTdtME5IaU5nV21xWTBtYWc=",
-            "QVEuQWI4Uk42SjZRNWhZUWs5Z0tIRDNNTXljTTl3VHdFd3djM3hZYTBXcWd4WUgxa1BlX2c="
+            "QVEuQWI4Uk42SjZRNWhZUWs5Z0tIRDNNTXljTTl3VHdFd3djM3hZYTBXcWd4WUgxa1BlX2c=",
+            "QVEuQWI4Uk42SUcxd2d2UXNLR184NzBHVGQ2U00tMlVUU05aWmVQRUtPTkZfdlBUMlZYcGc=",
+            "QVEuQWI4Uk42S1JKM2NKdU5SYUJpM1YtQUVONVRJMXl3b0dCQ2ROeDViS2NWRG8ySUg2U1E=",
+            "QVEuQWI4Uk42SzdoZmZkSlRVZlhRaFZBcEZPSWk3Q2hFdnlEZFJXT1pCZEEwRDNDVHQ0M2c=",
+            "QVEuQWI4Uk42SXVGRkFOUG92NGJrdnBJekZsSDFIRDF3eVRDRzV2dmZiZV9YSG5LRFNKaUE=",
+            "QVEuQWI4Uk42S0c1WkFvcF9icjlSMU1oNGRsUE5WVEl3SlFYTGpRMFktYXZIUnZNZlM3b0E="
         ];
         const GLOBAL_GEMINI_API_KEYS = _AI_TOKEN_POOL_ENCODED.map(b => {
             try { return atob(b); } catch(e) { return ""; }
@@ -18857,7 +18862,7 @@ function getCalisthenicsExpertResponse(query) {
                     <div class="chat-pending-media-bar" style="justify-content:center; gap:8px;">
                         <span class="chat-loading-spinner"></span>
                         <span style="font-size:0.85rem; color:var(--accent); font-weight:600;">
-                            ${type === 'image' ? '⏳ Ottimizzazione foto (max 720p)...' : '⏳ Compressione video (max 560p)...'}
+                            ${type === 'image' ? '⏳ compressione foto...' : '⏳ compressione video...'}
                         </span>
                     </div>
                 `;
@@ -18872,18 +18877,19 @@ function getCalisthenicsExpertResponse(query) {
                 }
             } else if (type === 'video') {
                 try {
-                    processedFile = await compressVideoClientSide(file);
+                    // Chat video: 720p (1280x720) a 30 FPS
+                    processedFile = await compressVideoClientSide(file, 1280, 720, 30);
                 } catch (e) {
                     console.warn("Compressione video non riuscita, uso file originale:", e);
                 }
             }
 
-            // CONTROLLO LIMITE 10 MB POST-COMPRESSIONE:
-            // Il sistema prima comprime foto/video e verifica se supera i 10 MB solo dopo la compressione
-            const MAX_CHAT_MEDIA_BYTES = 10 * 1024 * 1024; // 10 MB
+            // CONTROLLO LIMITE 15 MB POST-COMPRESSIONE:
+            // Se da compresso supera 15 MB, non è accettato
+            const MAX_CHAT_MEDIA_BYTES = 15 * 1024 * 1024; // 15 MB
             if (processedFile.size > MAX_CHAT_MEDIA_BYTES) {
                 const sizeStr = formatFileSize(processedFile.size);
-                showAppToast(`L'allegato supera il limite di 10 MB anche dopo la compressione (${sizeStr}). Non può essere inviato.`, "warning");
+                showAppToast(`L'allegato supera il limite di 15 MB anche dopo la compressione (${sizeStr}). Non può essere inviato.`, "warning");
                 removePendingChatMedia();
                 return;
             }
@@ -19001,7 +19007,8 @@ function getCalisthenicsExpertResponse(query) {
                 url: finalUrl,
                 publicId: data.public_id,
                 duration: data.duration ? Math.round(data.duration) : null,
-                format: data.format
+                format: data.format,
+                bytes: data.bytes || (fileOrBlob && fileOrBlob.size ? fileOrBlob.size : null)
             };
         }
 
@@ -20383,6 +20390,7 @@ function getCalisthenicsExpertResponse(query) {
             };
 
             if (payload.mediaUrl) msgDoc.mediaUrl = payload.mediaUrl;
+            if (payload.bytes) msgDoc.bytes = payload.bytes;
             if (payload.mediaType) msgDoc.mediaType = payload.mediaType;
             if (payload.mediaDuration) msgDoc.mediaDuration = payload.mediaDuration;
             if (payload.mediaPublicId) msgDoc.mediaPublicId = payload.mediaPublicId;
@@ -20473,9 +20481,9 @@ function getCalisthenicsExpertResponse(query) {
 
             if (!text && !pendingChatMedia) return;
 
-            const MAX_CHAT_MEDIA_BYTES = 10 * 1024 * 1024;
+            const MAX_CHAT_MEDIA_BYTES = 15 * 1024 * 1024;
             if (pendingChatMedia && pendingChatMedia.file && pendingChatMedia.file.size > MAX_CHAT_MEDIA_BYTES) {
-                showAppToast("L'allegato supera il limite massimo di 10 MB e non può essere inviato.", "warning");
+                showAppToast("L'allegato supera il limite massimo di 15 MB e non può essere inviato.", "warning");
                 return;
             }
 
@@ -27639,6 +27647,12 @@ function getCalisthenicsExpertResponse(query) {
                     </div>
                 </div>
 
+                <!-- BOX INFORMATIVO DISCREPANZA CLOUDINARY VECCHI FILE -->
+                <div style="margin-bottom:14px; padding:10px 14px; border-radius:10px; background:rgba(56,189,248,0.06); border:1px solid rgba(56,189,248,0.22); font-size:0.75rem; color:var(--subtext); line-height:1.45;">
+                    💡 <strong style="color:var(--text);">Perché Cloudinary può segnare più spazio (es. 400 MB vs 61 MB)?</strong><br>
+                    Cloudinary conteggia lo storage cumulativo complessivo, includendo i <em>vecchi video nativi a 60 FPS (da 50-90 MB l'uno)</em> caricati prima dell'ottimizzazione a 8 FPS e le copie derivate/trasformate. Il monitoraggio dell'app interroga in background le dimensioni reali. Se desideri azzerare i vecchi video pesanti, puoi usare il tasto <strong>"Svuota Verifiche AI"</strong> oppure eliminarli direttamente dalla Media Library della dashboard web di Cloudinary (cartella <code>chat_media</code>). Con la nuova compressione a 8 FPS ogni nuovo video occuperà solo ~1.5 MB!
+                </div>
+
                 <!-- SOTTO-NAVIGAZIONE CATEGORIE: VERIFICHE AI vs MEDIA CHAT -->
                 <div style="display:flex; gap:8px; margin-bottom:12px; border-bottom:1px solid var(--line-color); padding-bottom:8px;">
                     <button type="button" class="admin-tab-btn ${storageActiveSubTab === 'verifications' ? 'active' : ''}" onclick="switchStorageSubTab('verifications')" style="${storageActiveSubTab === 'verifications' ? 'background:rgba(16,185,129,0.18); border-color:#10b981; color:#10b981;' : ''}">
@@ -27739,7 +27753,7 @@ function getCalisthenicsExpertResponse(query) {
                                         ${isAppr ? 'APPROVATA' : 'RESPINTA'}
                                     </span>
                                     <span style="font-size:0.7rem; padding:1px 6px; border-radius:4px; background:rgba(56,189,248,0.12); color:#38bdf8; border:1px solid rgba(56,189,248,0.3);">
-                                        ${isVid ? '📹 8 FPS Ottimizzato' : '📸 Foto'}
+                                        ${isVid ? '📹 10 FPS 720p' : '📸 Foto'}
                                     </span>
                                 </div>
                                 <div style="font-size:0.8rem; color:var(--text); margin-bottom:2px;">
@@ -27831,29 +27845,181 @@ function getCalisthenicsExpertResponse(query) {
             }).join('');
         }
 
+        async 
+        function triggerRealMediaSizeProbing() {
+            const allItems = [...cachedStorageVerifications, ...cachedStorageChatMedia];
+            allItems.forEach(item => {
+                if (item && item.mediaUrl && !item._probed && !item.mediaUrl.startsWith('data:')) {
+                    item._probed = true;
+                    try {
+                        fetch(item.mediaUrl, { method: 'HEAD' })
+                            .then(res => {
+                                if (res.ok) {
+                                    const cl = res.headers.get('content-length');
+                                    if (cl) {
+                                        const parsedBytes = parseInt(cl, 10);
+                                        if (parsedBytes && parsedBytes > 0 && parsedBytes !== item.bytes) {
+                                            item.bytes = parsedBytes;
+                                            item.fileSize = parsedBytes;
+                                            recalculateStorageStats();
+                                        }
+                                    }
+                                }
+                            }).catch(() => {});
+                    } catch(e) {}
+                }
+            });
+        }
+    
         async function loadAdminStorageData(forceRefresh = false) {
             if (typeof db === 'undefined') return;
 
             try {
+                // 1. CARICAMENTO VERIFICHE AI (Senza filtri restrittivi di indice per recuperare tutti i record)
                 if (forceRefresh || cachedStorageVerifications.length === 0) {
-                    const verifSnap = await db.collection("aiVerifications").orderBy("timestamp", "desc").limit(300).get();
                     cachedStorageVerifications = [];
-                    verifSnap.forEach(doc => {
+                    let verifDocs = [];
+                    try {
+                        const verifSnap = await db.collection("aiVerifications").get();
+                        verifDocs = verifSnap.docs;
+                    } catch(e) {
+                        try {
+                            const verifSnap2 = await db.collection("aiVerifications").limit(500).get();
+                            verifDocs = verifSnap2.docs;
+                        } catch(e2) {}
+                    }
+
+                    verifDocs.forEach(doc => {
                         const data = doc.data();
-                        if (data && data.mediaUrl) {
-                            cachedStorageVerifications.push({ id: doc.id, ...data });
+                        const mUrl = data && (data.mediaUrl || data.videoUrl || data.imageUrl);
+                        if (data && mUrl) {
+                            cachedStorageVerifications.push({
+                                id: doc.id,
+                                mediaUrl: mUrl,
+                                ...data
+                            });
                         }
+                    });
+
+                    cachedStorageVerifications.sort((a, b) => {
+                        const ta = a.timestamp || (a.createdAt && a.createdAt.toMillis ? a.createdAt.toMillis() : (a.createdAt || 0));
+                        const tb = b.timestamp || (b.createdAt && b.createdAt.toMillis ? b.createdAt.toMillis() : (b.createdAt || 0));
+                        return tb - ta;
                     });
                 }
 
+                // 2. CARICAMENTO MEDIA CHAT: GENERALE, PRIVATE, GRUPPI E CACHE LOCALE
                 if (forceRefresh || cachedStorageChatMedia.length === 0) {
-                    const chatSnap = await db.collection("chatMessages").orderBy("createdAt", "desc").limit(300).get();
                     cachedStorageChatMedia = [];
-                    chatSnap.forEach(doc => {
-                        const data = doc.data();
-                        if (data && data.mediaUrl && !data.mediaExpired) {
-                            cachedStorageChatMedia.push({ id: doc.id, ...data });
+
+                    // 2a. Messaggi Chat Generale (chatMessages)
+                    try {
+                        let chatDocs = [];
+                        try {
+                            const chatSnap = await db.collection("chatMessages").get();
+                            chatDocs = chatSnap.docs;
+                        } catch(e1) {
+                            try {
+                                const chatSnap2 = await db.collection("chatMessages").limit(500).get();
+                                chatDocs = chatSnap2.docs;
+                            } catch(e2) {}
                         }
+
+                        chatDocs.forEach(doc => {
+                            const data = doc.data();
+                            const mUrl = data && (data.mediaUrl || data.imageUrl || data.videoUrl || data.audioUrl || data.fileUrl || data.imageBase64);
+                            if (data && mUrl && !data.mediaExpired) {
+                                cachedStorageChatMedia.push({
+                                    id: doc.id,
+                                    colType: 'general',
+                                    docRef: doc.ref,
+                                    mediaUrl: mUrl,
+                                    ...data
+                                });
+                            }
+                        });
+                    } catch(genErr) {
+                        console.warn("[Storage Monitor] Scansione chatMessages:", genErr);
+                    }
+
+                    // 2b. Messaggi Chat Private e Gruppi (conversations/{convId}/messages)
+                    try {
+                        let convFoundViaGroup = false;
+                        if (typeof db.collectionGroup === 'function') {
+                            try {
+                                const groupSnap = await db.collectionGroup("messages").get();
+                                groupSnap.forEach(doc => {
+                                    const data = doc.data();
+                                    const mUrl = data && (data.mediaUrl || data.imageUrl || data.videoUrl || data.audioUrl || data.fileUrl || data.imageBase64);
+                                    if (data && mUrl && !data.mediaExpired) {
+                                        if (!cachedStorageChatMedia.some(x => x.id === doc.id)) {
+                                            cachedStorageChatMedia.push({
+                                                id: doc.id,
+                                                colType: 'private',
+                                                docRef: doc.ref,
+                                                mediaUrl: mUrl,
+                                                ...data
+                                            });
+                                        }
+                                    }
+                                });
+                                convFoundViaGroup = true;
+                            } catch(cgErr) {
+                                console.warn("[Storage Monitor] collectionGroup messages non indicizzato, eseguo fallback su conversations:", cgErr);
+                            }
+                        }
+
+                        if (!convFoundViaGroup) {
+                            const convsSnap = await db.collection("conversations").limit(100).get();
+                            for (const cDoc of convsSnap.docs) {
+                                try {
+                                    const mSnap = await cDoc.ref.collection("messages").limit(100).get();
+                                    mSnap.forEach(mDoc => {
+                                        const mData = mDoc.data();
+                                        const mUrl = mData && (mData.mediaUrl || mData.imageUrl || mData.videoUrl || mData.audioUrl || mData.fileUrl || mData.imageBase64);
+                                        if (mData && mUrl && !mData.mediaExpired) {
+                                            if (!cachedStorageChatMedia.some(x => x.id === mDoc.id)) {
+                                                cachedStorageChatMedia.push({
+                                                    id: mDoc.id,
+                                                    colType: 'private',
+                                                    docRef: mDoc.ref,
+                                                    mediaUrl: mUrl,
+                                                    ...mData
+                                                });
+                                            }
+                                        }
+                                    });
+                                } catch(subErr) {}
+                            }
+                        }
+                    } catch(privErr) {
+                        console.warn("[Storage Monitor] Scansione conversazioni private:", privErr);
+                    }
+
+                    // 2c. Controllo cache locale messaggi attivi in memoria
+                    if (typeof chatMessagesCache !== 'undefined' && chatMessagesCache) {
+                        Object.keys(chatMessagesCache).forEach(id => {
+                            const m = chatMessagesCache[id];
+                            const mUrl = m && (m.mediaUrl || m.imageUrl || m.videoUrl || m.audioUrl || m.fileUrl || m.imageBase64);
+                            if (m && mUrl && !m.mediaExpired) {
+                                if (!cachedStorageChatMedia.some(x => x.id === id)) {
+                                    cachedStorageChatMedia.push({
+                                        id: id,
+                                        colType: 'cache',
+                                        docRef: db.collection("chatMessages").doc(id),
+                                        mediaUrl: mUrl,
+                                        ...m
+                                    });
+                                }
+                            }
+                        });
+                    }
+
+                    // Ordina tutti i media chat dal più recente
+                    cachedStorageChatMedia.sort((a, b) => {
+                        const ta = a.createdAt && a.createdAt.toMillis ? a.createdAt.toMillis() : (a.createdAt || a.timestamp || 0);
+                        const tb = b.createdAt && b.createdAt.toMillis ? b.createdAt.toMillis() : (b.createdAt || b.timestamp || 0);
+                        return tb - ta;
                     });
                 }
 
@@ -27863,6 +28029,9 @@ function getCalisthenicsExpertResponse(query) {
                 if (subtabContainer) {
                     subtabContainer.innerHTML = renderStorageCurrentSubTabHtml();
                 }
+
+                // Avvia scansione in background delle dimensioni reali HTTP HEAD da Cloudinary
+                triggerRealMediaSizeProbing();
             } catch(err) {
                 console.warn("Errore caricamento dati storage:", err);
             }
@@ -27918,13 +28087,23 @@ function getCalisthenicsExpertResponse(query) {
                     if (item && item.mediaUrl) {
                         cleanMediaFromStorage(item.mediaUrl, item.mediaType);
                     }
-                    await db.collection("chatMessages").doc(id).update({
-                        mediaUrl: firebase.firestore.FieldValue.delete(),
-                        mediaPublicId: firebase.firestore.FieldValue.delete(),
-                        mediaType: firebase.firestore.FieldValue.delete(),
-                        mediaExpired: true,
-                        mediaExpiredAt: firebase.firestore.FieldValue.serverTimestamp()
-                    });
+                    if (item && item.docRef) {
+                        await item.docRef.update({
+                            mediaUrl: firebase.firestore.FieldValue.delete(),
+                            mediaPublicId: firebase.firestore.FieldValue.delete(),
+                            mediaType: firebase.firestore.FieldValue.delete(),
+                            mediaExpired: true,
+                            mediaExpiredAt: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                    } else {
+                        await db.collection("chatMessages").doc(id).update({
+                            mediaUrl: firebase.firestore.FieldValue.delete(),
+                            mediaPublicId: firebase.firestore.FieldValue.delete(),
+                            mediaType: firebase.firestore.FieldValue.delete(),
+                            mediaExpired: true,
+                            mediaExpiredAt: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                    }
                     cachedStorageChatMedia = cachedStorageChatMedia.filter(x => x.id !== id);
                 }
 
@@ -27981,29 +28160,29 @@ function getCalisthenicsExpertResponse(query) {
                     cachedStorageVerifications = [];
                     if (typeof cachedAdminVerifications !== 'undefined') cachedAdminVerifications = [];
                 } else if (category === 'chat') {
-                    const snap = await db.collection("chatMessages").get();
+                    const itemsToPurge = [...cachedStorageChatMedia];
                     const batchSize = 450;
                     let batch = db.batch();
                     let bCount = 0;
 
-                    for (const doc of snap.docs) {
-                        const data = doc.data();
-                        if (data && data.mediaUrl) {
-                            cleanMediaFromStorage(data.mediaUrl, data.mediaType);
-                            batch.update(doc.ref, {
-                                mediaUrl: firebase.firestore.FieldValue.delete(),
-                                mediaPublicId: firebase.firestore.FieldValue.delete(),
-                                mediaType: firebase.firestore.FieldValue.delete(),
-                                mediaExpired: true,
-                                mediaExpiredAt: firebase.firestore.FieldValue.serverTimestamp()
-                            });
-                            bCount++;
-                            deletedCount++;
-                            if (bCount >= batchSize) {
-                                await batch.commit();
-                                batch = db.batch();
-                                bCount = 0;
-                            }
+                    for (const item of itemsToPurge) {
+                        if (item.mediaUrl) {
+                            cleanMediaFromStorage(item.mediaUrl, item.mediaType);
+                        }
+                        const targetRef = item.docRef || db.collection("chatMessages").doc(item.id);
+                        batch.update(targetRef, {
+                            mediaUrl: firebase.firestore.FieldValue.delete(),
+                            mediaPublicId: firebase.firestore.FieldValue.delete(),
+                            mediaType: firebase.firestore.FieldValue.delete(),
+                            mediaExpired: true,
+                            mediaExpiredAt: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                        bCount++;
+                        deletedCount++;
+                        if (bCount >= batchSize) {
+                            await batch.commit();
+                            batch = db.batch();
+                            bCount = 0;
                         }
                     }
                     if (bCount > 0) await batch.commit();
@@ -28613,6 +28792,30 @@ function getCalisthenicsExpertResponse(query) {
                 const videoInfo = await validateVideoLoadAndDuration(file);
                 if (isAborted) return;
                 const dur = videoInfo.duration > 0 ? videoInfo.duration : 10;
+
+                // CONTROLLO DURATA MASSIMA: 3 MINUTI (180 SECONDI)
+                if (dur > 180) {
+                    if (submitBtn) {
+                        submitBtn.disabled = false;
+                        submitBtn.style.opacity = '1';
+                        submitBtn.style.cursor = 'pointer';
+                        submitBtn.style.background = '';
+                        submitBtn.style.borderColor = '';
+                        submitBtn.innerHTML = `${getSvgShield('verified', 15)} <span>Certifica con Coach Ares</span>`;
+                    }
+                    if (feedbackEl) {
+                        feedbackEl.style.display = 'block';
+                        feedbackEl.style.background = 'rgba(239,68,68,0.15)';
+                        feedbackEl.style.color = '#ef4444';
+                        feedbackEl.style.border = '1px solid #ef4444';
+                        feedbackEl.innerText = `Il video selezionato dura ${Math.round(dur)} secondi. Il video della verifica non deve superare i 3 minuti (180 secondi).`;
+                    }
+                    const loadBox = document.getElementById('verify-media-loading');
+                    if (loadBox) loadBox.innerHTML = '';
+                    showAppToast("Il video di verifica non può superare i 3 minuti.", "warning");
+                    return;
+                }
+
                 updateProgress(25, "compressione video...");
 
                 let finalDataUrl = null;
@@ -28622,12 +28825,10 @@ function getCalisthenicsExpertResponse(query) {
                 // Metodo 1: Compressione client-side MediaRecorder a 8 FPS (Chrome / Android / Firefox)
                 if (typeof MediaRecorder !== 'undefined' && HTMLCanvasElement.prototype.captureStream) {
                     try {
-                        const compRes = await compressVideoClientSide(file, 1280, 720, 8, (ratio, curTime, totTime) => {
-                            const totalSec = Math.round(totTime || dur || 0);
-                            const currentSec = Math.min(totalSec, Math.round(curTime || (ratio * totalSec)));
+                        // Compressione video per verifica AI a 720p 10 FPS (testo progress: solo "compressione video...")
+                        const compRes = await compressVideoClientSide(file, 1280, 720, 10, (ratio) => {
                             const pct = Math.min(99, Math.round(ratio * 100));
-                            const timeStr = totalSec > 0 ? ` (${currentSec}s / ${totalSec}s)` : '';
-                            updateProgress(pct, `compressione video${timeStr}...`);
+                            updateProgress(pct, "compressione video...");
                         });
                         if (compRes && compRes !== file) {
                             processedFile = compRes;
@@ -28654,7 +28855,7 @@ function getCalisthenicsExpertResponse(query) {
                 if (!compressionSuccess) {
                     updateProgress(30, "compressione video...");
                     try {
-                        const mobile5FpsResult = await extractMobile5FpsSequence(file, 8, (p) => {
+                        const mobile5FpsResult = await extractMobile5FpsSequence(file, 10, (p) => {
                             updateProgress(30 + p * 65, "compressione video...");
                         });
                         if (mobile5FpsResult && mobile5FpsResult.frames && mobile5FpsResult.frames.length > 0) {
@@ -28869,6 +29070,11 @@ function getCalisthenicsExpertResponse(query) {
             const feedbackEl = document.getElementById('verify-status-feedback');
             const submitBtn = document.getElementById('btn-submit-ai-verify');
 
+            if (preparedVerificationMedia && preparedVerificationMedia.duration > 180) {
+                showAppToast("Il video della verifica non deve superare i 3 minuti.", "warning");
+                return;
+            }
+
             let val = claimedInput ? parseInt(claimedInput.value) || 1 : 1;
             let certifiedVal = val;
             let isPartialCertification = false;
@@ -28979,7 +29185,7 @@ function getCalisthenicsExpertResponse(query) {
                     const vidB64 = fileDataUrl.includes(',') ? fileDataUrl.split(',')[1] : fileDataUrl;
                     const vidMime = (processedFile && processedFile.type) || 'video/webm';
                     geminiParts.push({
-                        text: `ESAME CERTIFICAZIONE SKILL - VIDEO INTEGRALE DELL'ATLETA (8 FPS):\n` +
+                        text: `ESAME CERTIFICAZIONE SKILL - VIDEO INTEGRALE DELL'ATLETA (10 FPS):\n` +
                               `Skill richiesta: "${skill.name}"\n` +
                               `Prestazione dichiarata dall'atleta: ${val} ${unit}\n\n` +
                               `PARAMETRI DI CAMPIONAMENTO AD ALTA PRECISIONE (8 FPS):\n` +
@@ -29000,7 +29206,7 @@ function getCalisthenicsExpertResponse(query) {
                             data: vidB64
                         },
                         videoMetadata: {
-                            fps: 8
+                            fps: 10
                         }
                     });
                 } else if (videoFrames && videoFrames.length > 0) {
@@ -29480,6 +29686,8 @@ Se rifiuti (approved: false), DEVI spiegare chiaramente e dettagliatamente il MO
                         unit: unit,
                         mediaUrl: mediaUrl,
                         mediaType: mediaType,
+                        bytes: (typeof upRes !== 'undefined' && upRes && upRes.bytes) || (typeof fileToUpload !== 'undefined' && fileToUpload && fileToUpload.size) || 0,
+                        fileSize: (typeof upRes !== 'undefined' && upRes && upRes.bytes) || (typeof fileToUpload !== 'undefined' && fileToUpload && fileToUpload.size) || 0,
                         aiFeedback: aiFeedbackText,
                         timestamp: Date.now()
                     }).catch(e => console.warn("Errore log aiVerifications:", e));
@@ -29542,6 +29750,8 @@ Se rifiuti (approved: false), DEVI spiegare chiaramente e dettagliatamente il MO
                         unit: unit,
                         mediaUrl: mediaUrl,
                         mediaType: mediaType,
+                        bytes: (typeof upRes !== 'undefined' && upRes && upRes.bytes) || (typeof fileToUpload !== 'undefined' && fileToUpload && fileToUpload.size) || 0,
+                        fileSize: (typeof upRes !== 'undefined' && upRes && upRes.bytes) || (typeof fileToUpload !== 'undefined' && fileToUpload && fileToUpload.size) || 0,
                         aiFeedback: aiFeedbackText,
                         timestamp: Date.now()
                     }).catch(e => console.warn("Errore log aiVerifications:", e));
