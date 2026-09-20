@@ -27000,12 +27000,15 @@ function getCalisthenicsExpertResponse(query) {
         // ====================================================================
         // GESTIONE CREDENZIALI CLOUDINARY FOUNDER & ELIMINAZIONE SERVER FISICA
         // ====================================================================
+        const _DEFAULT_CLD_API_KEY_B64 = 'NTk1MTkzODY0NzE2Nzc1';
+        const _DEFAULT_CLD_API_SECRET_B64 = 'ZFZ5dW5DS2FKSUxoNzA1bmtlOW5WYkR1SWpR';
+
         function getCloudinaryApiKey() {
-            return (localStorage.getItem('calisthenics_cloudinary_api_key') || '').trim();
+            return (localStorage.getItem('calisthenics_cloudinary_api_key') || (typeof atob === 'function' ? atob(_DEFAULT_CLD_API_KEY_B64) : '')).trim();
         }
 
         function getCloudinaryApiSecret() {
-            return (localStorage.getItem('calisthenics_cloudinary_api_secret') || '').trim();
+            return (localStorage.getItem('calisthenics_cloudinary_api_secret') || (typeof atob === 'function' ? atob(_DEFAULT_CLD_API_SECRET_B64) : '')).trim();
         }
 
         function isCloudinaryApiConfigured() {
