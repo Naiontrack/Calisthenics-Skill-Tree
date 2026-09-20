@@ -30046,6 +30046,38 @@ function getCalisthenicsExpertResponse(query) {
             });
         }
 
+        
+                function formatCoachAresFeedback(approved, rawFeedback, claimedVal, countedVal, unit, skillName) {
+            let text = (rawFeedback || '').trim();
+            
+            // Rimuovi eventuali prefissi duplicati già inseriti dal modello o precedenti passaggi
+            text = text.replace(/^stato\s*richiesta\s*:\s*(?:rifiutata|accettata|approvata|respinta)[.\s\n\r-]*/i, '').trim();
+            text = text.replace(/^motivo\s*(?:\([^)]*\))?\s*:\s*/i, '').trim();
+            
+            if (!text) {
+                if (approved) {
+                    text = `Tutte le ${claimedVal} ${unit} di "${skillName || 'skill'}" sono state completate con ROM valido, lockout articolare e corretta biomeccanica.`;
+                } else {
+                    if (countedVal > 0 && countedVal < claimedVal) {
+                        text = `Dichiarate ${claimedVal} ${unit}, ma Coach Ares ha contato solo ${countedVal} ${unit} valide con ROM completo. Target non raggiunto.`;
+                    } else {
+                        text = `L'esecuzione non rispetta i criteri biomeccanici o l'inquadratura non consente la verifica.`;
+                    }
+                }
+            }
+            
+            // Verifica se il motivo riguarda inquadratura o visibilità e garantisce la presenza delle istruzioni di regia
+            const lower = text.toLowerCase();
+            const isFramingOrLighting = lower.includes('inquadratura') || lower.includes('da dietro') || lower.includes('posteriore') || lower.includes('controluce') || lower.includes('silhouette') || lower.includes('sagoma') || lower.includes('buio') || lower.includes('scura') || lower.includes('sfocat') || lower.includes('tagliat') || lower.includes('distante') || lower.includes('visibilità') || lower.includes('vedono male');
+            
+            if (!approved && isFramingOrLighting && !text.includes('Come rifare il video in maniera corretta:')) {
+                text += '\n\nCome rifare il video in maniera corretta: posiziona la telecamera di profilo (vista laterale a 90°) o a tre quarti, ad altezza sbarra o bacino, a 2.5 - 3.5 metri di distanza, inquadrando contemporaneamente l\'intero corpo e la sbarra per tutta la durata del movimento. Assicurati che la luce sia frontale (sorgente luminosa alle spalle della telecamera, illuminando bene l\'atleta) ed evita tassativamente inquadrature da dietro o in controluce.';
+            }
+            
+            const statusLine = approved ? "Stato richiesta: Accettata" : "Stato richiesta: Rifiutata";
+            return `${statusLine}\nMotivo: ${text}`;
+        }
+
         async function submitSkillForAiVerification(skillId) {
             const skill = typeof findSkillById === 'function' ? findSkillById(skillId) : null;
             if (!skill) return;
@@ -30298,27 +30330,26 @@ Indica subito il difetto tecnico principale (es. mancato lockout gomiti, mento s
 
 REQUISITI DI VISIBILITÀ, ILLUMINAZIONE, INQUADRATURA E GUIDA REGIA:
 - Se il video presenta uno di questi difetti:
-  * TROPPO BUIO o IN CONTROLUCE (sagoma scura, illuminazione insufficiente per distinguere le articolazioni, il petto o la sbarra);
-  * ANGOLAZIONE SCORRETTA o INCOMPLETA (inquadratura da dietro, prospettiva schiacciata dal basso o dall'alto che impedisce di verificare il contatto petto/sbarra, il mento o il blocco dei gomiti);
+  * TROPPO BUIO o IN CONTROLUCE (sagoma scura, silhouette, illuminazione insufficiente per distinguere le articolazioni, il petto o la sbarra);
+  * ANGOLAZIONE SCORRETTA o INCOMPLETA (inquadratura da dietro / posteriore CATEGORICAMENTE VIETATA per trazioni, pull up o dip in quanto impedisce di verificare mento/petto sopra la sbarra; prospettiva schiacciata dal basso o dall'alto);
   * CORPO TAGLIATO FUORI INQUADRATURA (piedi, braccia o sbarra che escono dal frame durante l'esercizio);
-  * SFOCATO o RISOLUZIONE INSUFFICIENTE;
-- In questi casi DEVI:
+  * SFOCATO o RISOLUZIONE INSUFFICIENTE (video che si vedono male);
+- In questi casi DEVI TASSATIVAMENTE:
   1. RIFIUTARE la certificazione ("approved": false, "reps_counted": 0, "hold_seconds": 0).
-  2. Nel "feedback", spiegare chiaramente il difetto visivo riscontrato e FORNIRE ISTRUZIONI PRATICHE ESATTE SU COME FILMARE IL VIDEO SUCCESSIVO:
-     - Posizione telecamera: ad altezza sbarra o bacino, a 3-4 metri di distanza, con inquadratura laterale o a tre quarti a figura intera che mostri contemporaneamente la sbarra e tutto il corpo dell'atleta dall'inizio alla fine.
-     - Illuminazione: luce frontale alle spalle della telecamera, evitando finestre o forti fonti di luce dietro l'atleta.
+  2. Nel feedback, spiegare chiaramente il difetto visivo riscontrato E FORNIRE ISTRUZIONI PRATICHE ESATTE SU COME FILMARE IL VIDEO SUCCESSIVO:
+     Come rifare il video in maniera corretta: posiziona la telecamera di profilo (vista laterale a 90°) o a tre quarti, ad altezza sbarra o bacino, a 2.5 - 3.5 metri di distanza, inquadrando contemporaneamente l'intero corpo e la sbarra per tutta la durata del movimento. Assicurati che la luce sia frontale (sorgente luminosa alle spalle della telecamera, illuminando bene l'atleta) ed evita tassativamente inquadrature da dietro o in controluce.
 
 REGOLE FONDAMENTALI DI VALUTAZIONE BIOMECCANICA:
 1. PRESENZA UMANA ED ESERCIZIO SPECIFICO (CRITICO E INDISPENSABILE - TOLLERANZA ZERO FRAUDI):
    - Il media deve mostrare CHIARAMENTE un essere umano reale intento ad eseguire l'esercizio specifico indicato ("${skill.name}").
    - Se l'immagine contiene un fiore, una pianta, un animale, un oggetto inanimato, un disegno, uno screenshot casuale, un meme, uno sfondo vuoto, una persona in piedi o in una posa che NON corrisponde alla skill indicata: DEVI CATEGORICAMENTE RIFIUTARE (approved: false).
 2. CONFRONTO SEVERO SOGLIA DICHIARATA (${val} ${unit}) vs CONTEGGIO EFFETTIVO (MANDATORIO E TASSATIVO):
-   - L'atleta ha dichiarato di aver eseguito ${val} ${unit}.
-   - Se il numero di ripetizioni valide contate (reps_counted) o secondi di tenuta valida (hold_seconds) è INFERIORE a ${val} (ad esempio: dichiara 15 ripetizioni ma ne conta 12, oppure dichiara 10s ma ne tiene 8s):
+   - DIFFIDA TOTALE DEL NUMERO DICHIARATO: L'atleta dichiara ${val} ${unit}, ma questo è solo un dato inserito dall'utente. Conta da zero ogni singola ripetizione valida.
+   - NON APPROVARE MAI se l'atleta esegue anche una sola ripetizione in meno rispetto al dichiarato! L'esame è FALLITO.
+   - Se il numero di ripetizioni valide contate (reps_counted) o secondi di tenuta valida (hold_seconds) è INFERIORE a ${val} (ad esempio: dichiara 12 o 15 ripetizioni ma ne esegue solo 8):
      * DEVI TASSATIVAMENTE IMPOSTARE: "approved": false.
-     * NON APPROVARE MAI se l'atleta esegue anche una sola ripetizione in meno rispetto al dichiarato! L'esame è FALLITO.
-     * In "reps_counted" / "hold_seconds", inserisci il numero esatto effettivo contato.
-     * In "feedback", spiega che sono state contate solo X ripetizioni/secondi validi su ${val} dichiarati e che la certificazione è RESPINTA per target non raggiunto.
+     * In "reps_counted" / "hold_seconds", inserisci il numero esatto effettivo contato (es. 8).
+     * La richiesta è RIFIUTATA.
    - Solo se l'atleta esegue ALMENO ${val} ripetizioni (o secondi) valide con biomeccanica conforme puoi impostare "approved": true.
 3. VALUTAZIONE INTEGRALE DEL VIDEO (MANDATORIO E TASSATIVO):
    - Stai analizzando l'INTERO VIDEO dell'atleta (o la sequenza cronologica ad alta densità lungo l'intera durata).
@@ -30326,23 +30357,34 @@ REGOLE FONDAMENTALI DI VALUTAZIONE BIOMECCANICA:
    - PER LE RIPETIZIONI (ROM completo, lockout in alto e in basso, assenza di kipping non consentito).
    - PER GLI HOLD (cronometra i secondi continuativi con allineamento posturale valido).
    - CONTROLLO ANTI-FRODE: verifica che non vi siano tagli ingannevoli, loop ripetuti o montaggi.
+
 STILE E TONO DELLA RISPOSTA (MANDATORIO: 100% DISCORSIVO, UMANO ED ESPERTO):
-Nel campo "feedback", Coach Ares parla SEMPRE in prima persona con tono DISCORSIVO, caldo, autorevole, motivante e naturale ("Ho visionato attentamente la tua serie...", "Ottimo lavoro atleta, hai dimostrato...", "Purtroppo non posso convalidare la skill perché...").
+Nel campo "feedback", Coach Ares parla SEMPRE in prima persona con tono DISCORSIVO, caldo, autorevole, motivante e naturale.
 NON usare MAI formule robotiche prefabbricate, elenchi freddi o schemi burocratici impersonali. Sii un vero coach di calisthenics esperto che parla direttamente e discorsivamente all'atleta con competenza e passione.
 Il campo "feedback" è OBBLIGATORIO e non deve MAI essere vuoto.
-Se approvi (approved: true), elogia discorsivamente i punti di forza biomeccanici (lockout completo, ROM, stabilità del core, assenza di kipping) confermando il pieno superamento della prova.
-Se rifiuti (approved: false), DEVI spiegare chiaramente e dettagliatamente il MOTIVO DEL PERCHÉ hai rifiutato il video: specifica quali ripetizioni non erano conformi e perché (es. mancato superamento sbarra col mento, petto non a contatto per chest to bar, gomiti non estesi in lockout, oscillazioni/kipping con le gambe, salita asimmetrica ad ala di gabbiano per muscle up, cedimento del bacino negli hold), oppure se il video è troppo buio o con angolazione errata spiegando come posizionare la telecamera per riuscire a verificarlo.
+Se approvi (approved: true), elogia discorsivamente i punti di forza biomeccanici confermando il pieno superamento della prova.
+Se rifiuti (approved: false), DEVI spiegare chiaramente e dettagliatamente il MOTIVO DEL PERCHÉ hai rifiutato il video: specifica quali ripetizioni non erano conformi o se ne sono state contate meno del dichiarato (es. solo 8 su 12), o se il video è da dietro/buio con le relative istruzioni di regia.
 
-4. FORMATO RISPOSTA:
-   Rispondi ESCLUSIVAMENTE in JSON valido (senza testo markdown attorno):
-   {
-     "approved": true | false,
-     "reps_counted": <numero intero di ripetizioni valide contate, oppure 0 se isometria>,
-     "hold_seconds": <secondi di tenuta continua contati, oppure 0 se ripetizioni>,
-     "feedback": "<SPIEGAZIONE DEL MOTIVO DEL VERDETTO: Feedback discorsivo, naturale e motivante in prima persona firmato Coach Ares>"
-   }`;
+FORMATO ESCLUSIVO DI RISPOSTA:
+Rispondi ESCLUSIVAMENTE in JSON valido (senza testo markdown attorno):
+{
+  "approved": true o false,
+  "reps_counted": <numero intero di ripetizioni valide contate, oppure 0>,
+  "hold_seconds": <secondi di tenuta continua contati, oppure 0>,
+  "feedback": "<SPIEGAZIONE DEL MOTIVO DEL VERDETTO: Feedback discorsivo, naturale e motivante in prima persona firmato Coach Ares formattato con Stato richiesta: ... e Motivo: ...>"
+}
 
-                // Modelli Gemini attivi con precedenza ai modelli ad alta disponibilità
+STRUTTURA OBBLIGATORIA DEL CAMPO "feedback" (SINTETICO MA NON TROPPO):
+Nel campo "feedback", devi seguire TASSATIVAMENTE questo schema su due righe:
+
+Se la richiesta è RIFIUTATA ("approved": false):
+Stato richiesta: Rifiutata
+Motivo: [Spiegazione sintetica ma non troppo del motivo del rifiuto. Se l'atleta ha eseguito meno ripetizioni del dichiarato, spiega chiaramente che sono state completate solo X ripetizioni valide con ROM completo su ${val} dichiarate. Se il video presenta inquadratura da dietro, controluce, sagoma scura o problemi di visibilità, spiega il difetto e AGGIUNGI: 'Come rifare il video in maniera corretta: posiziona la telecamera di profilo (vista laterale a 90°) o a tre quarti, ad altezza sbarra o bacino, a 2.5 - 3.5 metri di distanza, inquadrando contemporaneamente l'intero corpo e la sbarra per tutta la durata del movimento. Assicurati che la luce sia frontale (sorgente luminosa alle spalle della telecamera, illuminando bene l'atleta) ed evita tassativamente inquadrature da dietro o in controluce.']
+
+Se la richiesta è ACCETTATA ("approved": true):
+Stato richiesta: Accettata
+Motivo: [Conferma sintetica ma motivante: tutte le ${val} ${unit} di ${skill.name} sono state completate con ROM valido, lockout articolare e biomeccanica eccellente.]`;
+
                 const models = [
                     "gemini-3.1-flash-lite",
                     "gemini-3.6-flash",
@@ -30351,8 +30393,8 @@ Se rifiuti (approved: false), DEVI spiegare chiaramente e dettagliatamente il MO
                     "gemini-3.5-flash-lite"
                 ];
 
-                // Se sono presenti i fotogrammi estratti a 5 FPS (mobile o desktop), costruisci la sequenza 5 FPS ottimizzata
-                if (videoFrames && videoFrames.length > 0 && !isImage) {
+                // Se non è stato inserito il video continuo e sono presenti fotogrammi estratti, costruisci la sequenza fotogrammi di backup
+                if ((!geminiParts || geminiParts.length === 0) && videoFrames && videoFrames.length > 0 && !isImage) {
                     geminiParts = [
                         {
                             text: `ESAME CERTIFICAZIONE SKILL - SEQUENZA VIDEO INTEGRALE DELL'ATLETA A 5 FPS (1 frame ogni 0.2s):\n` +
@@ -30481,35 +30523,21 @@ Se rifiuti (approved: false), DEVI spiegare chiaramente e dettagliatamente il MO
                                         }
 
                                         // 2. CONTEGGIO DETERMINISTICO ED ENTRATA A CONTEGGIO UFFICIALE:
-                                        // Se l'atleta esegue meno di quanto dichiarato, ma ha eseguito ripetizioni o secondi validi (> 0):
-                                        // Coach Ares certifica ufficialmente il livello al numero effettivo contato (es. 6 su 15)!
-                                        // Quel numero entra a tutti gli effetti nel conteggio utente e viene certificato.
+                                        // Se l'atleta esegue meno di quanto dichiarato, RIFIUTO CATEGORICO!
+                                        // Non si converte mai in approvazione parziale: se l'atleta esegue 8 su 12, la richiesta è RIFIUTATA.
                                         if (skill.type === 'rep') {
                                             if (countedReps < val) {
-                                                if (countedReps > 0) {
-                                                    // Certifica il numero contato da Coach Ares!
-                                                    const claimedVal = val;
-                                                    certifiedVal = countedReps;
-                                                    val = countedReps;
-                                                    isPartialCertification = true;
-                                                    parsed.approved = true;
-
-                                                    const cleanCritique = (parsed.feedback || '')
-                                                        .replace(/certificazione\s*respinta[.!]*$/i, '')
-                                                        .trim();
-                                                    
-                                                    parsed.feedback = `Dichiarate ${claimedVal} ripetizioni: Coach Ares ha verificato e convalidato ${countedReps} ripetizioni con ROM valido. Il tuo livello è ufficialmente CERTIFICATO a ${countedReps} ripetizioni!` +
-                                                        (cleanCritique ? ` Note tecniche di Coach Ares: ${cleanCritique}` : '');
+                                                parsed.approved = false;
+                                                isPartialCertification = false;
+                                                const targetMsg = `Dichiarate ${val} ripetizioni, ma Coach Ares ha contato solo ${countedReps} ripetizioni valide con ROM completo.`;
+                                                let origFb = (parsed.feedback || '').trim();
+                                                origFb = origFb.replace(/^stato\s*richiesta\s*:\s*(?:rifiutata|accettata|approvata|respinta)[.\s\n\r-]*/i, '').trim();
+                                                origFb = origFb.replace(/^motivo\s*(?:\([^)]*\))?\s*:\s*/i, '').trim();
+                                                
+                                                if (origFb) {
+                                                    parsed.feedback = `${targetMsg} Motivo del rifiuto: ${origFb}`;
                                                 } else {
-                                                    // 0 ripetizioni valide: rifiuto assoluto
-                                                    parsed.approved = false;
-                                                    const targetMsg = `Dichiarate ${val} ripetizioni, ma Coach Ares ha contato solo ${countedReps} ripetizioni valide con ROM completo.`;
-                                                    const origFb = (parsed.feedback || '').trim();
-                                                    if (origFb) {
-                                                        parsed.feedback = `${targetMsg} Motivo del rifiuto: ${origFb}`;
-                                                    } else {
-                                                        parsed.feedback = `${targetMsg} Certificazione RESPINTA: per certificare questo livello devi completare tutte le ${val} ripetizioni dichiarate.`;
-                                                    }
+                                                    parsed.feedback = `${targetMsg} Certificazione RESPINTA: per certificare questo livello devi completare tutte le ${val} ripetizioni dichiarate.`;
                                                 }
                                             } else {
                                                 certifiedVal = Math.max(val, countedReps);
@@ -30518,28 +30546,17 @@ Se rifiuti (approved: false), DEVI spiegare chiaramente e dettagliatamente il MO
                                             }
                                         } else if (skill.type === 'sec') {
                                             if (countedSec < val) {
-                                                if (countedSec > 0) {
-                                                    const claimedVal = val;
-                                                    certifiedVal = countedSec;
-                                                    val = countedSec;
-                                                    isPartialCertification = true;
-                                                    parsed.approved = true;
-
-                                                    const cleanCritique = (parsed.feedback || '')
-                                                        .replace(/certificazione\s*respinta[.!]*$/i, '')
-                                                        .trim();
-
-                                                    parsed.feedback = `Dichiarati ${claimedVal} secondi: Coach Ares ha cronometrato e convalidato ${countedSec}s continuativi con allineamento valido. Il tuo livello è ufficialmente CERTIFICATO a ${countedSec} secondi!` +
-                                                        (cleanCritique ? ` Note tecniche di Coach Ares: ${cleanCritique}` : '');
+                                                parsed.approved = false;
+                                                isPartialCertification = false;
+                                                const targetMsg = `Dichiarati ${val} secondi di tenuta, ma Coach Ares ha cronometrato solo ${countedSec}s continuativi con allineamento valido.`;
+                                                let origFb = (parsed.feedback || '').trim();
+                                                origFb = origFb.replace(/^stato\s*richiesta\s*:\s*(?:rifiutata|accettata|approvata|respinta)[.\s\n\r-]*/i, '').trim();
+                                                origFb = origFb.replace(/^motivo\s*(?:\([^)]*\))?\s*:\s*/i, '').trim();
+                                                
+                                                if (origFb) {
+                                                    parsed.feedback = `${targetMsg} Motivo del rifiuto: ${origFb}`;
                                                 } else {
-                                                    parsed.approved = false;
-                                                    const targetMsg = `Dichiarati ${val} secondi di tenuta, ma Coach Ares ha cronometrato solo ${countedSec}s continuativi con allineamento valido.`;
-                                                    const origFb = (parsed.feedback || '').trim();
-                                                    if (origFb) {
-                                                        parsed.feedback = `${targetMsg} Motivo del rifiuto: ${origFb}`;
-                                                    } else {
-                                                        parsed.feedback = `${targetMsg} Certificazione RESPINTA: devi mantenere la posizione per tutti i ${val}s dichiarati.`;
-                                                    }
+                                                    parsed.feedback = `${targetMsg} Certificazione RESPINTA: devi mantenere la posizione per tutti i ${val}s dichiarati.`;
                                                 }
                                             } else {
                                                 certifiedVal = Math.max(val, countedSec);
@@ -30630,11 +30647,16 @@ Se rifiuti (approved: false), DEVI spiegare chiaramente e dettagliatamente il MO
             }
 
             const aiApproved = !!aiResult.approved;
-            let aiFeedbackText = (aiResult.feedback && aiResult.feedback.trim())
-                ? aiResult.feedback.trim()
-                : (aiApproved
-                    ? "Ho visionato attentamente la tua serie: biomeccanica impeccabile, ROM completo e controllo solido. Certificazione approvata a pieni voti!"
-                    : "Ho visionato attentamente il tuo video: l'esecuzione non rispetta pienamente i requisiti tecnici necessari per la certificazione.");
+            const currentCountedVal = (skill.type === 'rep') ? (aiResult.reps_counted || 0) : (aiResult.hold_seconds || 0);
+            let aiFeedbackText = (aiResult.feedback && aiResult.feedback.trim());
+            aiFeedbackText = formatCoachAresFeedback(
+                aiApproved,
+                aiFeedbackText,
+                val,
+                currentCountedVal,
+                unit,
+                skill.name
+            );
 
             if (aiApproved) {
                 if (typeof claimedInput !== 'undefined' && claimedInput && typeof val !== 'undefined') {
@@ -30699,7 +30721,7 @@ Se rifiuti (approved: false), DEVI spiegare chiaramente e dettagliatamente il MO
                         <div style="display:flex; align-items:center; gap:6px; margin-bottom:6px;">
                             ${getSvgShield('verified', 18)} <strong style="font-size:0.95rem;">${isPartialCertification ? `🎯 TARGET NON RAGGIUNTO — CONVALIDATE ${val} ${unit.toUpperCase()}!` : 'APPROVATA DA COACH ARES!'}</strong>
                         </div>
-                        <div style="font-size:0.84rem; line-height:1.45; margin-bottom:12px; color:var(--text);">${escapeHtml(aiFeedbackText)}</div>
+                        <div style="font-size:0.84rem; line-height:1.5; margin-bottom:12px; color:var(--text); white-space:pre-line;">${escapeHtml(aiFeedbackText)}</div>
                         <button type="button" class="btn-confirm" id="btn-verified-confirm-ok" onclick="closeSkillVerifyModal(); if (typeof openSkillDetailDrawer === 'function') openSkillDetailDrawer('${skillId}');" style="width:100%; padding:11px 16px; font-weight:800; font-size:0.92rem; background:linear-gradient(135deg, #10b981 0%, #059669 100%); border:1px solid #10b981; color:#ffffff; border-radius:10px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; box-shadow:0 0 16px rgba(16,185,129,0.35); transition:all 0.2s ease;">
                             ${getSvgShield('verified', 16)} <span>${isPartialCertification ? `Conferma ${val} ${unit} certificate` : 'Fantastico, Conferma e Continua'}</span>
                         </button>
@@ -30747,10 +30769,10 @@ Se rifiuti (approved: false), DEVI spiegare chiaramente e dettagliatamente il MO
                     feedbackEl.style.background = 'rgba(239,68,68,0.15)';
                     feedbackEl.style.color = '#f87171';
                     feedbackEl.style.border = '1px solid #ef4444';
-                    feedbackEl.innerHTML = `<div style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">${getSvgCross(15)} <strong>RESPINTA DA COACH ARES:</strong></div><span style="font-size:0.8rem; line-height:1.4;">${escapeHtml(aiFeedbackText)}</span>`;
+                    feedbackEl.innerHTML = `<div style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">${getSvgCross(15)} <strong>RESPINTA DA COACH ARES:</strong></div><div style="font-size:0.84rem; line-height:1.5; margin-bottom:12px; color:var(--text); white-space:pre-line;">${escapeHtml(aiFeedbackText)}</div>`;
                 }
 
-                showAppToast(`Skill non convalidata: ${aiFeedbackText}`, "error");
+                showAppToast("Richiesta non convalidata da Coach Ares.", "error");
 
                 if (submitBtn) {
                     submitBtn.disabled = false;
@@ -30763,6 +30785,7 @@ Se rifiuti (approved: false), DEVI spiegare chiaramente e dettagliatamente il MO
         }
 
         if (typeof window !== 'undefined') {
+            window.formatCoachAresFeedback = formatCoachAresFeedback;
             window.openSkillVerifyModal = openSkillVerificationModal;
             window.renderTree = updateUI;
             window.filterAdminVerificationsList = filterAdminVerificationsList;
