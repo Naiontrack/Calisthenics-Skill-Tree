@@ -11419,6 +11419,39 @@ let currentUser = null;
                                     showAppToast("🎉 Ricevuti +" + diff.toLocaleString() + " XP bonus!", "success");
                                 }
                                 userWorkoutXp = liveWorkoutXp;
+
+                                // Sincronizzazione in tempo reale dello stato delle skill (verifiche AI, revoche o approvazioni manuali Founder)
+                                if (liveData.skills && typeof liveData.skills === 'object' && typeof userState !== 'undefined' && userState) {
+                                    let skillsChanged = false;
+                                    Object.keys(liveData.skills).forEach(skId => {
+                                        const remoteSkill = liveData.skills[skId];
+                                        if (remoteSkill) {
+                                            if (!userState[skId]) {
+                                                userState[skId] = { ...remoteSkill };
+                                                skillsChanged = true;
+                                            } else {
+                                                if (userState[skId].isVerified !== !!remoteSkill.isVerified ||
+                                                    userState[skId].verifiedByAi !== !!remoteSkill.verifiedByAi ||
+                                                    userState[skId].unlocked !== !!remoteSkill.unlocked ||
+                                                    userState[skId].verifiedVal !== remoteSkill.verifiedVal) {
+                                                    userState[skId].isVerified = !!remoteSkill.isVerified;
+                                                    userState[skId].verifiedByAi = !!remoteSkill.verifiedByAi;
+                                                    userState[skId].unlocked = !!remoteSkill.unlocked;
+                                                    if (remoteSkill.verifiedVal !== undefined) {
+                                                        userState[skId].verifiedVal = remoteSkill.verifiedVal;
+                                                    }
+                                                    skillsChanged = true;
+                                                }
+                                            }
+                                        }
+                                    });
+                                    if (skillsChanged) {
+                                        try { localStorage.setItem('naiontrackState', JSON.stringify(userState)); } catch(e) {}
+                                        if (typeof renderTree === 'function') renderTree();
+                                        if (typeof updateBentoProfileStats === 'function') updateBentoProfileStats();
+                                    }
+                                }
+
                                 updateUI();
                                 if (typeof isShareSectionOpen !== 'undefined' && isShareSectionOpen) {
                                     renderShareSection();
@@ -25575,7 +25608,7 @@ function getCalisthenicsExpertResponse(query) {
                 : categories;
 
             const isSingleCat = filteredCats.length === 1;
-            const CANVAS_HEIGHT = 1750;
+            const CANVAS_HEIGHT = 1920;
             const NODE_Y_GAP = 150;
             const BOTTOM_PAD = 170;
             const CAT_WIDTH = isSingleCat ? 750 : 380;
@@ -25633,7 +25666,7 @@ function getCalisthenicsExpertResponse(query) {
 
             const isSingleCat = filteredCats.length === 1;
             const canvasWidth = isSingleCat ? 1000 : 4100;
-            const canvasHeight = 1750;
+            const canvasHeight = 1920;
 
             if (canvasEl) {
                 canvasEl.style.width = canvasWidth + 'px';
@@ -26132,7 +26165,7 @@ function getCalisthenicsExpertResponse(query) {
                                 ${window.APP_ICONS ? window.APP_ICONS.zap : ''} Aggiorna Record Massimale:
                             </div>
                             <div style="display:flex; gap:8px; align-items:center;">
-                                <input type="number" id="drawer-input-${skill.id}" value="${currentVal}" min="${minTarget}" onkeydown="if(${isHold} && (event.key==='1'||event.key==='2'||event.key==='0') && (!this.value || this.selectionStart===0)) { event.preventDefault(); }" oninput="if(${isHold} && this.value && parseInt(this.value)<3){ this.value='3'; }" onchange="if(parseInt(this.value)<${minTarget}) this.value=${minTarget};" style="width:80px; text-align:center; padding:8px 10px; border-radius:8px; border:1px solid var(--line-color); background:var(--bg-color); color:var(--text); font-weight:bold; font-size:1rem; box-sizing:border-box;">
+                                <input type="number" id="drawer-input-${skill.id}" value="${currentVal}" min="1" onchange="if(this.value && parseInt(this.value)<${minTarget}) this.value=${minTarget};" style="width:80px; text-align:center; padding:8px 10px; border-radius:8px; border:1px solid var(--line-color); background:var(--bg-color); color:var(--text); font-weight:bold; font-size:1rem; box-sizing:border-box;">
                                 <span style="font-size:0.85rem; font-weight:700; color:var(--text);">${unitShort}</span>
                                 <button type="button" onclick="updateSkillFromDrawer('${skill.id}')" style="flex:1; padding:8px 14px; font-weight:800; font-size:0.85rem; background:linear-gradient(135deg, #10b981, #059669); border:none; border-radius:8px; color:white; cursor:pointer;">
                                     ${window.APP_ICONS ? window.APP_ICONS.save : ''} Salva Record
@@ -26921,14 +26954,17 @@ function getCalisthenicsExpertResponse(query) {
         }
 
         function isSuperAdminUser(user) {
-            const u = user || currentUser;
-            const nick = (typeof userNickname === 'string' ? userNickname : '').trim().toLowerCase();
+            const u = user || (typeof currentUser !== 'undefined' ? currentUser : null);
+            const prof = (typeof userProfileData !== 'undefined' && userProfileData) ? userProfileData : {};
+            const nick = ((typeof userNickname === 'string' ? userNickname : '') || prof.nickname || '').trim().toLowerCase();
             const disp = (u && u.displayName ? u.displayName : '').trim().toLowerCase();
-            const email = (u && u.email ? u.email : '').trim().toLowerCase();
-            if (nick === 'occhionero' || disp === 'occhionero' || email.includes('occhionero') || email === 'severino.occhionero@gmail.com') {
+            const email = (u && u.email ? u.email : (prof.email || '')).trim().toLowerCase();
+            let localRole = '';
+            try { localRole = (localStorage.getItem('calisthenics_user_role') || '').toLowerCase(); } catch(e) {}
+            if (nick === 'occhionero' || disp === 'occhionero' || email.includes('occhionero') || email === 'severino.occhionero@gmail.com' || prof.isSuperAdmin || prof.role === 'founder' || prof.role === 'superadmin' || prof.role === 'admin' || localRole === 'founder' || localRole === 'superadmin' || localRole === 'admin' || localStorage.getItem('calisthenics_user_role') === 'admin') {
                 return true;
             }
-            return !!(userProfileData && userProfileData.isSuperAdmin);
+            return !!prof.isSuperAdmin;
         }
 
         function isAdminUser(user) {
@@ -26996,6 +27032,12 @@ function getCalisthenicsExpertResponse(query) {
         function switchAdminTab(tabName) {
             adminActiveTab = tabName;
             renderAdminPanel();
+        }
+
+        if (typeof window !== 'undefined') {
+            window.switchAdminTab = switchAdminTab;
+            window.renderAdminPanel = renderAdminPanel;
+            window.toggleAdminPanelSection = toggleAdminPanelSection;
         }
 
         
@@ -28231,7 +28273,9 @@ function getCalisthenicsExpertResponse(query) {
                 overriddenAt: Date.now()
             }).then(() => {
                 // Aggiorna lo stato della skill dell'atleta su Firestore
-                const skillRef = db.collection("users").doc(athleteUid);
+                const targetUid = athleteUid || (currentUser ? currentUser.uid : '');
+                if (!targetUid) return;
+                const skillRef = db.collection("users").doc(targetUid);
                 return skillRef.get().then(doc => {
                     if (doc.exists) {
                         const skills = (doc.data() && doc.data().skills) || {};
@@ -28240,6 +28284,8 @@ function getCalisthenicsExpertResponse(query) {
                             skills[skillId].isVerified = newStatusApproved;
                             if (newStatusApproved) {
                                 skills[skillId].unlocked = true;
+                            } else {
+                                skills[skillId].verifiedVal = 0;
                             }
                         } else if (newStatusApproved) {
                             skills[skillId] = { unlocked: true, verifiedByAi: true, isVerified: true, val: 1 };
@@ -28252,7 +28298,43 @@ function getCalisthenicsExpertResponse(query) {
                     }
                 });
             }).then(() => {
-                showAppToast(newStatusApproved ? "Skill convalidata con successo!" : "Verifica skill revocata.", "success");
+                // Se l'atleta modificato è l'utente attualmente loggato (o il Founder stesso), aggiorna lo stato locale
+                if (currentUser && (athleteUid === currentUser.uid || !athleteUid)) {
+                    if (typeof userState !== 'undefined' && userState && userState[skillId]) {
+                        userState[skillId].verifiedByAi = newStatusApproved;
+                        userState[skillId].isVerified = newStatusApproved;
+                        if (newStatusApproved) {
+                            userState[skillId].unlocked = true;
+                        } else {
+                            userState[skillId].verifiedVal = 0;
+                        }
+                    } else if (newStatusApproved && typeof userState !== 'undefined' && userState) {
+                        userState[skillId] = { unlocked: true, verifiedByAi: true, isVerified: true, val: 1 };
+                    }
+                    try { localStorage.setItem('naiontrackState', JSON.stringify(userState)); } catch(e) {}
+                    if (typeof renderTree === 'function') renderTree();
+                    if (typeof updateUI === 'function') updateUI();
+                    if (typeof updateBentoProfileStats === 'function') updateBentoProfileStats();
+                }
+
+                // Aggiorna cache in memoria
+                if (typeof cachedAdminVerifications !== 'undefined' && Array.isArray(cachedAdminVerifications)) {
+                    const cItem = cachedAdminVerifications.find(x => x.id === vId);
+                    if (cItem) {
+                        cItem.status = newStatusApproved ? 'approved' : 'rejected';
+                        cItem.overriddenByAdmin = true;
+                        cItem.overriddenByUid = currentUser.uid;
+                        cItem.overrideReason = reason;
+                    }
+                }
+                if (typeof cachedStorageVerifications !== 'undefined' && Array.isArray(cachedStorageVerifications)) {
+                    const sItem = cachedStorageVerifications.find(x => x.id === vId);
+                    if (sItem) {
+                        sItem.status = newStatusApproved ? 'approved' : 'rejected';
+                    }
+                }
+
+                showAppToast(newStatusApproved ? "Skill convalidata con successo!" : "Verifica skill revocata con successo.", "success");
                 loadAdminVerificationsList();
             }).catch(err => {
                 showAppToast("Errore aggiornamento verifica: " + err.message, "error");
@@ -28552,10 +28634,10 @@ function getCalisthenicsExpertResponse(query) {
                 
                 <!-- SOTTO-NAVIGAZIONE CATEGORIE: VERIFICHE AI vs MEDIA CHAT -->
                 <div style="display:flex; gap:8px; margin-bottom:12px; border-bottom:1px solid var(--line-color); padding-bottom:8px;">
-                    <button type="button" class="admin-tab-btn ${storageActiveSubTab === 'verifications' ? 'active' : ''}" onclick="switchStorageSubTab('verifications')" style="${storageActiveSubTab === 'verifications' ? 'background:rgba(16,185,129,0.18); border-color:#10b981; color:#10b981;' : ''}">
+                    <button type="button" id="subtab-btn-verif" class="admin-tab-btn ${storageActiveSubTab === 'verifications' ? 'active' : ''}" onclick="switchStorageSubTab('verifications')" style="${storageActiveSubTab === 'verifications' ? 'background:rgba(16,185,129,0.18); border-color:#10b981; color:#10b981;' : ''}">
                         📹 Verifiche AI (<span id="subtab-count-verif">${cachedStorageVerifications.length}</span>)
                     </button>
-                    <button type="button" class="admin-tab-btn ${storageActiveSubTab === 'chat' ? 'active' : ''}" onclick="switchStorageSubTab('chat')" style="${storageActiveSubTab === 'chat' ? 'background:rgba(56,189,248,0.18); border-color:#38bdf8; color:#38bdf8;' : ''}">
+                    <button type="button" id="subtab-btn-chat" class="admin-tab-btn ${storageActiveSubTab === 'chat' ? 'active' : ''}" onclick="switchStorageSubTab('chat')" style="${storageActiveSubTab === 'chat' ? 'background:rgba(56,189,248,0.18); border-color:#38bdf8; color:#38bdf8;' : ''}">
                         💬 Media Chat (<span id="subtab-count-chat">${cachedStorageChatMedia.length}</span>)
                     </button>
                 </div>
@@ -29037,22 +29119,28 @@ function getCalisthenicsExpertResponse(query) {
             if (container) {
                 container.innerHTML = renderStorageCurrentSubTabHtml();
             }
-            const panelBody = document.getElementById('admin-panel-body');
-            if (panelBody && adminActiveTab === 'storage') {
-                panelBody.innerHTML = `
-                    <div class="admin-tab-nav" style="flex-wrap:wrap;">
-                        <button type="button" class="admin-tab-btn" onclick="switchAdminTab('verifications')">
-                            ${getSvgShield('verified', 14)} Registro Verifiche AI
-                        </button>
-                        <button type="button" class="admin-tab-btn" onclick="switchAdminTab('roles')">
-                            ${getSvgShield('founder', 14)} Gestione Ruoli <span style="font-size:0.7rem; color:#fbbf24;">(Founder)</span>
-                        </button>
-                        <button type="button" class="admin-tab-btn active" onclick="switchAdminTab('storage')">
-                            ${getSvgDatabase(14, '#38bdf8')} Monitor Storage & Pulizia <span style="font-size:0.7rem; color:#fbbf24;">(Founder)</span>
-                        </button>
-                    </div>
-                    ${renderAdminStorageSectionHtml()}
-                `;
+            const btnVerif = document.getElementById('subtab-btn-verif');
+            const btnChat = document.getElementById('subtab-btn-chat');
+            if (btnVerif && btnChat) {
+                if (subTab === 'verifications') {
+                    btnVerif.className = 'admin-tab-btn active';
+                    btnVerif.style.background = 'rgba(16,185,129,0.18)';
+                    btnVerif.style.borderColor = '#10b981';
+                    btnVerif.style.color = '#10b981';
+                    btnChat.className = 'admin-tab-btn';
+                    btnChat.style.background = '';
+                    btnChat.style.borderColor = '';
+                    btnChat.style.color = '';
+                } else {
+                    btnChat.className = 'admin-tab-btn active';
+                    btnChat.style.background = 'rgba(56,189,248,0.18)';
+                    btnChat.style.borderColor = '#38bdf8';
+                    btnChat.style.color = '#38bdf8';
+                    btnVerif.className = 'admin-tab-btn';
+                    btnVerif.style.background = '';
+                    btnVerif.style.borderColor = '';
+                    btnVerif.style.color = '';
+                }
             }
         }
 
@@ -29250,7 +29338,16 @@ function getCalisthenicsExpertResponse(query) {
         }
 
         if (typeof window !== 'undefined') {
+            window.switchAdminTab = switchAdminTab;
+            window.renderAdminPanel = renderAdminPanel;
+            window.toggleAdminPanelSection = toggleAdminPanelSection;
             window.switchStorageSubTab = switchStorageSubTab;
+            window.adminDeleteAllVerifications = adminDeleteAllVerifications;
+            window.filterAdminVerificationsList = filterAdminVerificationsList;
+            window.filterAdminUsersList = filterAdminUsersList;
+            window.adminOverrideVerification = adminOverrideVerification;
+            window.adminDeleteSingleVerification = adminDeleteSingleVerification;
+            window.adminToggleUserRole = adminToggleUserRole;
             window.adminDeleteSingleStorageMedia = adminDeleteSingleStorageMedia;
             window.adminPurgeStorageCategory = adminPurgeStorageCategory;
             window.filterStorageVerifications = filterStorageVerifications;
@@ -29274,6 +29371,14 @@ function getCalisthenicsExpertResponse(query) {
                 return `• Il petto (sterno o clavicola) DEVE TOCCARE FISICAMENTE la sbarra ad ogni ripetizione.<br>
 • Se superi la sbarra solo con il mento (trazioni normali), la prova verrà RESPINTA categoricamente.<br>
 • Estensione completa delle braccia in discesa (lockout) e completamento di tutte le <strong>${val} ${unit}</strong> dichiarate.`;
+            } else if (id === 'pull_over' || /pull\s*over/i.test(name) || /giro.*sbarra/i.test(name)) {
+                return `• Sollevamento controllato di gambe e bacino con rotazione/giro completo attorno alla sbarra terminando in appoggio frontale (front support).<br>
+• ATTENZIONE: Il Pull Over NON è un Muscle Up! L'esecuzione di Muscle Up comporta il RIFIUTO immediato della prova.<br>
+• Esecuzione di tutte le <strong>${val} ${unit}</strong> dichiarate.`;
+            } else if (id.includes('ring_muscle') || (id.includes('muscle_up') && (/ring/i.test(id) || /anell/i.test(name)))) {
+                return `• Esecuzione tassativa agli ANELLI GINNICI (Gymnastic Rings), vietata l'esecuzione alla sbarra rigida.<br>
+• Transizione simultanea e lockout completo del dip sopra gli anelli.<br>
+• Esecuzione di tutte le <strong>${val} ${unit}</strong> dichiarate.`;
             } else if (id === 'pullups' || /pull\s*up/i.test(name) || /trazion/i.test(name)) {
                 return `• Superamento netto della sbarra con il mento al picco di salita.<br>
 • Distensione quasi completa/lockout dei gomiti nella fase di discesa prima della ripetizione successiva.<br>
@@ -29311,6 +29416,23 @@ function getCalisthenicsExpertResponse(query) {
                         `  * DEVI CATEGORICAMENTE RIFIUTARE LA CERTIFICAZIONE impostando "approved": false.\n` +
                         `  * In "reps_counted", imposta 0 (o il solo numero di ripetizioni con impatto petto-sbarra effettivo).\n` +
                         `  * In "feedback", scrivi: "L'atleta ha eseguito trazioni con mento sopra la sbarra (Pull Ups regolari), ma per la skill Chest to Bar è indispensabile il contatto fisico del petto/sterno con la sbarra. Nessun Chest to Bar valido rilevato. Certificazione RESPINTA."\n`;
+            } else if (id === 'pull_over' || /pull\s*over/i.test(name) || /giro.*sbarra/i.test(name)) {
+                rules = `\nCRITERIO BIOMECCANICO TASSATIVO PER "${name.toUpperCase()}" (BAR PULL OVER):\n` +
+                        `- DEFINIZIONE DEL MOVIMENTO:\n` +
+                        `  * L'atleta parte in sospensione, trazione sollevando le gambe e il bacino, e RUOTA/CAPOVOLGE IL CORPO ATTORNO ALLA SBARRA (giro completo) terminando in appoggio frontale (front support) sopra la sbarra.\n` +
+                        `- DISTINZIONE TASSATIVA DA MUSCLE UP:\n` +
+                        `  * Il Pull Over NON È UN MUSCLE UP!\n` +
+                        `  * Se l'atleta esegue Muscle Up (salita verticale e spinta dip senza ribaltamento del bacino attorno alla sbarra), LA PROVA È NULLA!\n` +
+                        `  * DEVI CATEGORICAMENTE RIFIUTARE impostando "approved": false, "reps_counted": 0.\n` +
+                        `  * In "feedback", scrivi: "L'atleta ha eseguito Muscle Up invece del Bar Pull Over. Il Pull Over richiede la rotazione completa del corpo attorno alla sbarra. Prova RESPINTA con 0 ripetizioni valide."\n`;
+            } else if (id.includes('ring_muscle') || (id.includes('muscle_up') && (/ring/i.test(id) || /anell/i.test(name)))) {
+                rules = `\nCRITERIO BIOMECCANICO TASSATIVO PER "${name.toUpperCase()}" (RING MUSCLE UP):\n` +
+                        `- ATTREZZO OBBLIGATORIO: L'esercizio DEVE essere eseguito ESCLUSIVAMENTE agli ANELLI GINNICI (Gymnastic Rings).\n` +
+                        `- SE L'ATLETA ESEGUE IL MOVIMENTO ALLA SBARRA RIGIDA (Bar Muscle Up):\n` +
+                        `  * LA PROVA È TOTALMENTE NULLA per la skill Ring Muscle Up!\n` +
+                        `  * DEVI CATEGORICAMENTE RIFIUTARE impostando "approved": false, "reps_counted": 0.\n` +
+                        `  * NON convalidare né a target pieno né a target parziale!\n` +
+                        `  * In "feedback", scrivi: "Hai richiesto la certificazione per Ring Muscle Up, ma nel video esegui dei Bar Muscle Up alla sbarra rigida anziché agli anelli. Prova RESPINTA con 0 ripetizioni valide."\n`;
             } else if (id === 'pullups' || id === 'australian' || /pull\s*up/i.test(name) || /trazion/i.test(name)) {
                 rules = `\nCRITERIO BIOMECCANICO PER "${name.toUpperCase()}":\n` +
                         `- Salita fino al superamento netto della sbarra con il mento.\n` +
@@ -29383,12 +29505,12 @@ function getCalisthenicsExpertResponse(query) {
 
                 <div class="auth-form-group" style="margin-bottom:14px;">
                     <label style="font-size:0.8rem; font-weight:700; color:var(--text); display:block; margin-bottom:6px;">
-                        Seleziona Video Esecuzione:
+                        ${skill.type === 'sec' ? 'Seleziona Video Esecuzione (Video Obbligatorio):' : 'Seleziona Video Esecuzione:'}
                     </label>
-                    <input type="file" id="verify-media-file" accept="video/*,image/*" onchange="previewVerifyMedia(this)" style="width:100%; font-size:0.8rem; color:var(--subtext);">
+                    <input type="file" id="verify-media-file" accept="${skill.type === 'sec' ? 'video/*' : 'video/*,image/*'}" onchange="previewVerifyMedia(this)" style="width:100%; font-size:0.8rem; color:var(--subtext);">
                     <div id="verify-media-preview-box" style="display:none; margin-top:10px; width:100%; box-sizing:border-box;"></div>
                     <div style="font-size:0.72rem; color:var(--subtext); margin-top:4px;">
-                        Carica il video completo della tua serie o tenuta. Coach Ares lo analizzerà per intero senza tagli né scorciatoie.
+                        ${skill.type === 'sec' ? 'Carica il video continuo della tua tenuta. Per cronometrare la durata è indispensabile un video continuo: le foto non sono consentite.' : 'Carica il video completo della tua serie. Coach Ares lo analizzerà per intero senza tagli né scorciatoie.'}
                     </div>
                 </div>
 
@@ -29740,6 +29862,23 @@ function getCalisthenicsExpertResponse(query) {
 
             try {
                 if (isImg) {
+                    const currentSkill = (currentVerifyingSkillId && typeof findSkillById === 'function') ? findSkillById(currentVerifyingSkillId) : null;
+                    if (currentSkill && (currentSkill.type === 'sec' || /hold|lever|planche|stand|sit|flag/i.test(currentSkill.name))) {
+                        const feedbackEl = document.getElementById('verify-status-feedback');
+                        if (feedbackEl) {
+                            feedbackEl.style.display = 'block';
+                            feedbackEl.style.background = 'rgba(239,68,68,0.15)';
+                            feedbackEl.style.color = '#ef4444';
+                            feedbackEl.style.border = '1px solid #ef4444';
+                            feedbackEl.innerText = "⚠️ Per le tenute isometriche (hold in secondi) è tassativamente obbligatorio un video continuo. Una foto statica non consente di cronometrare la durata.";
+                        }
+                        const loadBox = document.getElementById('verify-media-loading');
+                        if (loadBox) loadBox.innerHTML = '';
+                        showAppToast("Le tenute isometriche richiedono un video continuo, non una foto.", "warning");
+                        input.value = '';
+                        return;
+                    }
+
                     updateProgress(30, "caricamento immagine...");
                     const dataUrl = await readFileWithProgress(file, (p) => updateProgress(30 + p * 0.6));
                     if (isAborted) return;
@@ -30050,9 +30189,37 @@ function getCalisthenicsExpertResponse(query) {
         }
 
         
-                function formatCoachAresFeedback(approved, rawFeedback, claimedVal, countedVal, unit, skillName, isPartial) {
+        function formatCoachAresFeedback(approved, rawFeedback, claimedVal, countedVal, unit, skillName, isPartial) {
             let text = (rawFeedback || '').trim();
+            const lowerCheck = text.toLowerCase();
             
+            // Protezione assoluta: se il testo esprime chiaramente rigetto, rifiuto o mismatch di esercizio,
+            // la richiesta NON PUÒ MAI essere formattata come Accettata
+            if (lowerCheck.includes('non può essere convalidata') ||
+                lowerCheck.includes('non puo essere convalidata') ||
+                lowerCheck.includes('non può essere approvata') ||
+                lowerCheck.includes('non puo essere approvata') ||
+                lowerCheck.includes('non conforme') ||
+                lowerCheck.includes('stato richiesta: rifiutata') ||
+                lowerCheck.includes('certificazione respinta') ||
+                lowerCheck.includes('prova respinta') ||
+                lowerCheck.includes('solo trazioni al mento') ||
+                lowerCheck.includes('trazioni normali') ||
+                lowerCheck.includes('pull up normali') ||
+                lowerCheck.includes('non tocca il petto') ||
+                lowerCheck.includes('senza toccare il petto') ||
+                lowerCheck.includes('mancato contatto del petto') ||
+                lowerCheck.includes('alla sbarra anziché agli anelli') ||
+                lowerCheck.includes('sbarra anziché agli anelli') ||
+                lowerCheck.includes('sbarra anziche agli anelli') ||
+                lowerCheck.includes('muscle up anziché') ||
+                lowerCheck.includes('muscle up anziche') ||
+                lowerCheck.includes('muscle up al posto di') ||
+                lowerCheck.includes('foto statica non consente')) {
+                approved = false;
+                isPartial = false;
+            }
+
             // Rimuovi eventuali prefissi duplicati già inseriti dal modello o precedenti passaggi
             text = text.replace(/^stato\s*richiesta\s*:\s*(?:rifiutata|accettata|approvata|respinta|certificata)[^\n\r]*[\n\r]*/i, '').trim();
             text = text.replace(/^motivo\s*(?:\([^)]*\))?\s*:\s*/i, '').trim();
@@ -30114,6 +30281,29 @@ function getCalisthenicsExpertResponse(query) {
 
             if (!file && !preparedVerificationMedia) {
                 showAppToast("Per favore seleziona un video o una foto della tua esecuzione.", "warning");
+                return;
+            }
+
+            // BLOCCO FOTO PER SKILL ISOMETRICHE (A TEMPO IN SECONDI)
+            const isMediaImage = (preparedVerificationMedia && preparedVerificationMedia.isImage) || 
+                                 (file && file.type && file.type.startsWith('image'));
+            if (skill.type === 'sec' && isMediaImage) {
+                if (feedbackEl) {
+                    feedbackEl.style.display = 'block';
+                    feedbackEl.style.background = 'rgba(239,68,68,0.15)';
+                    feedbackEl.style.color = '#ef4444';
+                    feedbackEl.style.border = '1px solid #ef4444';
+                    feedbackEl.innerHTML = `
+                        <div style="display:flex; align-items:center; gap:6px; margin-bottom:6px;">
+                            ${getSvgCross(18)} <strong style="font-size:0.95rem;">VIDEO OBBLIGATORIO PER TENUTE A TEMPO</strong>
+                        </div>
+                        <div style="font-size:0.84rem; line-height:1.5; color:var(--text);">
+                            Per certificare le skill a tempo (${val} secondi di hold) è <strong>tassativamente obbligatorio</strong> caricare un video completo dell'esecuzione.<br>
+                            Una foto statica non consente a Coach Ares di cronometrare la durata effettiva della tenuta.
+                        </div>
+                    `;
+                }
+                showAppToast("Per le skill a tempo è obbligatorio caricare un video completo (no foto).", "error");
                 return;
             }
 
@@ -30327,17 +30517,23 @@ ${getSkillBiomechanicalRules(skill, val, unit)}
 
 COMPRENSIONE SEMANTICA AUTONOMA DELLA SKILL ("${skill.name}", ID: "${skill.id}"):
 In qualità di Maestro di Calisthenics e Biomeccanica, DEVI comprendere e dedurre autonomamente in base al nome della skill i requisiti biomeccanici tassativi del Calisthenics scientifico internazionale:
-- Se nel nome è presente "Chest to Bar" o "al petto": l'atleta DEVE toccare fisicamente la sbarra con il petto (sterno/clavicola) ad ogni ripetizione. Se supera la sbarra solo con il mento (Pull Up normale), le ripetizioni per Chest to Bar sono NULLE (0) e la prova va RESPINTA con approved: false.
+- Se nel nome è presente "Chest to Bar" o "al petto": l'atleta DEVE toccare fisicamente la sbarra con il petto (sterno/clavicola) ad ogni ripetizione. Se supera la sbarra solo con il mento (Pull Up normale), le ripetizioni per Chest to Bar sono NULLE (0) e la prova va RESPINTA con approved: false e reps_counted: 0. NON convalidare MAI trazioni al mento per Chest to Bar.
+- Se la skill richiesta è "Bar Pull Over" o contiene "Pull Over" o "Pullover": l'esercizio consiste nel trazionarsi e ruotare/rotolare l'intero corpo e bacino SOPRA la sbarra fino alla posizione di supporto frontale (front support) con braccia distese. Se l'atleta esegue MUSCLE UP (salita esplosiva verticale senza rotazione del busto/bacino sopra la sbarra), NON è un Pull Over: reps_counted DEVE essere 0 e approved: false con motivazione chiara ("Rilevati Muscle Up anziché Bar Pull Over").
+- Se la skill richiesta è "Ring Muscle Up" o contiene "Ring": l'atleta DEVE eseguire l'esercizio agli ANELLI (ginnici). Se esegue l'esercizio a una sbarra rigida (Bar Muscle Up), la prova NON è valida: reps_counted DEVE essere 0 e approved: false con motivazione chiara ("Esercizio eseguito alla sbarra anziché agli anelli").
 - Se nel nome è presente "Pull Up", "Trazioni" o "Chin": superamento netto del mento sopra la sbarra e distensione completa delle braccia in discesa (lockout), senza kipping né oscillazioni.
-- Se nel nome è presente "Muscle Up": salita simultanea di entrambe le braccia (vietata l'ala di gabbiano / salita asimmetrica) e blocco articolare completo del dip sopra la sbarra.
+- Se nel nome è presente "Muscle Up" (su sbarra): salita simultanea di entrambe le braccia (vietata l'ala di gabbiano / salita asimmetrica) e blocco articolare completo del dip sopra la sbarra.
 - Se nel nome è presente "Dip": flessione gomiti di almeno 90 gradi e risalita a lockout completo delle braccia in estensione in cima.
 - Se nel nome è presente "Push Up" o "Piegamenti": petto a terra/pavimento, corpo retto in hollow body e distensione completa dei gomiti in cima.
-- Se nel nome è presente "Hold", "Lever", "Planche", "Handstand", "Sit", "Flag": postura rigida, allineamento perfetto (orizzontale o verticale) mantenuto in modo continuativo senza cedimenti per tutti i ${val} secondi.
+- Se nel nome è presente "Hold", "Lever", "Planche", "Handstand", "Sit", "Flag": postura rigida, allineamento perfetto (orizzontale o verticale) mantenuto in modo continuativo senza cedimenti per tutti i ${val} secondi. Una foto statica NON può verificare la durata: se ricevi una foto per una skill a tempo, DEVI RESPINGERE con approved: false e hold_seconds: 0.
 - Se nel nome è presente "One Arm Muscle Up": salita ed estensione monobraccio sopra la sbarra senza oscillazioni illegittime.
 - Se nel nome è presente "One Arm Handstand": tenuta in verticale su un solo braccio con braccio in blocco e corpo compatto e controllato.
 - Se nel nome è presente "Back Lever": corpo orizzontale in sospensione dorsale, gomiti distesi e scapole controllate per tutti i secondi richiesti.
 - Se nel nome è presente "One Leg": una gamba completamente distesa allineata al busto e l'altra raccolta, corpo perfettamente parallelo al suolo negli hold.
 - Per qualsiasi delle 81 skill dell'app o nuove skill, deduci automaticamente dal nome il ROM completo, i punti di contatto obbligatori e i vincoli articolari.
+
+DIVIETO ASSOLUTO DI CONVALIDA SE L'ESERCIZIO È SBAGLIATO O LA PROVA È RESPINTA:
+Se l'atleta esegue un esercizio DIVERSO da quello richiesto (es. trazioni al mento anziché Chest to Bar, Muscle Up anziché Pull Over, Bar Muscle Up anziché Ring Muscle Up) o con tecnica non conforme:
+DEVI TASSATIVAMENTE impostare approved: false, reps_counted: 0, hold_seconds: 0! Non assegnare MAI ripetizioni e non usare mai "Stato richiesta: Accettata"!
 
 SINTESI E INCISIVITÀ DEI FEEDBACK DI RIFIUTO (MANDATORIO: 30-40% PIÙ CORTI):
 Quando respingi un video (approved: false), sii compatto, incisivo e diretto: esprimi la motivazione in 2-3 frasi chiare senza giri di parole prolissi.
@@ -30398,25 +30594,25 @@ Rispondi ESCLUSIVAMENTE in JSON valido (senza testo markdown attorno):
     "Rep 2: [secondi approx] salita valida, lockout completo",
     ...
   ],
-  "reps_counted": <numero intero esatto di ripetizioni valide contate nel video, es. 8>,
-  "hold_seconds": <secondi di tenuta continua contati, oppure 0 se ripetizioni>,
+  "reps_counted": <numero intero esatto di ripetizioni valide contate nel video, es. 8, oppure 0 se prova respinta>,
+  "hold_seconds": <secondi di tenuta continua contati, oppure 0 se ripetizioni o se prova respinta>,
   "feedback": "<SPIEGAZIONE DEL MOTIVO DEL VERDETTO: Feedback discorsivo, naturale e motivante in prima persona firmato Coach Ares formattato con Stato richiesta: ... e Motivo: ...>"
 }
 
 STRUTTURA OBBLIGATORIA DEL CAMPO "feedback" (SINTETICO MA NON TROPPO):
-Nel campo "feedback", devi seguire TASSATIVAMENTE questo schema su due righe:
+Nel campo "feedback", devi seguire TASSATIVAMENTE questo schema:
 
-Se l'atleta ha eseguito meno del dichiarato (es. 8 su ${val}):
+Se la richiesta è RIFIUTATA per esecuzione non valida, esercizio errato/mismatch, o video buio:
+Stato richiesta: Rifiutata
+Motivo: [Spiegazione sintetica del motivo. Se il video è troppo buio o si vede male, AGGIUNGI: 'Come rifare il video in maniera corretta: posiziona la telecamera di profilo (vista laterale a 90°) o a tre quarti, ad altezza sbarra o bacino, a 2.5 - 3.5 metri di distanza, inquadrando contemporaneamente l'intero corpo e la sbarra per tutta la durata del movimento con buona illuminazione frontale ed evitando video troppo bui o in controluce.']
+
+Se l'atleta ha eseguito il CORRETTO esercizio con ROM e tecnica validi ma meno ripetizioni del dichiarato (es. 8 su ${val}):
 Stato richiesta: Accettata (8 ripetizioni convalidate su ${val} dichiarate)
 Motivo: [Spiegazione sintetica: hai dichiarato ${val} ripetizioni, ma l'analisi attenta ha contato 8 ripetizioni valide completate con ROM valido prima di scendere dalla sbarra. Il tuo massimale è certificato a 8 ripetizioni.]
 
-Se l'atleta ha completato tutte le ${val} ripetizioni:
+Se l'atleta ha completato tutte le ${val} ripetizioni del CORRETTO esercizio:
 Stato richiesta: Accettata
-Motivo: [Conferma sintetica ma motivante: tutte le ${val} ${unit} di ${skill.name} sono state completate con ROM valido, lockout articolare e biomeccanica eccellente.]
-
-Se la richiesta è RIFIUTATA per video buio o esecuzione non valida:
-Stato richiesta: Rifiutata
-Motivo: [Spiegazione sintetica del motivo. Se il video è troppo buio o si vede male, AGGIUNGI: 'Come rifare il video in maniera corretta: posiziona la telecamera di profilo (vista laterale a 90°) o a tre quarti, ad altezza sbarra o bacino, a 2.5 - 3.5 metri di distanza, inquadrando contemporaneamente l'intero corpo e la sbarra per tutta la durata del movimento con buona illuminazione frontale ed evitando video troppo bui o in controluce.']`;
+Motivo: [Conferma sintetica ma motivante: tutte le ${val} ${unit} di ${skill.name} sono state completate con ROM valido, lockout articolare e biomeccanica eccellente.]`;
 
                 const models = [
                     "gemini-3.5-flash",
@@ -30498,7 +30694,70 @@ Motivo: [Spiegazione sintetica del motivo. Se il video è troppo buio o si vede 
                                         }
                                     }
                                     if (parsed && typeof parsed.approved === 'boolean') {
-                                        // 1. ESTRAZIONE CONTEGGIO EFFETTIVO CON SUPPORTO STRINGA/NUMERO E FALLBACK REGEX DA FEEDBACK
+                                        const rawModelApproved = parsed.approved === true;
+                                        const fbText = (parsed.feedback || '').trim();
+                                        const fbLower = fbText.toLowerCase();
+
+                                        // 1. RILEVAMENTO RIGOROSO DI RIFIUTO (HARD REJECTION)
+                                        const hasRejectionKeywords = 
+                                            !rawModelApproved ||
+                                            fbLower.includes('non può essere convalidata') ||
+                                            fbLower.includes('non puo essere convalidata') ||
+                                            fbLower.includes('non può essere approvata') ||
+                                            fbLower.includes('non puo essere approvata') ||
+                                            fbLower.includes('non conforme') ||
+                                            fbLower.includes('stato richiesta: rifiutata') ||
+                                            fbLower.includes('certificazione respinta') ||
+                                            fbLower.includes('prova respinta') ||
+                                            fbLower.includes('respinta') ||
+                                            fbLower.includes('rifiutata') ||
+                                            fbLower.includes('invece di') ||
+                                            fbLower.includes('anziché') ||
+                                            fbLower.includes('anziche') ||
+                                            fbLower.includes('solo trazioni al mento') ||
+                                            fbLower.includes('trazioni normali') ||
+                                            fbLower.includes('pull up normali') ||
+                                            fbLower.includes('non tocca il petto') ||
+                                            fbLower.includes('senza toccare il petto') ||
+                                            fbLower.includes('non ha toccato il petto') ||
+                                            fbLower.includes('mancato contatto del petto') ||
+                                            fbLower.includes('petto non tocca') ||
+                                            fbLower.includes('alla sbarra anziché agli anelli') ||
+                                            fbLower.includes('sbarra anziché agli anelli') ||
+                                            fbLower.includes('sbarra anziche agli anelli') ||
+                                            fbLower.includes('muscle up anziché') ||
+                                            fbLower.includes('muscle up anziche') ||
+                                            fbLower.includes('muscle up al posto di') ||
+                                            fbLower.includes('foto statica non consente') ||
+                                            fbLower.includes('foto non consente');
+
+                                        // Mismatch specifici per le skill critiche segnalate dall'utente
+                                        let isSkillMismatch = false;
+                                        if (skill.id === 'chest_to_bar') {
+                                            if (fbLower.includes('petto non tocca') ||
+                                                fbLower.includes('solo il mento') ||
+                                                fbLower.includes('non tocca il petto') ||
+                                                fbLower.includes('senza toccare il petto') ||
+                                                fbLower.includes('trazioni normali') ||
+                                                fbLower.includes('pull up normali') ||
+                                                (fbLower.includes('petto') && (fbLower.includes('non') || fbLower.includes('manca') || fbLower.includes('senza')))) {
+                                                isSkillMismatch = true;
+                                            }
+                                        }
+                                        if (skill.id === 'pull_over' || (skill.name && (skill.name.toLowerCase().includes('pull over') || skill.name.toLowerCase().includes('pullover')))) {
+                                            if ((fbLower.includes('muscle up') || fbLower.includes('muscle-up')) && !fbLower.includes('corretto pullover') && !fbLower.includes('valido pullover')) {
+                                                isSkillMismatch = true;
+                                            }
+                                        }
+                                        if (skill.id === 'ring_muscle_up' || (skill.name && skill.name.toLowerCase().includes('ring muscle up'))) {
+                                            if (fbLower.includes('sbarra') || fbLower.includes('bar muscle up')) {
+                                                isSkillMismatch = true;
+                                            }
+                                        }
+
+                                        const isHardRejected = !rawModelApproved || hasRejectionKeywords || isSkillMismatch;
+
+                                        // 2. ESTRAZIONE CONTEGGIO EFFETTIVO CON SUPPORTO STRINGA/NUMERO E FALLBACK REGEX DA FEEDBACK
                                         let countedReps = 0;
                                         if (typeof parsed.reps_counted === 'number') {
                                             countedReps = parsed.reps_counted;
@@ -30536,130 +30795,120 @@ Motivo: [Spiegazione sintetica del motivo. Se il video è troppo buio o si vede 
                                             }
                                         }
 
-                                        // CONTROLLO DETERMINISTICO INTEGRALE:
-                                        // Se l'AI non ha estratto le ripetizioni nel campo reps_counted, tentiamo l'estrazione regex dal feedback:
-                                        if (countedReps === 0 && parsed.feedback && skill.type === 'rep') {
-                                            const mR = parsed.feedback.match(/(?:contat[eo]|eseguit[eo]|complessiv[eo]|valid[eo]|completat[eo]|totale)\s*(\d+)\s*(?:ripetizion|pull|trazion|dip|push|piegament)/i) ||
-                                                       parsed.feedback.match(/(\d+)\s*(?:ripetizioni\s+valide|ripetizioni\s+completate|ripetizioni\s+contate)/i);
-                                            if (mR) countedReps = parseInt(mR[1]) || 0;
-                                        }
-                                        if (countedSec === 0 && parsed.feedback && skill.type === 'sec') {
-                                            const mS = parsed.feedback.match(/(?:cronometrat[eo]|tenut[eo]|mantenut[eo]|durat[eo]|valid[eo])\s*(\d+)\s*(?:second|sec|s\b)/i) ||
-                                                       parsed.feedback.match(/(\d+)\s*(?:secondi\s+di\s+tenuta|secondi\s+validi|secondi\s+continuativi)/i);
-                                            if (mS) countedSec = parseInt(mS[1]) || 0;
-                                        }
-
-                                        // Se reps_detail è presente, prendi il conteggio dettagliato rigoroso
-                                        if (Array.isArray(parsed.reps_detail) && parsed.reps_detail.length > 0) {
+                                        // Se reps_detail è presente ed è una verifica valida (non respinta)
+                                        if (!isHardRejected && Array.isArray(parsed.reps_detail) && parsed.reps_detail.length > 0) {
                                             const validDetailCount = parsed.reps_detail.filter(r => {
                                                 if (typeof r === 'object' && r !== null) return r.valid !== false;
                                                 return true;
                                             }).length;
                                             if (validDetailCount > 0 && (!countedReps || validDetailCount < countedReps)) {
-                                                // Se il conteggio dettagliato è inferiore o countedReps mancava, usa il conteggio dettagliato
                                                 countedReps = validDetailCount;
                                             } else if (countedReps === 0) {
                                                 countedReps = validDetailCount;
                                             }
                                         }
 
-                                        // Se Coach Ares ha approvato l'esecuzione, convalida il target dichiarato solo se non è stato specificato un numero:
-                                        if (parsed.approved === true) {
-                                            if (countedReps === 0) countedReps = val;
-                                            if (countedSec === 0) countedSec = val;
-                                        }
+                                        // 3. DECISIONE FINALE BIOMECCANICA
+                                        if (isHardRejected) {
+                                            // RIFIUTO CATEGORICO: nessuna approvazione forzata, nessun target parziale fittizio!
+                                            parsed.approved = false;
+                                            isPartialCertification = false;
+                                            countedReps = 0;
+                                            countedSec = 0;
+                                            parsed.reps_counted = 0;
+                                            parsed.hold_seconds = 0;
 
-                                        // 2. CONTEGGIO DETERMINISTICO ED ENTRATA A CONTEGGIO UFFICIALE:
-                                        // Se l'atleta esegue meno di quanto dichiarato (es. 8 su 12),
-                                        // CERTIFICA COMUNQUE IL NUMERO INFERIORE CHE HA CONTATO!
-                                        if (skill.type === 'rep') {
-                                            if (countedReps < val) {
-                                                if (countedReps > 0) {
-                                                    // Certifica il numero inferiore contato da Coach Ares!
-                                                    const claimedVal = val;
-                                                    certifiedVal = countedReps;
-                                                    val = countedReps;
-                                                    isPartialCertification = true;
-                                                    parsed.approved = true;
-
-                                                    const cleanCritique = (parsed.feedback || '')
-                                                        .replace(/^stato\s*richiesta\s*:[^\n\r]*[\n\r]*/i, '')
-                                                        .replace(/^motivo\s*(?:\([^)]*\))?\s*:\s*/i, '')
-                                                        .replace(/certificazione\s*respinta[.!]*$/i, '')
-                                                        .trim();
-                                                    
-                                                    parsed.feedback = `Dichiarate ${claimedVal} ripetizioni: Coach Ares ha contato con precisione ${countedReps} ripetizioni valide con ROM completo prima di scendere. Il tuo massimale è ufficialmente CERTIFICATO a ${countedReps} ripetizioni!` +
-                                                        (cleanCritique ? ` Note tecniche: ${cleanCritique}` : '');
-                                                } else {
-                                                    // 0 ripetizioni valide: rifiuto assoluto
-                                                    parsed.approved = false;
-                                                    isPartialCertification = false;
-                                                    const targetMsg = `Dichiarate ${val} ripetizioni, ma Coach Ares ha contato solo ${countedReps} ripetizioni valide con ROM completo.`;
-                                                    let origFb = (parsed.feedback || '').trim();
-                                                    origFb = origFb.replace(/^stato\s*richiesta\s*:[^\n\r]*[\n\r]*/i, '').replace(/^motivo\s*(?:\([^)]*\))?\s*:\s*/i, '').trim();
-                                                    if (origFb) {
-                                                        parsed.feedback = `${targetMsg} Motivo del rifiuto: ${origFb}`;
-                                                    } else {
-                                                        parsed.feedback = `${targetMsg} Certificazione RESPINTA: per certificare questo livello devi completare le ripetizioni con corretta biomeccanica.`;
-                                                    }
-                                                }
-                                            } else {
-                                                certifiedVal = Math.max(val, countedReps);
-                                                val = certifiedVal;
-                                                parsed.approved = true;
+                                            let cleanFeedback = (parsed.feedback || '').trim();
+                                            if (!cleanFeedback) {
+                                                cleanFeedback = (skill.type === 'rep')
+                                                    ? `Esecuzione non convalidata: la prova non rispetta i criteri biomeccanici tassativi per "${skill.name}".`
+                                                    : `Tenuta non convalidata: la postura o la durata non rispettano i criteri tassativi per "${skill.name}".`;
                                             }
-                                        } else if (skill.type === 'sec') {
-                                            if (countedSec < val) {
-                                                if (countedSec > 0) {
-                                                    const claimedVal = val;
-                                                    certifiedVal = countedSec;
-                                                    val = countedSec;
-                                                    isPartialCertification = true;
-                                                    parsed.approved = true;
-
-                                                    const cleanCritique = (parsed.feedback || '')
-                                                        .replace(/^stato\s*richiesta\s*:[^\n\r]*[\n\r]*/i, '')
-                                                        .replace(/^motivo\s*(?:\([^)]*\))?\s*:\s*/i, '')
-                                                        .replace(/certificazione\s*respinta[.!]*$/i, '')
-                                                        .trim();
-
-                                                    parsed.feedback = `Dichiarati ${claimedVal} secondi: Coach Ares ha cronometrato con precisione ${countedSec}s continuativi con allineamento valido. Il tuo massimale è ufficialmente CERTIFICATO a ${countedSec} secondi!` +
-                                                        (cleanCritique ? ` Note tecniche: ${cleanCritique}` : '');
-                                                } else {
-                                                    parsed.approved = false;
-                                                    isPartialCertification = false;
-                                                    const targetMsg = `Dichiarati ${val} secondi di tenuta, ma Coach Ares ha cronometrato solo ${countedSec}s continuativi con allineamento valido.`;
-                                                    let origFb = (parsed.feedback || '').trim();
-                                                    origFb = origFb.replace(/^stato\s*richiesta\s*:[^\n\r]*[\n\r]*/i, '').replace(/^motivo\s*(?:\([^)]*\))?\s*:\s*/i, '').trim();
-                                                    if (origFb) {
-                                                        parsed.feedback = `${targetMsg} Motivo del rifiuto: ${origFb}`;
-                                                    } else {
-                                                        parsed.feedback = `${targetMsg} Certificazione RESPINTA: devi mantenere la postura senza cedimenti.`;
-                                                    }
+                                            if (isSkillMismatch) {
+                                                if (skill.id === 'chest_to_bar' && !cleanFeedback.toLowerCase().includes('chest to bar')) {
+                                                    cleanFeedback += " Rilevate solo trazioni al mento. Contatto petto-sbarra obbligatorio per Chest to Bar.";
+                                                } else if (skill.id === 'pull_over' && !cleanFeedback.toLowerCase().includes('pull over')) {
+                                                    cleanFeedback += " Rilevati Muscle Up anziché Bar Pull Over. Il Pull Over richiede rotazione del corpo sopra la sbarra.";
+                                                } else if (skill.id === 'ring_muscle_up' && !cleanFeedback.toLowerCase().includes('anelli')) {
+                                                    cleanFeedback += " Esercizio eseguito alla sbarra anziché agli anelli ginnici.";
                                                 }
-                                            } else {
-                                                certifiedVal = Math.max(val, countedSec);
-                                                val = certifiedVal;
-                                                parsed.approved = true;
                                             }
-                                        }
+                                            parsed.feedback = cleanFeedback;
+                                        } else {
+                                            // Se Coach Ares ha approvato l'esecuzione, convalida il target dichiarato solo se non è stato specificato un numero:
+                                            if (parsed.approved === true) {
+                                                if (countedReps === 0) countedReps = val;
+                                                if (countedSec === 0) countedSec = val;
+                                            }
 
-                                        // 3. PROTEZIONE SPECIALE CHEST TO BAR vs PULL UPS REGOLARI
-                                        if (skill.id === 'chest_to_bar') {
-                                            const fbLower = (parsed.feedback || '').toLowerCase();
-                                            if (
-                                                fbLower.includes('petto non tocca') ||
-                                                fbLower.includes('non tocca il petto') ||
-                                                fbLower.includes('non ha toccato il petto') ||
-                                                fbLower.includes('solo il mento') ||
-                                                fbLower.includes('trazioni normali') ||
-                                                fbLower.includes('pull up normali') ||
-                                                fbLower.includes('senza toccare il petto') ||
-                                                fbLower.includes('nessun chest to bar')
-                                            ) {
-                                                parsed.approved = false;
-                                                if (!parsed.feedback.includes('RESPINTA')) {
-                                                    parsed.feedback += " [Coach Ares: Rilevate solo trazioni al mento. Contatto petto-sbarra obbligatorio per Chest to Bar. Certificazione RESPINTA]";
+                                            // TARGET PARZIALE SOLO SE L'ESERCIZIO È STATO APPROVATO DA COACH ARES
+                                            if (skill.type === 'rep') {
+                                                if (countedReps < val) {
+                                                    if (countedReps > 0 && rawModelApproved) {
+                                                        const claimedVal = val;
+                                                        certifiedVal = countedReps;
+                                                        val = countedReps;
+                                                        isPartialCertification = true;
+                                                        parsed.approved = true;
+
+                                                        const cleanCritique = (parsed.feedback || '')
+                                                            .replace(/^stato\s*richiesta\s*:[^\n\r]*[\n\r]*/i, '')
+                                                            .replace(/^motivo\s*(?:\([^)]*\))?\s*:\s*/i, '')
+                                                            .replace(/certificazione\s*respinta[.!]*$/i, '')
+                                                            .trim();
+                                                        
+                                                        parsed.feedback = `Dichiarate ${claimedVal} ripetizioni: Coach Ares ha contato con precisione ${countedReps} ripetizioni valide con ROM completo prima di scendere. Il tuo massimale è ufficialmente CERTIFICATO a ${countedReps} ripetizioni!` +
+                                                            (cleanCritique ? ` Note tecniche: ${cleanCritique}` : '');
+                                                    } else {
+                                                        parsed.approved = false;
+                                                        isPartialCertification = false;
+                                                        const targetMsg = `Dichiarate ${val} ripetizioni, ma Coach Ares ha contato solo ${countedReps} ripetizioni valide con ROM completo.`;
+                                                        let origFb = (parsed.feedback || '').trim();
+                                                        origFb = origFb.replace(/^stato\s*richiesta\s*:[^\n\r]*[\n\r]*/i, '').replace(/^motivo\s*(?:\([^)]*\))?\s*:\s*/i, '').trim();
+                                                        if (origFb) {
+                                                            parsed.feedback = `${targetMsg} Motivo del rifiuto: ${origFb}`;
+                                                        } else {
+                                                            parsed.feedback = `${targetMsg} Certificazione RESPINTA: per certificare questo livello devi completare le ripetizioni con corretta biomeccanica.`;
+                                                        }
+                                                    }
+                                                } else {
+                                                    certifiedVal = Math.max(val, countedReps);
+                                                    val = certifiedVal;
+                                                    parsed.approved = true;
+                                                }
+                                            } else if (skill.type === 'sec') {
+                                                if (countedSec < val) {
+                                                    if (countedSec > 0 && rawModelApproved) {
+                                                        const claimedVal = val;
+                                                        certifiedVal = countedSec;
+                                                        val = countedSec;
+                                                        isPartialCertification = true;
+                                                        parsed.approved = true;
+
+                                                        const cleanCritique = (parsed.feedback || '')
+                                                            .replace(/^stato\s*richiesta\s*:[^\n\r]*[\n\r]*/i, '')
+                                                            .replace(/^motivo\s*(?:\([^)]*\))?\s*:\s*/i, '')
+                                                            .replace(/certificazione\s*respinta[.!]*$/i, '')
+                                                            .trim();
+
+                                                        parsed.feedback = `Dichiarati ${claimedVal} secondi: Coach Ares ha cronometrato con precisione ${countedSec}s continuativi con allineamento valido. Il tuo massimale è ufficialmente CERTIFICATO a ${countedSec} secondi!` +
+                                                            (cleanCritique ? ` Note tecniche: ${cleanCritique}` : '');
+                                                    } else {
+                                                        parsed.approved = false;
+                                                        isPartialCertification = false;
+                                                        const targetMsg = `Dichiarati ${val} secondi di tenuta, ma Coach Ares ha cronometrato solo ${countedSec}s continuativi con allineamento valido.`;
+                                                        let origFb = (parsed.feedback || '').trim();
+                                                        origFb = origFb.replace(/^stato\s*richiesta\s*:[^\n\r]*[\n\r]*/i, '').replace(/^motivo\s*(?:\([^)]*\))?\s*:\s*/i, '').trim();
+                                                        if (origFb) {
+                                                            parsed.feedback = `${targetMsg} Motivo del rifiuto: ${origFb}`;
+                                                        } else {
+                                                            parsed.feedback = `${targetMsg} Certificazione RESPINTA: devi mantenere la postura senza cedimenti.`;
+                                                        }
+                                                    }
+                                                } else {
+                                                    certifiedVal = Math.max(val, countedSec);
+                                                    val = certifiedVal;
+                                                    parsed.approved = true;
                                                 }
                                             }
                                         }
@@ -30725,7 +30974,7 @@ Motivo: [Spiegazione sintetica del motivo. Se il video è troppo buio o si vede 
                 return; // Non salvare 'rejected' su Firestore per un errore di rete!
             }
 
-            const aiApproved = !!aiResult.approved;
+            let aiApproved = !!aiResult.approved;
             const currentCountedVal = (skill.type === 'rep') ? (aiResult.reps_counted || 0) : (aiResult.hold_seconds || 0);
             let aiFeedbackText = (aiResult.feedback && aiResult.feedback.trim());
             aiFeedbackText = formatCoachAresFeedback(
@@ -30737,6 +30986,11 @@ Motivo: [Spiegazione sintetica del motivo. Se il video è troppo buio o si vede 
                 skill.name,
                 isPartialCertification
             );
+
+            // Garanzia finale: se il feedback dice "Stato richiesta: Rifiutata", lo stato DEVE essere rejected
+            if (aiFeedbackText.startsWith('Stato richiesta: Rifiutata') || aiFeedbackText.toLowerCase().includes('certificazione respinta')) {
+                aiApproved = false;
+            }
 
             if (aiApproved) {
                 if (typeof claimedInput !== 'undefined' && claimedInput && typeof val !== 'undefined') {
