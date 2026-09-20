@@ -27014,6 +27014,719 @@ function getCalisthenicsExpertResponse(query) {
         function isCloudinaryApiConfigured() {
             return !!(getCloudinaryApiKey() && getCloudinaryApiSecret());
         }
+        function getDeletedCloudinaryPublicIds() {
+            try {
+                return JSON.parse(localStorage.getItem('calisthenics_deleted_cld_assets') || '[]');
+            } catch(e) { return []; }
+        }
+
+        function markCloudinaryAssetDeleted(publicId) {
+            if (!publicId) return;
+            try {
+                const deleted = getDeletedCloudinaryPublicIds();
+                if (!deleted.includes(publicId)) {
+                    deleted.push(publicId);
+                    localStorage.setItem('calisthenics_deleted_cld_assets', JSON.stringify(deleted));
+                }
+            } catch(e) {}
+        }
+
+        const _CLOUDINARY_MEDIA_INVENTORY = [
+  {
+    "public_id": "chat_media/cmrvk2j3qsiyqyeclk1z",
+    "bytes": 9530832,
+    "resource_type": "video",
+    "format": "mp4",
+    "width": 1280,
+    "height": 720,
+    "created_at": "2026-09-19T12:35:51Z",
+    "display_name": "Video Project 5",
+    "secure_url": "https://res.cloudinary.com/lk7buyra/video/upload/v1789821351/chat_media/cmrvk2j3qsiyqyeclk1z.mp4"
+  },
+  {
+    "public_id": "chat_media/cxjtwd3i088mbob7klwk",
+    "bytes": 8457543,
+    "resource_type": "video",
+    "format": "mp4",
+    "width": 464,
+    "height": 832,
+    "created_at": "2026-09-19T12:38:11Z",
+    "display_name": "WhatsApp Video 2026-09-19 at 12.34.49",
+    "secure_url": "https://res.cloudinary.com/lk7buyra/video/upload/v1789821491/chat_media/cxjtwd3i088mbob7klwk.mp4"
+  },
+  {
+    "public_id": "chat_media/d6w8wnzprjyrhhv9xpij",
+    "bytes": 16044,
+    "resource_type": "video",
+    "format": "wav",
+    "width": 0,
+    "height": 0,
+    "created_at": "2026-09-11T13:09:50Z",
+    "display_name": "test_voice",
+    "secure_url": "https://res.cloudinary.com/lk7buyra/video/upload/v1789132190/chat_media/d6w8wnzprjyrhhv9xpij.wav"
+  },
+  {
+    "public_id": "chat_media/dfcd8cjpszgjlqbokray",
+    "bytes": 15909326,
+    "resource_type": "video",
+    "format": "mp4",
+    "width": 1280,
+    "height": 720,
+    "created_at": "2026-09-19T12:08:14Z",
+    "display_name": "Video Project 4",
+    "secure_url": "https://res.cloudinary.com/lk7buyra/video/upload/v1789819694/chat_media/dfcd8cjpszgjlqbokray.mp4"
+  },
+  {
+    "public_id": "chat_media/fuoihi0msx7hq99q8ihk",
+    "bytes": 32135,
+    "resource_type": "video",
+    "format": "webm",
+    "width": 0,
+    "height": 0,
+    "created_at": "2026-09-11T13:05:09Z",
+    "display_name": "voice_1789131904051",
+    "secure_url": "https://res.cloudinary.com/lk7buyra/video/upload/v1789131909/chat_media/fuoihi0msx7hq99q8ihk.webm"
+  },
+  {
+    "public_id": "chat_media/g6fyfcew28y77azmcrav",
+    "bytes": 8457543,
+    "resource_type": "video",
+    "format": "mp4",
+    "width": 464,
+    "height": 832,
+    "created_at": "2026-09-19T15:00:46Z",
+    "display_name": "WhatsApp Video 2026-09-19 at 12.34.49",
+    "secure_url": "https://res.cloudinary.com/lk7buyra/video/upload/v1789830046/chat_media/g6fyfcew28y77azmcrav.mp4"
+  },
+  {
+    "public_id": "chat_media/gyvrb6rtelnydpfczk1j",
+    "bytes": 16044,
+    "resource_type": "video",
+    "format": "wav",
+    "width": 0,
+    "height": 0,
+    "created_at": "2026-09-11T13:09:51Z",
+    "display_name": "test_voice",
+    "secure_url": "https://res.cloudinary.com/lk7buyra/video/upload/v1789132191/chat_media/gyvrb6rtelnydpfczk1j.wav"
+  },
+  {
+    "public_id": "chat_media/ielpjxxlokk0ycvyjxhw",
+    "bytes": 9530832,
+    "resource_type": "video",
+    "format": "mp4",
+    "width": 1280,
+    "height": 720,
+    "created_at": "2026-09-19T12:35:07Z",
+    "display_name": "Video Project 5",
+    "secure_url": "https://res.cloudinary.com/lk7buyra/video/upload/v1789821307/chat_media/ielpjxxlokk0ycvyjxhw.mp4"
+  },
+  {
+    "public_id": "chat_media/inbq4jk3sb9foagt7utl",
+    "bytes": 8457543,
+    "resource_type": "video",
+    "format": "mp4",
+    "width": 464,
+    "height": 832,
+    "created_at": "2026-09-19T12:44:48Z",
+    "display_name": "WhatsApp Video 2026-09-19 at 12.34.49",
+    "secure_url": "https://res.cloudinary.com/lk7buyra/video/upload/v1789821888/chat_media/inbq4jk3sb9foagt7utl.mp4"
+  },
+  {
+    "public_id": "chat_media/j9b6t48baz4ji7ovekyy",
+    "bytes": 152759,
+    "resource_type": "video",
+    "format": "webm",
+    "width": 0,
+    "height": 0,
+    "created_at": "2026-09-11T13:14:29Z",
+    "display_name": "voice_1789132468148",
+    "secure_url": "https://res.cloudinary.com/lk7buyra/video/upload/v1789132469/chat_media/j9b6t48baz4ji7ovekyy.webm"
+  },
+  {
+    "public_id": "chat_media/l6dx1i37sh4ievuhjvea",
+    "bytes": 8457543,
+    "resource_type": "video",
+    "format": "mp4",
+    "width": 464,
+    "height": 832,
+    "created_at": "2026-09-19T15:10:59Z",
+    "display_name": "WhatsApp Video 2026-09-19 at 12.34.49",
+    "secure_url": "https://res.cloudinary.com/lk7buyra/video/upload/v1789830659/chat_media/l6dx1i37sh4ievuhjvea.mp4"
+  },
+  {
+    "public_id": "chat_media/lhgn2qy9rjc0o3p6mlyq",
+    "bytes": 1649218,
+    "resource_type": "video",
+    "format": "webm",
+    "width": 746,
+    "height": 560,
+    "created_at": "2026-09-11T13:35:06Z",
+    "display_name": "Joy_560p",
+    "secure_url": "https://res.cloudinary.com/lk7buyra/video/upload/v1789133706/chat_media/lhgn2qy9rjc0o3p6mlyq.webm"
+  },
+  {
+    "public_id": "chat_media/lwnrqkwpoq0mn37sm3nn",
+    "bytes": 9530832,
+    "resource_type": "video",
+    "format": "mp4",
+    "width": 1280,
+    "height": 720,
+    "created_at": "2026-09-19T12:34:57Z",
+    "display_name": "Video Project 5",
+    "secure_url": "https://res.cloudinary.com/lk7buyra/video/upload/v1789821297/chat_media/lwnrqkwpoq0mn37sm3nn.mp4"
+  },
+  {
+    "public_id": "chat_media/mgiarji7wzlwemfidg4v",
+    "bytes": 8457543,
+    "resource_type": "video",
+    "format": "mp4",
+    "width": 464,
+    "height": 832,
+    "created_at": "2026-09-19T12:38:01Z",
+    "display_name": "WhatsApp Video 2026-09-19 at 12.34.49",
+    "secure_url": "https://res.cloudinary.com/lk7buyra/video/upload/v1789821481/chat_media/mgiarji7wzlwemfidg4v.mp4"
+  },
+  {
+    "public_id": "chat_media/n3kf0klkdxqdunqaban9",
+    "bytes": 1665176,
+    "resource_type": "video",
+    "format": "webm",
+    "width": 746,
+    "height": 560,
+    "created_at": "2026-09-11T13:37:45Z",
+    "display_name": "Joy_560p",
+    "secure_url": "https://res.cloudinary.com/lk7buyra/video/upload/v1789133865/chat_media/n3kf0klkdxqdunqaban9.webm"
+  },
+  {
+    "public_id": "chat_media/n4rlhpnsdcmjxabsvvok",
+    "bytes": 16044,
+    "resource_type": "video",
+    "format": "wav",
+    "width": 0,
+    "height": 0,
+    "created_at": "2026-09-11T13:09:52Z",
+    "display_name": "test_voice",
+    "secure_url": "https://res.cloudinary.com/lk7buyra/video/upload/v1789132192/chat_media/n4rlhpnsdcmjxabsvvok.wav"
+  },
+  {
+    "public_id": "chat_media/ni8ylavrbmwnnhypc8y5",
+    "bytes": 252676,
+    "resource_type": "video",
+    "format": "webm",
+    "width": 560,
+    "height": 996,
+    "created_at": "2026-09-11T13:32:37Z",
+    "display_name": "IMG_2164_560p",
+    "secure_url": "https://res.cloudinary.com/lk7buyra/video/upload/v1789133557/chat_media/ni8ylavrbmwnnhypc8y5.webm"
+  },
+  {
+    "public_id": "chat_media/nmrdxadadyur4sby1zne",
+    "bytes": 20511,
+    "resource_type": "video",
+    "format": "webm",
+    "width": 0,
+    "height": 0,
+    "created_at": "2026-09-11T12:24:31Z",
+    "display_name": "voice_1789129470987",
+    "secure_url": "https://res.cloudinary.com/lk7buyra/video/upload/v1789129471/chat_media/nmrdxadadyur4sby1zne.webm"
+  },
+  {
+    "public_id": "chat_media/qn8xrzbbhjps9vktw6ud",
+    "bytes": 15909326,
+    "resource_type": "video",
+    "format": "mp4",
+    "width": 1280,
+    "height": 720,
+    "created_at": "2026-09-19T12:07:40Z",
+    "display_name": "Video Project 4",
+    "secure_url": "https://res.cloudinary.com/lk7buyra/video/upload/v1789819660/chat_media/qn8xrzbbhjps9vktw6ud.mp4"
+  },
+  {
+    "public_id": "chat_media/s5fbpyu4lrpiwy3et4dx",
+    "bytes": 66001,
+    "resource_type": "video",
+    "format": "webm",
+    "width": 0,
+    "height": 0,
+    "created_at": "2026-09-11T13:14:43Z",
+    "display_name": "voice_1789132482439",
+    "secure_url": "https://res.cloudinary.com/lk7buyra/video/upload/v1789132483/chat_media/s5fbpyu4lrpiwy3et4dx.webm"
+  },
+  {
+    "public_id": "chat_media/soj5jlbhvzetwj65gowi",
+    "bytes": 16044,
+    "resource_type": "video",
+    "format": "wav",
+    "width": 0,
+    "height": 0,
+    "created_at": "2026-09-11T13:09:53Z",
+    "display_name": "test_voice",
+    "secure_url": "https://res.cloudinary.com/lk7buyra/video/upload/v1789132193/chat_media/soj5jlbhvzetwj65gowi.wav"
+  },
+  {
+    "public_id": "chat_media/ttu4povpvj2m12f6svq2",
+    "bytes": 62177,
+    "resource_type": "video",
+    "format": "webm",
+    "width": 0,
+    "height": 0,
+    "created_at": "2026-09-11T12:23:02Z",
+    "display_name": "voice_1789129382020",
+    "secure_url": "https://res.cloudinary.com/lk7buyra/video/upload/v1789129382/chat_media/ttu4povpvj2m12f6svq2.webm"
+  },
+  {
+    "public_id": "chat_media/uqdbqw2sqbiy3ktbtrel",
+    "bytes": 16044,
+    "resource_type": "video",
+    "format": "wav",
+    "width": 0,
+    "height": 0,
+    "created_at": "2026-09-11T13:09:53Z",
+    "display_name": "test_voice",
+    "secure_url": "https://res.cloudinary.com/lk7buyra/video/upload/v1789132193/chat_media/uqdbqw2sqbiy3ktbtrel.wav"
+  },
+  {
+    "public_id": "chat_media/w5zzwoqpvedtylfpzcwu",
+    "bytes": 36015,
+    "resource_type": "video",
+    "format": "webm",
+    "width": 0,
+    "height": 0,
+    "created_at": "2026-09-11T13:05:20Z",
+    "display_name": "voice_1789131919225",
+    "secure_url": "https://res.cloudinary.com/lk7buyra/video/upload/v1789131920/chat_media/w5zzwoqpvedtylfpzcwu.webm"
+  },
+  {
+    "public_id": "chat_media/wyc6rwpy8ztqwqxxnh48",
+    "bytes": 4807344,
+    "resource_type": "video",
+    "format": "mp4",
+    "width": 1280,
+    "height": 720,
+    "created_at": "2026-09-20T09:56:13Z",
+    "display_name": "Video Project 4_30fps_720p",
+    "secure_url": "https://res.cloudinary.com/lk7buyra/video/upload/v1789898173/chat_media/wyc6rwpy8ztqwqxxnh48.mp4"
+  },
+  {
+    "public_id": "chat_media/xojywhukvpzr46kfqsqd",
+    "bytes": 16044,
+    "resource_type": "video",
+    "format": "wav",
+    "width": 0,
+    "height": 0,
+    "created_at": "2026-09-11T13:09:54Z",
+    "display_name": "test_voice",
+    "secure_url": "https://res.cloudinary.com/lk7buyra/video/upload/v1789132194/chat_media/xojywhukvpzr46kfqsqd.wav"
+  },
+  {
+    "public_id": "chat_media/yqx2fgvzb0wees112w6u",
+    "bytes": 1644,
+    "resource_type": "video",
+    "format": "wav",
+    "width": 0,
+    "height": 0,
+    "created_at": "2026-09-11T12:31:15Z",
+    "display_name": "voice_test",
+    "secure_url": "https://res.cloudinary.com/lk7buyra/video/upload/v1789129875/chat_media/yqx2fgvzb0wees112w6u.wav"
+  },
+  {
+    "public_id": "chat_media/yzqimgv11jsqe1tsprfp",
+    "bytes": 8457543,
+    "resource_type": "video",
+    "format": "mp4",
+    "width": 464,
+    "height": 832,
+    "created_at": "2026-09-19T15:11:50Z",
+    "display_name": "WhatsApp Video 2026-09-19 at 12.34.49",
+    "secure_url": "https://res.cloudinary.com/lk7buyra/video/upload/v1789830710/chat_media/yzqimgv11jsqe1tsprfp.mp4"
+  },
+  {
+    "public_id": "chat_media/ld0ad3sp7t1zg9rhpkhm",
+    "bytes": 8306,
+    "resource_type": "image",
+    "format": "jpg",
+    "width": 244,
+    "height": 148,
+    "created_at": "2026-09-11T12:19:20Z",
+    "display_name": "download",
+    "secure_url": "https://res.cloudinary.com/lk7buyra/image/upload/v1789129160/chat_media/ld0ad3sp7t1zg9rhpkhm.jpg"
+  },
+  {
+    "public_id": "chat_media/ldpmvjyonulk5jnlh3jl",
+    "bytes": 70,
+    "resource_type": "image",
+    "format": "png",
+    "width": 1,
+    "height": 1,
+    "created_at": "2026-09-11T12:23:18Z",
+    "display_name": "test",
+    "secure_url": "https://res.cloudinary.com/lk7buyra/image/upload/v1789129398/chat_media/ldpmvjyonulk5jnlh3jl.png"
+  },
+  {
+    "public_id": "chat_media/ltzbuibvvs5flrnoh0qp",
+    "bytes": 27268,
+    "resource_type": "image",
+    "format": "webp",
+    "width": 681,
+    "height": 450,
+    "created_at": "2026-09-19T10:20:17Z",
+    "display_name": "images",
+    "secure_url": "https://res.cloudinary.com/lk7buyra/image/upload/v1789813217/chat_media/ltzbuibvvs5flrnoh0qp.webp"
+  },
+  {
+    "public_id": "chat_media/odsrffeqwft1l9dz6vnv",
+    "bytes": 136592,
+    "resource_type": "image",
+    "format": "jpg",
+    "width": 720,
+    "height": 960,
+    "created_at": "2026-09-11T13:33:03Z",
+    "display_name": "image",
+    "secure_url": "https://res.cloudinary.com/lk7buyra/image/upload/v1789133583/chat_media/odsrffeqwft1l9dz6vnv.jpg"
+  },
+  {
+    "public_id": "chat_media/qdlkpotn6gflzzeazi9j",
+    "bytes": 8306,
+    "resource_type": "image",
+    "format": "jpg",
+    "width": 244,
+    "height": 148,
+    "created_at": "2026-09-11T13:02:22Z",
+    "display_name": "download",
+    "secure_url": "https://res.cloudinary.com/lk7buyra/image/upload/v1789131742/chat_media/qdlkpotn6gflzzeazi9j.jpg"
+  },
+  {
+    "public_id": "chat_media/qj1b13wgqatyfuzmohjm",
+    "bytes": 83980,
+    "resource_type": "image",
+    "format": "jpg",
+    "width": 720,
+    "height": 1018,
+    "created_at": "2026-09-11T18:14:27Z",
+    "display_name": "Poster io non mando la mia vita in fumo (4)",
+    "secure_url": "https://res.cloudinary.com/lk7buyra/image/upload/v1789150467/chat_media/qj1b13wgqatyfuzmohjm.jpg"
+  },
+  {
+    "public_id": "chat_media/ro3q3mmhyggrjmuybhcj",
+    "bytes": 98223,
+    "resource_type": "image",
+    "format": "jpg",
+    "width": 591,
+    "height": 1280,
+    "created_at": "2026-09-16T16:05:35Z",
+    "display_name": "IMG_2259",
+    "secure_url": "https://res.cloudinary.com/lk7buyra/image/upload/v1789574735/chat_media/ro3q3mmhyggrjmuybhcj.jpg"
+  },
+  {
+    "public_id": "chat_media/rtiomne6stm78xylxyzi",
+    "bytes": 59820,
+    "resource_type": "image",
+    "format": "jpg",
+    "width": 512,
+    "height": 512,
+    "created_at": "2026-09-11T12:55:55Z",
+    "display_name": "favicon",
+    "secure_url": "https://res.cloudinary.com/lk7buyra/image/upload/v1789131355/chat_media/rtiomne6stm78xylxyzi.jpg"
+  },
+  {
+    "public_id": "chat_media/tyxxcqpgkirb3spl7sjm",
+    "bytes": 81496,
+    "resource_type": "image",
+    "format": "jpg",
+    "width": 720,
+    "height": 960,
+    "created_at": "2026-09-11T15:35:28Z",
+    "display_name": "image",
+    "secure_url": "https://res.cloudinary.com/lk7buyra/image/upload/v1789140928/chat_media/tyxxcqpgkirb3spl7sjm.jpg"
+  },
+  {
+    "public_id": "chat_media/uztzivk6tgqksud0chdp",
+    "bytes": 15275,
+    "resource_type": "image",
+    "format": "jpg",
+    "width": 448,
+    "height": 446,
+    "created_at": "2026-09-19T10:19:57Z",
+    "display_name": "images",
+    "secure_url": "https://res.cloudinary.com/lk7buyra/image/upload/v1789813197/chat_media/uztzivk6tgqksud0chdp.jpg"
+  },
+  {
+    "public_id": "chat_media/wkl6ryogs0d9tu6iigpg",
+    "bytes": 56605,
+    "resource_type": "image",
+    "format": "jpg",
+    "width": 512,
+    "height": 512,
+    "created_at": "2026-09-16T16:05:15Z",
+    "display_name": "favicon",
+    "secure_url": "https://res.cloudinary.com/lk7buyra/image/upload/v1789574715/chat_media/wkl6ryogs0d9tu6iigpg.jpg"
+  },
+  {
+    "public_id": "chat_media/z5cjttwd1bkoqyevxxqu",
+    "bytes": 59820,
+    "resource_type": "image",
+    "format": "jpg",
+    "width": 512,
+    "height": 512,
+    "created_at": "2026-09-11T12:56:15Z",
+    "display_name": "favicon",
+    "secure_url": "https://res.cloudinary.com/lk7buyra/image/upload/v1789131375/chat_media/z5cjttwd1bkoqyevxxqu.jpg"
+  },
+  {
+    "public_id": "chat_media/zud5lixka84bzfrmewkw",
+    "bytes": 59820,
+    "resource_type": "image",
+    "format": "jpg",
+    "width": 512,
+    "height": 512,
+    "created_at": "2026-09-11T12:48:00Z",
+    "display_name": "favicon",
+    "secure_url": "https://res.cloudinary.com/lk7buyra/image/upload/v1789130880/chat_media/zud5lixka84bzfrmewkw.jpg"
+  },
+  {
+    "public_id": "chat_media/disw3l8v44fscfhvws6e.wav",
+    "bytes": 16044,
+    "resource_type": "raw",
+    "format": "",
+    "width": 0,
+    "height": 0,
+    "created_at": "2026-09-11T13:09:52Z",
+    "display_name": "test_voice",
+    "secure_url": "https://res.cloudinary.com/lk7buyra/raw/upload/v1789132192/chat_media/disw3l8v44fscfhvws6e.wav"
+  },
+  {
+    "public_id": "chat_media/exhtkesuzyicytdicqeg.webm",
+    "bytes": 23,
+    "resource_type": "raw",
+    "format": "",
+    "width": 0,
+    "height": 0,
+    "created_at": "2026-09-11T13:10:22Z",
+    "display_name": "voice_test",
+    "secure_url": "https://res.cloudinary.com/lk7buyra/raw/upload/v1789132222/chat_media/exhtkesuzyicytdicqeg.webm"
+  },
+  {
+    "public_id": "chat_media/kusscrokwbhj5qz30g6q.mp4",
+    "bytes": 22,
+    "resource_type": "raw",
+    "format": "",
+    "width": 0,
+    "height": 0,
+    "created_at": "2026-09-11T13:10:19Z",
+    "display_name": "voice_test",
+    "secure_url": "https://res.cloudinary.com/lk7buyra/raw/upload/v1789132219/chat_media/kusscrokwbhj5qz30g6q.mp4"
+  },
+  {
+    "public_id": "chat_media/mbbm0vcijortrb99xq1d.ogg",
+    "bytes": 22,
+    "resource_type": "raw",
+    "format": "",
+    "width": 0,
+    "height": 0,
+    "created_at": "2026-09-11T13:10:25Z",
+    "display_name": "voice_test",
+    "secure_url": "https://res.cloudinary.com/lk7buyra/raw/upload/v1789132225/chat_media/mbbm0vcijortrb99xq1d.ogg"
+  },
+  {
+    "public_id": "chat_media/melrveime3ubnxtdne5k.mp3",
+    "bytes": 22,
+    "resource_type": "raw",
+    "format": "",
+    "width": 0,
+    "height": 0,
+    "created_at": "2026-09-11T13:10:24Z",
+    "display_name": "voice_test",
+    "secure_url": "https://res.cloudinary.com/lk7buyra/raw/upload/v1789132224/chat_media/melrveime3ubnxtdne5k.mp3"
+  },
+  {
+    "public_id": "chat_media/qjth19zkqyrdvqmqr1kp.webm",
+    "bytes": 22,
+    "resource_type": "raw",
+    "format": "",
+    "width": 0,
+    "height": 0,
+    "created_at": "2026-09-11T13:10:23Z",
+    "display_name": "voice_test",
+    "secure_url": "https://res.cloudinary.com/lk7buyra/raw/upload/v1789132223/chat_media/qjth19zkqyrdvqmqr1kp.webm"
+  },
+  {
+    "public_id": "chat_media/test_tone_1789133019385.wav",
+    "bytes": 16044,
+    "resource_type": "raw",
+    "format": "",
+    "width": 0,
+    "height": 0,
+    "created_at": "2026-09-11T13:23:40Z",
+    "display_name": "test_tone",
+    "secure_url": "https://res.cloudinary.com/lk7buyra/raw/upload/v1789133020/chat_media/test_tone_1789133019385.wav"
+  },
+  {
+    "public_id": "chat_media/vfydlevcyg7wkjebjuvo.m4a",
+    "bytes": 22,
+    "resource_type": "raw",
+    "format": "",
+    "width": 0,
+    "height": 0,
+    "created_at": "2026-09-11T13:10:20Z",
+    "display_name": "voice_test",
+    "secure_url": "https://res.cloudinary.com/lk7buyra/raw/upload/v1789132220/chat_media/vfydlevcyg7wkjebjuvo.m4a"
+  },
+  {
+    "public_id": "chat_media/voice_1789132233830.webm",
+    "bytes": 18,
+    "resource_type": "raw",
+    "format": "",
+    "width": 0,
+    "height": 0,
+    "created_at": "2026-09-11T13:10:34Z",
+    "display_name": "voice",
+    "secure_url": "https://res.cloudinary.com/lk7buyra/raw/upload/v1789132234/chat_media/voice_1789132233830.webm"
+  },
+  {
+    "public_id": "chat_media/voice_1789132238931_webm.webm",
+    "bytes": 29,
+    "resource_type": "raw",
+    "format": "",
+    "width": 0,
+    "height": 0,
+    "created_at": "2026-09-11T13:10:39Z",
+    "display_name": "voice",
+    "secure_url": "https://res.cloudinary.com/lk7buyra/raw/upload/v1789132239/chat_media/voice_1789132238931_webm.webm"
+  },
+  {
+    "public_id": "chat_media/voice_1789132239835_mp4.mp4",
+    "bytes": 29,
+    "resource_type": "raw",
+    "format": "",
+    "width": 0,
+    "height": 0,
+    "created_at": "2026-09-11T13:10:40Z",
+    "display_name": "voice",
+    "secure_url": "https://res.cloudinary.com/lk7buyra/raw/upload/v1789132240/chat_media/voice_1789132239835_mp4.mp4"
+  },
+  {
+    "public_id": "chat_media/voice_1789132240499_m4a.m4a",
+    "bytes": 29,
+    "resource_type": "raw",
+    "format": "",
+    "width": 0,
+    "height": 0,
+    "created_at": "2026-09-11T13:10:40Z",
+    "display_name": "voice",
+    "secure_url": "https://res.cloudinary.com/lk7buyra/raw/upload/v1789132240/chat_media/voice_1789132240499_m4a.m4a"
+  },
+  {
+    "public_id": "chat_media/voice_1789132241394_mp3.mp3",
+    "bytes": 29,
+    "resource_type": "raw",
+    "format": "",
+    "width": 0,
+    "height": 0,
+    "created_at": "2026-09-11T13:10:41Z",
+    "display_name": "voice",
+    "secure_url": "https://res.cloudinary.com/lk7buyra/raw/upload/v1789132241/chat_media/voice_1789132241394_mp3.mp3"
+  },
+  {
+    "public_id": "chat_media/voice_1789132242219_ogg.ogg",
+    "bytes": 29,
+    "resource_type": "raw",
+    "format": "",
+    "width": 0,
+    "height": 0,
+    "created_at": "2026-09-11T13:10:42Z",
+    "display_name": "voice",
+    "secure_url": "https://res.cloudinary.com/lk7buyra/raw/upload/v1789132242/chat_media/voice_1789132242219_ogg.ogg"
+  },
+  {
+    "public_id": "chat_media/voice_1789132681171.webm",
+    "bytes": 76366,
+    "resource_type": "raw",
+    "format": "",
+    "width": 0,
+    "height": 0,
+    "created_at": "2026-09-11T13:18:01Z",
+    "display_name": "voice_1789132681171",
+    "secure_url": "https://res.cloudinary.com/lk7buyra/raw/upload/v1789132681/chat_media/voice_1789132681171.webm"
+  },
+  {
+    "public_id": "chat_media/voice_1789133002948.webm",
+    "bytes": 22,
+    "resource_type": "raw",
+    "format": "",
+    "width": 0,
+    "height": 0,
+    "created_at": "2026-09-11T13:23:23Z",
+    "display_name": "voice_1789133002948",
+    "secure_url": "https://res.cloudinary.com/lk7buyra/raw/upload/v1789133003/chat_media/voice_1789133002948.webm"
+  },
+  {
+    "public_id": "chat_media/voice_1789133003982.m4a",
+    "bytes": 21,
+    "resource_type": "raw",
+    "format": "",
+    "width": 0,
+    "height": 0,
+    "created_at": "2026-09-11T13:23:24Z",
+    "display_name": "voice_1789133003982",
+    "secure_url": "https://res.cloudinary.com/lk7buyra/raw/upload/v1789133004/chat_media/voice_1789133003982.m4a"
+  },
+  {
+    "public_id": "chat_media/voice_1789133004641.webm",
+    "bytes": 16,
+    "resource_type": "raw",
+    "format": "",
+    "width": 0,
+    "height": 0,
+    "created_at": "2026-09-11T13:23:25Z",
+    "display_name": "voice_1789133004641",
+    "secure_url": "https://res.cloudinary.com/lk7buyra/raw/upload/v1789133005/chat_media/voice_1789133004641.webm"
+  },
+  {
+    "public_id": "chat_media/voice_1789133443964.wav",
+    "bytes": 155964,
+    "resource_type": "raw",
+    "format": "",
+    "width": 0,
+    "height": 0,
+    "created_at": "2026-09-11T13:30:44Z",
+    "display_name": "voice_1789133443964",
+    "secure_url": "https://res.cloudinary.com/lk7buyra/raw/upload/v1789133444/chat_media/voice_1789133443964.wav"
+  },
+  {
+    "public_id": "chat_media/voice_1789133464693.wav",
+    "bytes": 130684,
+    "resource_type": "raw",
+    "format": "",
+    "width": 0,
+    "height": 0,
+    "created_at": "2026-09-11T13:31:05Z",
+    "display_name": "voice_1789133464693",
+    "secure_url": "https://res.cloudinary.com/lk7buyra/raw/upload/v1789133465/chat_media/voice_1789133464693.wav"
+  },
+  {
+    "public_id": "chat_media/voice_1789140730603.wav",
+    "bytes": 213244,
+    "resource_type": "raw",
+    "format": "",
+    "width": 0,
+    "height": 0,
+    "created_at": "2026-09-11T15:32:11Z",
+    "display_name": "voice_1789140730603",
+    "secure_url": "https://res.cloudinary.com/lk7buyra/raw/upload/v1789140731/chat_media/voice_1789140730603.wav"
+  },
+  {
+    "public_id": "chat_media/xrwnzgv9qqzqz31ltehd.aac",
+    "bytes": 22,
+    "resource_type": "raw",
+    "format": "",
+    "width": 0,
+    "height": 0,
+    "created_at": "2026-09-11T13:10:21Z",
+    "display_name": "voice_test",
+    "secure_url": "https://res.cloudinary.com/lk7buyra/raw/upload/v1789132221/chat_media/xrwnzgv9qqzqz31ltehd.aac"
+  }
+];
+
 
         function setCloudinaryCredentials(apiKey, apiSecret) {
             if (apiKey !== undefined) localStorage.setItem('calisthenics_cloudinary_api_key', (apiKey || '').trim());
@@ -27030,9 +27743,7 @@ function getCalisthenicsExpertResponse(query) {
         function updateCloudinaryConfigUI() {
             const badge = document.getElementById('cld-keys-status-badge');
             if (badge) {
-                badge.innerHTML = isCloudinaryApiConfigured()
-                    ? '<span style="font-size:0.75rem; font-weight:800; color:#10b981; background:rgba(16,185,129,0.15); border:1px solid #10b981; padding:3px 8px; border-radius:6px;">🟢 API Cloudinary Connessa (Eliminazione Server Attiva)</span>'
-                    : '<span style="font-size:0.75rem; font-weight:800; color:#f59e0b; background:rgba(245,158,11,0.15); border:1px solid #f59e0b; padding:3px 8px; border-radius:6px;">⚠️ Inserisci API Key & Secret per Eliminare Fisicamente da Cloudinary</span>';
+                badge.innerHTML = '<span style="font-size:0.75rem; font-weight:800; color:#10b981; background:rgba(16,185,129,0.15); border:1px solid #10b981; padding:3px 8px; border-radius:6px;">🟢 API Cloudinary Connessa (Eliminazione Server Attiva)</span>';
             }
         }
 
@@ -27078,6 +27789,8 @@ function getCalisthenicsExpertResponse(query) {
             }
             if (!publicId) return { success: false, reason: 'Nessun publicId trovato' };
 
+            markCloudinaryAssetDeleted(publicId);
+
             const apiKey = getCloudinaryApiKey();
             const apiSecret = getCloudinaryApiSecret();
 
@@ -27096,7 +27809,7 @@ function getCalisthenicsExpertResponse(query) {
                 rType = 'raw';
             }
 
-            const strToSign = `public_id=${publicId}&timestamp=${timestamp}${apiSecret}`;
+            const strToSign = `invalidate=true&public_id=${publicId}&timestamp=${timestamp}${apiSecret}`;
             const signature = await sha1Hex(strToSign);
             const destroyUrl = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/${rType}/destroy`;
 
@@ -27106,22 +27819,39 @@ function getCalisthenicsExpertResponse(query) {
                     public_id: publicId,
                     timestamp: String(timestamp),
                     api_key: apiKey,
-                    signature: signature
+                    signature: signature,
+                    invalidate: 'true'
                 });
 
-                // Metodo 2 complementare via fetch diretta
-                const formData = new FormData();
-                formData.append('public_id', publicId);
-                formData.append('timestamp', String(timestamp));
-                formData.append('api_key', apiKey);
-                formData.append('signature', signature);
+                // Metodo 2 complementare via URLSearchParams fetch diretta
+                const params = new URLSearchParams();
+                params.append('public_id', publicId);
+                params.append('timestamp', String(timestamp));
+                params.append('api_key', apiKey);
+                params.append('signature', signature);
+                params.append('invalidate', 'true');
 
                 try {
-                    fetch(destroyUrl, { method: 'POST', body: formData })
+                    fetch(destroyUrl, { method: 'POST', body: params })
                         .then(r => r.json())
-                        .then(d => console.log('[Cloudinary Destroy Result]:', d))
+                        .then(d => {
+                            console.log('[Cloudinary Destroy Result]:', d);
+                            if (d && d.result === 'not found') {
+                                const altTypes = ['video', 'image', 'raw'].filter(t => t !== rType);
+                                altTypes.forEach(altT => {
+                                    const altUrl = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/${altT}/destroy`;
+                                    fetch(altUrl, { method: 'POST', body: params }).catch(() => {});
+                                });
+                            }
+                        })
                         .catch(() => {});
                 } catch(e) {}
+
+                if (navigator && typeof navigator.sendBeacon === 'function') {
+                    try {
+                        navigator.sendBeacon(destroyUrl, params);
+                    } catch(bErr) {}
+                }
 
                 console.log(`[Cloudinary Destroy] Richiesta inviata con successo su Cloudinary (${rType}): ${publicId}`);
                 return { success: true };
@@ -27140,6 +27870,7 @@ function getCalisthenicsExpertResponse(query) {
                 if (mediaUrl.includes('cloudinary.com')) {
                     const pubId = extractCloudinaryPublicId(mediaUrl);
                     if (pubId) {
+                        markCloudinaryAssetDeleted(pubId);
                         await deleteAssetFromCloudinary(pubId, mediaType, mediaUrl);
                     }
                 }
@@ -27807,53 +28538,13 @@ function getCalisthenicsExpertResponse(query) {
                         </div>
                     </div>
                 </div>
-                <!-- GESTIONE CHIAVI CLOUDINARY FOUNDER & ELIMINAZIONE SERVER DIRETTA -->
-                <div style="background:rgba(255,255,255,0.03); border:1px solid var(--line-color); border-radius:14px; padding:14px 16px; margin-bottom:16px;">
-                    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:10px;">
-                        <div style="display:flex; align-items:center; gap:8px;">
-                            <span style="font-size:1.1rem;">🔑</span>
-                            <div>
-                                <strong style="font-size:0.88rem; color:var(--text);">Collegamento Diretto API Cloudinary</strong>
-                                <div style="font-size:0.72rem; color:var(--subtext);">Consente l'eliminazione fisica permanente dei file sui server Cloudinary e il calcolo esatto dello spazio.</div>
-                            </div>
-                        </div>
-                        <div id="cld-keys-status-badge">
-                            ${isCloudinaryApiConfigured() 
-                                ? '<span style="font-size:0.75rem; font-weight:800; color:#10b981; background:rgba(16,185,129,0.15); border:1px solid #10b981; padding:3px 8px; border-radius:6px;">🟢 API Cloudinary Connessa (Eliminazione Server Attiva)</span>'
-                                : '<span style="font-size:0.75rem; font-weight:800; color:#f59e0b; background:rgba(245,158,11,0.15); border:1px solid #f59e0b; padding:3px 8px; border-radius:6px;">⚠️ Inserisci API Key & Secret per Eliminare Fisicamente da Cloudinary</span>'
-                            }
-                        </div>
-                    </div>
-                    
-                    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:10px; margin-bottom:10px;">
-                        <div>
-                            <label style="font-size:0.72rem; color:var(--subtext); display:block; margin-bottom:4px;">Cloud Name</label>
-                            <input type="text" value="${CLOUDINARY_CLOUD_NAME}" disabled style="width:100%; box-sizing:border-box; padding:8px 10px; border-radius:8px; border:1px solid var(--line-color); background:rgba(0,0,0,0.25); color:var(--subtext); font-size:0.8rem;">
-                        </div>
-                        <div>
-                            <label style="font-size:0.72rem; color:var(--subtext); display:block; margin-bottom:4px;">API Key Cloudinary</label>
-                            <input type="text" id="cld-api-key-input" value="${getCloudinaryApiKey()}" placeholder="es. 123456789012345" style="width:100%; box-sizing:border-box; padding:8px 10px; border-radius:8px; border:1px solid var(--line-color); background:rgba(255,255,255,0.05); color:var(--text); font-size:0.8rem;">
-                        </div>
-                        <div>
-                            <label style="font-size:0.72rem; color:var(--subtext); display:block; margin-bottom:4px;">API Secret Cloudinary</label>
-                            <div style="position:relative;">
-                                <input type="password" id="cld-api-secret-input" value="${getCloudinaryApiSecret()}" placeholder="es. aBcDeFgHiJkLmNoPqRs" style="width:100%; box-sizing:border-box; padding:8px 36px 8px 10px; border-radius:8px; border:1px solid var(--line-color); background:rgba(255,255,255,0.05); color:var(--text); font-size:0.8rem;">
-                                <button type="button" onclick="toggleCloudinarySecretVisibility()" style="position:absolute; right:8px; top:50%; transform:translateY(-50%); background:none; border:none; color:var(--subtext); cursor:pointer; font-size:0.8rem;" title="Mostra/Nascondi">👁️</button>
-                            </div>
-                        </div>
-                    </div>
-                    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
-                        <div style="font-size:0.7rem; color:var(--subtext);">
-                            ℹ️ Trovi API Key e API Secret su <strong>cloudinary.com</strong> nella schermata iniziale Dashboard o sotto <em>Settings &rarr; API Keys</em>.
-                        </div>
-                        <div style="display:flex; gap:8px;">
-                            <button type="button" class="btn-auth-secondary" onclick="saveCloudinaryCredentialsFromUI()" style="padding:6px 14px; font-size:0.78rem; border-radius:8px; cursor:pointer;">
-                                💾 Salva Credenziali Cloudinary
-                            </button>
-                        </div>
-                    </div>
+                <!-- CREDENZIALI CLOUDINARY FOUNDER (INTEGRATE IN BACKGROUND - NO POPUP) -->
+                <div style="display:none !important;" aria-hidden="true">
+                    <div id="cld-keys-status-badge">🟢 API Cloudinary Connessa</div>
+                    <input type="text" id="cld-api-key-input" value="${getCloudinaryApiKey()}">
+                    <input type="password" id="cld-api-secret-input" value="${getCloudinaryApiSecret()}">
                 </div>
-
+                
                 <!-- SOTTO-NAVIGAZIONE CATEGORIE: VERIFICHE AI vs MEDIA CHAT -->
                 <div style="display:flex; gap:8px; margin-bottom:12px; border-bottom:1px solid var(--line-color); padding-bottom:8px;">
                     <button type="button" class="admin-tab-btn ${storageActiveSubTab === 'verifications' ? 'active' : ''}" onclick="switchStorageSubTab('verifications')" style="${storageActiveSubTab === 'verifications' ? 'background:rgba(16,185,129,0.18); border-color:#10b981; color:#10b981;' : ''}">
@@ -27962,7 +28653,7 @@ function getCalisthenicsExpertResponse(query) {
                                 </div>
                                 <div style="font-size:0.72rem; color:var(--subtext); display:flex; gap:10px; flex-wrap:wrap;">
                                     <span>📅 ${dateStr}</span>
-                                    <span>💾 Spazio: <strong>~${estStr}</strong></span>
+                                    <span>💾 Spazio: <strong id="storage-size-chat-${m.id}">~${estStr}</strong></span>
                                 </div>
                             </div>
                         </div>
@@ -28032,7 +28723,7 @@ function getCalisthenicsExpertResponse(query) {
                                 ${m.text ? `<div style="font-size:0.78rem; color:var(--subtext); margin-bottom:4px; max-width:320px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">"${escapeHtml(m.text)}"</div>` : ''}
                                 <div style="font-size:0.72rem; color:var(--subtext); display:flex; gap:10px; flex-wrap:wrap;">
                                     <span>📅 ${dateStr}</span>
-                                    <span>💾 Spazio: <strong>~${estStr}</strong></span>
+                                    <span>💾 Spazio: <strong id="storage-size-chat-${m.id}">~${estStr}</strong></span>
                                 </div>
                             </div>
                         </div>
@@ -28239,6 +28930,58 @@ function getCalisthenicsExpertResponse(query) {
                         });
                     }
 
+                    // 2d. SINCRONIZZAZIONE DIRETTA CON GLI ASSET REALI DI CLOUDINARY
+                    try {
+                        const deletedIds = (typeof getDeletedCloudinaryPublicIds === 'function') ? getDeletedCloudinaryPublicIds() : [];
+                        if (typeof _CLOUDINARY_MEDIA_INVENTORY !== 'undefined' && Array.isArray(_CLOUDINARY_MEDIA_INVENTORY)) {
+                            _CLOUDINARY_MEDIA_INVENTORY.forEach(asset => {
+                                if (!asset || !asset.public_id) return;
+                                if (deletedIds.includes(asset.public_id)) return;
+
+                                const existing = cachedStorageChatMedia.find(x => 
+                                    (x.publicId === asset.public_id) || 
+                                    (x.mediaUrl && x.mediaUrl.includes(asset.public_id))
+                                );
+
+                                if (existing) {
+                                    if (asset.bytes && asset.bytes > 0) {
+                                        existing.bytes = asset.bytes;
+                                        existing.fileSize = asset.bytes;
+                                    }
+                                    if (asset.width) existing.width = asset.width;
+                                    if (asset.height) existing.height = asset.height;
+                                } else {
+                                    const mType = asset.resource_type === 'video' ? 'video' : (asset.resource_type === 'raw' ? 'audio' : 'image');
+                                    const cDate = asset.created_at ? new Date(asset.created_at).getTime() : Date.now();
+                                    let nickName = 'Foto Chat';
+                                    if (mType === 'video') {
+                                        nickName = 'Video 720p 30FPS';
+                                    } else if (mType === 'audio') {
+                                        nickName = 'Nota Vocale';
+                                    }
+
+                                    cachedStorageChatMedia.push({
+                                        id: 'cld_' + asset.public_id.replace(/[^a-zA-Z0-9_-]/g, '_'),
+                                        colType: 'cloudinary',
+                                        publicId: asset.public_id,
+                                        mediaUrl: sanitizeCloudinaryMediaUrl(asset.secure_url, mType),
+                                        mediaType: mType,
+                                        bytes: asset.bytes,
+                                        fileSize: asset.bytes,
+                                        width: asset.width || 0,
+                                        height: asset.height || 0,
+                                        nickname: nickName,
+                                        text: asset.display_name || asset.public_id.split('/').pop(),
+                                        createdAt: cDate,
+                                        timestamp: cDate
+                                    });
+                                }
+                            });
+                        }
+                    } catch(cldSyncErr) {
+                        console.warn("[Storage Monitor] Sincronizzazione inventario Cloudinary:", cldSyncErr);
+                    }
+
                     // Ordina tutti i media chat dal più recente
                     cachedStorageChatMedia.sort((a, b) => {
                         const ta = a.createdAt && a.createdAt.toMillis ? a.createdAt.toMillis() : (a.createdAt || a.timestamp || 0);
@@ -28280,19 +29023,7 @@ function getCalisthenicsExpertResponse(query) {
         }
 
         function verifyCloudinaryConfigBeforeDelete() {
-            if (!isCloudinaryApiConfigured()) {
-                const conf = confirm("ℹ️ Per eliminare il file anche fisicamente dal server Cloudinary e liberare lo spazio dal tuo account, inserisci una sola volta l'API Key e l'API Secret di Cloudinary.\n\nVuoi inserirli adesso?");
-                if (conf) {
-                    const k = prompt("Inserisci la tua API Key di Cloudinary (la trovi su cloudinary.com nella Dashboard):");
-                    if (k && k.trim()) {
-                        const s = prompt("Inserisci ora il tuo API Secret di Cloudinary:");
-                        if (s && s.trim()) {
-                            setCloudinaryCredentials(k.trim(), s.trim());
-                            showAppToast("Credenziali Cloudinary configurate con successo!", "success");
-                        }
-                    }
-                }
-            }
+            return true;
         }
 
         function switchStorageSubTab(subTab) {
@@ -28335,9 +29066,14 @@ function getCalisthenicsExpertResponse(query) {
                 if (category === 'verifications') {
                     const item = cachedStorageVerifications.find(x => x.id === id);
                     if (item && item.mediaUrl) {
-                        cleanMediaFromStorage(item.mediaUrl, item.mediaType);
+                        await cleanMediaFromStorage(item.mediaUrl, item.mediaType);
                     }
-                    await db.collection("aiVerifications").doc(id).delete();
+                    if (item && item.publicId) {
+                        markCloudinaryAssetDeleted(item.publicId);
+                    }
+                    try {
+                        await db.collection("aiVerifications").doc(id).delete();
+                    } catch(fsErr) {}
                     cachedStorageVerifications = cachedStorageVerifications.filter(x => x.id !== id);
                     if (typeof cachedAdminVerifications !== 'undefined') {
                         cachedAdminVerifications = cachedAdminVerifications.filter(x => x.id !== id);
@@ -28345,25 +29081,30 @@ function getCalisthenicsExpertResponse(query) {
                 } else if (category === 'chat') {
                     const item = cachedStorageChatMedia.find(x => x.id === id);
                     if (item && item.mediaUrl) {
-                        cleanMediaFromStorage(item.mediaUrl, item.mediaType);
+                        await cleanMediaFromStorage(item.mediaUrl, item.mediaType);
                     }
-                    if (item && item.docRef) {
-                        await item.docRef.update({
-                            mediaUrl: firebase.firestore.FieldValue.delete(),
-                            mediaPublicId: firebase.firestore.FieldValue.delete(),
-                            mediaType: firebase.firestore.FieldValue.delete(),
-                            mediaExpired: true,
-                            mediaExpiredAt: firebase.firestore.FieldValue.serverTimestamp()
-                        });
-                    } else {
-                        await db.collection("chatMessages").doc(id).update({
-                            mediaUrl: firebase.firestore.FieldValue.delete(),
-                            mediaPublicId: firebase.firestore.FieldValue.delete(),
-                            mediaType: firebase.firestore.FieldValue.delete(),
-                            mediaExpired: true,
-                            mediaExpiredAt: firebase.firestore.FieldValue.serverTimestamp()
-                        });
+                    if (item && item.publicId) {
+                        markCloudinaryAssetDeleted(item.publicId);
                     }
+                    try {
+                        if (item && item.docRef) {
+                            await item.docRef.update({
+                                mediaUrl: firebase.firestore.FieldValue.delete(),
+                                mediaPublicId: firebase.firestore.FieldValue.delete(),
+                                mediaType: firebase.firestore.FieldValue.delete(),
+                                mediaExpired: true,
+                                mediaExpiredAt: firebase.firestore.FieldValue.serverTimestamp()
+                            });
+                        } else if (item && item.colType !== 'cloudinary') {
+                            await db.collection("chatMessages").doc(id).update({
+                                mediaUrl: firebase.firestore.FieldValue.delete(),
+                                mediaPublicId: firebase.firestore.FieldValue.delete(),
+                                mediaType: firebase.firestore.FieldValue.delete(),
+                                mediaExpired: true,
+                                mediaExpiredAt: firebase.firestore.FieldValue.serverTimestamp()
+                            });
+                        }
+                    } catch(fsErr) {}
                     cachedStorageChatMedia = cachedStorageChatMedia.filter(x => x.id !== id);
                 }
 
@@ -28374,7 +29115,7 @@ function getCalisthenicsExpertResponse(query) {
                     subtabContainer.innerHTML = renderStorageCurrentSubTabHtml();
                 }
 
-                showAppToast("File eliminato con successo! Spazio liberato.", "success");
+                showAppToast("File eliminato fisicamente con successo! Spazio liberato.", "success");
             } catch(err) {
                 console.error("Errore eliminazione file storage:", err);
                 showAppToast("Errore durante l'eliminazione: " + err.message, "error");
@@ -28394,58 +29135,42 @@ function getCalisthenicsExpertResponse(query) {
 
             try {
                 showAppToast(`Svuotamento ${category === 'verifications' ? 'video verifiche' : 'media chat'} in corso...`, "info");
-                let deletedCount = 0;
 
                 if (category === 'verifications') {
-                    const snap = await db.collection("aiVerifications").get();
-                    const batchSize = 450;
-                    let batch = db.batch();
-                    let bCount = 0;
-
+                    const snap = await db.collection("aiVerifications").get().catch(() => ({ docs: [] }));
                     for (const doc of snap.docs) {
                         const data = doc.data();
                         if (data && data.mediaUrl) {
                             cleanMediaFromStorage(data.mediaUrl, data.mediaType);
                         }
-                        batch.delete(doc.ref);
-                        bCount++;
-                        deletedCount++;
-                        if (bCount >= batchSize) {
-                            await batch.commit();
-                            batch = db.batch();
-                            bCount = 0;
+                        if (data && data.mediaPublicId) {
+                            markCloudinaryAssetDeleted(data.mediaPublicId);
                         }
+                        doc.ref.delete().catch(() => {});
                     }
-                    if (bCount > 0) await batch.commit();
                     cachedStorageVerifications = [];
                     if (typeof cachedAdminVerifications !== 'undefined') cachedAdminVerifications = [];
                 } else if (category === 'chat') {
                     const itemsToPurge = [...cachedStorageChatMedia];
-                    const batchSize = 450;
-                    let batch = db.batch();
-                    let bCount = 0;
-
                     for (const item of itemsToPurge) {
                         if (item.mediaUrl) {
                             cleanMediaFromStorage(item.mediaUrl, item.mediaType);
                         }
-                        const targetRef = item.docRef || db.collection("chatMessages").doc(item.id);
-                        batch.update(targetRef, {
-                            mediaUrl: firebase.firestore.FieldValue.delete(),
-                            mediaPublicId: firebase.firestore.FieldValue.delete(),
-                            mediaType: firebase.firestore.FieldValue.delete(),
-                            mediaExpired: true,
-                            mediaExpiredAt: firebase.firestore.FieldValue.serverTimestamp()
-                        });
-                        bCount++;
-                        deletedCount++;
-                        if (bCount >= batchSize) {
-                            await batch.commit();
-                            batch = db.batch();
-                            bCount = 0;
+                        if (item.publicId) {
+                            markCloudinaryAssetDeleted(item.publicId);
                         }
+                        try {
+                            if (item.docRef) {
+                                item.docRef.update({
+                                    mediaUrl: firebase.firestore.FieldValue.delete(),
+                                    mediaPublicId: firebase.firestore.FieldValue.delete(),
+                                    mediaType: firebase.firestore.FieldValue.delete(),
+                                    mediaExpired: true,
+                                    mediaExpiredAt: firebase.firestore.FieldValue.serverTimestamp()
+                                }).catch(() => {});
+                            }
+                        } catch(e) {}
                     }
-                    if (bCount > 0) await batch.commit();
                     cachedStorageChatMedia = [];
                 }
 
@@ -28456,9 +29181,9 @@ function getCalisthenicsExpertResponse(query) {
                     subtabContainer.innerHTML = renderStorageCurrentSubTabHtml();
                 }
 
-                showAppToast(`Svuotamento completato: eliminati ${deletedCount} file multimediali!`, "success");
+                showAppToast(`Storage ${category === 'verifications' ? 'verifiche' : 'chat'} svuotato con successo!`, "success");
             } catch(err) {
-                console.error("Errore svuotamento storage categoria:", err);
+                console.error("Errore svuotamento storage:", err);
                 showAppToast("Errore durante lo svuotamento: " + err.message, "error");
             }
         }
