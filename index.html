@@ -30066,12 +30066,12 @@ function getCalisthenicsExpertResponse(query) {
                 }
             }
             
-            // Verifica se il motivo riguarda inquadratura o visibilità e garantisce la presenza delle istruzioni di regia
+            // Verifica se il motivo riguarda buio, controluce o cattiva visibilità e inietta le istruzioni di regia
             const lower = text.toLowerCase();
-            const isFramingOrLighting = lower.includes('inquadratura') || lower.includes('da dietro') || lower.includes('posteriore') || lower.includes('controluce') || lower.includes('silhouette') || lower.includes('sagoma') || lower.includes('buio') || lower.includes('scura') || lower.includes('sfocat') || lower.includes('tagliat') || lower.includes('distante') || lower.includes('visibilità') || lower.includes('vedono male');
+            const isFramingOrLighting = lower.includes('buio') || lower.includes('controluce') || lower.includes('silhouette') || lower.includes('sagoma') || lower.includes('scura') || lower.includes('sfocat') || lower.includes('tagliat') || lower.includes('distante') || lower.includes('visibilità') || lower.includes('vede male') || lower.includes('vedono male') || lower.includes('inquadratura non consente') || lower.includes('inquadratura errata');
             
             if (!approved && isFramingOrLighting && !text.includes('Come rifare il video in maniera corretta:')) {
-                text += '\n\nCome rifare il video in maniera corretta: posiziona la telecamera di profilo (vista laterale a 90°) o a tre quarti, ad altezza sbarra o bacino, a 2.5 - 3.5 metri di distanza, inquadrando contemporaneamente l\'intero corpo e la sbarra per tutta la durata del movimento. Assicurati che la luce sia frontale (sorgente luminosa alle spalle della telecamera, illuminando bene l\'atleta) ed evita tassativamente inquadrature da dietro o in controluce.';
+                text += '\n\nCome rifare il video in maniera corretta: posiziona la telecamera di profilo (vista laterale a 90°) o a tre quarti, ad altezza sbarra o bacino, a 2.5 - 3.5 metri di distanza, inquadrando contemporaneamente l\'intero corpo e la sbarra per tutta la durata del movimento. Assicurati che la luce sia frontale (sorgente luminosa alle spalle della telecamera, illuminando bene l\'atleta) ed evita video troppo bui o in controluce.';
             }
             
             const statusLine = approved ? "Stato richiesta: Accettata" : "Stato richiesta: Rifiutata";
@@ -30329,15 +30329,18 @@ Quando respingi un video (approved: false), sii compatto, incisivo e diretto: es
 Indica subito il difetto tecnico principale (es. mancato lockout gomiti, mento sotto la sbarra, petto non a contatto, kipping) o il problema di ripresa (buio/angolazione) e come correggerlo.
 
 REQUISITI DI VISIBILITÀ, ILLUMINAZIONE, INQUADRATURA E GUIDA REGIA:
-- Se il video presenta uno di questi difetti:
-  * TROPPO BUIO o IN CONTROLUCE (sagoma scura, silhouette, illuminazione insufficiente per distinguere le articolazioni, il petto o la sbarra);
-  * ANGOLAZIONE SCORRETTA o INCOMPLETA (inquadratura da dietro / posteriore CATEGORICAMENTE VIETATA per trazioni, pull up o dip in quanto impedisce di verificare mento/petto sopra la sbarra; prospettiva schiacciata dal basso o dall'alto);
-  * CORPO TAGLIATO FUORI INQUADRATURA (piedi, braccia o sbarra che escono dal frame durante l'esercizio);
+- GESTIONE INQUADRATURA DA DIETRO (POSTERIORE):
+  * SE IL VIDEO È RIPRESO DA DIETRO MA SI VEDE CHIARAMENTE E SI CAPISCE TUTTO IL MOVIMENTO (l'atleta sale con la testa/mento sopra la sbarra, si vede la distensione completa delle braccia in lockout in basso e la salita fluida): DEVI ACCETTARE L'INQUADRATURA, CONTEGGIARE LE RIPETIZIONI E VALUTARE IL VIDEO NORMALMENTE! NON RIFIUTARE MAI un video solo perché è da dietro se l'esecuzione è chiara, ben visibile e comprensibile.
+  * RIFIUTA UN VIDEO DA DIETRO SOLO SE È TROPPO BUIO, O SE SI VEDE MALE (ad es. silhouette scura in controluce cieco dove non si distinguono le braccia o il corpo).
+- CASI TASSATIVI DI RIFIUTO PER VISIBILITÀ (SOLO SE È BUIO O SI VEDE MALE):
+  * TROPPO BUIO o IN CONTROLUCE (sagoma scura, silhouette impenetrabile, illuminazione insufficiente dove non si distingue l'atleta o la sbarra);
+  * ANGOLAZIONE SCORRETTA o INCOMPLETA (prospettiva ostruita o schiacciata tale da impedire di capire il movimento, ma accetta l'inquadratura da dietro se si capisce tutto e si vede chiaramente);
+  * CORPO TAGLIATO FUORI INQUADRATURA (movimento non visibile);
   * SFOCATO o RISOLUZIONE INSUFFICIENTE (video che si vedono male);
-- In questi casi DEVI TASSATIVAMENTE:
+- Solo quando il video è buio o si vede male DEVI:
   1. RIFIUTARE la certificazione ("approved": false, "reps_counted": 0, "hold_seconds": 0).
-  2. Nel feedback, spiegare chiaramente il difetto visivo riscontrato E FORNIRE ISTRUZIONI PRATICHE ESATTE SU COME FILMARE IL VIDEO SUCCESSIVO:
-     Come rifare il video in maniera corretta: posiziona la telecamera di profilo (vista laterale a 90°) o a tre quarti, ad altezza sbarra o bacino, a 2.5 - 3.5 metri di distanza, inquadrando contemporaneamente l'intero corpo e la sbarra per tutta la durata del movimento. Assicurati che la luce sia frontale (sorgente luminosa alle spalle della telecamera, illuminando bene l'atleta) ed evita tassativamente inquadrature da dietro o in controluce.
+  2. Nel feedback, spiegare chiaramente il difetto di luce o visibilità riscontrato E FORNIRE ISTRUZIONI PRATICHE ESATTE SU COME FILMARE IL VIDEO SUCCESSIVO:
+     Come rifare il video in maniera corretta: posiziona la telecamera di profilo (vista laterale a 90°) o a tre quarti, ad altezza sbarra o bacino, a 2.5 - 3.5 metri di distanza, inquadrando contemporaneamente l'intero corpo e la sbarra per tutta la durata del movimento con buona illuminazione frontale.
 
 REGOLE FONDAMENTALI DI VALUTAZIONE BIOMECCANICA:
 1. PRESENZA UMANA ED ESERCIZIO SPECIFICO (CRITICO E INDISPENSABILE - TOLLERANZA ZERO FRAUDI):
@@ -30363,7 +30366,7 @@ Nel campo "feedback", Coach Ares parla SEMPRE in prima persona con tono DISCORSI
 NON usare MAI formule robotiche prefabbricate, elenchi freddi o schemi burocratici impersonali. Sii un vero coach di calisthenics esperto che parla direttamente e discorsivamente all'atleta con competenza e passione.
 Il campo "feedback" è OBBLIGATORIO e non deve MAI essere vuoto.
 Se approvi (approved: true), elogia discorsivamente i punti di forza biomeccanici confermando il pieno superamento della prova.
-Se rifiuti (approved: false), DEVI spiegare chiaramente e dettagliatamente il MOTIVO DEL PERCHÉ hai rifiutato il video: specifica quali ripetizioni non erano conformi o se ne sono state contate meno del dichiarato (es. solo 8 su 12), o se il video è da dietro/buio con le relative istruzioni di regia.
+Se rifiuti (approved: false), DEVI spiegare chiaramente e dettagliatamente il MOTIVO DEL PERCHÉ hai rifiutato il video: specifica quali ripetizioni non erano conformi o se ne sono state contate meno del dichiarato (es. solo 8 su 12), o se il video è troppo buio o si vede male con le relative istruzioni di regia.
 
 FORMATO ESCLUSIVO DI RISPOSTA:
 Rispondi ESCLUSIVAMENTE in JSON valido (senza testo markdown attorno):
@@ -30379,7 +30382,7 @@ Nel campo "feedback", devi seguire TASSATIVAMENTE questo schema su due righe:
 
 Se la richiesta è RIFIUTATA ("approved": false):
 Stato richiesta: Rifiutata
-Motivo: [Spiegazione sintetica ma non troppo del motivo del rifiuto. Se l'atleta ha eseguito meno ripetizioni del dichiarato, spiega chiaramente che sono state completate solo X ripetizioni valide con ROM completo su ${val} dichiarate. Se il video presenta inquadratura da dietro, controluce, sagoma scura o problemi di visibilità, spiega il difetto e AGGIUNGI: 'Come rifare il video in maniera corretta: posiziona la telecamera di profilo (vista laterale a 90°) o a tre quarti, ad altezza sbarra o bacino, a 2.5 - 3.5 metri di distanza, inquadrando contemporaneamente l'intero corpo e la sbarra per tutta la durata del movimento. Assicurati che la luce sia frontale (sorgente luminosa alle spalle della telecamera, illuminando bene l'atleta) ed evita tassativamente inquadrature da dietro o in controluce.']
+Motivo: [Spiegazione sintetica ma non troppo del motivo del rifiuto. Se l'atleta ha eseguito meno ripetizioni del dichiarato, spiega chiaramente che sono state completate solo X ripetizioni valide con ROM completo su ${val} dichiarate. Se il video è troppo buio, in controluce o si vede male (non consente di capire il movimento), spiega il difetto e AGGIUNGI: 'Come rifare il video in maniera corretta: posiziona la telecamera di profilo (vista laterale a 90°) o a tre quarti, ad altezza sbarra o bacino, a 2.5 - 3.5 metri di distanza, inquadrando contemporaneamente l'intero corpo e la sbarra per tutta la durata del movimento con buona illuminazione frontale ed evitando video troppo bui o in controluce.']
 
 Se la richiesta è ACCETTATA ("approved": true):
 Stato richiesta: Accettata
