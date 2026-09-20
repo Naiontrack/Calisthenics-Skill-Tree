@@ -11783,7 +11783,36 @@ let currentUser = null;
             });
         }
 
-        function updateUI() {
+        
+        // =========================================================================
+        // HELPER DI VERIFICA DINAMICA: isSkillCurrentlyVerified
+        // Il badge verificato appare SE E SOLO SE val <= verifiedVal (o massimale verificato da Coach Ares).
+        // Se l'atleta aumenta il numero dalla scheda classica (val > verifiedVal), il badge SCOMPARE IMMEDIATAMENTE
+        // sia dall'albero, sia dal drawer, sia dalle info giocatore.
+        // Il badge riappare se e solo se l'atleta reimposta un valore <= verifiedVal, o verifica un nuovo massimale con Coach Ares.
+        // =========================================================================
+        function isSkillCurrentlyVerified(skillId, data) {
+            const sData = data || (typeof userState !== 'undefined' && userState ? userState[skillId] : null);
+            if (!sData || !sData.unlocked) return false;
+            const vVal = (typeof sData.verifiedVal === 'number' && sData.verifiedVal > 0)
+                ? sData.verifiedVal
+                : (typeof sData.verifiedCount === 'number' && sData.verifiedCount > 0 ? sData.verifiedCount : 0);
+            
+            if (vVal > 0) {
+                return (sData.val || 0) <= vVal;
+            }
+            
+            if (sData.verifiedByAi || sData.isVerified) {
+                sData.verifiedVal = sData.val || 0;
+                return (sData.val || 0) <= sData.verifiedVal;
+            }
+            return false;
+        }
+        if (typeof window !== 'undefined') {
+            window.isSkillCurrentlyVerified = isSkillCurrentlyVerified;
+        }
+
+function updateUI() {
             const currentXp = getTotalXp();
             const currentRank = getCurrentRank(currentXp);
             
@@ -11834,7 +11863,7 @@ let currentUser = null;
                     const skillData = userState[skill.id] || { unlocked: false, val: 0 };
                     const isUnlocked = skillData.unlocked;
                     const val = skillData.val || 0;
-                    const isVerified = !!(skillData.verifiedByAi || skillData.isVerified);
+                    const isVerified = isSkillCurrentlyVerified(skill.id, skillData);
                     
                     let dynamicTarget = skill.baseTarget;
                     let goalsReached = 0;
@@ -13175,6 +13204,8 @@ let currentUser = null;
                 userState[id].val = newVal;
             }
             saveState();
+            if (typeof updateUI === 'function') updateUI();
+            if (typeof updateBentoProfileStats === 'function') updateBentoProfileStats();
             const unit = skill.type === 'sec' ? 's' : 'rep';
             showAppToast(`Record "${skill.name}" aggiornato a ${newVal} ${unit}!`, 'success');
         }
@@ -14415,7 +14446,7 @@ let currentUser = null;
                         unlockedSkills.forEach(s => {
                             const val = skillsData[s.id].val || 0;
                             const unit = s.type === 'rep' ? 'rip' : 'sec';
-                            const isSkillVerif = !!(skillsData[s.id].verifiedByAi || isFounder);
+                            const isSkillVerif = isSkillCurrentlyVerified(s.id, skillsData[s.id]) || isFounder;
                             const verifPill = isSkillVerif
                                 ? `<span style="background:rgba(16,185,129,0.18); border:1px solid #10b981; color:#34d399; font-size:0.72rem; font-weight:800; padding:2px 8px; border-radius:999px; display:inline-flex; align-items:center; gap:4px; margin-left:auto;">${getSvgShield('verified', 12)} Verificata con AI</span>`
                                 : `<span style="background:rgba(245,158,11,0.15); border:1px solid rgba(245,158,11,0.5); color:#fbbf24; font-size:0.72rem; font-weight:800; padding:2px 8px; border-radius:999px; display:inline-flex; align-items:center; gap:4px; margin-left:auto;">Non verificata</span>`;
@@ -15302,7 +15333,12 @@ function getCalisthenicsExpertResponse(query) {
             "QVEuQWI4Uk42TFRWUzhtdnhkOXJZdGhtVHVDbFM2UG1VU00teGVIbTZhYl9WYkU3STNiVUE=",
             "QVEuQWI4Uk42SjBidkdRVFRMT01xZGE4TFBOeTM5THNCTmdWV1A0TmhvM3JGUXB2enhwdUE=",
             "QVEuQWI4Uk42SVNEU1dBZXd4eTdzUmJNbEV5eEtVbW5LcTVkQW0xM2RaNzI2aEFCOTI4UXc=",
-            "QVEuQWI4Uk42Smg1cnp1a0I2V2NwUUp0RGY5X3h2SVFZdjFlZFlRdm9oY3VtMkZUVkJQUVE="
+            "QVEuQWI4Uk42Smg1cnp1a0I2V2NwUUp0RGY5X3h2SVFZdjFlZFlRdm9oY3VtMkZUVkJQUVE=",
+            "QVEuQWI4Uk42SnJJbUN6U3lQTzZka3VFVFVBOXhLX1FLT2t4ZG9CWUlqRGpGX0J1SkdveWc=",
+            "QVEuQWI4Uk42THZaYVlPeVRBbmE5Q3hCOE91WlN3SXJacDU5Slg3SDNQeHI1dUUzeWFCc0E=",
+            "QVEuQWI4Uk42SkdSM1Fma0JsVWV4YjBqTWhqamctSFNWVl9CZzdpMVVOcTRhOG9NOXdVd0E=",
+            "QVEuQWI4Uk42TDhfVE1wdFpoV3Q3QjVpclpuQzYwaFVMTjBZTTdtME5IaU5nV21xWTBtYWc=",
+            "QVEuQWI4Uk42SjZRNWhZUWs5Z0tIRDNNTXljTTl3VHdFd3djM3hZYTBXcWd4WUgxa1BlX2c="
         ];
         const GLOBAL_GEMINI_API_KEYS = _AI_TOKEN_POOL_ENCODED.map(b => {
             try { return atob(b); } catch(e) { return ""; }
@@ -26046,8 +26082,11 @@ function getCalisthenicsExpertResponse(query) {
                             ${getSvgShield('verified', 18)} <span>Verifica AI</span>
                         </button>
                         ${(userSkillData.verifiedByAi)
-                            ? `<div style="display:flex; align-items:center; justify-content:center; gap:6px; padding:6px 12px; background:rgba(16, 185, 129, 0.1); border:1px solid rgba(16,185,129,0.35); border-radius:8px; font-size:0.75rem; font-weight:800; color:#10b981;">
-                                ${getSvgShield('verified', 13)} Skill già certificata con Coach Ares AI
+                            ? `<div style="display:flex; align-items:center; justify-content:center; gap:6px; padding:6px 12px; background:${isSkillCurrentlyVerified(skill.id, userSkillData) ? 'rgba(16, 185, 129, 0.1)' : 'rgba(245, 158, 11, 0.1)'}; border:1px solid ${isSkillCurrentlyVerified(skill.id, userSkillData) ? 'rgba(16,185,129,0.35)' : 'rgba(245,158,11,0.35)'}; border-radius:8px; font-size:0.75rem; font-weight:800; color:${isSkillCurrentlyVerified(skill.id, userSkillData) ? '#10b981' : '#f59e0b'};">
+                                ${isSkillCurrentlyVerified(skill.id, userSkillData)
+                                    ? `${getSvgShield('verified', 13)} Skill Verificata con Coach Ares AI (Massimale: ${userSkillData.verifiedVal || userSkillData.val} ${unitShort})`
+                                    : `⚠️ Record attuale (${userSkillData.val} ${unitShort}) superiore al massimale certificato (${userSkillData.verifiedVal} ${unitShort}). Badge disattivato fino a nuova certificazione o ripristino.`
+                                }
                                </div>`
                             : ''
                         }
@@ -26165,6 +26204,8 @@ function getCalisthenicsExpertResponse(query) {
                 userState[id].val = newVal;
             }
             saveState();
+            if (typeof updateUI === 'function') updateUI();
+            if (typeof updateBentoProfileStats === 'function') updateBentoProfileStats();
             const unit = skill.type === 'sec' ? 's' : 'rep';
             showAppToast("Record " + skill.name + " aggiornato a " + newVal + " " + unit + "!", "success");
             openSkillDetailDrawer(id);
@@ -26738,7 +26779,18 @@ function getCalisthenicsExpertResponse(query) {
         // RUOLI, SUPERADMIN & SISTEMA CERTIFICAZIONI SKILL CON AI COACH
         // =========================================================================
         let isAdminPanelOpen = true;
-        let adminActiveTab = 'verifications'; // 'verifications' | 'roles'
+        let adminActiveTab = 'verifications'; // 'verifications' | 'roles' | 'storage'
+        let storageActiveSubTab = 'verifications'; // 'verifications' | 'chat'
+        let cachedStorageVerifications = [];
+        let cachedStorageChatMedia = [];
+        let storageStats = {
+            totalBytes: 0,
+            verifBytes: 0,
+            chatBytes: 0,
+            verifCount: 0,
+            chatCount: 0,
+            maxBytes: 25.0 * 1024 * 1024 * 1024 // 25 GB quota Cloudinary Free Credits
+        };
 
         
         /* ==================== SVG ICONS HELPER FOR VERIFICATION & ADMIN ==================== */
@@ -26779,12 +26831,29 @@ function getCalisthenicsExpertResponse(query) {
             window.getSvgLock = getSvgLock;
             window.getSvgUnlock = getSvgUnlock;
             window.getSvgShield = getSvgShield;
+            window.getSvgDatabase = getSvgDatabase;
+            window.getSvgRefresh = getSvgRefresh;
         }
 
         function getSvgVideoCamera(size = 16) {
             return `<svg class="ui-svg-icon" viewBox="0 0 24 24" width="${size}" height="${size}" fill="none" style="vertical-align:middle; flex-shrink:0;">
                 <path d="M15 10l5-3v10l-5-3v-4z" fill="currentColor"/>
                 <rect x="2" y="6" width="13" height="12" rx="3" stroke="currentColor" stroke-width="2"/>
+            </svg>`;
+        }
+
+        function getSvgDatabase(size = 14, strokeColor = 'currentColor') {
+            return `<svg class="ui-svg-icon" viewBox="0 0 24 24" width="${size}" height="${size}" fill="none" style="vertical-align:middle; flex-shrink:0;">
+                <ellipse cx="12" cy="5" rx="9" ry="3" stroke="${strokeColor}" stroke-width="2"/>
+                <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3" stroke="${strokeColor}" stroke-width="2"/>
+                <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5" stroke="${strokeColor}" stroke-width="2"/>
+            </svg>`;
+        }
+
+        function getSvgRefresh(size = 14, strokeColor = 'currentColor') {
+            return `<svg class="ui-svg-icon" viewBox="0 0 24 24" width="${size}" height="${size}" fill="none" style="vertical-align:middle; flex-shrink:0;">
+                <path d="M23 4v6h-6M1 20v-6h6" stroke="${strokeColor}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" stroke="${strokeColor}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>`;
         }
 
@@ -26846,7 +26915,12 @@ function getCalisthenicsExpertResponse(query) {
             if (!st || typeof st !== 'object') return isSuperAdminUser(user);
             const unlockedKeys = Object.keys(st).filter(k => st[k] && (st[k].unlocked === true || st[k].unlocked === 'true'));
             if (unlockedKeys.length === 0) return isSuperAdminUser(user);
-            return unlockedKeys.every(k => st[k] && st[k].verifiedByAi === true);
+            return unlockedKeys.every(k => {
+                if (typeof isSkillCurrentlyVerified === 'function') {
+                    return isSkillCurrentlyVerified(k, st[k]);
+                }
+                return !!(st[k] && (st[k].verifiedByAi === true || st[k].isVerified === true));
+            });
         }
 
         function applyOcchioneroAutoVerify() {
@@ -26889,6 +26963,48 @@ function getCalisthenicsExpertResponse(query) {
             renderAdminPanel();
         }
 
+        
+        // ==========================================
+        // PULIZIA STORAGE MEDIA & VIDEO VERIFICHE AI
+        // ==========================================
+        function cleanMediaFromStorage(mediaUrl, mediaType) {
+            if (!mediaUrl) return;
+            try {
+                if (mediaUrl.startsWith('blob:')) {
+                    try { URL.revokeObjectURL(mediaUrl); } catch(e) {}
+                }
+                if (mediaUrl.includes('cloudinary.com')) {
+                    const pubId = extractCloudinaryPublicId(mediaUrl);
+                    if (pubId) {
+                        console.log('[Storage Cleanup] Pulizia referenza Cloudinary:', pubId);
+                    }
+                }
+            } catch(e) {
+                console.warn('[Storage Cleanup Error]:', e);
+            }
+        }
+
+        function extractCloudinaryPublicId(url) {
+            if (!url || typeof url !== 'string') return null;
+            try {
+                const clean = url.split('?')[0];
+                const uploadIdx = clean.indexOf('/upload/');
+                if (uploadIdx === -1) return null;
+                let pathAfterUpload = clean.substring(uploadIdx + 8);
+                if (pathAfterUpload.includes('/') && (pathAfterUpload.startsWith('c_') || pathAfterUpload.startsWith('w_') || pathAfterUpload.startsWith('q_') || pathAfterUpload.startsWith('v'))) {
+                    const parts = pathAfterUpload.split('/');
+                    while (parts.length > 0 && (parts[0].includes(',') || parts[0].startsWith('v') || parts[0].startsWith('c_'))) {
+                        parts.shift();
+                    }
+                    pathAfterUpload = parts.join('/');
+                }
+                const dotIdx = pathAfterUpload.lastIndexOf('.');
+                return dotIdx !== -1 ? pathAfterUpload.substring(0, dotIdx) : pathAfterUpload;
+            } catch(e) {
+                return null;
+            }
+        }
+
         function renderAdminPanel() {
             const section = document.getElementById('admin-panel-section');
             const container = document.getElementById('admin-panel-body');
@@ -26902,19 +27018,22 @@ function getCalisthenicsExpertResponse(query) {
             section.style.display = 'block';
             const isSuper = isSuperAdminUser(currentUser);
 
-            // Se l'utente è un admin collaboratore ma non superadmin, non può accedere al tab ruoli
-            if (!isSuper && adminActiveTab === 'roles') {
+            // Se l'utente è un admin collaboratore ma non superadmin, non può accedere al tab ruoli o storage
+            if (!isSuper && (adminActiveTab === 'roles' || adminActiveTab === 'storage')) {
                 adminActiveTab = 'verifications';
             }
 
             let html = `
-                <div class="admin-tab-nav">
+                <div class="admin-tab-nav" style="flex-wrap:wrap;">
                     <button type="button" class="admin-tab-btn ${adminActiveTab === 'verifications' ? 'active' : ''}" onclick="switchAdminTab('verifications')">
                         ${getSvgShield('verified', 14)} Registro Verifiche AI
                     </button>
                     ${isSuper ? `
                     <button type="button" class="admin-tab-btn ${adminActiveTab === 'roles' ? 'active' : ''}" onclick="switchAdminTab('roles')">
-                        ${getSvgShield('founder', 14)} Gestione Ruoli Admin <span style="font-size:0.7rem; color:#fbbf24;">(Founder)</span>
+                        ${getSvgShield('founder', 14)} Gestione Ruoli <span style="font-size:0.7rem; color:#fbbf24;">(Founder)</span>
+                    </button>
+                    <button type="button" class="admin-tab-btn ${adminActiveTab === 'storage' ? 'active' : ''}" onclick="switchAdminTab('storage')">
+                        ${getSvgDatabase(14, '#38bdf8')} Monitor Storage & Pulizia <span style="font-size:0.7rem; color:#fbbf24;">(Founder)</span>
                     </button>
                     ` : ''}
                 </div>
@@ -26925,13 +27044,27 @@ function getCalisthenicsExpertResponse(query) {
                     <div style="font-size:0.8rem; color:var(--subtext); margin-bottom:12px;">
                         Tutte le verifiche eseguite da Coach Ares AI per la community. In qualità di ${isSuper ? 'Founder' : 'Admin Collaboratore'} puoi sovrascrivere qualsiasi decisione.
                     </div>
+                    <div style="display:flex; gap:10px; align-items:center; margin-bottom:10px; flex-wrap:wrap;">
+                        <div style="flex:1; min-width:200px; position:relative;">
+                            <span style="position:absolute; left:12px; top:50%; transform:translateY(-50%); pointer-events:none; display:flex;">
+                                ${getSvgSearch(16)}
+                            </span>
+                            <input type="text" id="admin-verif-search-input" placeholder="Cerca atleta o skill..." oninput="filterAdminVerificationsList(this.value)" style="width:100%; box-sizing:border-box; padding:9px 12px 9px 38px; border-radius:10px; border:1px solid var(--line-color); background:rgba(255,255,255,0.05); color:var(--text); font-size:0.85rem; outline:none;">
+                        </div>
+                        ${isSuper ? `
+                        <button type="button" class="btn-cancel" onclick="adminDeleteAllVerifications()" style="padding:9px 14px; font-size:0.82rem; font-weight:800; background:rgba(239,68,68,0.15); border:1px solid #ef4444; color:#f87171; border-radius:10px; cursor:pointer; display:inline-flex; align-items:center; gap:6px; transition:all 0.2s;" title="Elimina definitivamente tutte le verifiche e i video liberando lo storage">
+                            🗑️ <span>Elimina Tutto</span>
+                        </button>
+                        ` : ''}
+                    </div>
+                    <div id="admin-verif-count-info" style="font-size:0.75rem; color:var(--subtext); margin-bottom:10px; display:none;"></div>
                     <div id="admin-verif-list-container" style="max-height:360px; overflow-y:auto;">
                         <p style="text-align:center; color:var(--subtext); font-size:0.8rem;">Caricamento registro verifiche...</p>
                     </div>
                 `;
                 container.innerHTML = html;
                 loadAdminVerificationsList();
-            } else {
+            } else if (adminActiveTab === 'roles') {
                 html += `
                     <div style="font-size:0.82rem; color:var(--subtext); margin-bottom:12px; display:flex; align-items:center; gap:6px;">
                         ${getSvgShield('founder', 15)} <span><strong>Esclusiva Founder (Occhionero)</strong>: Solo tu puoi nominare o revocare Admin collaboratori.</span>
@@ -26948,8 +27081,14 @@ function getCalisthenicsExpertResponse(query) {
                 `;
                 container.innerHTML = html;
                 loadAdminUsersList();
+            } else if (adminActiveTab === 'storage') {
+                html += renderAdminStorageSectionHtml();
+                container.innerHTML = html;
+                loadAdminStorageData();
             }
         }
+
+        let cachedAdminVerifications = [];
 
         function loadAdminVerificationsList() {
             const listEl = document.getElementById('admin-verif-list-container');
@@ -26960,91 +27099,135 @@ function getCalisthenicsExpertResponse(query) {
                 return;
             }
 
-            const isSuper = isSuperAdminUser(currentUser);
-
-            db.collection("aiVerifications").orderBy("timestamp", "desc").limit(30).get().then(snap => {
+            db.collection("aiVerifications").orderBy("timestamp", "desc").limit(100).get().then(snap => {
+                cachedAdminVerifications = [];
                 if (snap.empty) {
-                    listEl.innerHTML = '<p style="color:var(--subtext); font-size:0.8rem; text-align:center;">Nessuna verifica registrata finora.</p>';
+                    listEl.innerHTML = '<p style="color:var(--subtext); font-size:0.8rem; text-align:center; padding:20px 0;">Nessuna verifica registrata finora.</p>';
+                    const countEl = document.getElementById('admin-verif-count-info');
+                    if (countEl) countEl.style.display = 'none';
                     return;
                 }
-                let itemsHtml = '';
+
                 snap.forEach(doc => {
-                    const v = doc.data();
-                    const vId = doc.id;
-                    const dateStr = v.timestamp ? new Date(v.timestamp).toLocaleString('it-IT', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' }) : '';
-                    const isApproved = v.status === 'approved';
-                    const isOverridden = !!v.overriddenByAdmin;
-
-                    let statusBadge = isApproved
-                        ? `<span style="color:#10b981; font-weight:800; background:rgba(16,185,129,0.15); padding:2px 8px; border-radius:6px; font-size:0.75rem; border:1px solid #10b981; display:inline-flex; align-items:center; gap:4px;">${getSvgCheck(12)} Approvata dall'AI Coach${isOverridden ? ' (Modificata dal Founder)' : ''}</span>`
-                        : `<span style="color:#ef4444; font-weight:800; background:rgba(239,68,68,0.15); padding:2px 8px; border-radius:6px; font-size:0.75rem; border:1px solid #ef4444; display:inline-flex; align-items:center; gap:4px;">${getSvgCross(12)} Non Approvata dall'AI Coach${isOverridden ? ' (Modificata dal Founder)' : ''}</span>`;
-
-                    // Media allegato (Video o Foto)
-                    let mediaHtml = '';
-                    if (v.mediaUrl) {
-                        if (v.mediaType === 'image') {
-                            mediaHtml = `
-                                <div style="margin:8px 0;">
-                                    <img src="${v.mediaUrl}" style="max-height:180px; max-width:100%; border-radius:8px; border:1px solid var(--line-color); object-fit:contain; background:rgba(0,0,0,0.3); display:block;" alt="Prova Video/Foto">
-                                </div>
-                            `;
-                        } else {
-                            mediaHtml = `
-                                <div style="margin:8px 0;">
-                                    <video src="${v.mediaUrl}" controls playsinline style="max-height:200px; max-width:100%; border-radius:8px; border:1px solid var(--line-color); background:#000; display:block;"></video>
-                                </div>
-                            `;
-                        }
-                    } else {
-                        mediaHtml = `<div style="font-size:0.72rem; color:var(--subtext); margin:4px 0 8px 0; font-style:italic;">📹 Nessun file video/foto registrato per questa richiesta.</div>`;
-                    }
-
-                    // Azioni riservate SOLO ed ESCLUSIVAMENTE al Founder (Occhionero)
-                    let actionsHtml = '';
-                    if (isSuper) {
-                        const overrideBtn = isApproved
-                            ? `<button type="button" class="btn-cancel" onclick="adminOverrideVerification('${vId}', '${v.athleteUid || v.userId}', '${v.skillId}', false)" style="padding:4px 10px; font-size:0.75rem; display:inline-flex; align-items:center; gap:4px;">${getSvgCross(12)} Revoca / Rifiuta</button>`
-                            : `<button type="button" class="btn-confirm" onclick="adminOverrideVerification('${vId}', '${v.athleteUid || v.userId}', '${v.skillId}', true)" style="padding:4px 10px; font-size:0.75rem; background:rgba(16,185,129,0.25); border:1px solid #10b981; color:#34d399; display:inline-flex; align-items:center; gap:4px;">${getSvgCheck(12)} Approva Manualmente</button>`;
-
-                        const deleteBtn = `<button type="button" class="btn-cancel" onclick="adminDeleteVerification('${vId}')" style="padding:4px 8px; font-size:0.75rem; background:rgba(239,68,68,0.12); border:1px solid rgba(239,68,68,0.4); color:#f87171; display:inline-flex; align-items:center; gap:4px;" title="Elimina questa richiesta">🗑️ Elimina</button>`;
-
-                        actionsHtml = `
-                            <div style="display:flex; gap:8px; justify-content:flex-end; align-items:center; margin-top:8px;">
-                                ${deleteBtn}
-                                ${overrideBtn}
-                            </div>
-                        `;
-                    } else {
-                        actionsHtml = `
-                            <div style="text-align:right; margin-top:6px;">
-                                <span style="font-size:0.72rem; color:var(--subtext); font-style:italic;">Decisione AI definitiva (Modificabile solo dal Founder)</span>
-                            </div>
-                        `;
-                    }
-
-                    itemsHtml += `
-                        <div class="admin-verif-item" style="padding:12px; background:rgba(255,255,255,0.03); border:1px solid var(--line-color); border-radius:12px; margin-bottom:10px;">
-                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; flex-wrap:wrap; gap:6px;">
-                                <div style="font-weight:800; font-size:0.9rem; color:var(--text);">
-                                    ${escapeHtml(v.athleteNick || v.userNickname || 'Atleta')} — <span style="color:var(--accent);">${escapeHtml(v.skillName || v.skillId)}</span>
-                                    <span style="font-size:0.78rem; font-weight:normal; color:var(--subtext); margin-left:6px;">(${v.claimedVal || ''} ${v.unit || ''})</span>
-                                </div>
-                                <div style="font-size:0.75rem; color:var(--subtext);">${dateStr}</div>
-                            </div>
-                            ${mediaHtml}
-                            <div style="margin-bottom:6px;">${statusBadge}</div>
-                            <div style="font-size:0.78rem; color:var(--subtext); line-height:1.4; background:rgba(0,0,0,0.25); padding:6px 10px; border-radius:6px;">
-                                <strong>Valutazione AI:</strong> ${escapeHtml(v.aiFeedback || v.aiNotes || 'Nessun dettaglio registrato')}
-                                ${v.overrideReason ? `<br><strong style="color:#fbbf24;">Nota Founder:</strong> ${escapeHtml(v.overrideReason)}` : ''}
-                            </div>
-                            ${actionsHtml}
-                        </div>
-                    `;
+                    cachedAdminVerifications.push({ id: doc.id, ...doc.data() });
                 });
-                listEl.innerHTML = itemsHtml;
+
+                const searchInput = document.getElementById('admin-verif-search-input');
+                const curQuery = searchInput ? searchInput.value : '';
+                filterAdminVerificationsList(curQuery);
             }).catch(err => {
                 listEl.innerHTML = `<p style="color:#f87171; font-size:0.8rem; text-align:center;">Errore caricamento: ${escapeHtml(err.message)}</p>`;
             });
+        }
+
+        function filterAdminVerificationsList(query) {
+            const listEl = document.getElementById('admin-verif-list-container');
+            const countEl = document.getElementById('admin-verif-count-info');
+            if (!listEl) return;
+
+            const isSuper = isSuperAdminUser(currentUser);
+            const q = (query || '').trim().toLowerCase();
+
+            let filtered = cachedAdminVerifications;
+            if (q) {
+                filtered = cachedAdminVerifications.filter(v => {
+                    const nick = (v.athleteNick || v.userNickname || '').toLowerCase();
+                    const skill = (v.skillName || v.skillId || '').toLowerCase();
+                    const uid = (v.athleteUid || v.userId || '').toLowerCase();
+                    return nick.includes(q) || skill.includes(q) || uid.includes(q);
+                });
+            }
+
+            if (countEl) {
+                countEl.style.display = 'block';
+                if (q) {
+                    countEl.innerText = `Trovate ${filtered.length} di ${cachedAdminVerifications.length} verifiche per "${query}"`;
+                } else {
+                    countEl.innerText = `Totale verifiche archiviate nello storage: ${cachedAdminVerifications.length}`;
+                }
+            }
+
+            if (filtered.length === 0) {
+                listEl.innerHTML = q 
+                    ? `<p style="color:var(--subtext); font-size:0.8rem; text-align:center; padding:20px 0;">Nessuna verifica trovata per "<strong>${escapeHtml(query)}</strong>".</p>`
+                    : '<p style="color:var(--subtext); font-size:0.8rem; text-align:center; padding:20px 0;">Nessuna verifica registrata finora.</p>';
+                return;
+            }
+
+            let itemsHtml = '';
+            filtered.forEach(v => {
+                const vId = v.id;
+                const dateStr = v.timestamp ? new Date(v.timestamp).toLocaleString('it-IT', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' }) : '';
+                const isApproved = v.status === 'approved';
+                const isOverridden = !!v.overriddenByAdmin;
+
+                let statusBadge = isApproved
+                    ? `<span style="color:#10b981; font-weight:800; background:rgba(16,185,129,0.15); padding:2px 8px; border-radius:6px; font-size:0.75rem; border:1px solid #10b981; display:inline-flex; align-items:center; gap:4px;">${getSvgCheck(12)} Approvata dall'AI Coach${isOverridden ? ' (Modificata dal Founder)' : ''}</span>`
+                    : `<span style="color:#ef4444; font-weight:800; background:rgba(239,68,68,0.15); padding:2px 8px; border-radius:6px; font-size:0.75rem; border:1px solid #ef4444; display:inline-flex; align-items:center; gap:4px;">${getSvgCross(12)} Non Approvata dall'AI Coach${isOverridden ? ' (Modificata dal Founder)' : ''}</span>`;
+
+                // Media allegato (Video o Foto)
+                let mediaHtml = '';
+                if (v.mediaUrl) {
+                    if (v.mediaType === 'image') {
+                        mediaHtml = `
+                            <div style="margin:8px 0;">
+                                <img src="${v.mediaUrl}" style="max-height:180px; max-width:100%; border-radius:8px; border:1px solid var(--line-color); object-fit:contain; background:rgba(0,0,0,0.3); display:block;" alt="Prova Video/Foto">
+                            </div>
+                        `;
+                    } else {
+                        mediaHtml = `
+                            <div style="margin:8px 0;">
+                                <video src="${v.mediaUrl}" controls playsinline style="max-height:200px; max-width:100%; border-radius:8px; border:1px solid var(--line-color); background:#000; display:block;"></video>
+                            </div>
+                        `;
+                    }
+                } else {
+                    mediaHtml = `<div style="font-size:0.72rem; color:var(--subtext); margin:4px 0 8px 0; font-style:italic;">📹 Nessun file video/foto registrato per questa richiesta.</div>`;
+                }
+
+                // Azioni riservate SOLO ed ESCLUSIVAMENTE al Founder (Occhionero)
+                let actionsHtml = '';
+                if (isSuper) {
+                    const overrideBtn = isApproved
+                        ? `<button type="button" class="btn-cancel" onclick="adminOverrideVerification('${vId}', '${v.athleteUid || v.userId}', '${v.skillId}', false)" style="padding:4px 10px; font-size:0.75rem; display:inline-flex; align-items:center; gap:4px;">${getSvgCross(12)} Revoca / Rifiuta</button>`
+                        : `<button type="button" class="btn-confirm" onclick="adminOverrideVerification('${vId}', '${v.athleteUid || v.userId}', '${v.skillId}', true)" style="padding:4px 10px; font-size:0.75rem; background:rgba(16,185,129,0.25); border:1px solid #10b981; color:#34d399; display:inline-flex; align-items:center; gap:4px;">${getSvgCheck(12)} Approva Manualmente</button>`;
+
+                    const deleteBtn = `<button type="button" class="btn-cancel" onclick="adminDeleteVerification('${vId}')" style="padding:4px 8px; font-size:0.75rem; background:rgba(239,68,68,0.12); border:1px solid rgba(239,68,68,0.4); color:#f87171; display:inline-flex; align-items:center; gap:4px;" title="Elimina questa richiesta e libera lo storage">🗑️ Elimina</button>`;
+
+                    actionsHtml = `
+                        <div style="display:flex; gap:8px; justify-content:flex-end; align-items:center; margin-top:8px;">
+                            ${deleteBtn}
+                            ${overrideBtn}
+                        </div>
+                    `;
+                } else {
+                    actionsHtml = `
+                        <div style="text-align:right; margin-top:6px;">
+                            <span style="font-size:0.72rem; color:var(--subtext); font-style:italic;">Decisione AI definitiva (Modificabile solo dal Founder)</span>
+                        </div>
+                    `;
+                }
+
+                itemsHtml += `
+                    <div class="admin-verif-item" style="padding:12px; background:rgba(255,255,255,0.03); border:1px solid var(--line-color); border-radius:12px; margin-bottom:10px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; flex-wrap:wrap; gap:6px;">
+                            <div style="font-weight:800; font-size:0.9rem; color:var(--text);">
+                                ${escapeHtml(v.athleteNick || v.userNickname || 'Atleta')} — <span style="color:var(--accent);">${escapeHtml(v.skillName || v.skillId)}</span>
+                                <span style="font-size:0.78rem; font-weight:normal; color:var(--subtext); margin-left:6px;">(${v.claimedVal || ''} ${v.unit || ''})</span>
+                            </div>
+                            <div style="font-size:0.75rem; color:var(--subtext);">${dateStr}</div>
+                        </div>
+                        ${mediaHtml}
+                        <div style="margin-bottom:6px;">${statusBadge}</div>
+                        <div style="font-size:0.78rem; color:var(--subtext); line-height:1.4; background:rgba(0,0,0,0.25); padding:6px 10px; border-radius:6px;">
+                            <strong>Valutazione AI:</strong> ${escapeHtml(v.aiFeedback || v.aiNotes || 'Nessun dettaglio registrato')}
+                            ${v.overrideReason ? `<br><strong style="color:#fbbf24;">Nota Founder:</strong> ${escapeHtml(v.overrideReason)}` : ''}
+                        </div>
+                        ${actionsHtml}
+                    </div>
+                `;
+            });
+            listEl.innerHTML = itemsHtml;
         }
 
         function adminDeleteVerification(vId) {
@@ -27052,14 +27235,80 @@ function getCalisthenicsExpertResponse(query) {
                 showAppToast("Permesso negato: solo il Founder (Occhionero) può eliminare le verifiche.", "error");
                 return;
             }
-            if (!confirm("Vuoi eliminare definitivamente questa richiesta dal registro verifiche?")) return;
+            if (!confirm("Vuoi eliminare definitivamente questa richiesta e il relativo video dal registro verifiche e dallo storage?")) return;
 
-            db.collection("aiVerifications").doc(vId).delete().then(() => {
-                showAppToast("Richiesta di verifica eliminata.", "success");
-                loadAdminVerificationsList();
+            const docRef = db.collection("aiVerifications").doc(vId);
+            docRef.get().then(docSnap => {
+                const data = docSnap.exists ? docSnap.data() : null;
+                return docRef.delete().then(() => {
+                    if (data && data.mediaUrl) {
+                        cleanMediaFromStorage(data.mediaUrl, data.mediaType);
+                    }
+                    cachedAdminVerifications = cachedAdminVerifications.filter(item => item.id !== vId);
+                    showAppToast("Richiesta e video eliminati dallo storage.", "success");
+                    const searchInput = document.getElementById('admin-verif-search-input');
+                    const curQuery = searchInput ? searchInput.value : '';
+                    filterAdminVerificationsList(curQuery);
+                });
             }).catch(err => {
                 showAppToast("Errore durante l'eliminazione: " + err.message, "error");
             });
+        }
+
+        async function adminDeleteAllVerifications() {
+            if (!isSuperAdminUser(currentUser)) {
+                showAppToast("Permesso negato: solo il Founder (Occhionero) può svuotare il registro verifiche.", "error");
+                return;
+            }
+            if (!confirm("⚠️ ATTENZIONE: Sei sicuro di voler eliminare TUTTI i record e i video dal registro verifiche AI?\n\nQuesta operazione libererà lo storage di tutti i video archiviati e NON può essere annullata.")) {
+                return;
+            }
+
+            try {
+                showAppToast("Svuotamento registro e storage in corso...", "info");
+                const snap = await db.collection("aiVerifications").get();
+                if (snap.empty) {
+                    showAppToast("Il registro verifiche è già vuoto.", "info");
+                    return;
+                }
+
+                const batchSize = 450;
+                let batch = db.batch();
+                let count = 0;
+                let totalDeleted = 0;
+
+                for (const doc of snap.docs) {
+                    const data = doc.data();
+                    if (data && data.mediaUrl) {
+                        cleanMediaFromStorage(data.mediaUrl, data.mediaType);
+                    }
+                    batch.delete(doc.ref);
+                    count++;
+                    totalDeleted++;
+
+                    if (count >= batchSize) {
+                        await batch.commit();
+                        batch = db.batch();
+                        count = 0;
+                    }
+                }
+
+                if (count > 0) {
+                    await batch.commit();
+                }
+
+                cachedAdminVerifications = [];
+                showAppToast(`Svuotamento completato: eliminati ${totalDeleted} record e liberato lo storage!`, "success");
+                const listEl = document.getElementById('admin-verif-list-container');
+                if (listEl) {
+                    listEl.innerHTML = '<p style="color:var(--subtext); font-size:0.8rem; text-align:center; padding:20px 0;">Registro verifiche e storage completamente svuotati.</p>';
+                }
+                const countEl = document.getElementById('admin-verif-count-info');
+                if (countEl) countEl.style.display = 'none';
+            } catch (err) {
+                console.error("Errore eliminazione totale:", err);
+                showAppToast("Errore durante l'eliminazione: " + err.message, "error");
+            }
         }
 
         function adminOverrideVerification(vId, athleteUid, skillId, newStatusApproved) {
@@ -27208,6 +27457,640 @@ function getCalisthenicsExpertResponse(query) {
                 showAppToast("Errore aggiornamento ruolo: " + err.message, "error");
             });
         }
+
+        // =========================================================================
+        // SEZIONE FOUNDER: MONITORAGGIO STORAGE & PULIZIA MEDIA (CLOUDINARY & FIRESTORE)
+        // =========================================================================
+        function formatStorageBytes(bytes) {
+            if (!bytes || bytes <= 0) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        function getMediaSizeEstimate(item) {
+            if (!item) return 0;
+            if (typeof item.fileSize === 'number' && item.fileSize > 0) return item.fileSize;
+            if (typeof item.bytes === 'number' && item.bytes > 0) return item.bytes;
+            if (item.mediaUrl && typeof item.mediaUrl === 'string' && item.mediaUrl.startsWith('data:')) {
+                return Math.round(item.mediaUrl.length * 0.75);
+            }
+            const type = (item.mediaType || '').toLowerCase();
+            const url = (item.mediaUrl || '').toLowerCase();
+            if (type === 'audio' || url.includes('/raw/upload/') || url.includes('voice_') || url.includes('audio') || url.endsWith('.ogg') || url.endsWith('.wav') || url.endsWith('.m4a') || url.endsWith('.mp3')) {
+                return 200 * 1024; // ~200 KB nota vocale
+            }
+            if (type === 'video' || url.includes('video') || url.endsWith('.mp4') || url.endsWith('.webm') || url.endsWith('.mov')) {
+                return 1.8 * 1024 * 1024; // ~1.8 MB a 8 FPS compresso
+            }
+            return 350 * 1024; // ~350 KB foto compressa
+        }
+
+        function recalculateStorageStats() {
+            let verifBytes = 0;
+            cachedStorageVerifications.forEach(v => {
+                verifBytes += getMediaSizeEstimate(v);
+            });
+
+            let chatBytes = 0;
+            cachedStorageChatMedia.forEach(m => {
+                chatBytes += getMediaSizeEstimate(m);
+            });
+
+            storageStats.verifBytes = verifBytes;
+            storageStats.chatBytes = chatBytes;
+            storageStats.totalBytes = verifBytes + chatBytes;
+            storageStats.verifCount = cachedStorageVerifications.length;
+            storageStats.chatCount = cachedStorageChatMedia.length;
+
+            const totalBytes = storageStats.totalBytes;
+            const maxBytes = storageStats.maxBytes || (25.0 * 1024 * 1024 * 1024);
+            const pct = Math.min(100, Math.max(0, (totalBytes / maxBytes) * 100));
+            const pctFormatted = pct.toFixed(2);
+
+            let barColor = '#10b981';
+            let barGlow = 'rgba(16, 185, 129, 0.4)';
+            if (pct >= 85) {
+                barColor = '#ef4444';
+                barGlow = 'rgba(239, 68, 68, 0.5)';
+            } else if (pct >= 60) {
+                barColor = '#f59e0b';
+                barGlow = 'rgba(245, 158, 11, 0.5)';
+            }
+
+            const badgeEl = document.getElementById('storage-gauge-pct-badge');
+            if (badgeEl) {
+                badgeEl.style.color = barColor;
+                badgeEl.style.borderColor = barColor;
+                badgeEl.style.background = `${barColor}22`;
+                badgeEl.innerText = `${pctFormatted}% pieno`;
+            }
+
+            const barEl = document.getElementById('storage-gauge-bar');
+            if (barEl) {
+                barEl.style.width = `${Math.max(0.5, pct)}%`;
+                barEl.style.background = `linear-gradient(90deg, ${barColor}, #38bdf8)`;
+                barEl.style.boxShadow = `0 0 10px ${barGlow}`;
+            }
+
+            const usedEl = document.getElementById('storage-gauge-used-text');
+            if (usedEl) {
+                usedEl.innerHTML = `${formatStorageBytes(totalBytes)} <span style="font-size:0.72rem; color:var(--subtext); font-weight:500;">/ 25.0 GB</span>`;
+            }
+
+            const verifEl = document.getElementById('storage-gauge-verif-text');
+            if (verifEl) {
+                verifEl.innerHTML = `${storageStats.verifCount} file <span style="font-size:0.72rem; color:var(--subtext); font-weight:500;">(~${formatStorageBytes(verifBytes)})</span>`;
+            }
+
+            const chatEl = document.getElementById('storage-gauge-chat-text');
+            if (chatEl) {
+                chatEl.innerHTML = `${storageStats.chatCount} file <span style="font-size:0.72rem; color:var(--subtext); font-weight:500;">(~${formatStorageBytes(chatBytes)})</span>`;
+            }
+
+            const freeEl = document.getElementById('storage-gauge-free-text');
+            if (freeEl) {
+                freeEl.innerText = formatStorageBytes(Math.max(0, maxBytes - totalBytes));
+            }
+
+            const countVerifSubtab = document.getElementById('subtab-count-verif');
+            if (countVerifSubtab) countVerifSubtab.innerText = cachedStorageVerifications.length;
+            const countChatSubtab = document.getElementById('subtab-count-chat');
+            if (countChatSubtab) countChatSubtab.innerText = cachedStorageChatMedia.length;
+        }
+
+        function renderAdminStorageSectionHtml() {
+            const totalBytes = storageStats.totalBytes || 0;
+            const maxBytes = storageStats.maxBytes || (25.0 * 1024 * 1024 * 1024);
+            const pct = Math.min(100, Math.max(0, (totalBytes / maxBytes) * 100));
+            const pctFormatted = pct.toFixed(2);
+
+            let barColor = '#10b981';
+            let barGlow = 'rgba(16, 185, 129, 0.4)';
+            if (pct >= 85) {
+                barColor = '#ef4444';
+                barGlow = 'rgba(239, 68, 68, 0.5)';
+            } else if (pct >= 60) {
+                barColor = '#f59e0b';
+                barGlow = 'rgba(245, 158, 11, 0.5)';
+            }
+
+            return `
+                <div style="font-size:0.82rem; color:var(--subtext); margin-bottom:12px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;">
+                    <div style="display:flex; align-items:center; gap:6px;">
+                        ${getSvgShield('founder', 15)} <span><strong>Esclusiva Founder (Occhionero)</strong>: Monitoraggio e pulizia storage Cloudinary & Firestore.</span>
+                    </div>
+                    <button type="button" onclick="refreshStorageData(true)" style="background:rgba(56,189,248,0.12); border:1px solid rgba(56,189,248,0.4); color:#38bdf8; border-radius:8px; padding:5px 10px; font-size:0.75rem; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; gap:5px; transition:all 0.2s;">
+                        ${getSvgRefresh(13, '#38bdf8')} <span>Ricalcola Spazio</span>
+                    </button>
+                </div>
+
+                <!-- BOX GAUGE STORAGE -->
+                <div style="background:rgba(255,255,255,0.03); border:1px solid var(--line-color); border-radius:14px; padding:14px 16px; margin-bottom:16px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; flex-wrap:wrap; gap:6px;">
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <span style="display:flex; align-items:center; justify-content:center; width:30px; height:30px; border-radius:8px; background:rgba(56,189,248,0.15); color:#38bdf8;">
+                                ${getSvgDatabase(18, '#38bdf8')}
+                            </span>
+                            <div>
+                                <div style="font-size:0.92rem; font-weight:800; color:var(--text);">Spazio Storage Cloudinary & Firestore</div>
+                                <div style="font-size:0.72rem; color:var(--subtext);">Provider: <strong>Cloudinary</strong> (Media) + <strong>Firestore</strong> (DB) &bull; Quota Free: <strong>25.0 GB</strong></div>
+                            </div>
+                        </div>
+                        <div style="text-align:right;">
+                            <span id="storage-gauge-pct-badge" style="display:inline-block; font-size:0.85rem; font-weight:800; padding:3px 8px; border-radius:6px; background:${barColor}22; color:${barColor}; border:1px solid ${barColor};">
+                                ${pctFormatted}% pieno
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- BARRA PROGRESSO -->
+                    <div style="width:100%; height:12px; background:rgba(255,255,255,0.08); border-radius:6px; overflow:hidden; position:relative; margin-bottom:12px; border:1px solid rgba(255,255,255,0.05);">
+                        <div id="storage-gauge-bar" style="width:${Math.max(0.5, pct)}%; height:100%; background:linear-gradient(90deg, ${barColor}, #38bdf8); border-radius:6px; transition:width 0.4s ease, background 0.4s ease; box-shadow:0 0 10px ${barGlow};"></div>
+                    </div>
+
+                    <!-- GRIGLIA METRICHE -->
+                    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(130px, 1fr)); gap:10px;">
+                        <div style="background:rgba(255,255,255,0.02); border:1px solid var(--line-color); border-radius:10px; padding:8px 10px;">
+                            <div style="font-size:0.7rem; color:var(--subtext); text-transform:uppercase; letter-spacing:0.5px;">Occupato / Limite</div>
+                            <div id="storage-gauge-used-text" style="font-size:0.92rem; font-weight:800; color:var(--text); margin-top:2px;">
+                                ${formatStorageBytes(totalBytes)} <span style="font-size:0.72rem; color:var(--subtext); font-weight:500;">/ 25.0 GB</span>
+                            </div>
+                        </div>
+                        <div style="background:rgba(255,255,255,0.02); border:1px solid var(--line-color); border-radius:10px; padding:8px 10px;">
+                            <div style="font-size:0.7rem; color:var(--subtext); text-transform:uppercase; letter-spacing:0.5px;">📹 Verifiche AI</div>
+                            <div id="storage-gauge-verif-text" style="font-size:0.92rem; font-weight:800; color:#10b981; margin-top:2px;">
+                                ${storageStats.verifCount} file <span style="font-size:0.72rem; color:var(--subtext); font-weight:500;">(~${formatStorageBytes(storageStats.verifBytes)})</span>
+                            </div>
+                        </div>
+                        <div style="background:rgba(255,255,255,0.02); border:1px solid var(--line-color); border-radius:10px; padding:8px 10px;">
+                            <div style="font-size:0.7rem; color:var(--subtext); text-transform:uppercase; letter-spacing:0.5px;">💬 Media Chat</div>
+                            <div id="storage-gauge-chat-text" style="font-size:0.92rem; font-weight:800; color:#38bdf8; margin-top:2px;">
+                                ${storageStats.chatCount} file <span style="font-size:0.72rem; color:var(--subtext); font-weight:500;">(~${formatStorageBytes(storageStats.chatBytes)})</span>
+                            </div>
+                        </div>
+                        <div style="background:rgba(255,255,255,0.02); border:1px solid var(--line-color); border-radius:10px; padding:8px 10px;">
+                            <div style="font-size:0.7rem; color:var(--subtext); text-transform:uppercase; letter-spacing:0.5px;">Spazio Libero</div>
+                            <div id="storage-gauge-free-text" style="font-size:0.92rem; font-weight:800; color:#a7f3d0; margin-top:2px;">
+                                ${formatStorageBytes(Math.max(0, maxBytes - totalBytes))}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SOTTO-NAVIGAZIONE CATEGORIE: VERIFICHE AI vs MEDIA CHAT -->
+                <div style="display:flex; gap:8px; margin-bottom:12px; border-bottom:1px solid var(--line-color); padding-bottom:8px;">
+                    <button type="button" class="admin-tab-btn ${storageActiveSubTab === 'verifications' ? 'active' : ''}" onclick="switchStorageSubTab('verifications')" style="${storageActiveSubTab === 'verifications' ? 'background:rgba(16,185,129,0.18); border-color:#10b981; color:#10b981;' : ''}">
+                        📹 Verifiche AI (<span id="subtab-count-verif">${cachedStorageVerifications.length}</span>)
+                    </button>
+                    <button type="button" class="admin-tab-btn ${storageActiveSubTab === 'chat' ? 'active' : ''}" onclick="switchStorageSubTab('chat')" style="${storageActiveSubTab === 'chat' ? 'background:rgba(56,189,248,0.18); border-color:#38bdf8; color:#38bdf8;' : ''}">
+                        💬 Media Chat (<span id="subtab-count-chat">${cachedStorageChatMedia.length}</span>)
+                    </button>
+                </div>
+
+                <!-- CONTENITORE CONTENUTO SOTTO-TAB -->
+                <div id="admin-storage-subtab-container">
+                    ${renderStorageCurrentSubTabHtml()}
+                </div>
+            `;
+        }
+
+        function renderStorageCurrentSubTabHtml() {
+            if (storageActiveSubTab === 'verifications') {
+                return `
+                    <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:12px; flex-wrap:wrap;">
+                        <div style="flex:1; min-width:200px; position:relative;">
+                            <span style="position:absolute; left:12px; top:50%; transform:translateY(-50%); pointer-events:none; display:flex;">
+                                ${getSvgSearch(16)}
+                            </span>
+                            <input type="text" id="admin-storage-search-verif" placeholder="Cerca atleta o skill nelle verifiche..." oninput="filterStorageVerifications(this.value)" style="width:100%; box-sizing:border-box; padding:9px 12px 9px 38px; border-radius:10px; border:1px solid var(--line-color); background:rgba(255,255,255,0.05); color:var(--text); font-size:0.85rem; outline:none;">
+                        </div>
+                        <button type="button" class="btn-cancel" onclick="adminPurgeStorageCategory('verifications')" style="padding:9px 14px; font-size:0.82rem; font-weight:800; background:rgba(239,68,68,0.15); border:1px solid #ef4444; color:#f87171; border-radius:10px; cursor:pointer; display:inline-flex; align-items:center; gap:6px; transition:all 0.2s;" title="Elimina tutti i video delle verifiche AI liberando lo storage">
+                            🗑️ <span>Svuota Verifiche AI</span>
+                        </button>
+                    </div>
+                    <div id="admin-storage-verif-count-info" style="font-size:0.75rem; color:var(--subtext); margin-bottom:10px;">
+                        ${cachedStorageVerifications.length > 0 ? `Totale video/foto verifiche nello storage: ${cachedStorageVerifications.length}` : ''}
+                    </div>
+                    <div id="admin-storage-verif-items-list" style="max-height:420px; overflow-y:auto;">
+                        ${renderStorageVerificationsListHtml(cachedStorageVerifications)}
+                    </div>
+                `;
+            } else {
+                return `
+                    <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:12px; flex-wrap:wrap;">
+                        <div style="flex:1; min-width:200px; position:relative;">
+                            <span style="position:absolute; left:12px; top:50%; transform:translateY(-50%); pointer-events:none; display:flex;">
+                                ${getSvgSearch(16)}
+                            </span>
+                            <input type="text" id="admin-storage-search-chat" placeholder="Cerca mittente o testo nei media chat..." oninput="filterStorageChatMedia(this.value)" style="width:100%; box-sizing:border-box; padding:9px 12px 9px 38px; border-radius:10px; border:1px solid var(--line-color); background:rgba(255,255,255,0.05); color:var(--text); font-size:0.85rem; outline:none;">
+                        </div>
+                        <button type="button" class="btn-cancel" onclick="adminPurgeStorageCategory('chat')" style="padding:9px 14px; font-size:0.82rem; font-weight:800; background:rgba(239,68,68,0.15); border:1px solid #ef4444; color:#f87171; border-radius:10px; cursor:pointer; display:inline-flex; align-items:center; gap:6px; transition:all 0.2s;" title="Elimina tutti i file multimediali dalle chat liberando lo storage">
+                            🗑️ <span>Svuota Media Chat</span>
+                        </button>
+                    </div>
+                    <div id="admin-storage-chat-count-info" style="font-size:0.75rem; color:var(--subtext); margin-bottom:10px;">
+                        ${cachedStorageChatMedia.length > 0 ? `Totale allegati multimediali chat: ${cachedStorageChatMedia.length}` : ''}
+                    </div>
+                    <div id="admin-storage-chat-items-list" style="max-height:420px; overflow-y:auto;">
+                        ${renderStorageChatMediaListHtml(cachedStorageChatMedia)}
+                    </div>
+                `;
+            }
+        }
+
+        function renderStorageVerificationsListHtml(list) {
+            if (!list || list.length === 0) {
+                return '<p style="color:var(--subtext); font-size:0.82rem; text-align:center; padding:24px 0;">Nessun video o foto di verifica presente nello storage.</p>';
+            }
+
+            return list.map(v => {
+                const isAppr = v.status === 'approved';
+                const dateStr = v.timestamp ? new Date(v.timestamp).toLocaleString('it-IT', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' }) : 'Data n/d';
+                const estBytes = getMediaSizeEstimate(v);
+                const estStr = formatStorageBytes(estBytes);
+                const isVid = (v.mediaType === 'video') || (v.mediaUrl && (v.mediaUrl.includes('video') || v.mediaUrl.endsWith('.mp4') || v.mediaUrl.endsWith('.webm')));
+
+                let mediaEl = '';
+                if (isVid) {
+                    mediaEl = `
+                        <div style="position:relative; width:110px; height:80px; flex-shrink:0; border-radius:8px; overflow:hidden; background:#000; border:1px solid var(--line-color);">
+                            <video src="${escapeHtml(v.mediaUrl)}" preload="metadata" playsinline muted style="width:100%; height:100%; object-fit:cover;"></video>
+                            <a href="${escapeHtml(v.mediaUrl)}" target="_blank" rel="noopener noreferrer" style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.35); color:#fff; text-decoration:none; font-size:1.1rem;" title="Apri video">▶</a>
+                        </div>
+                    `;
+                } else {
+                    mediaEl = `
+                        <div style="position:relative; width:110px; height:80px; flex-shrink:0; border-radius:8px; overflow:hidden; background:#000; border:1px solid var(--line-color); cursor:pointer;" onclick="openChatMediaLightbox('${escapeHtml(v.mediaUrl)}')">
+                            <img src="${escapeHtml(v.mediaUrl)}" style="width:100%; height:100%; object-fit:cover;" loading="lazy">
+                        </div>
+                    `;
+                }
+
+                return `
+                    <div class="admin-verif-item" id="storage-item-verif-${v.id}" style="display:flex; gap:12px; align-items:center; flex-wrap:wrap; justify-content:space-between; margin-bottom:10px; padding:10px; border-radius:10px; background:rgba(255,255,255,0.02); border:1px solid var(--line-color);">
+                        <div style="display:flex; gap:12px; align-items:center; min-width:240px; flex:1;">
+                            ${mediaEl}
+                            <div style="flex:1;">
+                                <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap; margin-bottom:4px;">
+                                    <strong style="font-size:0.88rem; color:var(--text);">${escapeHtml(v.athleteNick || 'Atleta')}</strong>
+                                    <span style="font-size:0.7rem; font-weight:700; padding:1px 6px; border-radius:4px; ${isAppr ? 'background:rgba(16,185,129,0.15); color:#10b981; border:1px solid #10b981;' : 'background:rgba(239,68,68,0.15); color:#f87171; border:1px solid #ef4444;'}">
+                                        ${isAppr ? 'APPROVATA' : 'RESPINTA'}
+                                    </span>
+                                    <span style="font-size:0.7rem; padding:1px 6px; border-radius:4px; background:rgba(56,189,248,0.12); color:#38bdf8; border:1px solid rgba(56,189,248,0.3);">
+                                        ${isVid ? '📹 8 FPS Ottimizzato' : '📸 Foto'}
+                                    </span>
+                                </div>
+                                <div style="font-size:0.8rem; color:var(--text); margin-bottom:2px;">
+                                    Skill: <strong>${escapeHtml(v.skillName || v.skillId || 'Skill')}</strong> &bull; ${v.claimedVal || 0} ${escapeHtml(v.unit || 'reps')}
+                                </div>
+                                <div style="font-size:0.72rem; color:var(--subtext); display:flex; gap:10px; flex-wrap:wrap;">
+                                    <span>📅 ${dateStr}</span>
+                                    <span>💾 Spazio: <strong>~${estStr}</strong></span>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="display:flex; align-items:center; gap:6px;">
+                            <button type="button" onclick="adminDeleteSingleStorageMedia('verifications', '${v.id}')" style="background:rgba(239,68,68,0.12); border:1px solid #ef4444; color:#f87171; border-radius:8px; padding:7px 12px; font-size:0.76rem; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; gap:5px; transition:all 0.2s;" title="Elimina definitivamente questo video dallo storage">
+                                🗑️ <span>Elimina Video</span>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderStorageChatMediaListHtml(list) {
+            if (!list || list.length === 0) {
+                return '<p style="color:var(--subtext); font-size:0.82rem; text-align:center; padding:24px 0;">Nessun allegato multimediale presente nella chat.</p>';
+            }
+
+            return list.map(m => {
+                let dateStr = 'Data n/d';
+                if (m.createdAt) {
+                    try {
+                        const d = m.createdAt.toDate ? m.createdAt.toDate() : new Date(m.createdAt);
+                        dateStr = d.toLocaleString('it-IT', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' });
+                    } catch(e) {}
+                }
+                const estBytes = getMediaSizeEstimate(m);
+                const estStr = formatStorageBytes(estBytes);
+                const mType = m.mediaType || (m.mediaUrl && m.mediaUrl.includes('audio') ? 'audio' : (m.mediaUrl && m.mediaUrl.includes('video') ? 'video' : 'image'));
+
+                let mediaEl = '';
+                let typeBadge = '';
+                if (mType === 'video') {
+                    typeBadge = '<span style="font-size:0.7rem; padding:1px 6px; border-radius:4px; background:rgba(56,189,248,0.12); color:#38bdf8; border:1px solid rgba(56,189,248,0.3);">📹 Video</span>';
+                    mediaEl = `
+                        <div style="position:relative; width:110px; height:80px; flex-shrink:0; border-radius:8px; overflow:hidden; background:#000; border:1px solid var(--line-color);">
+                            <video src="${escapeHtml(m.mediaUrl)}" preload="metadata" playsinline muted style="width:100%; height:100%; object-fit:cover;"></video>
+                            <a href="${escapeHtml(m.mediaUrl)}" target="_blank" rel="noopener noreferrer" style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.35); color:#fff; text-decoration:none; font-size:1.1rem;" title="Apri video">▶</a>
+                        </div>
+                    `;
+                } else if (mType === 'audio') {
+                    typeBadge = '<span style="font-size:0.7rem; padding:1px 6px; border-radius:4px; background:rgba(168,85,247,0.12); color:#c084fc; border:1px solid rgba(168,85,247,0.3);">🎙️ Nota Vocale</span>';
+                    mediaEl = `
+                        <div style="width:110px; height:80px; flex-shrink:0; border-radius:8px; display:flex; flex-direction:column; align-items:center; justify-content:center; background:rgba(168,85,247,0.08); border:1px solid rgba(168,85,247,0.25); padding:4px; box-sizing:border-box;">
+                            <span style="font-size:1.3rem; margin-bottom:2px;">🎙️</span>
+                            <audio src="${escapeHtml(m.mediaUrl)}" controls style="width:100px; height:26px; transform:scale(0.85);"></audio>
+                        </div>
+                    `;
+                } else {
+                    typeBadge = '<span style="font-size:0.7rem; padding:1px 6px; border-radius:4px; background:rgba(16,185,129,0.12); color:#10b981; border:1px solid rgba(16,185,129,0.3);">📸 Foto</span>';
+                    mediaEl = `
+                        <div style="position:relative; width:110px; height:80px; flex-shrink:0; border-radius:8px; overflow:hidden; background:#000; border:1px solid var(--line-color); cursor:pointer;" onclick="openChatMediaLightbox('${escapeHtml(m.mediaUrl)}')">
+                            <img src="${escapeHtml(m.mediaUrl)}" style="width:100%; height:100%; object-fit:cover;" loading="lazy">
+                        </div>
+                    `;
+                }
+
+                return `
+                    <div class="admin-verif-item" id="storage-item-chat-${m.id}" style="display:flex; gap:12px; align-items:center; flex-wrap:wrap; justify-content:space-between; margin-bottom:10px; padding:10px; border-radius:10px; background:rgba(255,255,255,0.02); border:1px solid var(--line-color);">
+                        <div style="display:flex; gap:12px; align-items:center; min-width:240px; flex:1;">
+                            ${mediaEl}
+                            <div style="flex:1;">
+                                <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap; margin-bottom:4px;">
+                                    <strong style="font-size:0.88rem; color:var(--text);">${escapeHtml(m.nickname || 'Utente')}</strong>
+                                    ${typeBadge}
+                                </div>
+                                ${m.text ? `<div style="font-size:0.78rem; color:var(--subtext); margin-bottom:4px; max-width:320px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">"${escapeHtml(m.text)}"</div>` : ''}
+                                <div style="font-size:0.72rem; color:var(--subtext); display:flex; gap:10px; flex-wrap:wrap;">
+                                    <span>📅 ${dateStr}</span>
+                                    <span>💾 Spazio: <strong>~${estStr}</strong></span>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="display:flex; align-items:center; gap:6px;">
+                            <button type="button" onclick="adminDeleteSingleStorageMedia('chat', '${m.id}')" style="background:rgba(239,68,68,0.12); border:1px solid #ef4444; color:#f87171; border-radius:8px; padding:7px 12px; font-size:0.76rem; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; gap:5px; transition:all 0.2s;" title="Elimina definitivamente questo allegato dallo storage">
+                                🗑️ <span>Elimina Allegato</span>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        async function loadAdminStorageData(forceRefresh = false) {
+            if (typeof db === 'undefined') return;
+
+            try {
+                if (forceRefresh || cachedStorageVerifications.length === 0) {
+                    const verifSnap = await db.collection("aiVerifications").orderBy("timestamp", "desc").limit(300).get();
+                    cachedStorageVerifications = [];
+                    verifSnap.forEach(doc => {
+                        const data = doc.data();
+                        if (data && data.mediaUrl) {
+                            cachedStorageVerifications.push({ id: doc.id, ...data });
+                        }
+                    });
+                }
+
+                if (forceRefresh || cachedStorageChatMedia.length === 0) {
+                    const chatSnap = await db.collection("chatMessages").orderBy("createdAt", "desc").limit(300).get();
+                    cachedStorageChatMedia = [];
+                    chatSnap.forEach(doc => {
+                        const data = doc.data();
+                        if (data && data.mediaUrl && !data.mediaExpired) {
+                            cachedStorageChatMedia.push({ id: doc.id, ...data });
+                        }
+                    });
+                }
+
+                recalculateStorageStats();
+
+                const subtabContainer = document.getElementById('admin-storage-subtab-container');
+                if (subtabContainer) {
+                    subtabContainer.innerHTML = renderStorageCurrentSubTabHtml();
+                }
+            } catch(err) {
+                console.warn("Errore caricamento dati storage:", err);
+            }
+        }
+
+        function switchStorageSubTab(subTab) {
+            storageActiveSubTab = subTab;
+            const container = document.getElementById('admin-storage-subtab-container');
+            if (container) {
+                container.innerHTML = renderStorageCurrentSubTabHtml();
+            }
+            const panelBody = document.getElementById('admin-panel-body');
+            if (panelBody && adminActiveTab === 'storage') {
+                panelBody.innerHTML = `
+                    <div class="admin-tab-nav" style="flex-wrap:wrap;">
+                        <button type="button" class="admin-tab-btn" onclick="switchAdminTab('verifications')">
+                            ${getSvgShield('verified', 14)} Registro Verifiche AI
+                        </button>
+                        <button type="button" class="admin-tab-btn" onclick="switchAdminTab('roles')">
+                            ${getSvgShield('founder', 14)} Gestione Ruoli <span style="font-size:0.7rem; color:#fbbf24;">(Founder)</span>
+                        </button>
+                        <button type="button" class="admin-tab-btn active" onclick="switchAdminTab('storage')">
+                            ${getSvgDatabase(14, '#38bdf8')} Monitor Storage & Pulizia <span style="font-size:0.7rem; color:#fbbf24;">(Founder)</span>
+                        </button>
+                    </div>
+                    ${renderAdminStorageSectionHtml()}
+                `;
+            }
+        }
+
+        async function adminDeleteSingleStorageMedia(category, id) {
+            if (!isSuperAdminUser(currentUser)) {
+                showAppToast("Permesso negato: solo il Founder (Occhionero) può eliminare file dallo storage.", "error");
+                return;
+            }
+
+            const itemDesc = category === 'verifications' ? "questo video di verifica" : "questo allegato chat";
+            if (!confirm(`Sei sicuro di voler eliminare definitivamente ${itemDesc} per liberare spazio dallo storage?`)) return;
+
+            try {
+                if (category === 'verifications') {
+                    const item = cachedStorageVerifications.find(x => x.id === id);
+                    if (item && item.mediaUrl) {
+                        cleanMediaFromStorage(item.mediaUrl, item.mediaType);
+                    }
+                    await db.collection("aiVerifications").doc(id).delete();
+                    cachedStorageVerifications = cachedStorageVerifications.filter(x => x.id !== id);
+                    if (typeof cachedAdminVerifications !== 'undefined') {
+                        cachedAdminVerifications = cachedAdminVerifications.filter(x => x.id !== id);
+                    }
+                } else if (category === 'chat') {
+                    const item = cachedStorageChatMedia.find(x => x.id === id);
+                    if (item && item.mediaUrl) {
+                        cleanMediaFromStorage(item.mediaUrl, item.mediaType);
+                    }
+                    await db.collection("chatMessages").doc(id).update({
+                        mediaUrl: firebase.firestore.FieldValue.delete(),
+                        mediaPublicId: firebase.firestore.FieldValue.delete(),
+                        mediaType: firebase.firestore.FieldValue.delete(),
+                        mediaExpired: true,
+                        mediaExpiredAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                    cachedStorageChatMedia = cachedStorageChatMedia.filter(x => x.id !== id);
+                }
+
+                recalculateStorageStats();
+
+                const subtabContainer = document.getElementById('admin-storage-subtab-container');
+                if (subtabContainer) {
+                    subtabContainer.innerHTML = renderStorageCurrentSubTabHtml();
+                }
+
+                showAppToast("File eliminato con successo! Spazio liberato.", "success");
+            } catch(err) {
+                console.error("Errore eliminazione file storage:", err);
+                showAppToast("Errore durante l'eliminazione: " + err.message, "error");
+            }
+        }
+
+        async function adminPurgeStorageCategory(category) {
+            if (!isSuperAdminUser(currentUser)) {
+                showAppToast("Permesso negato: solo il Founder (Occhionero) può svuotare lo storage.", "error");
+                return;
+            }
+
+            const categoryName = category === 'verifications' ? "TUTTI i video delle Verifiche AI" : "TUTTI i file multimediali della Chat";
+            if (!confirm(`⚠️ ATTENZIONE: Sei sicuro di voler eliminare ${categoryName}?\n\nQuesta operazione rimuoverà definitivamente i file multimediali e libererà lo storage di Cloudinary e Firestore.`)) {
+                return;
+            }
+
+            try {
+                showAppToast(`Svuotamento ${category === 'verifications' ? 'video verifiche' : 'media chat'} in corso...`, "info");
+                let deletedCount = 0;
+
+                if (category === 'verifications') {
+                    const snap = await db.collection("aiVerifications").get();
+                    const batchSize = 450;
+                    let batch = db.batch();
+                    let bCount = 0;
+
+                    for (const doc of snap.docs) {
+                        const data = doc.data();
+                        if (data && data.mediaUrl) {
+                            cleanMediaFromStorage(data.mediaUrl, data.mediaType);
+                        }
+                        batch.delete(doc.ref);
+                        bCount++;
+                        deletedCount++;
+                        if (bCount >= batchSize) {
+                            await batch.commit();
+                            batch = db.batch();
+                            bCount = 0;
+                        }
+                    }
+                    if (bCount > 0) await batch.commit();
+                    cachedStorageVerifications = [];
+                    if (typeof cachedAdminVerifications !== 'undefined') cachedAdminVerifications = [];
+                } else if (category === 'chat') {
+                    const snap = await db.collection("chatMessages").get();
+                    const batchSize = 450;
+                    let batch = db.batch();
+                    let bCount = 0;
+
+                    for (const doc of snap.docs) {
+                        const data = doc.data();
+                        if (data && data.mediaUrl) {
+                            cleanMediaFromStorage(data.mediaUrl, data.mediaType);
+                            batch.update(doc.ref, {
+                                mediaUrl: firebase.firestore.FieldValue.delete(),
+                                mediaPublicId: firebase.firestore.FieldValue.delete(),
+                                mediaType: firebase.firestore.FieldValue.delete(),
+                                mediaExpired: true,
+                                mediaExpiredAt: firebase.firestore.FieldValue.serverTimestamp()
+                            });
+                            bCount++;
+                            deletedCount++;
+                            if (bCount >= batchSize) {
+                                await batch.commit();
+                                batch = db.batch();
+                                bCount = 0;
+                            }
+                        }
+                    }
+                    if (bCount > 0) await batch.commit();
+                    cachedStorageChatMedia = [];
+                }
+
+                recalculateStorageStats();
+
+                const subtabContainer = document.getElementById('admin-storage-subtab-container');
+                if (subtabContainer) {
+                    subtabContainer.innerHTML = renderStorageCurrentSubTabHtml();
+                }
+
+                showAppToast(`Svuotamento completato: eliminati ${deletedCount} file multimediali!`, "success");
+            } catch(err) {
+                console.error("Errore svuotamento storage categoria:", err);
+                showAppToast("Errore durante lo svuotamento: " + err.message, "error");
+            }
+        }
+
+        function filterStorageVerifications(query) {
+            const listEl = document.getElementById('admin-storage-verif-items-list');
+            const countEl = document.getElementById('admin-storage-verif-count-info');
+            if (!listEl) return;
+
+            const q = (query || '').trim().toLowerCase();
+            let filtered = cachedStorageVerifications;
+            if (q) {
+                filtered = cachedStorageVerifications.filter(v => {
+                    const nick = (v.athleteNick || '').toLowerCase();
+                    const skill = (v.skillName || v.skillId || '').toLowerCase();
+                    return nick.includes(q) || skill.includes(q);
+                });
+            }
+
+            if (countEl) {
+                countEl.innerText = q 
+                    ? `Trovati ${filtered.length} di ${cachedStorageVerifications.length} video per "${query}"`
+                    : `Totale video/foto verifiche nello storage: ${cachedStorageVerifications.length}`;
+            }
+
+            listEl.innerHTML = renderStorageVerificationsListHtml(filtered);
+        }
+
+        function filterStorageChatMedia(query) {
+            const listEl = document.getElementById('admin-storage-chat-items-list');
+            const countEl = document.getElementById('admin-storage-chat-count-info');
+            if (!listEl) return;
+
+            const q = (query || '').trim().toLowerCase();
+            let filtered = cachedStorageChatMedia;
+            if (q) {
+                filtered = cachedStorageChatMedia.filter(m => {
+                    const nick = (m.nickname || '').toLowerCase();
+                    const text = (m.text || '').toLowerCase();
+                    const type = (m.mediaType || '').toLowerCase();
+                    return nick.includes(q) || text.includes(q) || type.includes(q);
+                });
+            }
+
+            if (countEl) {
+                countEl.innerText = q 
+                    ? `Trovati ${filtered.length} di ${cachedStorageChatMedia.length} allegati per "${query}"`
+                    : `Totale allegati multimediali chat: ${cachedStorageChatMedia.length}`;
+            }
+
+            listEl.innerHTML = renderStorageChatMediaListHtml(filtered);
+        }
+
+        function refreshStorageData(force = false) {
+            showAppToast("Ricalcolo spazio storage in tempo reale...", "info");
+            loadAdminStorageData(force).then(() => {
+                showAppToast("Spazio storage aggiornato con successo!", "success");
+            });
+        }
+
+        if (typeof window !== 'undefined') {
+            window.switchStorageSubTab = switchStorageSubTab;
+            window.adminDeleteSingleStorageMedia = adminDeleteSingleStorageMedia;
+            window.adminPurgeStorageCategory = adminPurgeStorageCategory;
+            window.filterStorageVerifications = filterStorageVerifications;
+            window.filterStorageChatMedia = filterStorageChatMedia;
+            window.refreshStorageData = refreshStorageData;
+            window.recalculateStorageStats = recalculateStorageStats;
+            window.loadAdminStorageData = loadAdminStorageData;
+        }
+
 
         // =========================================================================
         // MODALE VERIFICA SKILL CON AI COACH (PER ATLETI)
@@ -28038,12 +28921,14 @@ function getCalisthenicsExpertResponse(query) {
                 }
             }
 
-            // Upload Cloudinary per archivio consultabile
+            // Upload Cloudinary per archivio consultabile (MANDATORIO: salva la versione 8 FPS compressa invece della nativa pesante)
             let mediaUrl = null;
             let mediaType = isImage ? 'image' : 'video';
+            const fileToUpload = (isVideo && processedFile) ? processedFile : (file || processedFile);
             try {
-                if (typeof uploadMediaToCloudinary === 'function') {
-                    const upRes = await uploadMediaToCloudinary(file || processedFile, mediaType);
+                if (typeof uploadMediaToCloudinary === 'function' && fileToUpload) {
+                    console.log('[Storage AI] Upload su Cloudinary versione 8 FPS ottimizzata:', fileToUpload.name || 'video_8fps.webm', fileToUpload.size, 'bytes');
+                    const upRes = await uploadMediaToCloudinary(fileToUpload, mediaType);
                     if (upRes && upRes.url) {
                         mediaUrl = upRes.url;
                     }
@@ -28385,6 +29270,19 @@ Se rifiuti (approved: false), DEVI spiegare chiaramente e dettagliatamente il MO
                                             }
                                         }
 
+                                        // CONTROLLO DETERMINISTICO INTEGRALE:
+                                        // Se l'AI non ha estratto le ripetizioni nel campo reps_counted, tentiamo l'estrazione regex dal feedback:
+                                        if (countedReps === 0 && parsed.feedback && skill.type === 'rep') {
+                                            const mR = parsed.feedback.match(/(?:contat[eo]|eseguit[eo]|complessiv[eo]|valid[eo]|completat[eo]|totale)\s*(\d+)\s*(?:ripetizion|pull|trazion|dip|push|piegament)/i) ||
+                                                       parsed.feedback.match(/(\d+)\s*(?:ripetizioni\s+valide|ripetizioni\s+completate|ripetizioni\s+contate)/i);
+                                            if (mR) countedReps = parseInt(mR[1]) || 0;
+                                        }
+                                        if (countedSec === 0 && parsed.feedback && skill.type === 'sec') {
+                                            const mS = parsed.feedback.match(/(?:cronometrat[eo]|tenut[eo]|mantenut[eo]|durat[eo]|valid[eo])\s*(\d+)\s*(?:second|sec|s\b)/i) ||
+                                                       parsed.feedback.match(/(\d+)\s*(?:secondi\s+di\s+tenuta|secondi\s+validi|secondi\s+continuativi)/i);
+                                            if (mS) countedSec = parseInt(mS[1]) || 0;
+                                        }
+
                                         // Se Coach Ares ha approvato l'esecuzione, convalida il target dichiarato:
                                         if (parsed.approved === true) {
                                             if (countedReps === 0) countedReps = val;
@@ -28551,11 +29449,17 @@ Se rifiuti (approved: false), DEVI spiegare chiaramente e dettagliatamente il MO
                 if (typeof claimedInput !== 'undefined' && claimedInput && typeof val !== 'undefined') {
                     claimedInput.value = val;
                 }
+                const drwInput = document.getElementById('drawer-input-' + skillId);
+                if (drwInput && typeof val !== 'undefined') drwInput.value = val;
+                const treeInput = document.getElementById('input-' + skillId);
+                if (treeInput && typeof val !== 'undefined') treeInput.value = val;
+
                 if (!userState[skillId]) {
-                    userState[skillId] = { unlocked: true, val: val, verifiedByAi: true, isVerified: true };
+                    userState[skillId] = { unlocked: true, val: val, verifiedVal: val, verifiedByAi: true, isVerified: true };
                 } else {
                     userState[skillId].unlocked = true;
                     userState[skillId].val = val;
+                    userState[skillId].verifiedVal = Math.max(userState[skillId].verifiedVal || 0, val);
                     userState[skillId].verifiedByAi = true;
                     userState[skillId].isVerified = true;
                 }
@@ -28600,11 +29504,11 @@ Se rifiuti (approved: false), DEVI spiegare chiaramente e dettagliatamente il MO
                     feedbackEl.style.border = '1px solid #10b981';
                     feedbackEl.innerHTML = `
                         <div style="display:flex; align-items:center; gap:6px; margin-bottom:6px;">
-                            ${getSvgShield('verified', 18)} <strong style="font-size:0.95rem;">${isPartialCertification ? `LIVELLO CERTIFICATO A ${val} ${unit.toUpperCase()}!` : 'APPROVATA DA COACH ARES!'}</strong>
+                            ${getSvgShield('verified', 18)} <strong style="font-size:0.95rem;">${isPartialCertification ? `🎯 TARGET NON RAGGIUNTO — CONVALIDATE ${val} ${unit.toUpperCase()}!` : 'APPROVATA DA COACH ARES!'}</strong>
                         </div>
                         <div style="font-size:0.84rem; line-height:1.45; margin-bottom:12px; color:var(--text);">${escapeHtml(aiFeedbackText)}</div>
                         <button type="button" class="btn-confirm" id="btn-verified-confirm-ok" onclick="closeSkillVerifyModal(); if (typeof openSkillDetailDrawer === 'function') openSkillDetailDrawer('${skillId}');" style="width:100%; padding:11px 16px; font-weight:800; font-size:0.92rem; background:linear-gradient(135deg, #10b981 0%, #059669 100%); border:1px solid #10b981; color:#ffffff; border-radius:10px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; box-shadow:0 0 16px rgba(16,185,129,0.35); transition:all 0.2s ease;">
-                            ${getSvgShield('verified', 16)} <span>Fantastico, Conferma e Continua</span>
+                            ${getSvgShield('verified', 16)} <span>${isPartialCertification ? `Conferma ${val} ${unit} certificate` : 'Fantastico, Conferma e Continua'}</span>
                         </button>
                     `;
                 }
@@ -28666,6 +29570,10 @@ Se rifiuti (approved: false), DEVI spiegare chiaramente e dettagliatamente il MO
         if (typeof window !== 'undefined') {
             window.openSkillVerifyModal = openSkillVerificationModal;
             window.renderTree = updateUI;
+            window.filterAdminVerificationsList = filterAdminVerificationsList;
+            window.adminDeleteAllVerifications = adminDeleteAllVerifications;
+            window.adminDeleteVerification = adminDeleteVerification;
+            window.isSkillCurrentlyVerified = isSkillCurrentlyVerified;
         }
         
         </script>
