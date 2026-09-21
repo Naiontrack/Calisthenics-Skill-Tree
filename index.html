@@ -29570,47 +29570,300 @@ function getCalisthenicsExpertResponse(query) {
         function getSkillBiomechanicsCriteriaHtml(skill, val, unit) {
             const id = (skill && skill.id) || '';
             const name = (skill && skill.name) || '';
+            const type = (skill && skill.type) || 'rep';
+            const lowerName = name.toLowerCase();
+            const lowerId = id.toLowerCase();
+
             // CRITERIO TASSATIVO: Il petto deve toccare fisicamente la sbarra ad ogni ripetizione
-            if (id === 'chest_to_bar' || /chest.*bar/i.test(name)) {
+            if (lowerId === 'chest_to_bar' || /chest.*bar/i.test(name) || /trazion.*petto/i.test(name) || lowerName.includes('petto')) {
                 return `• Il petto (sterno o clavicola) DEVE TOCCARE FISICAMENTE la sbarra ad ogni ripetizione.<br>
 • Se superi la sbarra solo con il mento (trazioni normali), la prova verrà RESPINTA categoricamente.<br>
-• Estensione completa delle braccia in discesa (lockout): Coach Ares conterà direttamente ogni ripetizione valida eseguita.`;
-            } else if (id === 'pull_over' || /pull\s*over/i.test(name) || /giro.*sbarra/i.test(name)) {
-                return `• Sollevamento controllato di gambe e bacino con rotazione/giro completo attorno alla sbarra terminando in appoggio frontale (front support).<br>
+• Estensione completa delle braccia in discesa (lockout a 180°): Coach Ares conterà direttamente ogni ripetizione valida eseguita.`;
+            } else if (lowerId === 'pull_over' || lowerId === 'pullover' || /pull\s*over/i.test(name) || /giro.*sbarra/i.test(name)) {
+                return `• Sollevamento controllato di gambe e bacino con rotazione/giro completo attorno alla sbarra terminando in appoggio frontale (front support) a braccia tese.<br>
 • ATTENZIONE: Il Pull Over NON è un Muscle Up! L'esecuzione di Muscle Up comporta il RIFIUTO immediato della prova.<br>
 • Coach Ares conterà direttamente tutte le rotazioni valide completate nella serie massimale.`;
-            } else if (id.includes('ring_muscle') || (id.includes('muscle_up') && (/ring/i.test(id) || /anell/i.test(name)))) {
+            } else if (lowerId.includes('ring_muscle') || (lowerName.includes('muscle up') && (lowerName.includes('ring') || lowerName.includes('anell')))) {
                 return `• Esecuzione tassativa agli ANELLI GINNICI (Gymnastic Rings), vietata l'esecuzione alla sbarra rigida.<br>
-• Transizione simultanea e lockout completo del dip sopra gli anelli.<br>
+• Transizione fluida e simultanea sopra gli anelli con lockout completo del dip a braccia tese in cima.<br>
 • Coach Ares conterà direttamente ogni ripetizione valida completata agli anelli.`;
-            } else if (id === 'pullups' || /pull\s*up/i.test(name) || /trazion/i.test(name)) {
+            } else if (lowerId.includes('muscle_up') || /muscle\s*up/i.test(name)) {
+                const isOneArm = lowerId.includes('one_arm') || lowerName.includes('one arm') || lowerName.includes('monobraccio');
+                if (isOneArm) {
+                    return `• Trazione esplosiva monobraccio e transizione simultanea sopra la sbarra.<br>
+• Lockout completo del braccio in estensione al termine della risalita.<br>
+• Coach Ares conterà direttamente ogni ripetizione valida eseguita.`;
+                }
+                return `• Transizione sopra la sbarra simultanea di entrambe le braccia (divieto categorico di salita asimmetrica o a 'chicken wing').<br>
+• Lockout articolare completo del dip finale sopra la sbarra a braccia tese.<br>
+• Coach Ares conterà direttamente ogni ripetizione valida completata sopra la sbarra.`;
+            } else if (lowerId.includes('one_arm_pullup') || (lowerName.includes('one arm') && (lowerName.includes('pull') || lowerName.includes('chin') || lowerName.includes('trazion')))) {
+                return `• Presa a una sola mano alla sbarra, braccio libero senza appoggi né trazioni sul polso attivo.<br>
+• Partenza a braccio completamente disteso e salita con mento netto sopra la sbarra.<br>
+• Discesa controllata fino a estensione completa: Coach Ares conterà direttamente ogni ripetizione valida eseguita.`;
+            } else if (lowerId.includes('australian') || /australian/i.test(name) || lowerName.includes('orizzontali')) {
+                return `• Corpo perfettamente allineato in asse obliquo o orizzontale con core e glutei serrati.<br>
+• Trazione fino a toccare con il petto la sbarra o gli anelli ad ogni ripetizione.<br>
+• Discesa completa a braccia tese: Coach Ares conterà direttamente ogni ripetizione valida completata.`;
+            } else if (lowerId.includes('towel') && (lowerName.includes('pull') || lowerName.includes('trazion'))) {
+                return `• Presa salda e verticale sulle estremità dell'asciugamano appeso alla sbarra.<br>
+• Trazione concentrica fino a portare il mento all'altezza delle mani.<br>
+• Discesa a braccia completamente distese: Coach Ares conterà direttamente ogni ripetizione valida eseguita.`;
+            } else if (lowerId.includes('pullup') || /pull\s*up/i.test(name) || /trazion/i.test(name) || lowerName.includes('chin up')) {
+                if (lowerName.includes('kipping') || lowerId.includes('explosive_pullup')) {
+                    return `• Oscillazione dinamica continua e coordinata del corpo con superamento netto del mento sopra la sbarra.<br>
+• Ritorno fluido in estensione delle braccia nella fase di oscillazione inferiore.<br>
+• Coach Ares conterà direttamente ogni ripetizione dinamica valida completata.`;
+                }
                 return `• Superamento netto della sbarra con il mento al picco di salita.<br>
 • Distensione quasi completa/lockout dei gomiti nella fase di discesa prima della ripetizione successiva.<br>
 • Forma controllata senza kipping: Coach Ares conterà direttamente ogni ripetizione valida eseguita nel video.`;
-            } else if (id === 'muscle_up' || /muscle\s*up/i.test(name)) {
-                return `• Transizione sopra la sbarra simultanea di entrambe le braccia (divieto di salita asimmetrica a 'chicken wing').<br>
-• Lockout completo del dip sopra la sbarra con braccia tese.<br>
-• Coach Ares conterà direttamente ogni ripetizione valida completata sopra la sbarra.`;
-            } else if (id.includes('dip') || /dip/i.test(name)) {
+            } else if (lowerId.includes('dip') || /dip/i.test(name)) {
+                if (lowerId.includes('ring') || lowerName.includes('ring') || lowerName.includes('anell')) {
+                    return `• Esecuzione agli anelli ginnici con controllo della stabilità e anelli aderenti al corpo senza oscillazioni.<br>
+• Flessione dei gomiti ad almeno 90° (spalle a livello o sotto i gomiti) in fase di discesa.<br>
+• Risalita a lockout completo delle braccia in estensione: Coach Ares conterà direttamente ogni ripetizione valida completata.`;
+                }
+                if (lowerId.includes('l_sit') || lowerName.includes('l-sit') || lowerName.includes('l sit')) {
+                    return `• Gambe mantenute tese a 90° parallele al suolo durante l'intera esecuzione del movimento.<br>
+• Flessione dei gomiti ad almeno 90° in discesa e spinta a lockout completo dei gomiti in cima.<br>
+• Coach Ares conterà direttamente ogni ripetizione valida completata.`;
+                }
+                if (lowerId.includes('korean') || lowerName.includes('korean')) {
+                    return `• Presa con sbarra singola posizionata dietro alla schiena.<br>
+• Discesa profonda con flessione gomiti a 90° senza appoggiare la schiena alla sbarra.<br>
+• Spinta a braccia distese: Coach Ares conterà direttamente ogni ripetizione valida completata.`;
+                }
+                if (lowerId.includes('russian') || lowerName.includes('russian')) {
+                    return `• Discesa in dip a 90°, transizione controllata in appoggio sugli avambracci lungo le parallele.<br>
+• Risalita dagli avambracci alle mani e lockout completo a braccia tese.<br>
+• Coach Ares conterà direttamente ogni ripetizione valida completata.`;
+                }
+                if (lowerId.includes('impossible') || lowerName.includes('impossible')) {
+                    return `• Discesa controllata appoggiando gli avambracci sulle parallele e spinta di sola forza dei tricipiti a leva svantaggiata.<br>
+• Ritorno a braccia completamente distese in lockout.<br>
+• Coach Ares conterà direttamente ogni ripetizione valida completata.`;
+                }
+                if (lowerId.includes('bench') || lowerName.includes('bench') || lowerName.includes('panca')) {
+                    return `• Mani in appoggio sul bordo della panca e busto vicino al supporto.<br>
+• Flessione dei gomiti fino a 90° e distensione completa delle braccia in risalita.<br>
+• Coach Ares conterà direttamente ogni ripetizione valida completata.`;
+            }
                 return `• Flessione dei gomiti ad almeno 90° nella fase eccentrica (spalle a livello o sotto i gomiti).<br>
 • Estensione completa (lockout) delle braccia in cima con spalle depresse.<br>
 • Coach Ares conterà direttamente ogni ripetizione valida completata.`;
-            } else if (skill && skill.type === 'sec') {
-                return `• Allineamento posturale perfetto e continuo senza compensi.<br>
-• Nessun cedimento dell'angolo o del bacino.<br>
+            } else if (lowerId.includes('pushup') || lowerId.includes('push_up') || /push\s*up/i.test(name) || /piegament/i.test(name)) {
+                if (lowerName.includes('diamond')) {
+                    return `• Mani a contatto sotto lo sterno con indici e pollici a formare un diamante.<br>
+• Petto a contatto o a sfiorare le mani al punto di massimo affondo.<br>
+• Distensione completa dei gomiti in spinta: Coach Ares conterà direttamente ogni ripetizione valida eseguita.`;
+                }
+                if (lowerName.includes('clap') || lowerName.includes('battito')) {
+                    return `• Spinta esplosiva dal pavimento con stacco netto di entrambe le mani dal suolo.<br>
+• Battito delle mani chiaramente udibile/visibile e atterraggio controllato ammortizzando prima della distensione successiva.<br>
+• Coach Ares conterà direttamente ogni ripetizione valida completata.`;
+                }
+                if (lowerId.includes('pseudo') || lowerName.includes('pseudo') || lowerName.includes('pppu')) {
+                    return `• Spalle costantemente sbilanciate in avanti oltre i polsi (lean accentuato) con scapole protratte.<br>
+• Petto a sfiorare il suolo mantenendo il punto di inclinazione avanzato senza arretrare in risalita.<br>
+• Lockout a braccia tese in cima: Coach Ares conterà direttamente ogni ripetizione valida completata.`;
+                }
+                if (lowerId.includes('one_arm') || lowerName.includes('one arm') || lowerName.includes('monobraccio')) {
+                    return `• Singolo braccio in appoggio al suolo sotto il petto, gambe divaricate per equilibrio senza torsioni eccessive.<br>
+• Discesa con il petto a sfiorare il suolo e risalita a distensione articolare completa del braccio.<br>
+• Coach Ares conterà direttamente ogni ripetizione valida completata.`;
+                }
+                if (lowerName.includes('knee') || lowerName.includes('ginocchia')) {
+                    return `• Ginocchia in appoggio al suolo con bacino e tronco perfettamente allineati in linea retta.<br>
+• Petto a terra ad ogni ripetizione e distensione completa dei gomiti in cima.<br>
+• Coach Ares conterà direttamente ogni ripetizione valida eseguita.`;
+                }
+                return `• Allineamento del corpo a tavola in hollow body (addome e glutei serrati, nessun inarcamento lombare).<br>
+• Petto a terra o a sfiorare il suolo (a 2-3 cm) nella fase di massimo affondo.<br>
+• Distensione completa (lockout) delle braccia in cima: Coach Ares conterà direttamente ogni ripetizione valida completata.`;
+            } else if (lowerId.includes('handstand') || lowerId.includes('hspu') || lowerId.includes('hs') || /handstand/i.test(name) || /verticale/i.test(name)) {
+                if (lowerId.includes('hspu') || lowerName.includes('hspu') || lowerName.includes('push up')) {
+                    return `• Discesa controllata dalla verticale fino a toccare il pavimento o il supporto con la testa formando un tripode con le mani.<br>
+• Spinta esplosiva fino al lockout articolare completo delle braccia e riallineamento delle spalle.<br>
+• Coach Ares conterà direttamente ogni ripetizione valida completata.`;
+                }
+                if (lowerId.includes('one_arm') || lowerName.includes('one arm') || lowerName.includes('monobraccio')) {
+                    return `• Equilibrio e tenuta stabile su un solo braccio con gomito bloccato teso e spalla in spinta attiva.<br>
+• Corpo allineato senza oscillazioni incontrollate.<br>
+• Tenuta ininterrotta: Coach Ares cronometrerà direttamente i secondi effettivi di tenuta valida prima del cedimento.`;
+                }
+                if (lowerName.includes('wall') || lowerId.includes('wall')) {
+                    return `• Corpo disteso e compatto rivolto verso la parete (o dorso al muro) a braccia bloccate e spalle attive in elevazione.<br>
+• Linea retta senza arco lombare accentuato (no postura a banana).<br>
+• Tenuta continua: Coach Ares cronometrerà direttamente i secondi effettivi di tenuta valida prima del cedimento.`;
+                }
+                return `• Braccia completamente tese con gomiti bloccati e spalle in massima elevazione e spinta attiva verso l'alto.<br>
+• Allineamento posturale lineare e controllato senza tocchi a terra o supporti.<br>
+• Tenuta ininterrotta: Coach Ares cronometrerà direttamente i secondi effettivi di tenuta valida prima del cedimento.`;
+            } else if (lowerId.includes('planche') || /planche/i.test(name) || lowerId.includes('maltese') || lowerName.includes('maltese')) {
+                if (lowerId.includes('planche_lean') || lowerName.includes('lean')) {
+                    return `• Braccia bloccate a gomiti tesi, massima protrazione e depressione scapolare con spalle inclinate in avanti oltre i polsi.<br>
+• Corpo teso in linea retta dai talloni alle spalle senza cedere con il bacino.<br>
+• Tenuta continua: Coach Ares cronometrerà direttamente i secondi effettivi di tenuta valida prima del cedimento.`;
+                }
+                if (lowerId.includes('maltese') || lowerName.includes('maltese')) {
+                    return `• Braccia allargate a croce sul piano orizzontale a gomiti tesi e bloccati.<br>
+• Corpo rigorosamente orizzontale parallelo al suolo a livello spalle.<br>
+• Tenuta ininterrotta: Coach Ares cronometrerà direttamente i secondi effettivi di tenuta valida prima del cedimento.`;
+                }
+                return `• Braccia rigorosamente bloccate a gomiti tesi (180°), scapole protratte e depresse.<br>
+• Corpo perfettamente orizzontale parallelo al suolo (altezza spalle = bacino = gambe), divieto di gambe basse o bacino alto.<br>
+• Tenuta ininterrotta: Coach Ares cronometrerà direttamente i secondi effettivi di tenuta valida prima del cedimento.`;
+            } else if (lowerId.includes('fl') || /front\s*lever/i.test(name)) {
+                return `• Corpo perfettamente orizzontale parallelo al suolo in sospensione alla sbarra o agli anelli.<br>
+• Braccia completamente distese con gomiti bloccati a 180° e scapole retratte/depresse.<br>
+• Tenuta ininterrotta senza cedimenti o piegamento d'anca: Coach Ares cronometrerà direttamente i secondi effettivi di tenuta valida prima del cedimento.`;
+            } else if (lowerId.includes('bl') || /back\s*lever/i.test(name)) {
+                return `• Corpo orizzontale in sospensione dorsale rivolto verso il suolo a braccia bloccate tese.<br>
+• Linea retta continuativa dalle spalle alle caviglie senza iperestensione o caduta del bacino.<br>
+• Tenuta ininterrotta: Coach Ares cronometrerà direttamente i secondi effettivi di tenuta valida prima del cedimento.`;
+            } else if (lowerId.includes('iron_cross') || lowerName.includes('iron cross')) {
+                return `• Braccia orizzontali a forma di croce a 90° rispetto al busto a gomiti completamente tesi.<br>
+• Corpo immobile e verticale agli anelli ginnici per l'intera durata della tenuta.<br>
+• Tenuta ininterrotta: Coach Ares cronometrerà direttamente i secondi effettivi di tenuta valida prima del cedimento.`;
+            } else if (lowerId.includes('victorian') || lowerName.includes('victorian')) {
+                return `• Corpo completamente orizzontale a livello degli anelli a braccia tese in leva orizzontale.<br>
+• Allineamento perfetto del busto e degli arti inferiori.<br>
+• Tenuta ininterrotta: Coach Ares cronometrerà direttamente i secondi effettivi di tenuta valida prima del cedimento.`;
+            } else if (lowerId.includes('ring_support') || lowerName.includes('ring support')) {
+                return `• Braccia completamente distese a gomiti bloccati lungo i fianchi sopra gli anelli.<br>
+• Anelli ruotati verso l'esterno (RTO) o stabili e separati dal corpo senza appoggiare le braccia alle cinghie.<br>
+• Tenuta continua: Coach Ares cronometrerà direttamente i secondi effettivi di tenuta valida prima del cedimento.`;
+            } else if (lowerId.includes('human_flag') || /human\s*flag/i.test(name) || lowerName.includes('bandiera')) {
+                return `• Presa salda al supporto verticale: braccio inferiore in spinta con gomito bloccato, braccio superiore in trazione.<br>
+• Busto e gambe allineati orizzontalmente paralleli al suolo senza caduta del bacino o torsioni.<br>
+• Tenuta ininterrotta: Coach Ares cronometrerà direttamente i secondi effettivi di tenuta valida prima del cedimento.`;
+            } else if (lowerId.includes('elbow_lever') || lowerName.includes('elbow lever')) {
+                return `• Gomiti puntati all'interno delle creste iliache e braccia piegate a sostenere il busto.<br>
+• Corpo orizzontale parallelo al suolo con gambe tese e piedi staccati da terra.<br>
+• Tenuta ininterrotta: Coach Ares cronometrerà direttamente i secondi effettivi di tenuta valida prima del cedimento.`;
+            } else if (lowerId.includes('frog_stand') || lowerName.includes('frog stand')) {
+                return `• Mani al suolo a larghezza spalle, ginocchia in appoggio sull'esterno dei gomiti/tricipiti.<br>
+• Sollevamento completo dei piedi dal suolo mantenendo l'equilibrio sulle mani.<br>
+• Tenuta continua: Coach Ares cronometrerà direttamente i secondi effettivi di tenuta valida prima del cedimento.`;
+            } else if (lowerId.includes('l_sit') || lowerId.includes('v_sit') || /l-sit/i.test(name) || /v-sit/i.test(name) || lowerName.includes('manna')) {
+                if (lowerName.includes('v-sit') || lowerId.includes('v_sit')) {
+                    return `• Braccia distese in spinta a terra o su parallele con spalle attive e depresse.<br>
+• Gambe completamente tese e sollevate oltre i 90° formando una V chiusa verso il busto.<br>
+• Tenuta ininterrotta: Coach Ares cronometrerà direttamente i secondi effettivi di tenuta valida prima del cedimento.`;
+                }
+                return `• Braccia distese e bloccate a terra o sulle parallele con spalle depresse e spinta attiva verso il basso.<br>
+• Gambe completamente tese a 90° parallele al suolo con ginocchia bloccate e piedi staccati da terra.<br>
+• Tenuta ininterrotta: Coach Ares cronometrerà direttamente i secondi effettivi di tenuta valida prima del cedimento.`;
+            } else if (lowerId.includes('dragon_flag') || lowerName.includes('dragon flag')) {
+                return `• Corpo dritto e compatto sostenuto unicamente dalla parte superiore delle spalle/scapole sulla panca.<br>
+• Linea rigida da spalle a piedi senza piegare il bacino (allineamento continuo).<br>
+• ${type === 'sec' ? 'Tenuta ininterrotta: Coach Ares cronometrerà direttamente i secondi effettivi di tenuta valida prima del cedimento.' : 'Discesa a sfiorare la panca e risalita mantenendo il corpo rigido: Coach Ares conterà direttamente ogni ripetizione valida completata.'}`;
+            } else if (lowerId.includes('hollow') || lowerName.includes('hollow body')) {
+                return `• Zona lombare costantemente incollata a terra senza spazi vuoti con il pavimento.<br>
+• Braccia e gambe tese sollevate a 15-20 cm dal suolo mantenendo la massima tensione addominale.<br>
+• Tenuta ininterrotta: Coach Ares cronometrerà direttamente i secondi effettivi di tenuta valida prima del cedimento.`;
+            } else if (lowerId.includes('plank') || lowerName.includes('plank')) {
+                return `• Corpo teso in linea retta perfetta (spalle, bacino, caviglie) con core serrato e retroversione del bacino.<br>
+• Nessun cedimento o inarcamento della zona lombare per l'intera durata.<br>
+• Tenuta continua: Coach Ares cronometrerà direttamente i secondi effettivi di tenuta valida prima del cedimento.`;
+            } else if (lowerId.includes('leg_raises') || lowerName.includes('leg raise') || lowerName.includes('gambe alla sbarra')) {
+                return `• Partenza in sospensione alla sbarra a braccia tese senza oscillazioni né slanci.<br>
+• Sollevamento delle gambe tese con ginocchia bloccate fino a toccare la sbarra (toes to bar) o a 90° netto.<br>
+• Discesa controllata: Coach Ares conterà direttamente ogni ripetizione valida completata.`;
+            } else if (lowerId.includes('ab_wheel') || lowerName.includes('ab wheel') || lowerName.includes('rollout')) {
+                return `• Estensione in avanti controllata della rotella fino a sfiorare il suolo con il petto.<br>
+• Rientro attivo tramite flessione del busto senza crollare con la colonna lombare.<br>
+• Coach Ares conterà direttamente ogni ripetizione valida completata.`;
+            } else if (lowerId.includes('windshield') || lowerName.includes('windshield') || lowerName.includes('tergicristallo')) {
+                return `• Sospensione a braccia tese con gambe mantenute tese e unite a 90° rispetto al busto.<br>
+• Rotazione controllata delle gambe da un lato all'altro con ROM completo e continuo.<br>
+• Coach Ares conterà direttamente ogni ripetizione valida completata.`;
+            } else if (lowerId.includes('superman') || lowerName.includes('superman')) {
+                return `• Posizione prona al suolo con sollevamento simultaneo e controllato di braccia e gambe tese.<br>
+• Mantenimento della contrazione di tutta la catena posteriore.<br>
+• Tenuta continua: Coach Ares cronometrerà direttamente i secondi effettivi di tenuta valida prima del cedimento.`;
+            } else if (lowerId.includes('crunch') || lowerName.includes('crunch') || lowerId.includes('russian_twist') || lowerName.includes('twist')) {
+                return `• Movimento controllato del core con massima contrazione addominale al picco concentrico.<br>
+• Ritorno fluido senza strappi o rimbalzi sul pavimento.<br>
+• Coach Ares conterà direttamente ogni ripetizione valida completata.`;
+            } else if (lowerId.includes('pistol') || lowerName.includes('pistol')) {
+                return `• Esecuzione su una sola gamba con l'altra gamba mantenuta distesa in avanti senza toccare terra.<br>
+• Discesa profonda sotto il parallelo (coscia a contatto con il polpaccio) e risalita a completa estensione del ginocchio.<br>
+• Coach Ares conterà direttamente ogni ripetizione valida completata.`;
+            } else if (lowerId.includes('shrimp') || lowerName.includes('shrimp')) {
+                return `• Una gamba piegata e afferrata dietro la schiena, piegamento completo sulla gamba attiva.<br>
+• Discesa fino a sfiorare il pavimento con il ginocchio posteriore e risalita a distensione completa.<br>
+• Coach Ares conterà direttamente ogni ripetizione valida completata.`;
+            } else if (lowerId.includes('cossack') || lowerName.includes('cossack')) {
+                return `• Affondo laterale profondo con gamba d'appoggio piegata a fondo e gamba opposta tesa con piede ruotato sul tallone.<br>
+• Discesa sotto il parallelo e risalita controllata al centro.<br>
+• Coach Ares conterà direttamente ogni ripetizione valida completata.`;
+            } else if (lowerId.includes('nordic') || lowerName.includes('nordic')) {
+                return `• Piedi e caviglie bloccati, discesa controllata in avanti con busto eretto attivando gli ischiocrurali.<br>
+• Minima spinta delle mani al suolo e ritorno controllato alla posizione iniziale.<br>
+• Coach Ares conterà direttamente ogni ripetizione valida completata.`;
+            } else if (lowerId.includes('wall_sit') || lowerName.includes('wall sit')) {
+                return `• Schiena adesa alla parete con cosce perfettamente parallele al suolo a 90° sulle ginocchia.<br>
+• Mani libere senza appoggi sulle cosce o sulla parete.<br>
+• Tenuta continua: Coach Ares cronometrerà direttamente i secondi effettivi di tenuta valida prima del cedimento.`;
+            } else if (lowerId.includes('squat') || /squat/i.test(name)) {
+                return `• Discesa controllata con le cosce che scendono almeno al livello parallelo al suolo (o sotto i 90°).<br>
+• Schiena salda e ginocchia in linea con i piedi, risalita a estensione completa delle ginocchia e delle anche in cima.<br>
+• Coach Ares conterà direttamente ogni ripetizione valida completata.`;
+            } else if (lowerId.includes('lunges') || lowerName.includes('affondi') || lowerName.includes('lunge')) {
+                return `• Passo controllato in avanti o indietro con ginocchio posteriore che sfiora il pavimento a 90°.<br>
+• Risalita a distensione completa della gamba anteriore.<br>
+• Coach Ares conterà direttamente ogni ripetizione valida completata.`;
+            } else if (lowerId.includes('calf') || lowerName.includes('polpacci') || lowerName.includes('calf')) {
+                return `• Spinta massima sulle punte dei piedi con estensione completa delle caviglie al picco.<br>
+• Discesa controllata fino al pieno allungamento del tendine prima della ripetizione successiva.<br>
+• Coach Ares conterà direttamente ogni ripetizione valida completata.`;
+            } else if (lowerId.includes('glute_bridge') || lowerName.includes('glute bridge') || lowerName.includes('ponte glutei')) {
+                return `• Spinta dal suolo fino al completo allineamento di ginocchia, bacino e spalle.<br>
+• Massima contrazione dei glutei in cima prima della discesa controllata.<br>
+• Coach Ares conterà direttamente ogni ripetizione valida completata.`;
+            } else if (lowerId.includes('box_jump') || lowerId.includes('broad_jump') || lowerName.includes('jump') || lowerName.includes('salto')) {
+                return `• Stacco esplosivo a due piedi con estensione completa del bacino in volo.<br>
+• Atterraggio stabile e ammortizzato a piedi saldi sul supporto o sul pavimento.<br>
+• Coach Ares conterà direttamente ogni ripetizione valida completata.`;
+            } else if (lowerId.includes('burpee') || lowerName.includes('burpee')) {
+                return `• Discesa a terra con petto e cosce a pieno contatto con il pavimento.<br>
+• Risalita esplosiva a gambe unite, salto verticale con battito delle mani sopra la testa.<br>
+• Coach Ares conterà direttamente ogni ripetizione valida completata.`;
+            } else if (lowerId.includes('mountain') || lowerName.includes('mountain climber')) {
+                return `• Posizione di plank alto a braccia tese con richiamo alternato rapido delle ginocchia verso il petto.<br>
+• Busto stabile senza oscillazioni eccessive del bacino.<br>
+• Coach Ares conterà direttamente ogni ripetizione valida completata.`;
+            } else if (lowerId.includes('hang') || lowerName.includes('hang') || lowerName.includes('sospensione')) {
+                return `• Sospensione completa a braccia distese senza appoggiare i piedi al suolo.<br>
+• Presa salda e costante per l'intera durata della prova.<br>
+• Tenuta continua: Coach Ares cronometrerà direttamente i secondi effettivi di tenuta valida prima del cedimento.`;
+            } else if (lowerId.includes('spin') || lowerId.includes('hop') || lowerName.includes('360') || lowerName.includes('combo') || lowerName.includes('freestyle')) {
+                return `• Esecuzione fluida, aerea e controllata della transizione dinamica attorno o sopra la sbarra.<br>
+• Presa sicura e ripresa stabile senza cadute o interruzioni scomposte.<br>
+• ${type === 'sec' ? 'Tenuta e flusso continuo: Coach Ares cronometrerà direttamente i secondi effettivi di combo valida.' : 'Coach Ares conterà direttamente ogni transizione o ripetizione acrobatica valida completata.'}`;
+            } else if (type === 'sec' || (skill && skill.type === 'sec') || lowerName.includes('hold') || lowerName.includes('isomet') || lowerName.includes('tenuta')) {
+                const safeName = (typeof escapeHtml === 'function') ? escapeHtml(name) : name;
+                return `• Postura rigorosa e allineamento articolare impeccabile dedotto dal movimento di "${safeName}".<br>
+• Blocco articolare e tensione isometrica costante senza oscillazioni o cedimenti strutturali.<br>
 • Tenuta ininterrotta: Coach Ares cronometrerà direttamente i secondi effettivi di tenuta valida prima del cedimento.`;
             }
-            return `• ROM completo e lockout articolare corretto ad ogni ripetizione.<br>
-• Forma controllata e assenza di oscillazioni improprie.<br>
-• Coach Ares conterà direttamente ogni ripetizione valida completata nella tua serie massimale.`;
+            const safeName = (typeof escapeHtml === 'function') ? escapeHtml(name) : name;
+            return `• ROM completo dedotto dalla biomeccanica di "${safeName}": estensione articolare di partenza e picco concentrico netto.<br>
+• Lockout articolare controllato di chiusura prima di iniziare ogni ripetizione successiva.<br>
+• Esecuzione pulita senza oscillazioni improprie: Coach Ares conterà direttamente ogni ripetizione valida eseguita.`;
         }
 
         function getSkillBiomechanicalRules(skill, val, unit) {
             const id = (skill && skill.id) || '';
             const name = (skill && skill.name) || '';
+            const type = (skill && skill.type) || 'rep';
+            const lowerName = name.toLowerCase();
+            const lowerId = id.toLowerCase();
             let rules = '';
 
-            if (id === 'chest_to_bar' || /chest.*bar/i.test(name) || /trazion.*petto/i.test(name)) {
+            if (lowerId === 'chest_to_bar' || /chest.*bar/i.test(name) || /trazion.*petto/i.test(name) || lowerName.includes('petto')) {
                 rules = `\nCRITERIO BIOMECCANICO TASSATIVO PER "${name.toUpperCase()}" (CHEST TO BAR PULL UPS):\n` +
                         `- DISCRIMINANTE FONDAMENTALE TRA PULL UP E CHEST TO BAR:\n` +
                         `  * In un normale Pull Up (trazione al mento), l'atleta supera la sbarra solo con il mento.\n` +
@@ -29620,16 +29873,16 @@ function getCalisthenicsExpertResponse(query) {
                         `  * DEVI CATEGORICAMENTE RIFIUTARE LA CERTIFICAZIONE impostando "approved": false.\n` +
                         `  * In "reps_counted", imposta 0 (o il solo numero di ripetizioni con impatto petto-sbarra effettivo).\n` +
                         `  * In "feedback", scrivi: "L'atleta ha eseguito trazioni con mento sopra la sbarra (Pull Ups regolari), ma per la skill Chest to Bar è indispensabile il contatto fisico del petto/sterno con la sbarra. Nessun Chest to Bar valido rilevato. Certificazione RESPINTA."\n`;
-            } else if (id === 'pull_over' || /pull\s*over/i.test(name) || /giro.*sbarra/i.test(name)) {
+            } else if (lowerId === 'pull_over' || lowerId === 'pullover' || /pull\s*over/i.test(name) || /giro.*sbarra/i.test(name)) {
                 rules = `\nCRITERIO BIOMECCANICO TASSATIVO PER "${name.toUpperCase()}" (BAR PULL OVER):\n` +
                         `- DEFINIZIONE DEL MOVIMENTO:\n` +
-                        `  * L'atleta parte in sospensione, trazione sollevando le gambe e il bacino, e RUOTA/CAPOVOLGE IL CORPO ATTORNO ALLA SBARRA (giro completo) terminando in appoggio frontale (front support) sopra la sbarra.\n` +
+                        `  * L'atleta parte in sospensione, trazione sollevando le gambe e il bacino, e RUOTA/CAPOVOLGE IL CORPO ATTORNO ALLA SBARRA (giro completo) terminando in appoggio frontale (front support) sopra la sbarra a braccia tese.\n` +
                         `- DISTINZIONE TASSATIVA DA MUSCLE UP:\n` +
                         `  * Il Pull Over NON È UN MUSCLE UP!\n` +
                         `  * Se l'atleta esegue Muscle Up (salita verticale e spinta dip senza ribaltamento del bacino attorno alla sbarra), LA PROVA È NULLA!\n` +
                         `  * DEVI CATEGORICAMENTE RIFIUTARE impostando "approved": false, "reps_counted": 0.\n` +
                         `  * In "feedback", scrivi: "L'atleta ha eseguito Muscle Up invece del Bar Pull Over. Il Pull Over richiede la rotazione completa del corpo attorno alla sbarra. Prova RESPINTA con 0 ripetizioni valide."\n`;
-            } else if (id.includes('ring_muscle') || (id.includes('muscle_up') && (/ring/i.test(id) || /anell/i.test(name)))) {
+            } else if (lowerId.includes('ring_muscle') || (lowerName.includes('muscle up') && (lowerName.includes('ring') || lowerName.includes('anell')))) {
                 rules = `\nCRITERIO BIOMECCANICO TASSATIVO PER "${name.toUpperCase()}" (RING MUSCLE UP):\n` +
                         `- ATTREZZO OBBLIGATORIO: L'esercizio DEVE essere eseguito ESCLUSIVAMENTE agli ANELLI GINNICI (Gymnastic Rings).\n` +
                         `- SE L'ATLETA ESEGUE IL MOVIMENTO ALLA SBARRA RIGIDA (Bar Muscle Up):\n` +
@@ -29637,32 +29890,67 @@ function getCalisthenicsExpertResponse(query) {
                         `  * DEVI CATEGORICAMENTE RIFIUTARE impostando "approved": false, "reps_counted": 0.\n` +
                         `  * NON convalidare né a target pieno né a target parziale!\n` +
                         `  * In "feedback", scrivi: "Hai richiesto la certificazione per Ring Muscle Up, ma nel video esegui dei Bar Muscle Up alla sbarra rigida anziché agli anelli. Prova RESPINTA con 0 ripetizioni valide."\n`;
-            } else if (id === 'pullups' || id === 'australian' || /pull\s*up/i.test(name) || /trazion/i.test(name)) {
+            } else if (lowerId.includes('muscle_up') || /muscle\s*up/i.test(name)) {
+                rules = `\nCRITERIO BIOMECCANICO PER "${name.toUpperCase()}" (BAR MUSCLE UP):\n` +
+                        `- Transizione sopra la sbarra simultanea di entrambe le braccia. RIFIUTA categoricamente se un gomito sale prima dell'altro (chicken wing / ala di gabbiano).\n` +
+                        `- Lockout completo del dip sopra la sbarra a braccia distese.\n` +
+                        `- Conta solo le ripetizioni con transizione pulita e chiusura a braccia tese.\n`;
+            } else if (lowerId.includes('one_arm_pullup') || (lowerName.includes('one arm') && (lowerName.includes('pull') || lowerName.includes('chin')))) {
+                rules = `\nCRITERIO BIOMECCANICO PER "${name.toUpperCase()}" (ONE ARM PULL UP):\n` +
+                        `- Presa a una sola mano alla sbarra, mano libera senza contatto o appoggio al polso trazionante.\n` +
+                        `- Partenza a braccio completamente disteso e salita col mento netto sopra la sbarra.\n` +
+                        `- Lockout di ritorno in discesa controllata prima della ripetizione successiva.\n`;
+            } else if (lowerId.includes('australian') || /australian/i.test(name)) {
+                rules = `\nCRITERIO BIOMECCANICO PER "${name.toUpperCase()}" (AUSTRALIAN PULL UPS):\n` +
+                        `- Corpo in asse teso con glutei e addome attivi (no bacino cascante).\n` +
+                        `- Contatto del petto con la sbarra al picco e distensione completa delle braccia in discesa.\n`;
+            } else if (lowerId === 'pullups' || lowerId.includes('pullup') || /pull\s*up/i.test(name) || /trazion/i.test(name) || lowerName.includes('chin up')) {
                 rules = `\nCRITERIO BIOMECCANICO PER "${name.toUpperCase()}":\n` +
                         `- Salita fino al superamento netto della sbarra con il mento.\n` +
                         `- Discesa a braccia distese (lockout dei gomiti) prima di risalire.\n` +
                         `- Assenza di kipping o slanci delle gambe incontrollati.\n`;
-            } else if (id === 'muscle_up' || /muscle\s*up/i.test(name)) {
-                rules = `\nCRITERIO BIOMECCANICO PER "${name.toUpperCase()}" (BAR MUSCLE UP):\n` +
-                        `- Transizione sopra la sbarra simultanea di entrambe le braccia. RIFIUTA categoricamente se un gomito sale prima dell'altro (chicken wing / ala di gabbiano).\n` +
-                        `- Lockout completo del dip sopra la sbarra.\n`;
-            } else if (id.includes('dip') || /dip/i.test(name)) {
+            } else if (lowerId.includes('dip') || /dip/i.test(name)) {
                 rules = `\nCRITERIO BIOMECCANICO PER "${name.toUpperCase()}":\n` +
-                        `- Flessione minima del gomito di 90 gradi nella discesa.\n` +
-                        `- Lockout completo delle braccia in estensione al ritorno.\n`;
-            } else if (id.includes('pushup') || /push\s*up/i.test(name) || /piegament/i.test(name)) {
+                        `- Flessione minima del gomito di 90 gradi nella discesa (spalle a livello o sotto i gomiti).\n` +
+                        `- Lockout articolare completo delle braccia in estensione al ritorno con spalle depresse.\n`;
+            } else if (lowerId.includes('pushup') || lowerId.includes('push_up') || /push\s*up/i.test(name) || /piegament/i.test(name)) {
                 rules = `\nCRITERIO BIOMECCANICO PER "${name.toUpperCase()}":\n` +
                         `- Petto a terra o a sfiorare il suolo al massimo affondo.\n` +
-                        `- Distensione completa delle braccia in alto, corpo allineato in hollow.\n`;
-            } else if (id.includes('planche') || /planche/i.test(name)) {
+                        `- Distensione completa delle braccia in alto, corpo allineato in hollow body.\n`;
+            } else if (lowerId.includes('planche') || /planche/i.test(name) || lowerId.includes('maltese') || lowerName.includes('maltese')) {
                 rules = `\nCRITERIO BIOMECCANICO PER "${name.toUpperCase()}" (PLANCHE):\n` +
                         `- Braccia bloccate tese, protrazione scapolare, corpo orizzontale senza gambe basse o schiena inarcata.\n`;
-            } else if (id.includes('fl') || /front\s*lever/i.test(name)) {
+            } else if (lowerId.includes('fl') || /front\s*lever/i.test(name)) {
                 rules = `\nCRITERIO BIOMECCANICO PER "${name.toUpperCase()}" (FRONT LEVER):\n` +
                         `- Corpo perfettamente orizzontale parallelo al suolo, braccia tese, retrazione scapolare.\n`;
-            } else if (id.includes('handstand') || id.includes('hs') || /handstand/i.test(name) || /verticale/i.test(name)) {
+            } else if (lowerId.includes('bl') || /back\s*lever/i.test(name)) {
+                rules = `\nCRITERIO BIOMECCANICO PER "${name.toUpperCase()}" (BACK LEVER):\n` +
+                `- Sospensione dorsale orizzontale a braccia tese, corpo in linea retta dalle spalle alle caviglie.\n`;
+            } else if (lowerId.includes('handstand') || lowerId.includes('hs') || /handstand/i.test(name) || /verticale/i.test(name)) {
                 rules = `\nCRITERIO BIOMECCANICO PER "${name.toUpperCase()}":\n` +
-                        `- Braccia tese, spalle in spinta, tenuta controllata senza appoggi alle pareti (per libera).\n`;
+                        `- Braccia tese, spalle in spinta, tenuta controllata senza appoggi alle pareti (per libera).\n` +
+                        `- Per HSPU: testa a sfiorare il suolo avanti alle mani (tripode) e risalita a lockout completo dei gomiti.\n`;
+            } else if (lowerId.includes('pistol') || lowerId.includes('shrimp') || lowerName.includes('pistol') || lowerName.includes('shrimp')) {
+                rules = `\nCRITERIO BIOMECCANICO PER "${name.toUpperCase()}":\n` +
+                        `- Esecuzione su singola gamba con affondo profondo sotto il parallelo (coscia contro polpaccio).\n` +
+                        `- Gamba opposta distesa in avanti (o afferrata dietro per shrimp) senza toccare terra, lockout completo in risalita.\n`;
+            } else if (lowerId.includes('squat') || /squat/i.test(name) || lowerId.includes('lunges') || lowerName.includes('lunge')) {
+                rules = `\nCRITERIO BIOMECCANICO PER "${name.toUpperCase()}":\n` +
+                        `- Discesa con cosce almeno parallele al suolo (sotto 90°) e risalita a distensione completa delle ginocchia e delle anche.\n`;
+            } else if (lowerId.includes('l_sit') || lowerId.includes('v_sit') || lowerName.includes('l-sit') || lowerName.includes('v-sit')) {
+                rules = `\nCRITERIO BIOMECCANICO PER "${name.toUpperCase()}":\n` +
+                        `- Braccia tese con spalle depresse, gambe tese a 90° (o sollevate a V) senza toccare terra con i piedi.\n`;
+            } else if (lowerId.includes('human_flag') || lowerName.includes('human flag') || lowerName.includes('bandiera')) {
+                rules = `\nCRITERIO BIOMECCANICO PER "${name.toUpperCase()}":\n` +
+                        `- Corpo allineato orizzontalmente rispetto al suolo, braccio inferiore in spinta a gomito bloccato, braccio superiore in trazione.\n`;
+            } else if (type === 'sec' || (skill && skill.type === 'sec') || lowerName.includes('hold') || lowerName.includes('plank')) {
+                rules = `\nCRITERIO BIOMECCANICO PER "${name.toUpperCase()}" (TENUTA ISOMETRICA):\n` +
+                        `- Mantenimento continuo della postura specifica di ${name} con blocco articolare e assenza di oscillazioni.\n` +
+                        `- Cronometra solo i secondi continuativi prima che la forma si rompa o l'atleta ceda.\n`;
+            } else {
+                rules = `\nCRITERIO BIOMECCANICO PER "${name.toUpperCase()}":\n` +
+                        `- ROM completo dall'inizio alla fine della ripetizione secondo gli standard del Calisthenics internazionale.\n` +
+                        `- Lockout articolare controllato di chiusura prima di iniziare ogni ripetizione successiva.\n`;
             }
 
             return rules;
@@ -30800,7 +31088,7 @@ In qualità di Maestro di Calisthenics e Biomeccanica, DEVI comprendere e dedurr
 - Se nel nome è presente "One Arm Handstand": tenuta in verticale su un solo braccio con braccio in blocco e corpo compatto e controllato.
 - Se nel nome è presente "Back Lever": corpo orizzontale in sospensione dorsale, gomiti distesi e scapole controllate per tutti i secondi richiesti.
 - Se nel nome è presente "One Leg": una gamba completamente distesa allineata al busto e l'altra raccolta, corpo perfettamente parallelo al suolo negli hold.
-- Per qualsiasi delle 81 skill dell'app o nuove skill, deduci automaticamente dal nome il ROM completo, i punti di contatto obbligatori e i vincoli articolari.
+- Per qualsiasi delle 90 skill dell'app o nuove custom skill, deduci automaticamente dal nome il ROM completo, i punti di contatto obbligatori e i vincoli articolari.
 
 DIVIETO ASSOLUTO DI CONVALIDA SE L'ESERCIZIO È SBAGLIATO O LA PROVA È RESPINTA:
 Se l'atleta esegue un esercizio DIVERSO da quello richiesto (es. trazioni al mento anziché Chest to Bar, Muscle Up anziché Pull Over, Bar Muscle Up anziché Ring Muscle Up) o con tecnica non conforme:
