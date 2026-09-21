@@ -29642,12 +29642,12 @@ function getCalisthenicsExpertResponse(query) {
 
                 <div class="auth-form-group" style="margin-bottom:14px;">
                     <label style="font-size:0.8rem; font-weight:700; color:var(--text); display:block; margin-bottom:6px;">
-                        ${skill.type === 'sec' ? 'Seleziona Video Esecuzione (Video Obbligatorio):' : 'Seleziona Video Esecuzione:'}
+                        📹 Seleziona Video Esecuzione: (Video Obbligatorio per tutte le Skill)
                     </label>
-                    <input type="file" id="verify-media-file" accept="${skill.type === 'sec' ? 'video/*' : 'video/*,image/*'}" onchange="previewVerifyMedia(this)" style="width:100%; font-size:0.8rem; color:var(--subtext);">
+                    <input type="file" id="verify-media-file" accept="video/*" onchange="previewVerifyMedia(this)" style="width:100%; font-size:0.8rem; color:var(--subtext);">
                     <div id="verify-media-preview-box" style="display:none; margin-top:10px; width:100%; box-sizing:border-box;"></div>
                     <div style="font-size:0.72rem; color:var(--subtext); margin-top:4px;">
-                        ${skill.type === 'sec' ? 'Carica il video continuo della tua tenuta. Per cronometrare la durata è indispensabile un video continuo: le foto non sono consentite.' : 'Carica il video completo della tua serie. Coach Ares lo analizzerà per intero senza tagli né scorciatoie.'}
+                        Carica il video completo e continuo della tua esecuzione (obbligatorio per tutte le skill). Coach Ares analizzerà l'intero video senza tagli né scorciatoie: le foto non sono consentite per nessuna skill.
                     </div>
                 </div>
 
@@ -29675,6 +29675,10 @@ function getCalisthenicsExpertResponse(query) {
                 try { verifyMediaLoadAbort(); } catch(e) {}
                 verifyMediaLoadAbort = null;
             }
+            if (verifyAnalysisProgressTimer) {
+                try { clearInterval(verifyAnalysisProgressTimer); } catch(e) {}
+                verifyAnalysisProgressTimer = null;
+            }
             const prevVid = document.getElementById('verify-preview-video-player');
             if (prevVid) {
                 try { prevVid.pause(); } catch(e) {}
@@ -29694,6 +29698,7 @@ function getCalisthenicsExpertResponse(query) {
 
         let preparedVerificationMedia = null;
         let verifyMediaLoadAbort = null;
+        let verifyAnalysisProgressTimer = null;
 
         function readFileWithProgress(file, onProgress) {
             return new Promise((resolve, reject) => {
@@ -29999,54 +30004,26 @@ function getCalisthenicsExpertResponse(query) {
 
             try {
                 if (isImg) {
-                    const currentSkill = (currentVerifyingSkillId && typeof findSkillById === 'function') ? findSkillById(currentVerifyingSkillId) : null;
-                    if (currentSkill && (currentSkill.type === 'sec' || /hold|lever|planche|stand|sit|flag/i.test(currentSkill.name))) {
-                        const feedbackEl = document.getElementById('verify-status-feedback');
-                        if (feedbackEl) {
-                            feedbackEl.style.display = 'block';
-                            feedbackEl.style.background = 'rgba(239,68,68,0.15)';
-                            feedbackEl.style.color = '#ef4444';
-                            feedbackEl.style.border = '1px solid #ef4444';
-                            feedbackEl.innerText = "⚠️ Per le tenute isometriche (hold in secondi) è tassativamente obbligatorio un video continuo. Una foto statica non consente di cronometrare la durata.";
-                        }
-                        const loadBox = document.getElementById('verify-media-loading');
-                        if (loadBox) loadBox.innerHTML = '';
-                        showAppToast("Le tenute isometriche richiedono un video continuo, non una foto.", "warning");
-                        input.value = '';
-                        return;
+                    const feedbackEl = document.getElementById('verify-status-feedback');
+                    if (feedbackEl) {
+                        feedbackEl.style.display = 'block';
+                        feedbackEl.style.background = 'rgba(239,68,68,0.15)';
+                        feedbackEl.style.color = '#ef4444';
+                        feedbackEl.style.border = '1px solid #ef4444';
+                        feedbackEl.innerText = "⚠️ Video obbligatorio per tutte le skill: le foto non sono consentite per la certificazione con Coach Ares.";
                     }
-
-                    updateProgress(30, "caricamento immagine...");
-                    const dataUrl = await readFileWithProgress(file, (p) => updateProgress(30 + p * 0.6));
-                    if (isAborted) return;
-                    updateProgress(100, "caricamento completato!");
-
-                    preparedVerificationMedia = {
-                        file: file,
-                        dataUrl: dataUrl,
-                        isImage: true,
-                        isVideo: false
-                    };
-
                     const loadBox = document.getElementById('verify-media-loading');
-                    if (loadBox) {
-                        loadBox.innerHTML = `
-                            <div style="display:flex; align-items:center; justify-content:space-between;">
-                                <span style="color:#10b981; font-weight:700; font-size:0.82rem; display:flex; align-items:center; gap:6px;">
-                                    ${getSvgShield('verified', 14)} Foto pronta per l'analisi
-                                </span>
-                                <span style="font-size:0.75rem; color:var(--subtext);">${(file.size / 1024).toFixed(0)} KB</span>
-                            </div>
-                        `;
-                    }
-
+                    if (loadBox) loadBox.innerHTML = '';
+                    showAppToast("Video obbligatorio per tutte le skill: le foto non sono consentite.", "warning");
+                    input.value = '';
+                    preparedVerificationMedia = null;
                     if (submitBtn) {
-                        submitBtn.disabled = false;
-                        submitBtn.style.opacity = '1';
-                        submitBtn.style.cursor = 'pointer';
-                        submitBtn.style.background = '';
-                        submitBtn.style.borderColor = '';
-                        submitBtn.innerHTML = `${getSvgShield('verified', 15)} <span>Certifica con Coach Ares</span>`;
+                        submitBtn.disabled = true;
+                        submitBtn.style.opacity = '0.5';
+                        submitBtn.style.cursor = 'not-allowed';
+                        submitBtn.style.background = '#4b5563';
+                        submitBtn.style.borderColor = '#4b5563';
+                        submitBtn.innerHTML = `${getSvgShield('verified', 15)} <span>Seleziona un video</span>`;
                     }
                     return;
                 }
@@ -30352,16 +30329,26 @@ function getCalisthenicsExpertResponse(query) {
                 lowerCheck.includes('muscle up anziché') ||
                 lowerCheck.includes('muscle up anziche') ||
                 lowerCheck.includes('muscle up al posto di') ||
-                lowerCheck.includes('foto statica non consente')) {
+                lowerCheck.includes('foto statica non consente') ||
+                lowerCheck.includes('foto non consentite')) {
                 approved = false;
                 isPartial = false;
+            }
+
+            // Estrai eventuale campo "Come fare il video" già presente nel rawFeedback
+            let extractedHowTo = "";
+            const howToMatch = text.match(/(?:come\s*(?:ri)?fare\s*il\s*video(?:\s*in\s*maniera\s*corretta)?\s*:\s*)([\s\S]*)$/i);
+            if (howToMatch) {
+                extractedHowTo = howToMatch[1].trim();
+                text = text.slice(0, howToMatch.index).trim();
             }
 
             // Rimuovi eventuali prefissi duplicati già inseriti dal modello o precedenti passaggi
             text = text.replace(/^stato\s*richiesta\s*:\s*(?:rifiutata|accettata|approvata|respinta|certificata)[^\n\r]*[\n\r]*/i, '').trim();
             text = text.replace(/^motivo\s*(?:\([^)]*\))?\s*:\s*/i, '').trim();
             
-            if (!text) {
+            // Rimozione categorica di formule generiche o placeholder vuoti
+            if (!text || text === "L'esecuzione non rispetta i criteri biomeccanici o l'inquadratura non consente la verifica." || text.includes("non rispetta i criteri biomeccanici o l'inquadratura non consente")) {
                 if (approved) {
                     if (isPartial || (countedVal > 0 && countedVal < claimedVal)) {
                         text = `Dichiarate ${claimedVal} ${unit}, ma Coach Ares ha contato con precisione ${countedVal} ${unit} valide con ROM completo prima di scendere. Il tuo massimale è ufficialmente CERTIFICATO a ${countedVal} ${unit}!`;
@@ -30369,17 +30356,26 @@ function getCalisthenicsExpertResponse(query) {
                         text = `Tutte le ${claimedVal} ${unit} di "${skillName || 'skill'}" sono state completate con ROM valido, lockout articolare e corretta biomeccanica.`;
                     }
                 } else {
-                    text = `L'esecuzione non rispetta i criteri biomeccanici o l'inquadratura non consente la verifica.`;
+                    const skName = skillName || 'questa skill';
+                    text = `Esecuzione non convalidata: la serie di "${skName}" presenta difetti biomeccanici nell'esecuzione (ROM incompleto, mancato blocco articolare o compensi non ammessi).`;
                 }
             }
             
-            // Verifica se il motivo riguarda buio, controluce o cattiva visibilità e inietta le istruzioni di regia
-            const lower = text.toLowerCase();
-            const isFramingOrLighting = lower.includes('buio') || lower.includes('controluce') || lower.includes('silhouette') || lower.includes('sagoma') || lower.includes('scura') || lower.includes('sfocat') || lower.includes('tagliat') || lower.includes('distante') || lower.includes('visibilità') || lower.includes('vede male') || lower.includes('vedono male') || lower.includes('inquadratura non consente') || lower.includes('inquadratura errata');
-            
-            if (!approved && isFramingOrLighting && !text.includes('Come rifare il video in maniera corretta:')) {
-                text += '\n\nCome rifare il video in maniera corretta: posiziona la telecamera di profilo (vista laterale a 90°) o a tre quarti, ad altezza sbarra o bacino, a 2.5 - 3.5 metri di distanza, inquadrando contemporaneamente l\'intero corpo e la sbarra per tutta la durata del movimento Assicurati che la luce sia frontale (sorgente luminosa alle spalle della telecamera, illuminando bene l\'atleta) ed evitando video troppo bui o in controluce.';
-            }
+            // Verifica se il motivo riguarda buio, controluce, inquadratura errata o cattiva visibilità
+            const combinedForCheck = (text + ' ' + extractedHowTo).toLowerCase();
+            const isFramingOrLighting = combinedForCheck.includes('buio') || 
+                                       combinedForCheck.includes('controluce') || 
+                                       combinedForCheck.includes('silhouette') || 
+                                       combinedForCheck.includes('sagoma') || 
+                                       combinedForCheck.includes('scura') || 
+                                       combinedForCheck.includes('sfocat') || 
+                                       combinedForCheck.includes('tagliat') || 
+                                       combinedForCheck.includes('distante') || 
+                                       combinedForCheck.includes('visibilità') || 
+                                       combinedForCheck.includes('vede male') || 
+                                       combinedForCheck.includes('vedono male') || 
+                                       combinedForCheck.includes('inquadratura non consente') || 
+                                       combinedForCheck.includes('inquadratura errata');
             
             let statusLine = "";
             if (approved) {
@@ -30392,7 +30388,15 @@ function getCalisthenicsExpertResponse(query) {
                 statusLine = "Stato richiesta: Rifiutata";
             }
             
-            return `${statusLine}\nMotivo: ${text}`;
+            let result = `${statusLine}\nMotivo: ${text}`;
+            
+            // CAMPO "Come fare il video": DEVE COMPARIRE SE E SOLO SE L'INQUADRATURA DEL VIDEO È ERRATA O NON SI VEDE BENE
+            if (!approved && isFramingOrLighting) {
+                const howToText = extractedHowTo || "posiziona la telecamera di profilo (vista laterale a 90°) o a tre quarti, ad altezza sbarra o bacino, a 2.5 - 3.5 metri di distanza, inquadrando contemporaneamente l'intero corpo e la sbarra per tutta la durata del movimento. Assicurati che la luce sia frontale (sorgente luminosa alle spalle della telecamera, illuminando bene l'atleta) ed evitando video troppo bui o in controluce.";
+                result += `\nCome fare il video: ${howToText}`;
+            }
+            
+            return result;
         }
 
         async function submitSkillForAiVerification(skillId) {
@@ -30424,10 +30428,10 @@ function getCalisthenicsExpertResponse(query) {
                 return;
             }
 
-            // BLOCCO FOTO PER SKILL ISOMETRICHE (A TEMPO IN SECONDI)
+            // BLOCCO FOTO: VIDEO OBBLIGATORIO PER TUTTE LE SKILL (TUTTI I 90 LIVELLI)
             const isMediaImage = (preparedVerificationMedia && preparedVerificationMedia.isImage) || 
                                  (file && file.type && file.type.startsWith('image'));
-            if (skill.type === 'sec' && isMediaImage) {
+            if (isMediaImage) {
                 if (feedbackEl) {
                     feedbackEl.style.display = 'block';
                     feedbackEl.style.background = 'rgba(239,68,68,0.15)';
@@ -30435,15 +30439,15 @@ function getCalisthenicsExpertResponse(query) {
                     feedbackEl.style.border = '1px solid #ef4444';
                     feedbackEl.innerHTML = `
                         <div style="display:flex; align-items:center; gap:6px; margin-bottom:6px;">
-                            ${getSvgCross(18)} <strong style="font-size:0.95rem;">VIDEO OBBLIGATORIO PER TENUTE A TEMPO</strong>
+                            ${getSvgCross(18)} <strong style="font-size:0.95rem;">VIDEO OBBLIGATORIO PER TUTTE LE SKILL</strong>
                         </div>
                         <div style="font-size:0.84rem; line-height:1.5; color:var(--text);">
-                            Per certificare le skill a tempo (${val} secondi di hold) è <strong>tassativamente obbligatorio</strong> caricare un video completo dell'esecuzione.<br>
-                            Una foto statica non consente a Coach Ares di cronometrare la durata effettiva della tenuta.
+                            Per certificare qualsiasi skill è <strong>tassativamente obbligatorio</strong> caricare un video completo dell'esecuzione.<br>
+                            Una foto statica non consente a Coach Ares di verificare il movimento, il ROM o la durata effettiva: le foto sono severamente vietate per tutte le skill.
                         </div>
                     `;
                 }
-                showAppToast("Per le skill a tempo è obbligatorio caricare un video completo (no foto).", "error");
+                showAppToast("Video obbligatorio per tutte le skill: le foto non sono consentite.", "error");
                 return;
             }
 
@@ -30451,6 +30455,18 @@ function getCalisthenicsExpertResponse(query) {
                 submitBtn.disabled = true;
                 submitBtn.innerHTML = `${getSvgShield('verified', 15)} <span>Analisi Biomeccanica Coach Ares AI...</span>`;
             }
+            if (verifyAnalysisProgressTimer) {
+                try { clearInterval(verifyAnalysisProgressTimer); } catch(e) {}
+                verifyAnalysisProgressTimer = null;
+            }
+            const progressStages = [
+                `Coach Ares sta visionando l'intero video per convalidare <strong>${escapeHtml(skill.name)}</strong> (${val} ${unit})...`,
+                `Coach Ares: Conteggio ripetizioni e controllo ROM articolare...`,
+                `Coach Ares: Analisi criteri biomeccanici specifici per <strong>${escapeHtml(skill.name)}</strong>...`,
+                `Coach Ares: Controllo fermo immagine e lockout articolari...`,
+                `Coach Ares: Elaborazione verdetto finale e stesura giudizio...`
+            ];
+            let stageIdx = 0;
             if (feedbackEl) {
                 feedbackEl.style.display = 'block';
                 feedbackEl.style.background = 'rgba(56,189,248,0.12)';
@@ -30461,6 +30477,15 @@ function getCalisthenicsExpertResponse(query) {
                     <span>Coach Ares sta visionando l'intero video per convalidare <strong>${escapeHtml(skill.name)}</strong> (${val} ${unit})...</span>
                 </div>`;
             }
+            verifyAnalysisProgressTimer = setInterval(() => {
+                stageIdx = (stageIdx + 1) % progressStages.length;
+                if (feedbackEl) {
+                    feedbackEl.innerHTML = `<div style="display:flex; align-items:center; gap:8px;">
+                        <span class="ai-pulse-dot"></span>
+                        <span>${progressStages[stageIdx]}</span>
+                    </div>`;
+                }
+            }, 2800);
 
             let processedFile = file;
             let fileDataUrl = null;
@@ -30488,20 +30513,20 @@ function getCalisthenicsExpertResponse(query) {
                 }
             }
 
-            // Upload Cloudinary per archivio consultabile (MANDATORIO: salva la versione 8 FPS compressa invece della nativa pesante)
+            // Upload Cloudinary asincrono non bloccante per archivio (Gemini parte all'istante senza attese)
             let mediaUrl = null;
             let mediaType = isImage ? 'image' : 'video';
             const fileToUpload = (isVideo && processedFile) ? processedFile : (file || processedFile);
-            try {
-                if (typeof uploadMediaToCloudinary === 'function' && fileToUpload) {
-                    console.log('[Storage AI] Upload su Cloudinary versione 8 FPS ottimizzata:', fileToUpload.name || 'video_8fps.webm', fileToUpload.size, 'bytes');
-                    const upRes = await uploadMediaToCloudinary(fileToUpload, mediaType);
-                    if (upRes && upRes.url) {
-                        mediaUrl = upRes.url;
-                    }
-                }
-            } catch (upErr) {
-                console.warn("Upload Cloudinary:", upErr);
+            let cloudinaryUploadPromise = null;
+            if (typeof uploadMediaToCloudinary === 'function' && fileToUpload) {
+                console.log('[Storage AI] Avvio upload Cloudinary asincrono non bloccante:', fileToUpload.name || 'video_verif.webm', fileToUpload.size, 'bytes');
+                cloudinaryUploadPromise = Promise.race([
+                    uploadMediaToCloudinary(fileToUpload, mediaType),
+                    new Promise((_, reject) => setTimeout(() => reject(new Error('Cloudinary timeout')), 25000))
+                ]).catch(upErr => {
+                    console.warn("[Storage AI] Upload Cloudinary asincrono completato con fallback:", upErr);
+                    return null;
+                });
             }
 
             if (!mediaUrl && fileDataUrl) {
@@ -30646,7 +30671,7 @@ function getCalisthenicsExpertResponse(query) {
                     try { return atob(["QVEuQWI4Uk42SVNEU1dBZXd4", "eTdzUmJNbEV5eEtVbW5LcTVk", "QW0xM2RaNzI2aEFCOTI4UXc="].join("")); } catch(e) { return ""; }
                 })();
 
-            let aiResult = { approved: false, feedback: "Verifica non completata." };
+            let aiResult = null;
 
             if (apiKeyToUse) {
                 const systemPrompt = `Sei Coach Ares, il giudice ufficiale, severo, incorruttibile ed esperto di biomeccanica e calisthenics dell'app 'Occhionero\'s Calisthenics Tree'.
@@ -30739,27 +30764,33 @@ Rispondi ESCLUSIVAMENTE in JSON valido (senza testo markdown attorno):
   "feedback": "<SPIEGAZIONE DEL MOTIVO DEL VERDETTO: Feedback discorsivo, naturale e motivante in prima persona firmato Coach Ares formattato con Stato richiesta: ... e Motivo: ...>"
 }
 
-STRUTTURA OBBLIGATORIA DEL CAMPO "feedback" (SINTETICO MA NON TROPPO):
-Nel campo "feedback", devi seguire TASSATIVAMENTE questo schema:
+STRUTTURA OBBLIGATORIA DEL CAMPO "feedback":
+Nel campo "feedback", devi seguire TASSATIVAMENTE questa struttura:
 
-Se la richiesta è RIFIUTATA per esecuzione non valida, esercizio errato/mismatch, o video buio:
+Se la richiesta è RIFIUTATA per esecuzione non valida o esercizio errato/mismatch:
 Stato richiesta: Rifiutata
-Motivo: [Spiegazione sintetica del motivo. Se il video è troppo buio o si vede male, AGGIUNGI: 'Come rifare il video in maniera corretta: posiziona la telecamera di profilo (vista laterale a 90°) o a tre quarti, ad altezza sbarra o bacino, a 2.5 - 3.5 metri di distanza, inquadrando contemporaneamente l'intero corpo e la sbarra per tutta la durata del movimento con buona illuminazione frontale ed evitando video troppo bui o in controluce.']
+Motivo: [Spiega in modo dettagliato, preciso e specifico esattamente cosa non va nell'esecuzione (es. mancato tocco del petto per Chest to Bar, mento sotto la sbarra, kipping/oscillazioni, gomiti piegati in lockout, ecc.). NON USARE MAI formule generiche come "L'esecuzione non rispetta i criteri biomeccanici o l'inquadratura non consente la verifica".]
+
+Se la richiesta è RIFIUTATA perché il video è buio, tagliato, in controluce o l'inquadratura non consente di vedere bene:
+Stato richiesta: Rifiutata
+Motivo: [Spiega in modo dettagliato e specifico il problema visivo riscontrato.]
+Come fare il video: posiziona la telecamera di profilo (vista laterale a 90°) o a tre quarti, ad altezza sbarra o bacino, a 2.5 - 3.5 metri di distanza, inquadrando contemporaneamente l'intero corpo e la sbarra per tutta la durata del movimento. Assicurati che la luce sia frontale (sorgente luminosa alle spalle della telecamera, illuminando bene l'atleta) ed evitando video troppo bui o in controluce.
+(ATTENZIONE TASSATIVA: il campo "Come fare il video" DEVE COMPARIRE SE E SOLO SE L'INQUADRATURA DEL VIDEO È ERRATA O NON SI VEDE BENE. Se il video si vede bene ed è un errore biomeccanico, NON inserire assolutamente questo campo!)
 
 Se l'atleta ha eseguito il CORRETTO esercizio con ROM e tecnica validi ma meno ripetizioni del dichiarato (es. 8 su ${val}):
-Stato richiesta: Accettata (8 ripetizioni convalidate su ${val} dichiarate)
-Motivo: [Spiegazione sintetica: hai dichiarato ${val} ripetizioni, ma l'analisi attenta ha contato 8 ripetizioni valide completate con ROM valido prima di scendere dalla sbarra. Il tuo massimale è certificato a 8 ripetizioni.]
+Stato richiesta: Accettata (8 ripetizioni certificate su ${val} dichiarate)
+Motivo: [Spiegazione dettagliata e specifica: hai dichiarato ${val} ripetizioni, ma l'analisi attenta ha contato con precisione 8 ripetizioni valide completate con ROM valido prima di scendere dalla sbarra. Il tuo massimale è certificato a 8 ripetizioni.]
 
 Se l'atleta ha completato tutte le ${val} ripetizioni del CORRETTO esercizio:
 Stato richiesta: Accettata
-Motivo: [Conferma sintetica ma motivante: tutte le ${val} ${unit} di ${skill.name} sono state completate con ROM valido, lockout articolare e biomeccanica eccellente.]`;
+Motivo: [Conferma dettagliata e motivante: tutte le ${val} ${unit} di ${skill.name} sono state completate con ROM valido, lockout articolare e biomeccanica eccellente.]`;
 
                 const models = [
-                    "gemini-3.5-flash",
-                    "gemini-3.6-flash",
-                    "gemini-flash-latest",
                     "gemini-3.1-flash-lite",
-                    "gemini-3.5-flash-lite"
+                    "gemini-3.6-flash",
+                    "gemini-3.5-flash-lite",
+                    "gemini-flash-lite-latest",
+                    "gemini-3.5-flash"
                 ];
 
                 // Se non è stato inserito il video continuo e sono presenti fotogrammi estratti, costruisci la sequenza fotogrammi di backup
@@ -30800,7 +30831,7 @@ Motivo: [Conferma sintetica ma motivante: tutte le ${val} ${unit} di ${skill.nam
                     for (const m of models) {
                         try {
                             const controller = new AbortController();
-                            const timeoutId = setTimeout(() => controller.abort(), 40000);
+                            const timeoutId = setTimeout(() => controller.abort(), 18000);
                             const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${encodeURIComponent(currentActiveKey)}`, {
                                 method: "POST",
                                 headers: { "Content-Type": "application/json" },
@@ -30823,7 +30854,10 @@ Motivo: [Conferma sintetica ma motivante: tutte le ${val} ${unit} di ${skill.nam
                             if (resp.ok) {
                                 const data = await resp.json();
                                 if (data.candidates && data.candidates[0] && data.candidates[0].content) {
-                                    const rawText = data.candidates[0].content.parts[0].text;
+                                    const textPart = (data.candidates[0].content.parts || []).find(p => p.text && !p.thought) || 
+                                                     data.candidates[0].content.parts[data.candidates[0].content.parts.length - 1] || 
+                                                     data.candidates[0].content.parts[0];
+                                    const rawText = (textPart && textPart.text) || '';
                                     let parsed = null;
                                     try {
                                         parsed = JSON.parse(rawText);
@@ -31072,7 +31106,7 @@ Motivo: [Conferma sintetica ma motivante: tutte le ${val} ${unit} di ${skill.nam
                         }
                     }
 
-                    if (aiResult) break;
+                    if (aiResult && aiResult.feedback !== "Verifica non completata.") break;
 
                     if (keyNeedsRotation && typeof getNextHealthyGeminiApiKey === 'function') {
                         currentActiveKey = getNextHealthyGeminiApiKey();
@@ -31084,6 +31118,18 @@ Motivo: [Conferma sintetica ma motivante: tutte le ${val} ${unit} di ${skill.nam
                     approved: false,
                     feedback: "Chiave AI non configurata. Impossibile certificare la skill."
                 };
+            }
+
+            if (!aiResult) {
+                aiResult = {
+                    approved: false,
+                    feedback: "Verifica non completata."
+                };
+            }
+
+            if (verifyAnalysisProgressTimer) {
+                try { clearInterval(verifyAnalysisProgressTimer); } catch(e) {}
+                verifyAnalysisProgressTimer = null;
             }
 
             // GESTIONE DISTINTA TRA ERRORE TECNICO/RETE E RIFIUTO BIOMECCANICO EFFETTIVO
@@ -31112,6 +31158,21 @@ Motivo: [Conferma sintetica ma motivante: tutte le ${val} ${unit} di ${skill.nam
                     submitBtn.innerHTML = `${getSvgShield('verified', 15)} <span>Riprova Certificazione</span>`;
                 }
                 return; // Non salvare 'rejected' su Firestore per un errore di rete!
+            }
+
+            // Attesa risoluzione upload Cloudinary asincrono (se ancora in volo) prima di archiviare
+            if (cloudinaryUploadPromise) {
+                try {
+                    const upResResolved = await cloudinaryUploadPromise;
+                    if (upResResolved && upResResolved.url) {
+                        mediaUrl = upResResolved.url;
+                    }
+                } catch(cErr) {
+                    console.warn("[Storage AI] Cloudinary fallback:", cErr);
+                }
+            }
+            if (!mediaUrl && fileDataUrl) {
+                mediaUrl = fileDataUrl;
             }
 
             let aiApproved = !!aiResult.approved;
