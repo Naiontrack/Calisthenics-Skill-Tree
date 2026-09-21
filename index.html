@@ -29574,35 +29574,35 @@ function getCalisthenicsExpertResponse(query) {
             if (id === 'chest_to_bar' || /chest.*bar/i.test(name)) {
                 return `• Il petto (sterno o clavicola) DEVE TOCCARE FISICAMENTE la sbarra ad ogni ripetizione.<br>
 • Se superi la sbarra solo con il mento (trazioni normali), la prova verrà RESPINTA categoricamente.<br>
-• Estensione completa delle braccia in discesa (lockout) e completamento di tutte le <strong>${val} ${unit}</strong> dichiarate.`;
+• Estensione completa delle braccia in discesa (lockout): Coach Ares conterà direttamente ogni ripetizione valida eseguita.`;
             } else if (id === 'pull_over' || /pull\s*over/i.test(name) || /giro.*sbarra/i.test(name)) {
                 return `• Sollevamento controllato di gambe e bacino con rotazione/giro completo attorno alla sbarra terminando in appoggio frontale (front support).<br>
 • ATTENZIONE: Il Pull Over NON è un Muscle Up! L'esecuzione di Muscle Up comporta il RIFIUTO immediato della prova.<br>
-• Esecuzione di tutte le <strong>${val} ${unit}</strong> dichiarate.`;
+• Coach Ares conterà direttamente tutte le rotazioni valide completate nella serie massimale.`;
             } else if (id.includes('ring_muscle') || (id.includes('muscle_up') && (/ring/i.test(id) || /anell/i.test(name)))) {
                 return `• Esecuzione tassativa agli ANELLI GINNICI (Gymnastic Rings), vietata l'esecuzione alla sbarra rigida.<br>
 • Transizione simultanea e lockout completo del dip sopra gli anelli.<br>
-• Esecuzione di tutte le <strong>${val} ${unit}</strong> dichiarate.`;
+• Coach Ares conterà direttamente ogni ripetizione valida completata agli anelli.`;
             } else if (id === 'pullups' || /pull\s*up/i.test(name) || /trazion/i.test(name)) {
                 return `• Superamento netto della sbarra con il mento al picco di salita.<br>
 • Distensione quasi completa/lockout dei gomiti nella fase di discesa prima della ripetizione successiva.<br>
-• Forma controllata senza kipping e completamento di tutte le <strong>${val} ${unit}</strong> dichiarate.`;
+• Forma controllata senza kipping: Coach Ares conterà direttamente ogni ripetizione valida eseguita nel video.`;
             } else if (id === 'muscle_up' || /muscle\s*up/i.test(name)) {
                 return `• Transizione sopra la sbarra simultanea di entrambe le braccia (divieto di salita asimmetrica a 'chicken wing').<br>
 • Lockout completo del dip sopra la sbarra con braccia tese.<br>
-• Completamento di tutte le <strong>${val} ${unit}</strong> dichiarate.`;
+• Coach Ares conterà direttamente ogni ripetizione valida completata sopra la sbarra.`;
             } else if (id.includes('dip') || /dip/i.test(name)) {
                 return `• Flessione dei gomiti ad almeno 90° nella fase eccentrica (spalle a livello o sotto i gomiti).<br>
 • Estensione completa (lockout) delle braccia in cima con spalle depresse.<br>
-• Esecuzione di tutte le <strong>${val} ${unit}</strong> dichiarate.`;
+• Coach Ares conterà direttamente ogni ripetizione valida completata.`;
             } else if (skill && skill.type === 'sec') {
-                return `• Allineamento posturale perfetto e continuo per tutta la durata dichiarata.<br>
+                return `• Allineamento posturale perfetto e continuo senza compensi.<br>
 • Nessun cedimento dell'angolo o del bacino.<br>
-• Tenuta ininterrotta per tutti i <strong>${val} ${unit}</strong> dichiarati.`;
+• Tenuta ininterrotta: Coach Ares cronometrerà direttamente i secondi effettivi di tenuta valida prima del cedimento.`;
             }
             return `• ROM completo e lockout articolare corretto ad ogni ripetizione.<br>
 • Forma controllata e assenza di oscillazioni improprie.<br>
-• Raggiungimento effettivo di tutte le <strong>${val} ${unit}</strong> dichiarate.`;
+• Coach Ares conterà direttamente ogni ripetizione valida completata nella tua serie massimale.`;
         }
 
         function getSkillBiomechanicalRules(skill, val, unit) {
@@ -30547,7 +30547,7 @@ function getCalisthenicsExpertResponse(query) {
                     <div style="display:flex; flex-direction:column; gap:6px;">
                         <div style="display:flex; align-items:center; gap:8px; font-weight:600;">
                             <span class="ai-pulse-dot"></span>
-                            <span>Coach Ares sta visionando l'intero video per convalidare <strong>${escapeHtml(skill.name)}</strong> (${val} ${unit})...</span>
+                            <span>Coach Ares sta visionando l'intero video per contare e certificare il tuo massimale di <strong>${escapeHtml(skill.name)}</strong>...</span><!-- <span>Coach Ares sta visionando l'intero video per convalidare <strong>${escapeHtml(skill.name)}</strong> (${val} ${unit})...</span> -->
                         </div>
                         <div id="verify-ai-sub-stage" style="display:flex; align-items:center; gap:6px; font-size:0.78rem; color:var(--subtext); margin-left:18px;">
                             <span class="ai-sub-pulse" style="display:inline-block; width:6px; height:6px; border-radius:50%; background:var(--accent);"></span>
@@ -30566,7 +30566,7 @@ function getCalisthenicsExpertResponse(query) {
                         <div style="display:flex; flex-direction:column; gap:6px;">
                             <div style="display:flex; align-items:center; gap:8px; font-weight:600;">
                                 <span class="ai-pulse-dot"></span>
-                                <span>Coach Ares sta visionando l'intero video per convalidare <strong>${escapeHtml(skill.name)}</strong> (${val} ${unit})...</span>
+                                <span>Coach Ares sta visionando l'intero video per contare e certificare il tuo massimale di <strong>${escapeHtml(skill.name)}</strong>...</span>
                             </div>
                             <div id="verify-ai-sub-stage" style="display:flex; align-items:center; gap:6px; font-size:0.78rem; color:var(--subtext); margin-left:18px;">
                                 <span class="ai-sub-pulse" style="display:inline-block; width:6px; height:6px; border-radius:50%; background:var(--accent);"></span>
