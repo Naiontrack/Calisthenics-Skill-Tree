@@ -8014,6 +8014,33 @@
         </div>
     </div>
 
+    <!-- MODALE AVVISO REVOCA SKILL DAL FOUNDER (NOTIFICA ATLETA) -->
+    <div class="modal-overlay" id="founder-revocation-modal" style="display:none; z-index:99999;">
+        <div class="modal-box" style="max-width:480px; width:92%; background:var(--card-bg, #1e293b); border:1px solid rgba(245,158,11,0.5); border-radius:18px; padding:22px; box-shadow:0 16px 50px rgba(0,0,0,0.7), 0 0 25px rgba(245,158,11,0.15);">
+            <div style="display:flex; align-items:center; gap:10px; margin-bottom:14px;">
+                <div style="width:42px; height:42px; border-radius:12px; background:rgba(245,158,11,0.15); border:1px solid rgba(245,158,11,0.4); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                    <span style="font-size:1.35rem;">⚠️</span>
+                </div>
+                <div>
+                    <div style="font-size:0.75rem; font-weight:800; text-transform:uppercase; letter-spacing:0.5px; color:#f59e0b;">
+                        Avviso Ufficiale dal Founder
+                    </div>
+                    <h3 id="founder-revocation-title" style="margin:2px 0 0 0; font-size:1.15rem; color:var(--text, #f8fafc); font-weight:800;">
+                        Verifica Skill Revocata
+                    </h3>
+                </div>
+            </div>
+            
+            <div id="founder-revocation-body" style="font-size:0.86rem; color:var(--text, #cbd5e1); line-height:1.5;"></div>
+
+            <div style="margin-top:20px; display:flex; gap:10px; justify-content:flex-end;">
+                <button type="button" class="btn-confirm" id="btn-dismiss-founder-revocation" onclick="dismissFounderRevocationNotice()" style="width:100%; min-height:44px; font-weight:800; font-size:0.92rem; background:linear-gradient(135deg, #f59e0b, #d97706); border:none; border-radius:10px; color:#fff; display:inline-flex; align-items:center; justify-content:center; gap:8px; cursor:pointer; box-shadow:0 4px 15px rgba(245,158,11,0.3);">
+                    Ho Capito
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- MODAL RUOTA DELLA FORTUNA -->
     <div class="wheel-modal-overlay" id="wheel-modal">
         <div class="wheel-modal-box">
@@ -11367,6 +11394,7 @@ let currentUser = null;
                         if (typeof updateBentoProfileStats === 'function') updateBentoProfileStats();
                         if (typeof renderAdminPanel === 'function') renderAdminPanel();
                         if (typeof initUserProfileRealtimeListener === 'function') initUserProfileRealtimeListener(user.uid);
+                        if (typeof checkAndShowFounderRevocationNotices === 'function') checkAndShowFounderRevocationNotices(data.pendingFounderNotices, user.uid);
                         userWorkoutXp = data.workoutXp || 0;
                         localStorage.setItem(getWorkoutXpStorageKey(), String(userWorkoutXp));
 
@@ -11442,6 +11470,13 @@ let currentUser = null;
                                                     }
                                                     skillsChanged = true;
                                                 }
+                                                if (remoteSkill.revocationNotice) {
+                                                    userState[skId].revocationNotice = remoteSkill.revocationNotice;
+                                                    skillsChanged = true;
+                                                } else if (userState[skId].revocationNotice) {
+                                                    delete userState[skId].revocationNotice;
+                                                    skillsChanged = true;
+                                                }
                                             }
                                         }
                                     });
@@ -11455,6 +11490,9 @@ let currentUser = null;
                                 updateUI();
                                 if (typeof isShareSectionOpen !== 'undefined' && isShareSectionOpen) {
                                     renderShareSection();
+                                }
+                                if (typeof checkAndShowFounderRevocationNotices === 'function') {
+                                    checkAndShowFounderRevocationNotices(liveData.pendingFounderNotices, user.uid);
                                 }
                             }
                         }, err => console.warn("Errore realtime user profile:", err));
@@ -26413,6 +26451,20 @@ function getCalisthenicsExpertResponse(query) {
                     </div>
                 </div>
 
+                ${userSkillData.revocationNotice && userSkillData.revocationNotice.reason ? `
+                <div style="background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.4); border-left:4px solid #ef4444; border-radius:12px; padding:12px 14px; margin:12px 0 6px 0; text-align:left;">
+                    <div style="display:flex; align-items:center; gap:6px; font-size:0.75rem; font-weight:800; color:#ef4444; text-transform:uppercase; margin-bottom:4px;">
+                        ⚠️ <span>Verifica Revocata dal ${escapeHtml(userSkillData.revocationNotice.revokedBy || 'Founder (Occhionero)')}</span>
+                    </div>
+                    <div style="font-size:0.88rem; font-weight:600; color:var(--text, #f8fafc); font-style:italic; line-height:1.38;">
+                        "${escapeHtml(userSkillData.revocationNotice.reason)}"
+                    </div>
+                    <div style="font-size:0.72rem; color:var(--subtext, #94a3b8); margin-top:6px;">
+                        Nota Founder: Correggi i difetti biomeccanici segnalati prima di richiedere una nuova certificazione video.
+                    </div>
+                </div>
+                ` : ''}
+
                 ${statCardHtml}
 
                 ${prereqHtml}
@@ -28437,6 +28489,152 @@ function getCalisthenicsExpertResponse(query) {
             }
         }
 
+        let currentActiveRevocationNotice = null;
+
+        function showFounderRevocationNoticeModal(notice, athleteUid) {
+            if (!notice) return;
+            currentActiveRevocationNotice = { ...notice, athleteUid };
+            const modal = document.getElementById('founder-revocation-modal');
+            const titleEl = document.getElementById('founder-revocation-title');
+            const bodyEl = document.getElementById('founder-revocation-body');
+            if (!modal || !bodyEl) return;
+
+            const skillName = notice.skillName || (typeof findSkillById === 'function' ? (findSkillById(notice.skillId) ? findSkillById(notice.skillId).name : null) : null) || notice.skillId || 'Skill';
+
+            if (titleEl) {
+                titleEl.innerText = `Skill Revocata: ${skillName}`;
+            }
+
+            const dateStr = notice.timestamp 
+                ? new Date(notice.timestamp).toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) 
+                : 'Di recente';
+
+            bodyEl.innerHTML = `
+                <p style="margin:0 0 12px 0; color:var(--text, #f8fafc); font-size:0.88rem; line-height:1.45;">
+                    La certificazione per la skill <strong>${escapeHtml(skillName)}</strong> è stata esaminata e 
+                    <span style="color:#ef4444; font-weight:800;">REVOCATA</span> direttamente dal <strong>${escapeHtml(notice.revokedBy || 'Founder (Occhionero)')}</strong>.
+                </p>
+
+                <div style="background:rgba(245,158,11,0.1); border:1px solid rgba(245,158,11,0.4); border-left:4px solid #f59e0b; border-radius:10px; padding:12px 14px; margin-bottom:14px;">
+                    <div style="font-size:0.75rem; font-weight:800; color:#f59e0b; text-transform:uppercase; margin-bottom:6px; display:flex; align-items:center; gap:6px;">
+                        📝 <span>Nota e Motivazione del Founder:</span>
+                    </div>
+                    <div style="font-size:0.92rem; font-weight:600; color:var(--text, #f8fafc); font-style:italic; line-height:1.4;">
+                        "${escapeHtml(notice.reason || 'Nessuna motivazione specificata.')}"
+                    </div>
+                    <div style="font-size:0.72rem; color:var(--subtext, #94a3b8); margin-top:6px; text-align:right;">
+                        ${dateStr}
+                    </div>
+                </div>
+
+                <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:10px; padding:10px 12px; font-size:0.8rem; color:var(--subtext, #94a3b8); line-height:1.4;">
+                    ℹ️ <strong>Cosa comporta:</strong> Il massimale verificato per questa skill è stato azzerato. Consulta attentamente i criteri biomeccanici dell'app, correggi i difetti indicati dal Founder e carica un nuovo video per ottenere nuovamente la verifica ufficiale con Coach Ares.
+                </div>
+            `;
+
+            modal.style.display = 'flex';
+            modal.classList.add('active');
+        }
+
+        function dismissFounderRevocationNotice() {
+            const modal = document.getElementById('founder-revocation-modal');
+            if (modal) {
+                modal.classList.remove('active');
+                modal.style.display = 'none';
+            }
+
+            if (currentActiveRevocationNotice) {
+                const { id, athleteUid, skillId, skillName } = currentActiveRevocationNotice;
+                const uid = athleteUid || (currentUser ? currentUser.uid : null);
+                
+                if (uid && id) {
+                    try {
+                        const storageKey = 'dismissed_founder_notices_' + uid;
+                        const dismissed = JSON.parse(localStorage.getItem(storageKey) || '[]');
+                        if (!dismissed.includes(id)) {
+                            dismissed.push(id);
+                            localStorage.setItem(storageKey, JSON.stringify(dismissed));
+                        }
+                    } catch(e) {}
+                }
+
+                if (typeof userState !== 'undefined' && userState && skillId && userState[skillId] && userState[skillId].revocationNotice) {
+                    userState[skillId].revocationNotice.dismissed = true;
+                    try { localStorage.setItem('naiontrackState', JSON.stringify(userState)); } catch(e) {}
+                }
+
+                if (uid && typeof db !== 'undefined') {
+                    const userRef = db.collection("users").doc(uid);
+                    userRef.get().then(doc => {
+                        if (doc.exists) {
+                            const data = doc.data() || {};
+                            let pending = Array.isArray(data.pendingFounderNotices) ? data.pendingFounderNotices : [];
+                            pending = pending.filter(n => n.id !== id && n.skillId !== skillId);
+                            const updateObj = { pendingFounderNotices: pending };
+                            if (data.skills && data.skills[skillId] && data.skills[skillId].revocationNotice) {
+                                updateObj[`skills.${skillId}.revocationNotice.dismissed`] = true;
+                            }
+                            return userRef.update(updateObj);
+                        }
+                    }).catch(e => console.warn("Errore archiviazione avviso founder:", e));
+                }
+
+                if (typeof showAppToast === 'function') {
+                    showAppToast(`Avviso per ${skillName || 'skill'} recepito.`, "info");
+                }
+                currentActiveRevocationNotice = null;
+            }
+        }
+
+        function checkAndShowFounderRevocationNotices(notices, athleteUid) {
+            const uid = athleteUid || (currentUser ? currentUser.uid : null);
+            if (!uid) return;
+
+            let dismissedIds = [];
+            try {
+                dismissedIds = JSON.parse(localStorage.getItem('dismissed_founder_notices_' + uid) || '[]');
+            } catch(e) {}
+
+            // Controlla array pendingFounderNotices
+            if (Array.isArray(notices) && notices.length > 0) {
+                const unread = notices.filter(n => n && n.type === 'skill_revocation' && !n.read && !dismissedIds.includes(n.id));
+                if (unread.length > 0) {
+                    showFounderRevocationNoticeModal(unread[0], uid);
+                    return;
+                }
+            }
+
+            // Fallback: controlla anche direttamente dentro userState o skills per eventuali revocationNotice non dismissate
+            const skillsToCheck = (typeof userState !== 'undefined' && userState) ? userState : null;
+            if (skillsToCheck && typeof skillsToCheck === 'object') {
+                for (const skId of Object.keys(skillsToCheck)) {
+                    const sk = skillsToCheck[skId];
+                    if (sk && sk.revocationNotice && !sk.revocationNotice.dismissed) {
+                        const noticeId = sk.revocationNotice.vId || ('rev_' + skId);
+                        if (!dismissedIds.includes(noticeId)) {
+                            const skillObj = typeof findSkillById === 'function' ? findSkillById(skId) : null;
+                            showFounderRevocationNoticeModal({
+                                id: noticeId,
+                                type: 'skill_revocation',
+                                skillId: skId,
+                                skillName: sk.revocationNotice.skillName || (skillObj ? skillObj.name : skId),
+                                reason: sk.revocationNotice.reason,
+                                revokedBy: sk.revocationNotice.revokedBy || 'Founder (Occhionero)',
+                                timestamp: sk.revocationNotice.revokedAt || Date.now()
+                            }, uid);
+                            return;
+                        }
+                    }
+                }
+            }
+        }
+
+        if (typeof window !== 'undefined') {
+            window.showFounderRevocationNoticeModal = showFounderRevocationNoticeModal;
+            window.dismissFounderRevocationNotice = dismissFounderRevocationNotice;
+            window.checkAndShowFounderRevocationNotices = checkAndShowFounderRevocationNotices;
+        }
+
         function adminOverrideVerification(vId, athleteUid, skillId, newStatusApproved) {
             if (!isSuperAdminUser(currentUser)) {
                 showAppToast("Permesso negato: solo il Founder (Occhionero) può modificare le decisioni dell'AI.", "error");
@@ -28448,6 +28646,9 @@ function getCalisthenicsExpertResponse(query) {
                 : "Motivo della revoca della verifica (es. 'ROM parziale non valido'):";
             const reason = prompt(promptMsg, newStatusApproved ? "Convalidata manualmente dal Founder Occhionero" : "Revocata dal Founder Occhionero");
             if (reason === null) return;
+
+            const skillObj = typeof findSkillById === 'function' ? findSkillById(skillId) : null;
+            const skillName = skillObj ? skillObj.name : skillId;
 
             db.collection("aiVerifications").doc(vId).update({
                 status: newStatusApproved ? 'approved' : 'rejected',
@@ -28462,22 +28663,53 @@ function getCalisthenicsExpertResponse(query) {
                 const skillRef = db.collection("users").doc(targetUid);
                 return skillRef.get().then(doc => {
                     if (doc.exists) {
-                        const skills = (doc.data() && doc.data().skills) || {};
+                        const data = doc.data() || {};
+                        const skills = data.skills || {};
                         if (skills[skillId]) {
                             skills[skillId].verifiedByAi = newStatusApproved;
                             skills[skillId].isVerified = newStatusApproved;
                             if (newStatusApproved) {
                                 skills[skillId].unlocked = true;
+                                if (skills[skillId].revocationNotice) {
+                                    delete skills[skillId].revocationNotice;
+                                }
                             } else {
                                 skills[skillId].verifiedVal = 0;
+                                skills[skillId].revocationNotice = {
+                                    vId: vId,
+                                    reason: reason,
+                                    revokedAt: Date.now(),
+                                    revokedBy: 'Founder (Occhionero)',
+                                    skillName: skillName,
+                                    dismissed: false
+                                };
                             }
                         } else if (newStatusApproved) {
                             skills[skillId] = { unlocked: true, verifiedByAi: true, isVerified: true, val: 1 };
                         }
-                        const isFullyVerif = isUserFullyVerified(skills, { displayName: doc.data().nickname, email: doc.data().email });
+
+                        let pendingNotices = Array.isArray(data.pendingFounderNotices) ? data.pendingFounderNotices : [];
+                        if (!newStatusApproved) {
+                            pendingNotices = pendingNotices.filter(n => n.skillId !== skillId && n.id !== vId);
+                            pendingNotices.unshift({
+                                id: vId || ('rev_' + skillId + '_' + Date.now()),
+                                type: 'skill_revocation',
+                                skillId: skillId,
+                                skillName: skillName,
+                                reason: reason,
+                                revokedBy: 'Founder (Occhionero)',
+                                timestamp: Date.now(),
+                                read: false
+                            });
+                        } else {
+                            pendingNotices = pendingNotices.filter(n => n.skillId !== skillId);
+                        }
+
+                        const isFullyVerif = isUserFullyVerified(skills, { displayName: data.nickname, email: data.email });
                         return skillRef.set({
                             skills: skills,
-                            isVerifiedUser: isFullyVerif
+                            isVerifiedUser: isFullyVerif,
+                            pendingFounderNotices: pendingNotices
                         }, { merge: true });
                     }
                 });
@@ -28489,8 +28721,17 @@ function getCalisthenicsExpertResponse(query) {
                         userState[skillId].isVerified = newStatusApproved;
                         if (newStatusApproved) {
                             userState[skillId].unlocked = true;
+                            if (userState[skillId].revocationNotice) delete userState[skillId].revocationNotice;
                         } else {
                             userState[skillId].verifiedVal = 0;
+                            userState[skillId].revocationNotice = {
+                                vId: vId,
+                                reason: reason,
+                                revokedAt: Date.now(),
+                                revokedBy: 'Founder (Occhionero)',
+                                skillName: skillName,
+                                dismissed: false
+                            };
                         }
                     } else if (newStatusApproved && typeof userState !== 'undefined' && userState) {
                         userState[skillId] = { unlocked: true, verifiedByAi: true, isVerified: true, val: 1 };
@@ -28499,6 +28740,18 @@ function getCalisthenicsExpertResponse(query) {
                     if (typeof renderTree === 'function') renderTree();
                     if (typeof updateUI === 'function') updateUI();
                     if (typeof updateBentoProfileStats === 'function') updateBentoProfileStats();
+
+                    if (!newStatusApproved) {
+                        showFounderRevocationNoticeModal({
+                            id: vId,
+                            type: 'skill_revocation',
+                            skillId: skillId,
+                            skillName: skillName,
+                            reason: reason,
+                            revokedBy: 'Founder (Occhionero)',
+                            timestamp: Date.now()
+                        }, currentUser.uid);
+                    }
                 }
 
                 // Aggiorna cache in memoria
@@ -29980,6 +30233,20 @@ function getCalisthenicsExpertResponse(query) {
                 <p style="font-size:0.84rem; color:var(--subtext); margin-top:0; line-height:1.4;">
                     Per convalidare ufficialmente la skill e ottenere il badge <strong>Utente Verificato</strong>, allega il video della tua esecuzione da sottoporre all'analisi biomeccanica di <strong>Coach Ares AI</strong>.
                 </p>
+
+                ${userSkillData.revocationNotice && userSkillData.revocationNotice.reason ? `
+                <div style="background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.45); border-left:4px solid #ef4444; border-radius:12px; padding:12px 14px; margin-bottom:14px; text-align:left;">
+                    <div style="font-size:0.76rem; font-weight:800; color:#ef4444; text-transform:uppercase; margin-bottom:4px; display:flex; align-items:center; gap:6px;">
+                        ⚠️ <span>Nota di Revoca del ${escapeHtml(userSkillData.revocationNotice.revokedBy || 'Founder (Occhionero)')}:</span>
+                    </div>
+                    <div style="font-size:0.9rem; font-weight:600; color:var(--text, #f8fafc); font-style:italic; line-height:1.4;">
+                        "${escapeHtml(userSkillData.revocationNotice.reason)}"
+                    </div>
+                    <div style="font-size:0.74rem; color:var(--subtext, #94a3b8); margin-top:6px;">
+                        Assicurati di aver corretto il difetto segnalato prima di registrare e inviare il nuovo video.
+                    </div>
+                </div>
+                ` : ''}
                 
                 <div style="background:rgba(56,189,248,0.08); border:1px solid rgba(56,189,248,0.25); border-radius:10px; padding:10px 12px; margin-bottom:14px; font-size:0.78rem; color:var(--text);">
                     <div style="font-weight:800; color:var(--accent); margin-bottom:6px; display:flex; align-items:center; gap:6px;">
