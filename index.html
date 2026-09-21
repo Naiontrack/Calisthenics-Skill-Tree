@@ -16265,7 +16265,44 @@ function getCalisthenicsExpertResponse(query) {
             "elbowleverhold": "elbow_lever",
             "backleverhold": "elbow_lever",
             "dragonflag": "dragon_flag",
-            "victoriancrosssuparallelehold": "victorian"
+            "victoriancrosssuparallelehold": "victorian",
+            "chesttobarpullups": "chest_to_bar",
+            "chesttobar": "chest_to_bar",
+            "barpullover": "pullover",
+            "pullover": "pullover",
+            "ringmuscleup": "ring_muscle_up",
+            "deadhang": "dead_hang",
+            "deadhangpassivehang": "dead_hang",
+            "towelhang": "towel_hang",
+            "fingertiphang": "fingertip_hang",
+            "towelpullups": "towel_pullup",
+            "onearmhang": "one_arm_hang",
+            "russiantwist": "russian_twist",
+            "supermanhold": "superman_hold",
+            "hanginglegraises": "leg_raises",
+            "legraises": "leg_raises",
+            "abwheelrollout": "ab_wheel",
+            "abwheel": "ab_wheel",
+            "windshieldwipers": "windshield_wipers",
+            "jumpsquat": "jump_squat",
+            "mountainclimbers": "mountain_climbers",
+            "burpees": "burpees",
+            "standingbroadjump": "broad_jump",
+            "broadjump": "broad_jump",
+            "kippingpullups": "explosive_pullup",
+            "explosivepullups": "explosive_pullup",
+            "lunges": "lunges",
+            "calfraises": "calf_raises",
+            "wallsit": "wall_sit",
+            "glutebridge": "glute_bridge",
+            "bulgariansplitsquat": "bulgarian_split_squat",
+            "boxjump": "box_jump",
+            "cossacksquat": "cossack_squat",
+            "nordichamstringcurl": "nordic_curl",
+            "shrimpsquat": "shrimp_squat",
+            "victoriancrossonrings": "victorian",
+            "impossibledip": "impossible_dip",
+            "onearmmuscleup": "one_arm_muscle_up"
         };
 
         function getSkillBiomechanicsProfile(skillId, fallbackName = "") {
@@ -22939,7 +22976,15 @@ function getCalisthenicsExpertResponse(query) {
                     { name: 'Bodyweight Squats', minReps: 12, maxReps: 18, unit: 'reps' },
                     { name: 'Dead Bug', minReps: 10, maxReps: 15, unit: 'reps' },
                     { name: 'Scapular Pull-ups', minReps: 6, maxReps: 10, unit: 'reps' },
-                    { name: 'Hollow Body Hold', minReps: 15, maxReps: 25, unit: 'sec' }
+                    { name: 'Hollow Body Hold', minReps: 15, maxReps: 25, unit: 'sec' },
+                    { name: 'Dead Hang (Passive Hang)', minReps: 20, maxReps: 40, unit: 'sec' },
+                    { name: 'Russian Twist', minReps: 16, maxReps: 24, unit: 'reps' },
+                    { name: 'Superman Hold', minReps: 15, maxReps: 30, unit: 'sec' },
+                    { name: 'Mountain Climbers', minReps: 16, maxReps: 26, unit: 'reps' },
+                    { name: 'Lunges', minReps: 12, maxReps: 20, unit: 'reps' },
+                    { name: 'Calf Raises', minReps: 15, maxReps: 25, unit: 'reps' },
+                    { name: 'Wall Sit', minReps: 20, maxReps: 35, unit: 'sec' },
+                    { name: 'Glute Bridge', minReps: 12, maxReps: 18, unit: 'reps' }
                 ]
             },
             normale: {
@@ -22958,7 +23003,15 @@ function getCalisthenicsExpertResponse(query) {
                     { name: 'Chin-ups', minReps: 6, maxReps: 10, unit: 'reps' },
                     { name: 'Archer Push-ups', minReps: 6, maxReps: 10, unit: 'reps/lato' },
                     { name: 'Tuck Front Lever Hold', minReps: 8, maxReps: 15, unit: 'sec' },
-                    { name: 'Wall Handstand Hold', minReps: 20, maxReps: 35, unit: 'sec' }
+                    { name: 'Wall Handstand Hold', minReps: 20, maxReps: 35, unit: 'sec' },
+                    { name: 'Chest to Bar Pull Ups', minReps: 4, maxReps: 8, unit: 'reps' },
+                    { name: 'Bar Pull Over', minReps: 3, maxReps: 6, unit: 'reps' },
+                    { name: 'Towel Hang', minReps: 15, maxReps: 25, unit: 'sec' },
+                    { name: 'Hanging Leg Raises', minReps: 6, maxReps: 12, unit: 'reps' },
+                    { name: 'Jump Squat', minReps: 10, maxReps: 16, unit: 'reps' },
+                    { name: 'Burpees', minReps: 8, maxReps: 14, unit: 'reps' },
+                    { name: 'Bulgarian Split Squat', minReps: 8, maxReps: 12, unit: 'reps/gamba' },
+                    { name: 'Box Jump', minReps: 6, maxReps: 10, unit: 'reps' }
                 ]
             },
             difficile: {
@@ -22977,7 +23030,17 @@ function getCalisthenicsExpertResponse(query) {
                     { name: 'Handstand Push-ups al muro', minReps: 5, maxReps: 9, unit: 'reps' },
                     { name: 'Pistol Squats', minReps: 8, maxReps: 12, unit: 'reps/gamba' },
                     { name: 'Dragon Flag', minReps: 6, maxReps: 10, unit: 'reps' },
-                    { name: 'Back Lever Hold', minReps: 8, maxReps: 15, unit: 'sec' }
+                    { name: 'Back Lever Hold', minReps: 8, maxReps: 15, unit: 'sec' },
+                    { name: 'Ring Muscle Up', minReps: 2, maxReps: 5, unit: 'reps' },
+                    { name: 'Towel Pull Ups', minReps: 4, maxReps: 8, unit: 'reps' },
+                    { name: 'Kipping Pull Ups', minReps: 4, maxReps: 8, unit: 'reps' },
+                    { name: 'Fingertip Hang', minReps: 10, maxReps: 20, unit: 'sec' },
+                    { name: 'Ab Wheel Rollout', minReps: 5, maxReps: 10, unit: 'reps' },
+                    { name: 'Windshield Wipers', minReps: 6, maxReps: 12, unit: 'reps' },
+                    { name: 'Standing Broad Jump', minReps: 5, maxReps: 8, unit: 'reps' },
+                    { name: 'Cossack Squat', minReps: 8, maxReps: 12, unit: 'reps/gamba' },
+                    { name: 'Nordic Hamstring Curl', minReps: 3, maxReps: 6, unit: 'reps' },
+                    { name: 'Shrimp Squat', minReps: 4, maxReps: 8, unit: 'reps/gamba' }
                 ]
             },
             estremo: {
@@ -22996,7 +23059,11 @@ function getCalisthenicsExpertResponse(query) {
                     { name: '90-Degree Push-ups', minReps: 3, maxReps: 6, unit: 'reps' },
                     { name: 'Victorian Cross su parallele Hold', minReps: 4, maxReps: 8, unit: 'sec' },
                     { name: 'Impossible Dips', minReps: 3, maxReps: 6, unit: 'reps' },
-                    { name: 'One-Arm Handstand Hold', minReps: 4, maxReps: 8, unit: 'sec' }
+                    { name: 'One-Arm Handstand Hold', minReps: 4, maxReps: 8, unit: 'sec' },
+                    { name: 'One Arm Hang', minReps: 8, maxReps: 15, unit: 'sec' },
+                    { name: 'One Arm Muscle Up', minReps: 1, maxReps: 2, unit: 'reps' },
+                    { name: 'Victorian Cross on Rings', minReps: 2, maxReps: 4, unit: 'sec' },
+                    { name: 'Impossible Dip', minReps: 1, maxReps: 3, unit: 'reps' }
                 ]
             }
         };
@@ -29633,12 +29700,16 @@ function getCalisthenicsExpertResponse(query) {
                     ${getSkillBiomechanicsCriteriaHtml(skill, currentVal, unit)}
                 </div>
 
-                <div class="auth-form-group" style="margin-bottom:12px;">
-                    <label style="font-size:0.8rem; font-weight:700; color:var(--text); display:block; margin-bottom:6px;">
-                        Massimale Dichiarato (${unit}):
-                    </label>
-                    <input type="number" id="verify-claimed-val" value="${currentVal}" min="1" style="width:100%; padding:10px; background:var(--input-bg); border:1px solid var(--line-color); border-radius:8px; color:var(--text); font-weight:800; font-size:1rem; box-sizing:border-box;">
+                <div style="background:rgba(16,185,129,0.08); border:1px solid rgba(16,185,129,0.25); border-radius:10px; padding:10px 12px; margin-bottom:14px; font-size:0.8rem; color:var(--text); display:flex; align-items:center; gap:8px;">
+                    ${getSvgShield('verified', 18)}
+                    <div>
+                        <strong style="color:#10b981;">Conteggio Diretto Coach Ares AI:</strong>
+                        <div style="color:var(--subtext); font-size:0.75rem; margin-top:2px;">
+                            Non serve dichiarare alcun massimale: carica il video della tua serie e Coach Ares conterà direttamente ogni ${skill.type === 'sec' ? 'secondo di tenuta' : 'ripetizione valida'} completata, certificando il tuo massimale effettivo!
+                        </div>
+                    </div>
                 </div>
+                <input type="hidden" id="verify-claimed-val" value="${currentVal}">
 
                 <div class="auth-form-group" style="margin-bottom:14px;">
                     <label style="font-size:0.8rem; font-weight:700; color:var(--text); display:block; margin-bottom:6px;">
@@ -29647,7 +29718,7 @@ function getCalisthenicsExpertResponse(query) {
                     <input type="file" id="verify-media-file" accept="video/*" onchange="previewVerifyMedia(this)" style="width:100%; font-size:0.8rem; color:var(--subtext);">
                     <div id="verify-media-preview-box" style="display:none; margin-top:10px; width:100%; box-sizing:border-box;"></div>
                     <div style="font-size:0.72rem; color:var(--subtext); margin-top:4px;">
-                        Carica il video completo e continuo della tua esecuzione (obbligatorio per tutte le skill). Coach Ares analizzerà l'intero video senza tagli né scorciatoie: le foto non sono consentite per nessuna skill.
+                        Carica il video completo e continuo della tua esecuzione (lunghezza massima: <strong>180 secondi</strong>, nessun limite di MB). Coach Ares analizzerà l'intero video a 10 FPS: le foto non sono consentite per nessuna skill.
                     </div>
                 </div>
 
@@ -30036,15 +30107,15 @@ function getCalisthenicsExpertResponse(query) {
                 if (isAborted) return;
                 const dur = videoInfo.duration > 0 ? videoInfo.duration : 10;
 
-                // CONTROLLO DURATA MASSIMA: 3 MINUTI (180 SECONDI)
+                // CONTROLLO DURATA MASSIMA: 180 SECONDI (3 MINUTI)
                 if (dur > 180) {
                     if (submitBtn) {
-                        submitBtn.disabled = false;
-                        submitBtn.style.opacity = '1';
-                        submitBtn.style.cursor = 'pointer';
-                        submitBtn.style.background = '';
-                        submitBtn.style.borderColor = '';
-                        submitBtn.innerHTML = `${getSvgShield('verified', 15)} <span>Certifica con Coach Ares</span>`;
+                        submitBtn.disabled = true;
+                        submitBtn.style.opacity = '0.5';
+                        submitBtn.style.cursor = 'not-allowed';
+                        submitBtn.style.background = '#4b5563';
+                        submitBtn.style.borderColor = '#4b5563';
+                        submitBtn.innerHTML = `${getSvgShield('verified', 15)} <span>Video troppo lungo (> 180s)</span>`;
                     }
                     if (feedbackEl) {
                         feedbackEl.style.display = 'block';
@@ -30055,7 +30126,7 @@ function getCalisthenicsExpertResponse(query) {
                     }
                     const loadBox = document.getElementById('verify-media-loading');
                     if (loadBox) loadBox.innerHTML = '';
-                    showAppToast("Il video di verifica non può superare i 3 minuti.", "warning");
+                    showAppToast("Il video di verifica non deve superare i 180 secondi (3 minuti).", "warning");
                     return;
                 }
 
@@ -30065,19 +30136,19 @@ function getCalisthenicsExpertResponse(query) {
                 let backupFrames = [];
                 let compressionSuccess = false;
 
-                // Se il video è <= 15MB, manteniamo il file originale nativo a 30 FPS!
-                // Questo evita il collasso a 1 FPS causato da canvas captureStream e garantisce anteprima fluida e campionamento 10 FPS perfetto su Gemini.
-                if (file.size <= 15 * 1024 * 1024) {
+                // Verifiche AI: nessun limite di peso sui video (il limite dei 15 MB vale ESCLUSIVAMENTE per le chat!).
+                // All'AI il video arriva campionato a 10 FPS (videoMetadata: { fps: 10 }) per non sprecare crediti e token.
+                if (file.size <= 15 * 1024 * 1024 || file.size <= 45 * 1024 * 1024 || file.size > 0) {
                     processedFile = file;
                     compressionSuccess = true;
                     try {
                         finalDataUrl = await readFileWithProgress(file, (ratio) => {
                             const pct = Math.min(95, 25 + Math.round(ratio * 70));
-                            updateProgress(pct, "compressione video...");
+                            updateProgress(pct, "caricamento video per analisi AI (10 FPS)...");
                         });
                     } catch(e) {}
                 } else {
-                    // Solo per video giganti > 15MB: compressione a 720p 10 FPS
+                    // Solo per video giganti > 45MB: compressione a 720p 10 FPS
                     if (typeof MediaRecorder !== 'undefined' && HTMLCanvasElement.prototype.captureStream) {
                         try {
                             const compRes = await compressVideoClientSide(file, 1280, 720, 10, (ratio) => {
@@ -30459,12 +30530,12 @@ function getCalisthenicsExpertResponse(query) {
                 try { clearInterval(verifyAnalysisProgressTimer); } catch(e) {}
                 verifyAnalysisProgressTimer = null;
             }
-            const progressStages = [
-                `Coach Ares sta visionando l'intero video per convalidare <strong>${escapeHtml(skill.name)}</strong> (${val} ${unit})...`,
-                `Coach Ares: Conteggio ripetizioni e controllo ROM articolare...`,
-                `Coach Ares: Analisi criteri biomeccanici specifici per <strong>${escapeHtml(skill.name)}</strong>...`,
-                `Coach Ares: Controllo fermo immagine e lockout articolari...`,
-                `Coach Ares: Elaborazione verdetto finale e stesura giudizio...`
+            const coherentSubStages = [
+                "Decodifica del flusso video e verifica inquadratura...",
+                "Analisi continua dei fotogrammi e tracciamento traiettoria ROM...",
+                "Conteggio cronologico delle ripetizioni e verifica lockout articolari...",
+                `Controllo criteri biomeccanici avanzati e anti-frode per ${escapeHtml(skill.name)}...`,
+                "Formulazione verdetto ufficiale, calcolo massimale e stesura del giudizio..."
             ];
             let stageIdx = 0;
             if (feedbackEl) {
@@ -30472,18 +30543,37 @@ function getCalisthenicsExpertResponse(query) {
                 feedbackEl.style.background = 'rgba(56,189,248,0.12)';
                 feedbackEl.style.color = 'var(--accent)';
                 feedbackEl.style.border = '1px solid var(--accent)';
-                feedbackEl.innerHTML = `<div style="display:flex; align-items:center; gap:8px;">
-                    <span class="ai-pulse-dot"></span>
-                    <span>Coach Ares sta visionando l'intero video per convalidare <strong>${escapeHtml(skill.name)}</strong> (${val} ${unit})...</span>
-                </div>`;
+                feedbackEl.innerHTML = `
+                    <div style="display:flex; flex-direction:column; gap:6px;">
+                        <div style="display:flex; align-items:center; gap:8px; font-weight:600;">
+                            <span class="ai-pulse-dot"></span>
+                            <span>Coach Ares sta visionando l'intero video per convalidare <strong>${escapeHtml(skill.name)}</strong> (${val} ${unit})...</span>
+                        </div>
+                        <div id="verify-ai-sub-stage" style="display:flex; align-items:center; gap:6px; font-size:0.78rem; color:var(--subtext); margin-left:18px;">
+                            <span class="ai-sub-pulse" style="display:inline-block; width:6px; height:6px; border-radius:50%; background:var(--accent);"></span>
+                            <span id="verify-ai-stage-text">${coherentSubStages[0]}</span>
+                        </div>
+                    </div>
+                `;
             }
             verifyAnalysisProgressTimer = setInterval(() => {
-                stageIdx = (stageIdx + 1) % progressStages.length;
-                if (feedbackEl) {
-                    feedbackEl.innerHTML = `<div style="display:flex; align-items:center; gap:8px;">
-                        <span class="ai-pulse-dot"></span>
-                        <span>${progressStages[stageIdx]}</span>
-                    </div>`;
+                stageIdx = (stageIdx + 1) % coherentSubStages.length;
+                const stageTxtEl = document.getElementById('verify-ai-stage-text');
+                if (stageTxtEl) {
+                    stageTxtEl.innerText = coherentSubStages[stageIdx];
+                } else if (feedbackEl) {
+                    feedbackEl.innerHTML = `
+                        <div style="display:flex; flex-direction:column; gap:6px;">
+                            <div style="display:flex; align-items:center; gap:8px; font-weight:600;">
+                                <span class="ai-pulse-dot"></span>
+                                <span>Coach Ares sta visionando l'intero video per convalidare <strong>${escapeHtml(skill.name)}</strong> (${val} ${unit})...</span>
+                            </div>
+                            <div id="verify-ai-sub-stage" style="display:flex; align-items:center; gap:6px; font-size:0.78rem; color:var(--subtext); margin-left:18px;">
+                                <span class="ai-sub-pulse" style="display:inline-block; width:6px; height:6px; border-radius:50%; background:var(--accent);"></span>
+                                <span id="verify-ai-stage-text">${coherentSubStages[stageIdx]}</span>
+                            </div>
+                        </div>
+                    `;
                 }
             }, 2800);
 
@@ -30504,7 +30594,7 @@ function getCalisthenicsExpertResponse(query) {
                 isVideo = !isImage;
                 if (isVideo) {
                     try { videoFrames = await extractKeyframesFromVideo(file, 5); } catch(e) {}
-                    if (file.size > 8 * 1024 * 1024) {
+                    if (file.size > 45 * 1024 * 1024) {
                         try { processedFile = await compressVideoClientSide(file, 1280, 720); } catch(e) { processedFile = file; }
                     }
                     try { fileDataUrl = await readFileAsDataURL(processedFile); } catch(e) {}
@@ -30565,12 +30655,26 @@ function getCalisthenicsExpertResponse(query) {
                 const hasCompressedVideo = preparedVerificationMedia &&
                     preparedVerificationMedia.compressionSuccess &&
                     processedFile &&
-                    processedFile.size <= 15 * 1024 * 1024;
+                    (processedFile.size <= 45 * 1024 * 1024 || processedFile.size <= 15 * 1024 * 1024 || processedFile.size > 0);
 
                 if (hasCompressedVideo && fileDataUrl) {
                     const vidB64 = fileDataUrl.includes(',') ? fileDataUrl.split(',')[1] : fileDataUrl;
-                    const vidMime = (processedFile && processedFile.type) || 'video/webm';
+                    const vidMime = (function(f, d) {
+                        if (f && f.type && typeof f.type === 'string' && f.type.startsWith('video/')) return f.type;
+                        const name = ((f && f.name) || '').toLowerCase();
+                        if (name.endsWith('.mp4') || name.endsWith('.m4v')) return 'video/mp4';
+                        if (name.endsWith('.mov')) return 'video/quicktime';
+                        if (name.endsWith('.webm')) return 'video/webm';
+                        if (name.endsWith('.3gp')) return 'video/3gpp';
+                        if (name.endsWith('.avi')) return 'video/avi';
+                        if (d && typeof d === 'string' && d.startsWith('data:video/')) {
+                            const m = d.match(/^data:(video\/[a-zA-Z0-9.-]+);/);
+                            if (m && m[1]) return m[1];
+                        }
+                        return 'video/mp4';
+                    })(processedFile, fileDataUrl);
                     // Per specifiche ufficiali Google Gemini API, il file video deve precedere il prompt di testo
+                    // ed è campionato esattamente a 10 FPS per non sprecare token e crediti AI
                     geminiParts.push({
                         inlineData: {
                             mimeType: vidMime,
@@ -30583,18 +30687,13 @@ function getCalisthenicsExpertResponse(query) {
                     geminiParts.push({
                         text: `ESAME CERTIFICAZIONE SKILL - VIDEO INTEGRALE DELL'ATLETA (10 FPS):\n` +
                               `Skill da certificare: "${skill.name}"\n` +
-                              `Prestazione dichiarata dall'atleta: ${val} ${unit} (ATTENZIONE: questo è solo un dato inserito dall'utente, DEVI CONTARE DA ZERO ogni singola ripetizione valida effettivamente vista nel video!)\n\n` +
-                              `PARAMETRI DI CAMPIONAMENTO AD ALTA PRECISIONE (10 FPS):\n` +
-                              `- Il video è campionato ad alta precisione a 10 fotogrammi per secondo (1 fotogramma ogni 0.100 secondi, 300+ fotogrammi analizzati).\n` +
-                              `- Per le RIPETIZIONI dinamiche: ogni ripetizione completa da 1.5-2.5s è rappresentata da una sequenza nitida di 15-25 fotogrammi consecutivi (salita, lockout in alto, discesa, lockout in basso). Conta cronologicamente ogni singola ripetizione valida.\n` +
-                              `- Per gli HOLD (tenute isometriche): ogni secondo corrisponde a 10 fotogrammi consecutivi (es. 100 fotogrammi = 10 secondi esatti). Cronometra i secondi continuativi con allineamento posturale valido.\n\n` +
-                              `ISTRUZIONI DI ANALISI CONTINUA:\n` +
-                              `1. Visiona e analizza l'INTERO VIDEO dal primo all'ultimo secondo, senza saltare nessun secondo.\n` +
-                              `2. Conta cronologicamente ogni singola ripetizione valida (o cronometra i secondi continuativi di tenuta isometrica).\n` +
-                              `3. Verifica che il ROM sia completo per ogni ripetizione (es. mento/petto sopra la sbarra, lockout dei gomiti, assenza di kipping o compensi scorretti) o che l'allineamento posturale sia mantenuto per l'intera durata dichiarata.\n` +
-                              `4. CONTROLLO ANTI-FRODE: accertati che il video non sia tagliato, montato in loop, velocizzato o interrotto anticipatamente.\n` +
-                              `5. Se l'atleta esegue meno di ${val} ${unit} valide (ad es. esegue solo 8 ripetizioni mentre ne dichiara 12), inserisci "reps_counted": 8 e l'elenco cronologico in reps_detail. Non approvare MAI ${val} se ne hai contate di meno!\n` +
-                              `6. Se l'atleta esegue ${val} o più ${unit} valide con corretta biomeccanica, APPROVA la certificazione.`
+                              `Prestazione dichiarata dall'atleta: ${val} ${unit} (DIFFIDA TOTALE: questo è SOLO un input dell'atleta e NON DEVI MAI dare per buono questo numero! DEVI CONTARE DA ZERO ogni singola ripetizione valida realmente vista nel video).\n\n` +
+                              `PARAMETRI DI ANALISI CONTINUA:\n` +
+                              `- Visiona l'INTERO video dal secondo 0 alla fine senza saltare alcun secondo.\n` +
+                              `- Per le RIPETIZIONI dinamiche: conta cronologicamente ogni singola ripetizione valida (salita completa con mento/petto sopra la sbarra, discesa a braccia completamente distese in lockout, assenza di kipping o oscillazioni).\n` +
+                              `- Per gli HOLD: ogni secondo corrisponde a 10 fotogrammi consecutivi (es. 100 fotogrammi = 10 secondi esatti). Cronometra i secondi continuativi con allineamento posturale valido prima di cedere.\n` +
+                              `- TASSATIVO SUL CONTEGGIO: se l'atleta esegue 7 ripetizioni e poi scende dalla sbarra, DEVI indicare "reps_counted": 7 e inserire esattamente 7 elementi in "reps_detail". NON APPROVARE MAI ${val} ripetizioni se nel video ne vedi di meno!\n` +
+                              `- Se l'atleta esegue ${val} o più ripetizioni valide con ROM perfetto, APPROVA la certificazione.`
                     });
                 } else if (videoFrames && videoFrames.length > 0) {
                     geminiParts.push({
@@ -30631,23 +30730,30 @@ function getCalisthenicsExpertResponse(query) {
                             }
                         });
                     });
-                } else if (fileDataUrl && processedFile && processedFile.size <= 15 * 1024 * 1024) {
+                } else if (fileDataUrl && processedFile && (processedFile.size <= 45 * 1024 * 1024 || processedFile.size <= 15 * 1024 * 1024 || processedFile.size > 0)) {
                     const vidB64 = fileDataUrl.includes(',') ? fileDataUrl.split(',')[1] : fileDataUrl;
-                    const vidMime = (processedFile && processedFile.type) || 'video/mp4';
-                    geminiParts.push({
-                        text: `ESAME CERTIFICAZIONE SKILL - VIDEO INTEGRALE DELL'ATLETA (5 FPS):\n` +
-                              `Skill richiesta: "${skill.name}"\n` +
-                              `Prestazione dichiarata: ${val} ${unit}\n` +
-                              `Analizza con rigore l'intero video e conta le ripetizioni o secondi di tenuta esatti:`
-                    });
+                    const vidMime = (function(f, d) {
+                        if (f && f.type && typeof f.type === 'string' && f.type.startsWith('video/')) return f.type;
+                        const name = ((f && f.name) || '').toLowerCase();
+                        if (name.endsWith('.mp4') || name.endsWith('.m4v')) return 'video/mp4';
+                        if (name.endsWith('.mov')) return 'video/quicktime';
+                        if (name.endsWith('.webm')) return 'video/webm';
+                        return 'video/mp4';
+                    })(processedFile, fileDataUrl);
                     geminiParts.push({
                         inlineData: {
                             mimeType: vidMime,
                             data: vidB64
                         },
                         videoMetadata: {
-                            fps: 8
+                            fps: 10 // fps: 8 / fps: 5 compatibile
                         }
+                    });
+                    geminiParts.push({
+                        text: `ESAME CERTIFICAZIONE SKILL - VIDEO INTEGRALE DELL'ATLETA (10 FPS):\n` +
+                              `Skill richiesta: "${skill.name}"\n` +
+                              `Prestazione dichiarata: ${val} ${unit}\n` +
+                              `Analizza con rigore l'intero video a 10 FPS e conta le ripetizioni o secondi di tenuta esatti:`
                     });
                 } else {
                     if (submitBtn) {
@@ -30724,17 +30830,23 @@ REGOLE FONDAMENTALI DI VALUTAZIONE BIOMECCANICA:
    - Se l'immagine contiene un fiore, una pianta, un animale, un oggetto inanimato, un disegno, uno screenshot casuale, un meme, uno sfondo vuoto, una persona in piedi o in una posa che NON corrisponde alla skill indicata: DEVI CATEGORICAMENTE RIFIUTARE (approved: false).
 
 2. ATTENZIONE MASSIMA AL CONTEGGIO CRONOLOGICO (DIFFIDA TOTALE DEL NUMERO INSERITO):
-   - DIFFIDA TOTALE DEL NUMERO DICHIARATO: L'atleta dichiara ${val} ${unit}. Questo è solo un dato inserito dall'utente e NON DEVE CONDIZIONARE il tuo conteggio.
-   - DEVI STARE ATTENTISSIMO QUANDO CONTI: guarda con estremo rigore ogni secondo del video dal primo all'ultimo.
+   - DIFFIDA TOTALE DEL NUMERO DICHIARATO: L'atleta dichiara ${val} ${unit}. Questo è SOLO un dato inserito dall'utente e NON DEVE CONDIZIONARE il tuo conteggio.
+   - DEVI CONTARE DA ZERO OGNI SINGOLA RIPETIZIONE: guarda con estremo rigore ogni secondo del video dal primo all'ultimo.
+   - NON APPROVARE MAI A SCATOLA CHIUSA IL NUMERO DICHIARATO (${val})! Se nel video l'atleta esegue 7 ripetizioni valide e poi scende, DEVI INDICARE ESATTAMENTE "reps_counted": 7 e inserire esattamente 7 elementi in "reps_detail". Non dire MAI che vanno bene ${val} se ne hai viste di meno!
    - Conta da zero ogni singola ripetizione valida:
      * Salita col mento sopra la sbarra (o petto a contatto per Chest to Bar).
      * Lockout completo delle braccia in discesa.
      * Assenza di kipping o compensi.
-   - Quando l'atleta scende dalla sbarra o interrompe la serie, il conteggio SI FERMA.
-   - NON APPROVARE a scatola chiusa il numero dichiarato (${val})! Se nel video l'atleta esegue 8 ripetizioni valide e poi scende, DEVI INDICARE ESATTAMENTE "reps_counted": 8! Non dire MAI che vanno bene ${val} se ne hai viste di meno!
-   - CONFRONTO SEVERO SOGLIA DICHIARATA (${val} ${unit}) vs CONTEGGIO EFFETTIVO (MANDATORIO E TASSATIVO):
+   - Quando l'atleta scende dalla sbarra o interrompe la serie, il conteggio SI FERMA IMMEDIATAMENTE.
+   - REGOLA DELLA VERIFICA TEMPORALE CRONOLOGICA IN "reps_detail":
+     Per OGNI ripetizione valida contata, DEVI aggiungere una riga nell'array "reps_detail" specificando il secondo di inizio, il ROM massimo e il lockout di discesa (es. "Rep 1 (0:03-0:05): salita mento sopra la sbarra, discesa a braccia distese").
+     Il numero TOTALE di elementi nell'array "reps_detail" DEVE CORRISPONDERE ESATTAMENTE a "reps_counted"! Se ci sono 7 ripetizioni, ci devono essere ESATTAMENTE 7 elementi in reps_detail.
+   - CONFRONTO SEVERO SOGLIA DICHIARATA (${val} ${unit}) vs CONTEGGIO EFFETTIVO:
      * NON APPROVARE MAI se l'atleta esegue anche una sola ripetizione in meno rispetto al dichiarato come target pieno!
-     * Se l'atleta esegue meno ripetizioni del dichiarato (es. 8 su 12): inserisci nel campo "reps_counted" esattamente il numero reale contato (8).
+     * Se l'atleta esegue ${val} o più ripetizioni valide con ROM perfetto, approva con "approved": true e "reps_counted": ${val}.
+     * Se l'atleta esegue meno ripetizioni del dichiarato (es. 7 su ${val}):
+       - Se la tecnica delle ripetizioni completate è valida, imposta "approved": true, "reps_counted": 7 (il numero reale contato) e formula il verdetto certificando il massimale reale ("Stato richiesta: Accettata (7 ripetizioni certificate su ${val} dichiarate)").
+       - Se la biomeccanica è errata o l'esercizio è diverso, imposta "approved": false, "reps_counted": 0.
 
 3. VALUTAZIONE INTEGRALE DEL VIDEO (MANDATORIO E TASSATIVO):
    - Stai analizzando l'INTERO VIDEO dell'atleta (o la sequenza cronologica ad alta densità lungo l'intera durata).
@@ -30943,6 +31055,16 @@ Motivo: [Conferma dettagliata e motivante: tutte le ${val} ${unit} di ${skill.na
                                                           parsed.feedback.match(/(\d+)\s*(?:ripetizion|pull|trazion|dip|push|chin|reps)\s*valid/i);
                                             if (mReps) countedReps = parseInt(mReps[1]) || 0;
                                         }
+                                        if (parsed.feedback && skill.type === 'rep') {
+                                            const mExplicit = parsed.feedback.match(/(?:contat[eo]|eseguit[eo]|completat[eo]|certificat[eo]|valid[eo])\s*(?:con precisione\s*)?(\d+)\s*(?:ripetizion|pull|trazion|dip|push|chin|reps)/i) ||
+                                                              parsed.feedback.match(/(\d+)\s*(?:ripetizion|pull|trazion|dip|push|chin|reps)\s*(?:su|rispetto a)\s*\d+/i);
+                                            if (mExplicit) {
+                                                const explicitNum = parseInt(mExplicit[1]) || 0;
+                                                if (explicitNum > 0 && explicitNum < countedReps) {
+                                                    countedReps = explicitNum;
+                                                }
+                                            }
+                                        }
 
                                         let countedSec = 0;
                                         if (typeof parsed.hold_seconds === 'number') {
@@ -30975,10 +31097,10 @@ Motivo: [Conferma dettagliata e motivante: tutte le ${val} ${unit} di ${skill.na
                                                 if (typeof r === 'object' && r !== null) return r.valid !== false;
                                                 return true;
                                             }).length;
-                                            if (validDetailCount > 0 && (!countedReps || validDetailCount < countedReps)) {
-                                                countedReps = validDetailCount;
-                                            } else if (countedReps === 0) {
-                                                countedReps = validDetailCount;
+                                            if (validDetailCount > 0) {
+                                                if (countedReps === 0 || validDetailCount < countedReps || (countedReps === val && validDetailCount < val)) {
+                                                    countedReps = validDetailCount;
+                                                }
                                             }
                                         }
 
@@ -31015,8 +31137,36 @@ Motivo: [Conferma dettagliata e motivante: tutte le ${val} ${unit} di ${skill.na
                                                 if (countedSec === 0) countedSec = val;
                                             }
 
-                                            // TARGET PARZIALE SOLO SE L'ESERCIZIO È STATO APPROVATO DA COACH ARES
+                                            // CONTEGGIO DIRETTO DEL MASSIMALE DA PARTE DI COACH ARES AI:
+                                            // Il numero contato da Coach Ares diventa direttamente il massimale certificato
                                             if (skill.type === 'rep') {
+                                                if (countedReps > 0 && (parsed.approved || rawModelApproved || !isHardRejected)) {
+                                                    val = countedReps;
+                                                    certifiedVal = countedReps;
+                                                    parsed.approved = true;
+                                                    parsed.reps_counted = countedReps;
+                                                    isPartialCertification = false;
+
+                                                    const cleanCritique = (parsed.feedback || '')
+                                                        .replace(/^stato\s*richiesta\s*:[^\n\r]*[\n\r]*/i, '')
+                                                        .replace(/^motivo\s*(?:\([^)]*\))?\s*:\s*/i, '')
+                                                        .replace(/certificazione\s*respinta[.!]*$/i, '')
+                                                        .trim();
+
+                                                    parsed.feedback = `Coach Ares ha visionato l'intero video e contato con precisione ${countedReps} ripetizioni valide con ROM completo e lockout articolare prima della conclusione della serie. Il tuo massimale per "${skill.name}" è ufficialmente CERTIFICATO a ${countedReps} ripetizioni!` +
+                                                        (cleanCritique && !cleanCritique.toLowerCase().includes('respinta') ? ` Note tecniche: ${cleanCritique}` : '');
+                                                } else if (countedReps === 0) {
+                                                    parsed.approved = false;
+                                                    isPartialCertification = false;
+                                                    parsed.reps_counted = 0;
+                                                    let origFb = (parsed.feedback || '').trim()
+                                                        .replace(/^stato\s*richiesta\s*:[^\n\r]*[\n\r]*/i, '')
+                                                        .replace(/^motivo\s*(?:\([^)]*\))?\s*:\s*/i, '')
+                                                        .trim();
+                                                    parsed.feedback = origFb || `Coach Ares non ha rilevato ripetizioni valide con ROM completo e corretta biomeccanica per "${skill.name}". Certificazione RESPINTA.`;
+                                                }
+
+                                                // Salvaguardia e compatibilità verifica soglia dichiarata:
                                                 if (countedReps < val) {
                                                     if (countedReps > 0 && rawModelApproved) {
                                                         const claimedVal = val;
@@ -31024,13 +31174,14 @@ Motivo: [Conferma dettagliata e motivante: tutte le ${val} ${unit} di ${skill.na
                                                         val = countedReps;
                                                         isPartialCertification = true;
                                                         parsed.approved = true;
+                                                        parsed.reps_counted = countedReps;
 
                                                         const cleanCritique = (parsed.feedback || '')
                                                             .replace(/^stato\s*richiesta\s*:[^\n\r]*[\n\r]*/i, '')
                                                             .replace(/^motivo\s*(?:\([^)]*\))?\s*:\s*/i, '')
                                                             .replace(/certificazione\s*respinta[.!]*$/i, '')
                                                             .trim();
-                                                        
+
                                                         parsed.feedback = `Dichiarate ${claimedVal} ripetizioni: Coach Ares ha contato con precisione ${countedReps} ripetizioni valide con ROM completo prima di scendere. Il tuo massimale è ufficialmente CERTIFICATO a ${countedReps} ripetizioni!` +
                                                             (cleanCritique ? ` Note tecniche: ${cleanCritique}` : '');
                                                     } else {
@@ -31049,8 +31200,36 @@ Motivo: [Conferma dettagliata e motivante: tutte le ${val} ${unit} di ${skill.na
                                                     certifiedVal = Math.max(val, countedReps);
                                                     val = certifiedVal;
                                                     parsed.approved = true;
+                                                    parsed.reps_counted = certifiedVal;
                                                 }
                                             } else if (skill.type === 'sec') {
+                                                if (countedSec > 0 && (parsed.approved || rawModelApproved || !isHardRejected)) {
+                                                    val = countedSec;
+                                                    certifiedVal = countedSec;
+                                                    parsed.approved = true;
+                                                    parsed.hold_seconds = countedSec;
+                                                    isPartialCertification = false;
+
+                                                    const cleanCritique = (parsed.feedback || '')
+                                                        .replace(/^stato\s*richiesta\s*:[^\n\r]*[\n\r]*/i, '')
+                                                        .replace(/^motivo\s*(?:\([^)]*\))?\s*:\s*/i, '')
+                                                        .replace(/certificazione\s*respinta[.!]*$/i, '')
+                                                        .trim();
+
+                                                    parsed.feedback = `Coach Ares ha visionato l'intero video e cronometrato con precisione ${countedSec} secondi continuativi con allineamento posturale valido. Il tuo massimale per "${skill.name}" è ufficialmente CERTIFICATO a ${countedSec} secondi!` +
+                                                        (cleanCritique && !cleanCritique.toLowerCase().includes('respinta') ? ` Note tecniche: ${cleanCritique}` : '');
+                                                } else if (countedSec === 0) {
+                                                    parsed.approved = false;
+                                                    isPartialCertification = false;
+                                                    parsed.hold_seconds = 0;
+                                                    let origFb = (parsed.feedback || '').trim()
+                                                        .replace(/^stato\s*richiesta\s*:[^\n\r]*[\n\r]*/i, '')
+                                                        .replace(/^motivo\s*(?:\([^)]*\))?\s*:\s*/i, '')
+                                                        .trim();
+                                                    parsed.feedback = origFb || `Coach Ares non ha cronometrato una tenuta continuativa con allineamento valido per "${skill.name}". Certificazione RESPINTA.`;
+                                                }
+
+                                                // Salvaguardia e compatibilità verifica soglia dichiarata:
                                                 if (countedSec < val) {
                                                     if (countedSec > 0 && rawModelApproved) {
                                                         const claimedVal = val;
@@ -31058,6 +31237,7 @@ Motivo: [Conferma dettagliata e motivante: tutte le ${val} ${unit} di ${skill.na
                                                         val = countedSec;
                                                         isPartialCertification = true;
                                                         parsed.approved = true;
+                                                        parsed.hold_seconds = countedSec;
 
                                                         const cleanCritique = (parsed.feedback || '')
                                                             .replace(/^stato\s*richiesta\s*:[^\n\r]*[\n\r]*/i, '')
