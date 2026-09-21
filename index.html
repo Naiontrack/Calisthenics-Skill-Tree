@@ -25599,6 +25599,128 @@ function getCalisthenicsExpertResponse(query) {
             return 1 + Math.max(...prereqs.map(p => getSkillDepth(p, new Set(visited))));
         }
 
+                const SKILL_TREE_LAYOUT_OFFSETS = {
+            // Cat 1: Push & Planche Tree (-210 Planche, 0 Pushups, +210 Single arm)
+            pseudo_pushups: -210,
+            planche_lean: -210,
+            tuck_planche: -210,
+            adv_tuck_planche: -210,
+            one_leg_planche: -210,
+            straddle_planche: -210,
+            full_planche: -210,
+            maltese: -210,
+
+            pushups_knee: 0,
+            pushups: 0,
+            diamond_pushups: -70,
+            clap_pushups: 70,
+            double_clap_pushups: 0,
+            behind_back_clap: 0,
+
+            frog_stand: 210,
+            elbow_lever: 210,
+            one_arm_pushup: 210,
+            one_arm_russian: 210,
+
+            // Cat 2: Pull & Front Lever Tree (-240 Muscle Up, -80 Front Lever, 0 Pullups, +80 OAP, +240 Back Lever)
+            australian: 0,
+            pullups: 0,
+            chest_to_bar: -240,
+            muscle_up: -240,
+            one_arm_muscle_up: -240,
+
+            tuck_fl: -80,
+            adv_tuck_fl: -80,
+            one_leg_fl: -80,
+            straddle_fl: -80,
+            full_fl: -80,
+
+            one_arm_pullup: 80,
+
+            tuck_bl: 240,
+            adv_tuck_bl: 240,
+            one_leg_bl: 240,
+            straddle_bl: 240,
+            full_bl: 240,
+
+            // Cat 3: Ring Skills
+            ring_support: 0,
+            ring_dips: 0,
+            ring_muscle_up: -120,
+            iron_cross: 120,
+            victorian: 120,
+
+            // Cat 4: Freestyle
+            pullover: 0,
+            spin_360: 0,
+            freestyle_combo: 0,
+
+            // Cat 5: Handstands, Dips & Compression
+            bench_dips: -260,
+            classic_dip: -260,
+            bar_dips: -260,
+            l_sit_dip: -340,
+            russian_dip: -200,
+            korean_dip: -60,
+            impossible_dip: -200,
+
+            l_sit: -70,
+            v_sit: -70,
+
+            wall_handstand: 80,
+            freestanding_hs: 80,
+            hspu_wall: 240,
+            freestanding_hspu: 80,
+            one_arm_handstand: 240,
+
+            // Cat 6: Human Flag & Core Special
+            plank: -100,
+            crunch: 100,
+            hollow_body: -100,
+            dragon_flag: -100,
+            side_plank: 100,
+            human_flag_tuck: 100,
+            human_flag_straddle: 100,
+            human_flag: 100,
+
+            // Cat 7: Legs & Lower Body
+            squat: -250,
+            lunges: -250,
+            bulgarian_split_squat: -250,
+            pistol_squat: -250,
+            shrimp_squat: -250,
+
+            calf_raises: -80,
+            box_jump: -80,
+
+            glute_bridge: 90,
+            cossack_squat: 90,
+
+            wall_sit: 260,
+            nordic_curl: 260,
+
+            // Cat 8: Grip, Forearms & Hangs
+            dead_hang: 0,
+            towel_hang: -110,
+            towel_pullup: -110,
+            fingertip_hang: 110,
+            one_arm_hang: 110,
+
+            // Cat 9: Advanced Core & Rotations
+            russian_twist: -110,
+            leg_raises: -110,
+            windshield_wipers: -110,
+            superman_hold: 110,
+            ab_wheel: 110,
+
+            // Cat 10: Explosiveness & Conditioning
+            jump_squat: -170,
+            broad_jump: -170,
+            mountain_climbers: 0,
+            burpees: 0,
+            explosive_pullup: 170
+        };
+
         function computeSkillCoordinates() {
             const coords = {};
             if (typeof categories === 'undefined') return coords;
@@ -25611,43 +25733,36 @@ function getCalisthenicsExpertResponse(query) {
             const CANVAS_HEIGHT = 1920;
             const NODE_Y_GAP = 150;
             const BOTTOM_PAD = 170;
-            const CAT_WIDTH = isSingleCat ? 750 : 380;
-            const subGap = isSingleCat ? 160 : 140;
+            const CAT_WIDTH = 750;
+            const START_X = isSingleCat ? 500 : 420;
 
             filteredCats.forEach((cat, catIdx) => {
-                const byDepth = {};
+                const catCenterX = isSingleCat ? 500 : (catIdx * CAT_WIDTH + START_X);
+
                 cat.skills.forEach(skill => {
                     const d = getSkillDepth(skill.id);
-                    byDepth[d] = byDepth[d] || [];
-                    byDepth[d].push(skill);
-                });
+                    const y = Math.round(CANVAS_HEIGHT - BOTTOM_PAD - (d * NODE_Y_GAP));
+                    
+                    let xOffset = 0;
+                    if (SKILL_TREE_LAYOUT_OFFSETS[skill.id] !== undefined) {
+                        xOffset = SKILL_TREE_LAYOUT_OFFSETS[skill.id];
+                    }
 
-                const catCenterX = isSingleCat ? 450 : (catIdx * CAT_WIDTH + (CAT_WIDTH / 2) + 80);
+                    const x = Math.round(catCenterX + xOffset);
 
-                Object.keys(byDepth).forEach(dStr => {
-                    const d = parseInt(dStr, 10);
-                    const skillsAtDepth = byDepth[d];
-                    const count = skillsAtDepth.length;
-
-                    skillsAtDepth.forEach((s, subIdx) => {
-                        const xOffset = (subIdx - (count - 1) / 2) * subGap;
-                        const x = Math.round(catCenterX + xOffset);
-                        const y = Math.round(CANVAS_HEIGHT - BOTTOM_PAD - (d * NODE_Y_GAP));
-
-                        coords[s.id] = {
-                            id: s.id,
-                            name: s.name,
-                            tier: s.tier,
-                            rarity: s.rarity || 'normale',
-                            category: cat.title,
-                            catId: cat.id,
-                            prerequisites: s.prerequisites || [],
-                            depth: d,
-                            x: x,
-                            y: y,
-                            catCenterX: catCenterX
-                        };
-                    });
+                    coords[skill.id] = {
+                        id: skill.id,
+                        name: skill.name,
+                        tier: skill.tier,
+                        rarity: skill.rarity || 'normale',
+                        category: cat.title,
+                        catId: cat.id,
+                        prerequisites: skill.prerequisites || [],
+                        depth: d,
+                        x: x,
+                        y: y,
+                        catCenterX: catCenterX
+                    };
                 });
             });
 
@@ -25665,7 +25780,7 @@ function getCalisthenicsExpertResponse(query) {
                 : categories;
 
             const isSingleCat = filteredCats.length === 1;
-            const canvasWidth = isSingleCat ? 1000 : 4100;
+            const canvasWidth = isSingleCat ? 1000 : (filteredCats.length * 750 + 200);
             const canvasHeight = 1920;
 
             if (canvasEl) {
@@ -25719,7 +25834,7 @@ function getCalisthenicsExpertResponse(query) {
             // HTML Nodes & Category Banners
             let nodesHtml = '';
             filteredCats.forEach((cat, cIdx) => {
-                const catCenterX = isSingleCat ? 450 : (cIdx * 380 + 190 + 80);
+                const catCenterX = isSingleCat ? 500 : (cIdx * 750 + 420);
                 nodesHtml += `<div class="tree-category-banner" style="left: ${catCenterX - 130}px; top: 30px;">${escapeHtml(cat.title)}</div>`;
             });
 
@@ -28693,36 +28808,48 @@ function getCalisthenicsExpertResponse(query) {
             }
         }
 
-        function renderStorageVerificationsListHtml(list) {
-            if (!list || list.length === 0) {
+                function renderStorageVerificationsListHtml(list) {
+            if (!list || !Array.isArray(list) || list.length === 0) {
                 return '<p style="color:var(--subtext); font-size:0.82rem; text-align:center; padding:24px 0;">Nessun video o foto di verifica presente nello storage.</p>';
             }
 
-            return list.map(v => {
-                const isAppr = v.status === 'approved';
-                const dateStr = v.timestamp ? new Date(v.timestamp).toLocaleString('it-IT', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' }) : 'Data n/d';
+            return list.filter(v => v != null).map(v => {
+                let isAppr = false;
+                try { isAppr = v.status === 'approved'; } catch(e) {}
+
+                let dateStr = 'Data n/d';
+                if (v.timestamp) {
+                    try {
+                        const d = v.timestamp.toDate ? v.timestamp.toDate() : (v.timestamp.seconds ? new Date(v.timestamp.seconds * 1000) : new Date(v.timestamp));
+                        dateStr = isNaN(d.getTime()) ? 'Data n/d' : d.toLocaleString('it-IT', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' });
+                    } catch(e) {
+                        dateStr = 'Data n/d';
+                    }
+                }
                 const estBytes = getMediaSizeEstimate(v);
                 const estStr = formatStorageBytes(estBytes);
                 const isVid = (v.mediaType === 'video') || (v.mediaUrl && (v.mediaUrl.includes('video') || v.mediaUrl.endsWith('.mp4') || v.mediaUrl.endsWith('.webm')));
+                const safeUrl = v.mediaUrl ? String(v.mediaUrl).replace(/'/g, '%27') : '';
+                const safeId = v.id ? String(v.id).replace(/'/g, '') : '';
 
                 let mediaEl = '';
                 if (isVid) {
                     mediaEl = `
                         <div style="position:relative; width:110px; height:80px; flex-shrink:0; border-radius:8px; overflow:hidden; background:#000; border:1px solid var(--line-color);">
-                            <video src="${escapeHtml(v.mediaUrl)}" preload="metadata" playsinline muted style="width:100%; height:100%; object-fit:cover;"></video>
-                            <a href="${escapeHtml(v.mediaUrl)}" target="_blank" rel="noopener noreferrer" style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.35); color:#fff; text-decoration:none; font-size:1.1rem;" title="Apri video">▶</a>
+                            <video src="${escapeHtml(safeUrl)}" preload="metadata" playsinline muted style="width:100%; height:100%; object-fit:cover;"></video>
+                            <a href="${escapeHtml(safeUrl)}" target="_blank" rel="noopener noreferrer" style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.35); color:#fff; text-decoration:none; font-size:1.1rem;" title="Apri video">▶</a>
                         </div>
                     `;
                 } else {
                     mediaEl = `
-                        <div style="position:relative; width:110px; height:80px; flex-shrink:0; border-radius:8px; overflow:hidden; background:#000; border:1px solid var(--line-color); cursor:pointer;" onclick="openChatMediaLightbox('${escapeHtml(v.mediaUrl)}')">
-                            <img src="${escapeHtml(v.mediaUrl)}" style="width:100%; height:100%; object-fit:cover;" loading="lazy">
+                        <div style="position:relative; width:110px; height:80px; flex-shrink:0; border-radius:8px; overflow:hidden; background:#000; border:1px solid var(--line-color); cursor:pointer;" onclick="openChatMediaLightbox('${escapeHtml(safeUrl)}')">
+                            <img src="${escapeHtml(safeUrl)}" style="width:100%; height:100%; object-fit:cover;" loading="lazy">
                         </div>
                     `;
                 }
 
                 return `
-                    <div class="admin-verif-item" id="storage-item-verif-${v.id}" style="display:flex; gap:12px; align-items:center; flex-wrap:wrap; justify-content:space-between; margin-bottom:10px; padding:10px; border-radius:10px; background:rgba(255,255,255,0.02); border:1px solid var(--line-color);">
+                    <div class="admin-verif-item" id="storage-item-verif-${safeId}" style="display:flex; gap:12px; align-items:center; flex-wrap:wrap; justify-content:space-between; margin-bottom:10px; padding:10px; border-radius:10px; background:rgba(255,255,255,0.02); border:1px solid var(--line-color);">
                         <div style="display:flex; gap:12px; align-items:center; min-width:240px; flex:1;">
                             ${mediaEl}
                             <div style="flex:1;">
@@ -28740,7 +28867,7 @@ function getCalisthenicsExpertResponse(query) {
                                 </div>
                                 <div style="font-size:0.72rem; color:var(--subtext); display:flex; gap:10px; flex-wrap:wrap;">
                                     <span>📅 ${dateStr}</span>
-                                    <span>💾 Spazio: <strong id="storage-size-chat-${m.id}">~${estStr}</strong></span>
+                                    <span>💾 Spazio: <strong id="storage-size-verif-${v.id}">~${estStr}</strong></span>
                                 </div>
                             </div>
                         </div>
@@ -29113,12 +29240,8 @@ function getCalisthenicsExpertResponse(query) {
             return true;
         }
 
-        function switchStorageSubTab(subTab) {
+                function switchStorageSubTab(subTab) {
             storageActiveSubTab = subTab;
-            const container = document.getElementById('admin-storage-subtab-container');
-            if (container) {
-                container.innerHTML = renderStorageCurrentSubTabHtml();
-            }
             const btnVerif = document.getElementById('subtab-btn-verif');
             const btnChat = document.getElementById('subtab-btn-chat');
             if (btnVerif && btnChat) {
@@ -29140,6 +29263,15 @@ function getCalisthenicsExpertResponse(query) {
                     btnVerif.style.background = '';
                     btnVerif.style.borderColor = '';
                     btnVerif.style.color = '';
+                }
+            }
+            const container = document.getElementById('admin-storage-subtab-container');
+            if (container) {
+                try {
+                    container.innerHTML = renderStorageCurrentSubTabHtml();
+                } catch(renderErr) {
+                    console.error('[Storage Subtab Render Error]:', renderErr);
+                    container.innerHTML = '<p style="color:#ef4444; font-size:0.85rem; padding:20px; text-align:center;">Errore caricamento subtab: ' + escapeHtml(renderErr.message) + '</p>';
                 }
             }
         }
@@ -30280,7 +30412,10 @@ function getCalisthenicsExpertResponse(query) {
             let file = fileInput && fileInput.files ? fileInput.files[0] : null;
 
             if (!file && !preparedVerificationMedia) {
-                showAppToast("Per favore seleziona un video o una foto della tua esecuzione.", "warning");
+                showAppToast("Per favore seleziona prima il video della tua esecuzione.", "warning");
+                if (fileInput) {
+                    try { fileInput.focus(); fileInput.click(); } catch(e) {}
+                }
                 return;
             }
 
@@ -31121,6 +31256,11 @@ Motivo: [Conferma sintetica ma motivante: tutte le ${val} ${unit} di ${skill.nam
         if (typeof window !== 'undefined') {
             window.formatCoachAresFeedback = formatCoachAresFeedback;
             window.openSkillVerifyModal = openSkillVerificationModal;
+            window.openSkillVerificationModal = openSkillVerificationModal;
+            window.closeSkillVerifyModal = closeSkillVerifyModal;
+            window.submitSkillForAiVerification = submitSkillForAiVerification;
+            window.switchStorageSubTab = switchStorageSubTab;
+            window.SKILL_TREE_LAYOUT_OFFSETS = SKILL_TREE_LAYOUT_OFFSETS;
             window.renderTree = updateUI;
             window.filterAdminVerificationsList = filterAdminVerificationsList;
             window.adminDeleteAllVerifications = adminDeleteAllVerifications;
