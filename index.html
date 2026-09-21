@@ -27069,7 +27069,7 @@ function getCalisthenicsExpertResponse(query) {
         }
 
         function isSuperAdminUser(user) {
-            const u = user || (typeof currentUser !== 'undefined' ? currentUser : null);
+            const u = user || (typeof currentUser !== 'undefined' && currentUser ? currentUser : (typeof window !== 'undefined' ? window.currentUser : null));
             const prof = (typeof userProfileData !== 'undefined' && userProfileData) ? userProfileData : {};
             const nick = ((typeof userNickname === 'string' ? userNickname : '') || prof.nickname || '').trim().toLowerCase();
             const disp = (u && u.displayName ? u.displayName : '').trim().toLowerCase();
@@ -27083,7 +27083,8 @@ function getCalisthenicsExpertResponse(query) {
         }
 
         function isAdminUser(user) {
-            if (isSuperAdminUser(user)) return true;
+            const u = user || (typeof currentUser !== 'undefined' && currentUser ? currentUser : (typeof window !== 'undefined' ? window.currentUser : null));
+            if (isSuperAdminUser(u)) return true;
             return !!(userProfileData && (userProfileData.isAdmin || userProfileData.isSuperAdmin));
         }
 
@@ -28067,13 +28068,14 @@ function getCalisthenicsExpertResponse(query) {
             const container = document.getElementById('admin-panel-body');
             if (!section || !container) return;
 
-            if (!isAdminUser(currentUser)) {
+            const activeUser = (typeof currentUser !== 'undefined' && currentUser) ? currentUser : (typeof window !== 'undefined' ? window.currentUser : null);
+            if (!isAdminUser(activeUser)) {
                 section.style.display = 'none';
                 return;
             }
 
             section.style.display = 'block';
-            const isSuper = isSuperAdminUser(currentUser);
+            const isSuper = isSuperAdminUser(activeUser);
 
             // Se l'utente è un admin collaboratore ma non superadmin, non può accedere al tab ruoli o storage
             if (!isSuper && (adminActiveTab === 'roles' || adminActiveTab === 'storage')) {
@@ -28828,7 +28830,7 @@ function getCalisthenicsExpertResponse(query) {
                 }
                 const estBytes = getMediaSizeEstimate(v);
                 const estStr = formatStorageBytes(estBytes);
-                const isVid = (v.mediaType === 'video') || (v.mediaUrl && (v.mediaUrl.includes('video') || v.mediaUrl.endsWith('.mp4') || v.mediaUrl.endsWith('.webm')));
+                const isVid = (v.mediaType === 'video') || (typeof v.mediaUrl === 'string' && (v.mediaUrl.includes('video') || v.mediaUrl.endsWith('.mp4') || v.mediaUrl.endsWith('.webm')));
                 const safeUrl = v.mediaUrl ? String(v.mediaUrl).replace(/'/g, '%27') : '';
                 const safeId = v.id ? String(v.id).replace(/'/g, '') : '';
 
@@ -28896,7 +28898,8 @@ function getCalisthenicsExpertResponse(query) {
                 }
                 const estBytes = getMediaSizeEstimate(m);
                 const estStr = formatStorageBytes(estBytes);
-                const mType = m.mediaType || (m.mediaUrl && m.mediaUrl.includes('audio') ? 'audio' : (m.mediaUrl && m.mediaUrl.includes('video') ? 'video' : 'image'));
+                const mUrlStr = typeof m.mediaUrl === 'string' ? m.mediaUrl : '';
+                const mType = m.mediaType || (mUrlStr && mUrlStr.includes('audio') ? 'audio' : (mUrlStr && mUrlStr.includes('video') ? 'video' : 'image'));
 
                 let mediaEl = '';
                 let typeBadge = '';
@@ -29478,8 +29481,10 @@ function getCalisthenicsExpertResponse(query) {
             window.filterAdminVerificationsList = filterAdminVerificationsList;
             window.filterAdminUsersList = filterAdminUsersList;
             window.adminOverrideVerification = adminOverrideVerification;
-            window.adminDeleteSingleVerification = adminDeleteSingleVerification;
-            window.adminToggleUserRole = adminToggleUserRole;
+            window.adminDeleteVerification = adminDeleteVerification;
+            window.adminDeleteSingleVerification = typeof adminDeleteVerification !== 'undefined' ? adminDeleteVerification : null;
+            window.setAdminRole = setAdminRole;
+            window.adminToggleUserRole = typeof setAdminRole !== 'undefined' ? setAdminRole : null;
             window.adminDeleteSingleStorageMedia = adminDeleteSingleStorageMedia;
             window.adminPurgeStorageCategory = adminPurgeStorageCategory;
             window.filterStorageVerifications = filterStorageVerifications;
@@ -31260,12 +31265,12 @@ Motivo: [Conferma sintetica ma motivante: tutte le ${val} ${unit} di ${skill.nam
             window.closeSkillVerifyModal = closeSkillVerifyModal;
             window.submitSkillForAiVerification = submitSkillForAiVerification;
             window.switchStorageSubTab = switchStorageSubTab;
-            window.SKILL_TREE_LAYOUT_OFFSETS = SKILL_TREE_LAYOUT_OFFSETS;
-            window.renderTree = updateUI;
+            window.SKILL_TREE_LAYOUT_OFFSETS = typeof SKILL_TREE_LAYOUT_OFFSETS !== 'undefined' ? SKILL_TREE_LAYOUT_OFFSETS : (window.SKILL_TREE_LAYOUT_OFFSETS || {});
+            window.renderTree = typeof updateUI !== 'undefined' ? updateUI : window.renderTree;
             window.filterAdminVerificationsList = filterAdminVerificationsList;
             window.adminDeleteAllVerifications = adminDeleteAllVerifications;
             window.adminDeleteVerification = adminDeleteVerification;
-            window.isSkillCurrentlyVerified = isSkillCurrentlyVerified;
+            window.isSkillCurrentlyVerified = typeof isSkillCurrentlyVerified !== 'undefined' ? isSkillCurrentlyVerified : window.isSkillCurrentlyVerified;
         }
         
         </script>
